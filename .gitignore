@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+appsettings.Development.json
+
+# Uploads (CV files stored locally — not tracked in git)
+server/Recruitment.Gorilla.API/Uploads/
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Misc
+.DS_Store
+Thumbs.db
