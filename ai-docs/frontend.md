@@ -46,8 +46,8 @@ Both the upload `CandidateForm` and the detail `ProfileEditor` include **GitHub 
 ### Configuration page (`pages/ConfigurationPage.tsx`, route `/configuration`, navbar link)
 Manages **Roles applied** and **Skills** lookups: a reusable `OptionSection` renders a table (all values incl. inactive via `includeInactive=true`) with Add/Edit modals and Delete. Query keys `['config','roles','all']` / `['config','skills','all']`; mutations invalidate the `['config']` prefix so candidate forms refresh too.
 
-### Status colors (`utils/statusColors.ts`)
-`getStatusVariant(status)` maps a status to a Bootstrap variant (danger/success/primary/info/secondary/light) and `statusBadgeTextDark(status)` picks badge text color. Applied to candidate-list badges, the detail header badge, and `StatusTimeline` nodes/badges.
+### Status colors (`utils/statusColors.ts` + `components/StatusBadge.tsx`)
+`getStatusClass(status)` maps a status to a **tone** modifier class (`status--reject|success|interview|assessment|muted|uploaded|intake`). The colors are CSS design tokens in `index.css` (`--status-color` solid for the dot, `--status-tint` translucent for the badge background), with a `[data-bs-theme="dark"]` override block so a future dark theme just flips `data-bs-theme` on `<html>` — no component changes. Use the shared `StatusBadge` / `StatusDot` components (do not reintroduce per-call Bootstrap `bg-*` variants); applied to the candidate list, detail header, and `StatusTimeline`.
 
 ### CV preview (`CvFilesCard` in `CandidateDetailPage`)
 Each CV file has **Preview** + **Download**. Preview calls `previewCvFile` (authenticated blob → object URL) and renders PDFs in an `<iframe>` (`.cv-preview-frame`); non-PDF types show a friendly fallback and keep Download. Object URLs are revoked on change/unmount.

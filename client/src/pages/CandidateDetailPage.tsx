@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Alert, Badge, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addStatus,
@@ -15,7 +15,7 @@ import {
 } from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
-import { getStatusVariant, statusBadgeTextDark } from '../utils/statusColors';
+import { StatusBadge } from '../components/StatusBadge';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
@@ -53,9 +53,7 @@ export default function CandidateDetailPage() {
       <div className="d-flex justify-content-between align-items-center my-3">
         <div className="d-flex align-items-center gap-3">
           <h2 className="mb-0">{data.fullName}</h2>
-          <Badge bg={getStatusVariant(data.currentStatus)} text={statusBadgeTextDark(data.currentStatus) ? 'dark' : undefined}>
-            {data.currentStatus}
-          </Badge>
+          <StatusBadge status={data.currentStatus} />
         </div>
         <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
           Delete candidate

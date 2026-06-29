@@ -1,28 +1,35 @@
-// Maps a candidate status to a Bootstrap contextual variant (theme-aware).
-// Used for list badges, the detail status display, and timeline nodes/badges.
+// Maps a candidate status to a "tone" (a CSS design-token class). Colors live in
+// index.css as CSS variables so they adapt to a future dark theme (data-bs-theme).
+// Consumed by the shared StatusBadge / StatusDot components.
 
-const STATUS_VARIANTS: Record<string, string> = {
-  Reject: 'danger',
-  'Not Recommended': 'danger',
-  Discontinued: 'danger',
+export type StatusTone =
+  | 'reject'
+  | 'success'
+  | 'interview'
+  | 'assessment'
+  | 'muted'
+  | 'uploaded'
+  | 'intake';
+
+const STATUS_TONE: Record<string, StatusTone> = {
+  Reject: 'reject',
+  'Not Recommended': 'reject',
+  Discontinued: 'reject',
   Recommended: 'success',
-  'Call for Interview': 'primary',
-  'Interview Scheduled': 'primary',
-  'Interview Completed': 'primary',
-  'Technical Assessment': 'info',
-  'Submission Receieved': 'info',
-  'Code Review': 'info',
-  'No Submission': 'secondary',
-  'Not Available': 'secondary',
-  Uploaded: 'light',
-  'Ask for Assesment': 'light',
+  'Call for Interview': 'interview',
+  'Interview Scheduled': 'interview',
+  'Interview Completed': 'interview',
+  'Technical Assessment': 'assessment',
+  'Submission Receieved': 'assessment',
+  'Code Review': 'assessment',
+  'No Submission': 'muted',
+  'Not Available': 'muted',
+  Uploaded: 'uploaded',
+  'Ask for Assesment': 'intake',
 };
 
-/** Bootstrap variant name (danger/success/primary/info/secondary/light) for a status. */
-export const getStatusVariant = (status: string): string => STATUS_VARIANTS[status] ?? 'light';
+/** Tone key for a status (defaults to muted for unknown values). */
+export const getStatusTone = (status: string): StatusTone => STATUS_TONE[status] ?? 'muted';
 
-/** Whether the badge needs dark text (light/neutral backgrounds). */
-export const statusBadgeTextDark = (status: string): boolean => {
-  const v = getStatusVariant(status);
-  return v === 'light' || v === 'secondary';
-};
+/** CSS modifier class carrying the status color tokens, e.g. "status--reject". */
+export const getStatusClass = (status: string): string => `status--${getStatusTone(status)}`;
