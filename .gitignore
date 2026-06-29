@@ -10,6 +10,9 @@ appsettings.Development.json
 # Uploads (CV files stored locally — not tracked in git)
 server/Recruitment.Gorilla.API/Uploads/
 
+# Log files (log4net output)
+server/Recruitment.Gorilla.API/Logs/
+
 # Node
 node_modules/
 dist/

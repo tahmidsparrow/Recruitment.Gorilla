@@ -57,15 +57,16 @@ cd Recruitment.Gorilla
 
 ### 2. Configure the database connection
 
-Edit `server/Recruitment.Gorilla.API/appsettings.json` and set your MySQL credentials:
+The connection string is **not** stored in `appsettings.json` (it stays out of source control). On each machine, provide your own MySQL credentials via [.NET user secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets). Run this once from the API project folder, substituting your MySQL host, port, database name, user, and password:
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=RecruitmentGorilla;User=root;Password=yourpassword;"
-  }
-}
+```bash
+cd server/Recruitment.Gorilla.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=RecruitmentGorilla;User=root;Password=yourpassword;"
 ```
+
+The secret is loaded automatically when the app runs in the **Development** environment. The `RecruitmentGorilla` database does not need to exist yet — the next step creates it.
+
+> If the connection string is missing, the API fails fast on startup with a message telling you to set this secret.
 
 ### 3. Run database migrations
 
@@ -215,9 +216,11 @@ All extracted values are editable before the candidate record is saved.
 ## Development Notes
 
 - EF Core packages are pinned to **9.0.0** to stay within Pomelo 9.x's compatibility window (`>= 9.0.0 && <= 9.0.999`)
+- The MySQL connection string is supplied per-machine via .NET user secrets (see Getting Started), not committed to `appsettings.json`
 - Uploaded files are stored as `{GUID}{.pdf|.docx}` — the original filename is preserved in the database
 - Status values are free-form strings in Phase 1; a defined status lookup table will be introduced in a later phase
-- The `Uploads/` directory is excluded from git via `.gitignore`
+- Logging uses **log4net** (configured in `log4net.config`); logs are written to the console and a daily rolling file under `server/Recruitment.Gorilla.API/Logs/`
+- The `Uploads/` and `Logs/` directories are excluded from git via `.gitignore`
 
 ---
 

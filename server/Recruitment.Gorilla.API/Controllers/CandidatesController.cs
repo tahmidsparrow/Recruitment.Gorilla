@@ -6,7 +6,9 @@ namespace Recruitment.Gorilla.API.Controllers;
 
 [ApiController]
 [Route("api/candidates")]
-public class CandidatesController(CandidateService candidateService) : ControllerBase
+public class CandidatesController(
+    CandidateService candidateService,
+    ILogger<CandidatesController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -32,10 +34,17 @@ public class CandidatesController(CandidateService candidateService) : Controlle
         var (created, duplicate) = await candidateService.CreateAsync(dto);
 
         if (duplicate is not null)
+        {
+            logger.LogWarning(
+                "Duplicate candidate email '{Email}' — matches existing candidate {ExistingId}.",
+                dto.Email, duplicate.Id);
             return Conflict(new DuplicateCandidateDto(
                 $"A candidate with email '{duplicate.Email}' already exists.", duplicate));
+        }
 
-        return CreatedAtAction(nameof(GetById), new { id = created!.Id }, created);
+        logger.LogInformation("Created candidate {Id} ('{Name}') by {ChangedBy}.",
+            created!.Id, created.FullName, dto.ChangedBy);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpGet("{id}/cv/{fileId}")]
@@ -58,6 +67,10 @@ public class CandidatesController(CandidateService candidateService) : Controlle
     public async Task<IActionResult> AddStatus(int id, [FromBody] StatusChangeDto dto)
     {
         var entry = await candidateService.AddStatusAsync(id, dto);
-        return entry is null ? NotFound() : Ok(entry);
+        if (entry is null) return NotFound();
+
+        logger.LogInformation("Candidate {Id} status changed to '{Status}' by {ChangedBy}.",
+            id, dto.Status, dto.ChangedBy);
+        return Ok(entry);
     }
 }

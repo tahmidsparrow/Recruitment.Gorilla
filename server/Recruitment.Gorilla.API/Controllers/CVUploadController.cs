@@ -6,7 +6,10 @@ namespace Recruitment.Gorilla.API.Controllers;
 
 [ApiController]
 [Route("api/cvupload")]
-public class CVUploadController(CVParserService parser, IWebHostEnvironment env) : ControllerBase
+public class CVUploadController(
+    CVParserService parser,
+    IWebHostEnvironment env,
+    ILogger<CVUploadController> logger) : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = [".pdf", ".docx"];
     private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
@@ -19,10 +22,16 @@ public class CVUploadController(CVParserService parser, IWebHostEnvironment env)
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(ext))
+        {
+            logger.LogWarning("Rejected upload '{FileName}': unsupported extension {Ext}.", file.FileName, ext);
             return BadRequest("Only PDF and Word (.docx) files are accepted.");
+        }
 
         if (file.Length > MaxFileSizeBytes)
+        {
+            logger.LogWarning("Rejected upload '{FileName}': size {Size} exceeds limit.", file.FileName, file.Length);
             return BadRequest("File exceeds the 10 MB size limit.");
+        }
 
         var fileType = ext == ".pdf" ? "PDF" : "Word";
         var storedName = $"{Guid.NewGuid()}{ext}";
@@ -34,6 +43,10 @@ public class CVUploadController(CVParserService parser, IWebHostEnvironment env)
             file.CopyTo(stream);
 
         var (name, email, phone, linkedin, skills, summary) = parser.Parse(fullPath, fileType);
+
+        logger.LogInformation(
+            "Parsed CV '{FileName}' ({FileType}, {Size} bytes) stored as {StoredName}.",
+            file.FileName, fileType, file.Length, storedName);
 
         return Ok(new CVDraftDto(
             name, email, phone, null, skills, summary, linkedin,
