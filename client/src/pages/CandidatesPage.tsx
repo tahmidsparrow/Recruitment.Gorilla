@@ -83,10 +83,10 @@ export default function CandidatesPage() {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Email</th>
-                <th>Title</th>
+                <th className="d-none d-lg-table-cell">Email</th>
+                <th className="d-none d-md-table-cell">Title</th>
                 <th>Status</th>
-                <th>Added</th>
+                <th className="d-none d-md-table-cell">Added</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
@@ -95,15 +95,19 @@ export default function CandidatesPage() {
                 <tr key={c.id}>
                   <td>
                     <Link to={`/candidates/${c.id}`}>{c.fullName}</Link>
+                    {/* Email is hidden as its own column on small screens — show it here instead */}
+                    <div className="text-muted small d-lg-none text-break">{c.email}</div>
                   </td>
-                  <td>{c.email}</td>
-                  <td>{c.currentTitle ?? '—'}</td>
+                  <td className="d-none d-lg-table-cell text-break">{c.email}</td>
+                  <td className="d-none d-md-table-cell">{c.currentTitle ?? '—'}</td>
                   <td>
                     <Badge bg="info" text="dark">
                       {c.currentStatus}
                     </Badge>
                   </td>
-                  <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td className="d-none d-md-table-cell text-nowrap">
+                    {new Date(c.createdAt).toLocaleDateString()}
+                  </td>
                   <td className="text-end">
                     <Button
                       size="sm"
@@ -118,7 +122,7 @@ export default function CandidatesPage() {
             </tbody>
           </Table>
 
-          <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
             <span className="text-muted small">{data.totalCount} candidate(s)</span>
             <div className="d-flex align-items-center gap-2">
               <Button

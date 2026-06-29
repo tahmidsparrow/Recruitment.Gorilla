@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Link } from 'react-router-dom';
 import { Container, Navbar, Nav } from 'react-bootstrap';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
@@ -7,9 +7,11 @@ import CandidateDetailPage from './pages/CandidateDetailPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4">
+      <Navbar expand="lg" sticky="top" className="app-navbar mb-4">
         <Container>
-          <Navbar.Brand href="/">Recruitment Gorilla</Navbar.Brand>
+          <Navbar.Brand as={Link} to="/">
+            <img src="/logo.png" alt="Requirement Gorilla" className="app-logo-img" />
+          </Navbar.Brand>
           <Navbar.Toggle />
           <Navbar.Collapse>
             <Nav className="me-auto">

@@ -1,8 +1,197 @@
+/* ============================================================
+   Microsoft Fluent-inspired theme
+   Communication blue (#0078D4) + Fluent neutrals + Segoe UI
+   ============================================================ */
+:root {
+  /* Brand */
+  --ms-primary: #0078d4;
+  --ms-primary-hover: #106ebe;
+  --ms-primary-pressed: #005a9e;
+  --ms-primary-tint: #deecf9;
+  --ms-primary-tint-2: #c7e0f4;
+
+  /* Neutrals */
+  --ms-bg: #faf9f8;
+  --ms-surface: #ffffff;
+  --ms-neutral-light: #f3f2f1;
+  --ms-neutral: #edebe9;
+  --ms-border: #e1dfdd;
+  --ms-text: #323130;
+  --ms-text-secondary: #605e5c;
+
+  /* Depth (Fluent elevation) */
+  --ms-shadow-4: 0 1.6px 3.6px rgba(0, 0, 0, 0.08), 0 0.3px 0.9px rgba(0, 0, 0, 0.06);
+  --ms-shadow-8: 0 3.2px 7.2px rgba(0, 0, 0, 0.1), 0 0.6px 1.8px rgba(0, 0, 0, 0.07);
+
+  /* Map onto Bootstrap's CSS variables */
+  --bs-primary: var(--ms-primary);
+  --bs-primary-rgb: 0, 120, 212;
+  --bs-primary-text-emphasis: var(--ms-primary-pressed);
+  --bs-primary-bg-subtle: var(--ms-primary-tint);
+  --bs-primary-border-subtle: var(--ms-primary-tint-2);
+  --bs-link-color: var(--ms-primary);
+  --bs-link-color-rgb: 0, 120, 212;
+  --bs-link-hover-color: var(--ms-primary-hover);
+  --bs-body-bg: var(--ms-bg);
+  --bs-body-color: var(--ms-text);
+  --bs-border-color: var(--ms-border);
+  --bs-body-font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", sans-serif;
+}
+
 body {
   margin: 0;
-  background-color: #f8f9fa;
+  background-color: var(--ms-bg);
+  color: var(--ms-text);
+  font-family: var(--bs-body-font-family);
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
   min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+  color: var(--ms-text);
+}
+
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ===== App bar ===== */
+.app-navbar {
+  background: var(--ms-surface);
+  border-bottom: 1px solid var(--ms-border);
+  box-shadow: var(--ms-shadow-4);
+  padding: 0.35rem 0;
+}
+.app-navbar .navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ms-text);
+}
+.app-navbar .navbar-brand:hover {
+  text-decoration: none;
+}
+
+/* Brand logo */
+.app-logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+
+.app-navbar .nav-link {
+  color: var(--ms-text-secondary);
+  font-weight: 600;
+  padding: 0.5rem 0.95rem;
+  position: relative;
+}
+.app-navbar .nav-link:hover {
+  color: var(--ms-text);
+}
+.app-navbar .nav-link.active {
+  color: var(--ms-primary);
+}
+.app-navbar .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0.95rem;
+  right: 0.95rem;
+  bottom: 0;
+  height: 2px;
+  background: var(--ms-primary);
+  border-radius: 2px;
+}
+
+/* ===== Buttons (Bootstrap 5.3 component vars) ===== */
+.btn {
+  border-radius: 4px;
+  font-weight: 600;
+}
+.btn-primary {
+  --bs-btn-bg: var(--ms-primary);
+  --bs-btn-border-color: var(--ms-primary);
+  --bs-btn-hover-bg: var(--ms-primary-hover);
+  --bs-btn-hover-border-color: var(--ms-primary-hover);
+  --bs-btn-active-bg: var(--ms-primary-pressed);
+  --bs-btn-active-border-color: var(--ms-primary-pressed);
+  --bs-btn-disabled-bg: var(--ms-primary);
+  --bs-btn-disabled-border-color: var(--ms-primary);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--ms-primary);
+  --bs-btn-border-color: var(--ms-primary);
+  --bs-btn-hover-bg: var(--ms-primary);
+  --bs-btn-hover-border-color: var(--ms-primary);
+  --bs-btn-active-bg: var(--ms-primary-pressed);
+  --bs-btn-active-border-color: var(--ms-primary-pressed);
+}
+
+/* ===== Cards ===== */
+.card {
+  border: 1px solid var(--ms-border);
+  border-radius: 8px;
+  box-shadow: var(--ms-shadow-4);
+}
+.card-header {
+  background: var(--ms-surface);
+  border-bottom: 1px solid var(--ms-neutral);
+  font-weight: 600;
+  color: var(--ms-text);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* ===== Tables ===== */
+.table {
+  --bs-table-hover-bg: var(--ms-neutral-light);
+}
+.table > thead th {
+  background: var(--ms-neutral-light);
+  color: var(--ms-text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--ms-border);
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+/* ===== Forms ===== */
+.form-control,
+.form-select {
+  border-radius: 4px;
+  border-color: var(--ms-border);
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--ms-primary);
+  box-shadow: 0 0 0 1px var(--ms-primary);
+}
+.form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ms-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+/* ===== Status badge (candidates list) ===== */
+.badge.bg-info {
+  background-color: var(--ms-primary-tint) !important;
+  color: var(--ms-primary-pressed) !important;
+  font-weight: 600;
+}
+
+/* ===== Modal ===== */
+.modal-content {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--ms-shadow-8);
 }
