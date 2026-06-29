@@ -7,6 +7,8 @@ Entities live in `server/Recruitment.Gorilla.API/Models/`; mapping/constraints a
 Candidate 1───* CVFile          (cascade delete)
 Candidate 1───* StatusHistory   (cascade delete)
 RefreshToken    (standalone; auth)
+StatusOption    (standalone lookup)
+StatusOption 1───* StatusTransition (from/to lookup)
 ```
 
 ### Candidate (`Candidates`)
@@ -45,8 +47,11 @@ One row per uploaded file. The physical file is on disk under `Uploads/` as `{GU
 |---|---|---|
 | Id | int PK | |
 | CandidateId | int FK → Candidate | cascade delete |
-| Status | varchar(100) | required; free-form string in Phase 1 |
+| Status | varchar(100) | required; selected from active workflow options when appended |
 | Comment | text | nullable |
+| TaskDetails | varchar(1000) | nullable; used for Technical Assessment |
+| SubmissionUrl | varchar(1000) | nullable; used for Submission Receieved |
+| InterviewAt | datetime | nullable; used for Interview Scheduled |
 | ChangedAt | datetime | |
 | ChangedBy | varchar(200) | required; admin name/email |
 
@@ -63,8 +68,32 @@ Server-side store for auth refresh tokens (rotation + revocation). Only the **SH
 | ReplacedByTokenHash | varchar(100)? | rotation audit trail |
 | IsActive | (computed) | `RevokedAt == null && now < ExpiresAt`; `[NotMapped]` via `Ignore` |
 
+### StatusOption (`StatusOptions`)
+Lookup table for candidate status dropdown values. Candidate and history rows still store the status text so historical labels remain readable even if configuration changes later.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| Name | varchar(100) | required; unique |
+| SortOrder | int | dropdown order |
+| IsInitial | bool | allowed as an initial upload/review status |
+| IsActive | bool | inactive options are hidden from dropdowns |
+| CreatedAt | datetime | UTC |
+
+### StatusTransition (`StatusTransitions`)
+Lookup table for allowed movement from one status option to another. The UI hides statuses that are not valid next steps, and the API enforces the same rule.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| FromStatusOptionId | int FK → StatusOption | required |
+| ToStatusOptionId | int FK → StatusOption | required |
+| SortOrder | int | next-status dropdown order |
+| IsActive | bool | inactive transitions are hidden/blocked |
+
 ## Key design rules
-- **Status is free-form text** in Phase 1 (a defined enum/lookup is a later phase). Keep it a string.
+- **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits.
 - **CurrentStatus is denormalized** — whenever you append a `StatusHistory`, update `Candidate.CurrentStatus` and `UpdatedAt` in the same save (see `CandidateService.AddStatusAsync`).
+- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment for Interview Completed/Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).

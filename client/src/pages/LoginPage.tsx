@@ -14,14 +14,14 @@ export default function LoginPage() {
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from ?? '/candidates';
 
-  if (isAuthenticated) {
-    return <Navigate to={from} replace />;
-  }
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  if (isAuthenticated) {
+    return <Navigate to={from} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

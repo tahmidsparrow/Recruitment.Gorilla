@@ -1,0 +1,8 @@
+[2m4:18:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31m[Unhandled error] [1mError[22m: There was an error during concurrent rendering but React was able to recover by instead synchronously rendering the entire root.
+[39m > throwException node_modules/react-dom/cjs/react-dom-client.development.js:9634:8
+ > throwAndUnwindWorkLoop node_modules/react-dom/cjs/react-dom-client.development.js:17717:10
+ > renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17447:18
+ > performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16504:10
+ > performWorkOnRootViaSchedulerTask node_modules/react-dom/cjs/react-dom-client.development.js:18957:6
+ > MessagePort.performWorkUntilDeadline node_modules/scheduler/cjs/scheduler.development.js:45:47
+

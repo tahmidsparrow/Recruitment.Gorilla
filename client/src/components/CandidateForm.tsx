@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createCandidate } from '../services/api';
+import { createCandidate, getInitialStatusOptions } from '../services/api';
 import type { CVDraft, DuplicateCandidate } from '../types';
 
 interface Props {
@@ -9,8 +10,6 @@ interface Props {
   onSaved: () => void;
   onCancel: () => void;
 }
-
-const DEFAULT_STATUS = 'Uploaded';
 
 export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [fullName, setFullName] = useState(draft.fullName ?? '');
@@ -20,11 +19,27 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [linkedInUrl, setLinkedInUrl] = useState(draft.linkedInUrl ?? '');
   const [skills, setSkills] = useState(draft.skills ?? '');
   const [summary, setSummary] = useState(draft.summary ?? '');
+  const [initialStatus, setInitialStatus] = useState('');
+  const [initialStatusComment, setInitialStatusComment] = useState('');
   const [changedBy, setChangedBy] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<DuplicateCandidate | null>(null);
+
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ['status-options', 'initial'],
+    queryFn: getInitialStatusOptions,
+  });
+
+  const initialStatusNeedsComment =
+    initialStatus === 'Reject' || initialStatus === 'Discontinued';
+
+  useEffect(() => {
+    if (!initialStatus && statusOptions.length > 0) {
+      setInitialStatus(statusOptions[0].name);
+    }
+  }, [initialStatus, statusOptions]);
 
   const save = async (allowDuplicate: boolean) => {
     setSaving(true);
@@ -42,7 +57,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         originalFileName: draft.originalFileName,
         fileType: draft.fileType,
         fileSizeBytes: draft.fileSizeBytes,
-        initialStatus: DEFAULT_STATUS,
+        initialStatus,
+        initialStatusComment: initialStatusComment.trim() || null,
         changedBy: changedBy.trim() || 'admin',
         allowDuplicate,
       });
@@ -61,8 +77,12 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !email.trim()) {
-      setError('Full name and email are required.');
+    if (!fullName.trim() || !email.trim() || !initialStatus) {
+      setError('Full name, email, and initial status are required.');
+      return;
+    }
+    if (initialStatusNeedsComment && !initialStatusComment.trim()) {
+      setError(`${initialStatus} requires a comment.`);
       return;
     }
     void save(false);
@@ -131,6 +151,34 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             onChange={(e) => setChangedBy(e.target.value)}
           />
         </Col>
+        <Col md={6}>
+          <Form.Label>Initial status</Form.Label>
+          <Form.Select
+            value={initialStatus}
+            onChange={(e) => setInitialStatus(e.target.value)}
+          >
+            <option value="" disabled>
+              Select status
+            </option>
+            {statusOptions.map((option) => (
+              <option key={option.id} value={option.name}>
+                {option.name}
+              </option>
+            ))}
+          </Form.Select>
+        </Col>
+        {initialStatusNeedsComment && (
+          <Col md={12}>
+            <Form.Label>Status comment *</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={2}
+              value={initialStatusComment}
+              onChange={(e) => setInitialStatusComment(e.target.value)}
+              required
+            />
+          </Col>
+        )}
       </Row>
 
       <div className="d-flex gap-2 mt-4">

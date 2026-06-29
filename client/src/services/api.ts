@@ -8,6 +8,7 @@ import type {
   LoginResult,
   PagedResult,
   CandidateListItem,
+  StatusOption,
   StatusChangePayload,
   StatusHistoryEntry,
   UpdateCandidatePayload,
@@ -138,6 +139,21 @@ export const getCandidates = async (
 
 export const getCandidate = async (id: number): Promise<CandidateDetail> => {
   const { data } = await api.get<CandidateDetail>(`/candidates/${id}`);
+  return data;
+};
+
+export const getStatusOptions = async (): Promise<StatusOption[]> => {
+  const { data } = await api.get<StatusOption[]>('/status-options');
+  return data;
+};
+
+export const getInitialStatusOptions = async (): Promise<StatusOption[]> => {
+  const { data } = await api.get<StatusOption[]>('/status-options/initial');
+  return data;
+};
+
+export const getNextStatusOptions = async (candidateId: number): Promise<StatusOption[]> => {
+  const { data } = await api.get<StatusOption[]>(`/status-options/next/${candidateId}`);
   return data;
 };
 

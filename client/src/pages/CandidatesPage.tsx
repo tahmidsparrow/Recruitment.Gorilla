@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Badge, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteCandidate, getCandidates } from '../services/api';
+import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
 import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
@@ -20,6 +20,11 @@ export default function CandidatesPage() {
     queryKey: ['candidates', { search, status, page }],
     queryFn: () => getCandidates({ search, status, page, pageSize: PAGE_SIZE }),
     placeholderData: keepPreviousData,
+  });
+
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ['status-options'],
+    queryFn: getStatusOptions,
   });
 
   const deleteMutation = useMutation({
@@ -60,15 +65,22 @@ export default function CandidatesPage() {
             </Button>
           </InputGroup>
         </Form>
-        <Form.Control
-          placeholder="Filter by status"
+        <Form.Select
+          aria-label="Filter by status"
           style={{ maxWidth: 220 }}
           value={status}
           onChange={(e) => {
             setPage(1);
             setStatus(e.target.value);
           }}
-        />
+        >
+          <option value="">All statuses</option>
+          {statusOptions.map((option) => (
+            <option key={option.id} value={option.name}>
+              {option.name}
+            </option>
+          ))}
+        </Form.Select>
       </div>
 
       {isLoading ? (

@@ -27,6 +27,7 @@ public record CreateCandidateDto(
     string FileType,
     long FileSizeBytes,
     string InitialStatus,
+    string? InitialStatusComment,
     string ChangedBy,
     bool AllowDuplicate = false
 );
@@ -55,6 +56,9 @@ public record UpdateCandidateDto(
 public record StatusChangeDto(
     string Status,
     string? Comment,
+    string? TaskDetails,
+    string? SubmissionUrl,
+    DateTime? InterviewAt,
     string ChangedBy
 );
 
@@ -96,8 +100,18 @@ public record StatusHistoryDto(
     int Id,
     string Status,
     string? Comment,
+    string? TaskDetails,
+    string? SubmissionUrl,
+    DateTime? InterviewAt,
     DateTime ChangedAt,
     string ChangedBy
+);
+
+public record StatusOptionDto(
+    int Id,
+    string Name,
+    int SortOrder,
+    bool IsInitial
 );
 
 public record PagedResult<T>(

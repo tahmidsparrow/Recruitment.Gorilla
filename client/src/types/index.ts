@@ -25,6 +25,7 @@ export interface CreateCandidatePayload {
   fileType: string;
   fileSizeBytes: number;
   initialStatus: string;
+  initialStatusComment: string | null;
   changedBy: string;
   allowDuplicate?: boolean;
 }
@@ -47,6 +48,9 @@ export interface UpdateCandidatePayload {
 export interface StatusChangePayload {
   status: string;
   comment: string | null;
+  taskDetails: string | null;
+  submissionUrl: string | null;
+  interviewAt: string | null;
   changedBy: string;
 }
 
@@ -72,8 +76,18 @@ export interface StatusHistoryEntry {
   id: number;
   status: string;
   comment: string | null;
+  taskDetails: string | null;
+  submissionUrl: string | null;
+  interviewAt: string | null;
   changedAt: string;
   changedBy: string;
+}
+
+export interface StatusOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isInitial: boolean;
 }
 
 export interface CandidateDetail {

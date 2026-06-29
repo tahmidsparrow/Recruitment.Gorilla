@@ -7,6 +7,7 @@ import {
   deleteCandidate,
   downloadCvFile,
   getCandidate,
+  getNextStatusOptions,
   updateCandidate,
 } from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
@@ -240,18 +241,49 @@ function AddStatus({
 }) {
   const [status, setStatus] = useState('');
   const [comment, setComment] = useState('');
+  const [taskDetails, setTaskDetails] = useState('');
+  const [submissionUrl, setSubmissionUrl] = useState('');
+  const [interviewAt, setInterviewAt] = useState('');
   const [changedBy, setChangedBy] = useState('');
+  const queryClient = useQueryClient();
+
+  const { data: statusOptions = [] } = useQuery({
+    queryKey: ['status-options', 'next', candidateId],
+    queryFn: () => getNextStatusOptions(candidateId),
+  });
+
+  const requiresComment =
+    status === 'Technical Assessment' ||
+    status === 'Interview Completed' ||
+    status === 'Reject' ||
+    status === 'Discontinued';
+  const requiresTaskDetails = status === 'Technical Assessment';
+  const requiresSubmissionUrl = status === 'Submission Receieved';
+  const requiresInterviewAt = status === 'Interview Scheduled';
+  const canSubmit =
+    !!status &&
+    (!requiresComment || !!comment.trim()) &&
+    (!requiresTaskDetails || !!taskDetails.trim()) &&
+    (!requiresSubmissionUrl || !!submissionUrl.trim()) &&
+    (!requiresInterviewAt || !!interviewAt);
 
   const mutation = useMutation({
     mutationFn: () =>
       addStatus(candidateId, {
         status: status.trim(),
         comment: comment.trim() || null,
+        taskDetails: taskDetails.trim() || null,
+        submissionUrl: submissionUrl.trim() || null,
+        interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
         changedBy: changedBy.trim() || 'admin',
       }),
     onSuccess: () => {
       setStatus('');
       setComment('');
+      setTaskDetails('');
+      setSubmissionUrl('');
+      setInterviewAt('');
+      void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
       onAdded();
     },
   });
@@ -260,17 +292,29 @@ function AddStatus({
     <Form
       onSubmit={(e) => {
         e.preventDefault();
-        if (status.trim()) mutation.mutate();
+        if (canSubmit) mutation.mutate();
       }}
     >
       {mutation.isError && <Alert variant="danger">Failed to add status.</Alert>}
+      {statusOptions.length === 0 && (
+        <Alert variant="info">
+          No next status is available from the candidate&apos;s current status.
+        </Alert>
+      )}
       <Row className="g-2">
         <Col md={7}>
-          <Form.Control
-            placeholder="New status"
+          <Form.Select
+            aria-label="New status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-          />
+          >
+            <option value="">Select status</option>
+            {statusOptions.map((option) => (
+              <option key={option.id} value={option.name}>
+                {option.name}
+              </option>
+            ))}
+          </Form.Select>
         </Col>
         <Col md={5}>
           <Form.Control
@@ -279,17 +323,52 @@ function AddStatus({
             onChange={(e) => setChangedBy(e.target.value)}
           />
         </Col>
+        {requiresTaskDetails && (
+          <Col md={12}>
+            <Form.Control
+              as="textarea"
+              rows={2}
+              placeholder="Assigned task details *"
+              value={taskDetails}
+              onChange={(e) => setTaskDetails(e.target.value)}
+              required
+            />
+          </Col>
+        )}
+        {requiresSubmissionUrl && (
+          <Col md={12}>
+            <Form.Control
+              type="url"
+              placeholder="Submission link *"
+              value={submissionUrl}
+              onChange={(e) => setSubmissionUrl(e.target.value)}
+              required
+            />
+          </Col>
+        )}
+        {requiresInterviewAt && (
+          <Col md={12}>
+            <Form.Label className="mb-1">Interview date/time *</Form.Label>
+            <Form.Control
+              type="datetime-local"
+              value={interviewAt}
+              onChange={(e) => setInterviewAt(e.target.value)}
+              required
+            />
+          </Col>
+        )}
         <Col md={12}>
           <Form.Control
             as="textarea"
             rows={2}
-            placeholder="Comment (optional)"
+            placeholder={requiresComment ? 'Comment *' : 'Comment (optional)'}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            required={requiresComment}
           />
         </Col>
       </Row>
-      <Button type="submit" size="sm" className="mt-2" disabled={!status.trim() || mutation.isPending}>
+      <Button type="submit" size="sm" className="mt-2" disabled={!canSubmit || mutation.isPending}>
         {mutation.isPending ? 'Adding…' : 'Add status'}
       </Button>
     </Form>

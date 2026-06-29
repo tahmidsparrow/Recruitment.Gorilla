@@ -14,3 +14,4 @@ A spec captures the intent, data/API contract, and acceptance criteria so any ag
 | Spec | Status | Notes |
 |---|---|---|
 | [example-candidate-notes.md](example-candidate-notes.md) | Example | Worked example demonstrating the template + full-stack flow. Not necessarily implemented. |
+| [database-backed-status-options.md](database-backed-status-options.md) | Implemented | Status dropdown values now come from the database. |

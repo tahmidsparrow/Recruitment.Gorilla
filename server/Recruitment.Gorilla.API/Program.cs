@@ -34,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<CandidateService>();
 builder.Services.AddScoped<CVParserService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<StatusOptionService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it via user secrets.");

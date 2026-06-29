@@ -7,6 +7,16 @@ namespace Recruitment.Gorilla.API.Services;
 
 public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 {
+    private const string Uploaded = "Uploaded";
+    private const string TechnicalAssessment = "Technical Assessment";
+    private const string SubmissionReceieved = "Submission Receieved";
+    private const string CodeReview = "Code Review";
+    private const string InterviewScheduled = "Interview Scheduled";
+    private const string InterviewCompleted = "Interview Completed";
+    private const string Recommended = "Recommended";
+    private const string Reject = "Reject";
+    private const string Discontinued = "Discontinued";
+
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
         string? search, string? status, int page, int pageSize)
     {
@@ -58,6 +68,74 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .FirstOrDefaultAsync();
     }
 
+    public async Task<bool> IsActiveStatusAsync(string status) =>
+        await db.StatusOptions.AnyAsync(s => s.IsActive && s.Name == status);
+
+    public async Task<string?> ValidateInitialStatusAsync(CreateCandidateDto dto)
+    {
+        var isAllowedInitial = await db.StatusOptions
+            .AnyAsync(s => s.IsActive && s.IsInitial && s.Name == dto.InitialStatus);
+        if (!isAllowedInitial)
+            return "Initial status must be an active configured initial status option.";
+
+        if (RequiresComment(dto.InitialStatus) && string.IsNullOrWhiteSpace(dto.InitialStatusComment))
+            return $"{dto.InitialStatus} requires a comment.";
+
+        return null;
+    }
+
+    public async Task<string?> ValidateStatusChangeAsync(int candidateId, StatusChangeDto dto)
+    {
+        var candidate = await db.Candidates
+            .Include(c => c.StatusHistories)
+            .FirstOrDefaultAsync(c => c.Id == candidateId);
+
+        if (candidate is null) return null;
+
+        var transitionAllowed = await db.StatusTransitions.AnyAsync(t =>
+            t.IsActive &&
+            t.FromStatusOption.IsActive &&
+            t.ToStatusOption.IsActive &&
+            t.FromStatusOption.Name == candidate.CurrentStatus &&
+            t.ToStatusOption.Name == dto.Status);
+
+        if (!transitionAllowed)
+            return $"Status cannot move from '{candidate.CurrentStatus}' to '{dto.Status}'.";
+
+        if (RequiresComment(dto.Status) && string.IsNullOrWhiteSpace(dto.Comment))
+            return $"{dto.Status} requires a comment.";
+
+        if (dto.Status == TechnicalAssessment)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Comment))
+                return "Technical Assessment requires a comment.";
+            if (string.IsNullOrWhiteSpace(dto.TaskDetails))
+                return "Technical Assessment requires assigned task details.";
+        }
+
+        if (dto.Status == SubmissionReceieved && string.IsNullOrWhiteSpace(dto.SubmissionUrl))
+            return "Submission Receieved requires a submission link.";
+
+        if (dto.Status == CodeReview && !HasStatus(candidate, SubmissionReceieved))
+            return "Code Review requires Submission Receieved to exist in the candidate history.";
+
+        if (dto.Status == InterviewScheduled && dto.InterviewAt is null)
+            return "Interview Scheduled requires interview date/time.";
+
+        if (dto.Status == InterviewCompleted)
+        {
+            if (!HasStatus(candidate, InterviewScheduled))
+                return "Interview Completed requires Interview Scheduled to exist in the candidate history.";
+            if (string.IsNullOrWhiteSpace(dto.Comment))
+                return "Interview Completed requires a comment.";
+        }
+
+        if (dto.Status == Recommended && !HasAnyStatus(candidate, [CodeReview, InterviewCompleted]))
+            return "Recommended requires Code Review or Interview Completed to exist in the candidate history.";
+
+        return null;
+    }
+
     /// <summary>
     /// Creates a candidate. If an existing candidate shares the same email and the
     /// caller has not set AllowDuplicate, the existing record is returned in
@@ -95,6 +173,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.StatusHistories.Add(new StatusHistory
         {
             Status = dto.InitialStatus,
+            Comment = dto.InitialStatusComment,
             ChangedBy = dto.ChangedBy,
         });
 
@@ -183,6 +262,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             CandidateId = id,
             Status = dto.Status,
             Comment = dto.Comment,
+            TaskDetails = dto.TaskDetails,
+            SubmissionUrl = dto.SubmissionUrl,
+            InterviewAt = dto.InterviewAt,
             ChangedBy = dto.ChangedBy,
         };
 
@@ -191,7 +273,15 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        return new StatusHistoryDto(entry.Id, entry.Status, entry.Comment, entry.ChangedAt, entry.ChangedBy);
+        return new StatusHistoryDto(
+            entry.Id,
+            entry.Status,
+            entry.Comment,
+            entry.TaskDetails,
+            entry.SubmissionUrl,
+            entry.InterviewAt,
+            entry.ChangedAt,
+            entry.ChangedBy);
     }
 
     private static CandidateDetailDto MapToDetail(Candidate c) => new(
@@ -199,6 +289,24 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         c.Skills, c.Summary, c.LinkedInUrl, c.CurrentStatus,
         c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
-        c.StatusHistories.Select(s => new StatusHistoryDto(s.Id, s.Status, s.Comment, s.ChangedAt, s.ChangedBy)).ToList()
+        c.StatusHistories.Select(s => new StatusHistoryDto(
+            s.Id,
+            s.Status,
+            s.Comment,
+            s.TaskDetails,
+            s.SubmissionUrl,
+            s.InterviewAt,
+            s.ChangedAt,
+            s.ChangedBy)).ToList()
     );
+
+    private static bool RequiresComment(string status) =>
+        status is Reject or Discontinued;
+
+    private static bool HasStatus(Candidate candidate, string status) =>
+        candidate.CurrentStatus == status || candidate.StatusHistories.Any(h => h.Status == status);
+
+    private static bool HasAnyStatus(Candidate candidate, string[] statuses) =>
+        statuses.Contains(candidate.CurrentStatus) ||
+        candidate.StatusHistories.Any(h => statuses.Contains(h.Status));
 }

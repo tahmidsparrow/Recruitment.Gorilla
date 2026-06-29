@@ -44,6 +44,24 @@ export default function StatusTimeline({ history }: Props) {
                 {formatDate(entry.changedAt)} · {entry.changedBy}
               </div>
               {entry.comment && <div className="mt-1">{entry.comment}</div>}
+              {entry.taskDetails && (
+                <div className="mt-1 small">
+                  <span className="fw-semibold">Task:</span> {entry.taskDetails}
+                </div>
+              )}
+              {entry.submissionUrl && (
+                <div className="mt-1 small">
+                  <span className="fw-semibold">Submission:</span>{' '}
+                  <a href={entry.submissionUrl} target="_blank" rel="noreferrer">
+                    {entry.submissionUrl}
+                  </a>
+                </div>
+              )}
+              {entry.interviewAt && (
+                <div className="mt-1 small">
+                  <span className="fw-semibold">Interview:</span> {formatDate(entry.interviewAt)}
+                </div>
+              )}
             </div>
           </li>
         );

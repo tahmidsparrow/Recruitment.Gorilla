@@ -33,6 +33,10 @@ public class CandidatesController(
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
+        var validationError = await candidateService.ValidateInitialStatusAsync(dto);
+        if (validationError is not null)
+            return BadRequest(validationError);
+
         var (created, duplicate) = await candidateService.CreateAsync(dto);
 
         if (duplicate is not null)
@@ -78,6 +82,10 @@ public class CandidatesController(
     [HttpPost("{id}/status")]
     public async Task<IActionResult> AddStatus(int id, [FromBody] StatusChangeDto dto)
     {
+        var validationError = await candidateService.ValidateStatusChangeAsync(id, dto);
+        if (validationError is not null)
+            return BadRequest(validationError);
+
         var entry = await candidateService.AddStatusAsync(id, dto);
         if (entry is null) return NotFound();
 

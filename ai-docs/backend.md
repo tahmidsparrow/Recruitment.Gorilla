@@ -5,8 +5,8 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 ## Structure
 | Folder | Purpose |
 |---|---|
-| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`. |
-| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`. |
+| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`. |
+| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`. |
 | `Models/` | EF entities. |
 | `Data/AppDbContext.cs` | DbSets + Fluent config. |
 | `DTOs/` | Request/response `record`s. |
@@ -19,7 +19,7 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 1. log4net logging provider (`AddLog4Net("log4net.config")`); log dir anchored via `RG_LOG_DIR` env var to `Logs/`.
 2. Controllers, Swagger.
 3. `AddDbContext<AppDbContext>` using MySQL connection string (fails fast if missing).
-4. Service registrations: `CandidateService`, `CVParserService`, `AuthService` (all scoped).
+4. Service registrations: `CandidateService`, `CVParserService`, `AuthService`, `StatusOptionService` (all scoped).
 5. JWT auth (hardened — see [auth.md](auth.md)) + default-deny fallback authorization policy.
 6. CORS from `AllowedOrigins`.
 7. Pipeline: Swagger (Dev) → `UseCors` → **`UseAuthentication` → `UseAuthorization`** → `MapControllers`.
@@ -50,6 +50,14 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 ## File storage
 Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original name kept in `CVFile.OriginalFileName`. Download streams via `CandidatesController.GetCvFile` (`PhysicalFile(...)`) and requires auth. Deleting a candidate removes its files from disk.
 
+## Status options
+- Status labels are stored in the `StatusOptions` lookup table and served from `GET /api/status-options`.
+- Initial upload statuses come from `GET /api/status-options/initial`.
+- Valid next statuses for a candidate come from `GET /api/status-options/next/{candidateId}` and are backed by `StatusTransitions`.
+- `CandidatesController` validates initial statuses, transitions, and prerequisites before saving.
+- Prerequisite details are stored on `StatusHistory`: task details, submission URL, interview date/time, and comments.
+- Future admin configuration can edit/add options and transitions against the same tables without changing candidate history storage.
+
 ## Logging
 log4net (`log4net.config`): console + daily rolling file under `Logs/`. App categories log at INFO; framework noise at WARN. Log audit events on writes.
 
@@ -67,5 +75,8 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | POST | `/api/candidates/{id}/status` | required | Append status change |
 | GET | `/api/candidates/{id}/cv/{fileId}` | required | Stream original CV file |
 | DELETE | `/api/candidates/{id}` | required | Delete candidate + files |
+| GET | `/api/status-options` | required | Active status dropdown options |
+| GET | `/api/status-options/initial` | required | Initial status dropdown options |
+| GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
 
 Swagger UI is at `http://localhost:5000/swagger` in Development.

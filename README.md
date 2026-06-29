@@ -182,6 +182,9 @@ See [ai-docs/data-model.md](ai-docs/data-model.md) for full detail. Tables: **Ca
 | `POST` | `/api/candidates/{id}/status` | ✓ | Add a status change with comment |
 | `GET` | `/api/candidates/{id}/cv/{fileId}` | ✓ | Stream/download the original CV file |
 | `DELETE` | `/api/candidates/{id}` | ✓ | Delete candidate + CV files + history |
+| `GET` | `/api/status-options` | ✓ | Active status dropdown options |
+| `GET` | `/api/status-options/initial` | ✓ | Initial status dropdown options |
+| `GET` | `/api/status-options/next/{candidateId}` | ✓ | Allowed next statuses for a candidate |
 
 All `✓` endpoints require a bearer access token. Auth design (rotation, hashing, hardening): [ai-docs/auth.md](ai-docs/auth.md).
 
@@ -209,7 +212,7 @@ Extraction is best-effort and **always editable** before saving. Robust LLM-base
 - **Secrets** (connection string, `Jwt:Key`, `Auth:PasswordHash`) are supplied per-machine via .NET user secrets, never committed.
 - The backend binds to **localhost only**; the frontend (Vite) is the only thing exposed on the LAN and proxies `/api` to it.
 - Uploaded files are stored as `{GUID}{.pdf|.docx}`; the original filename is preserved in the database.
-- Status values are free-form strings in Phase 1; a defined status lookup table is planned for a later phase.
+- Status dropdown values come from the seeded `StatusOptions` lookup table, with allowed transitions in `StatusTransitions`; admin-editable configuration is planned for a later phase.
 - Logging uses **log4net** (`log4net.config`) → console + daily rolling file under `Logs/`.
 - The `Uploads/` and `Logs/` directories are excluded from git.
 - Stop the running API before `dotnet build` / migrations (the running process locks the executable).
@@ -218,5 +221,5 @@ Extraction is best-effort and **always editable** before saving. Robust LLM-base
 
 ## Roadmap
 
-- **Phase 2** — LLM-based CV extraction, defined status workflow, role-based access (admin vs. recruiter), email notifications
+- **Phase 2** — LLM-based CV extraction, admin-editable workflow configuration, role-based access (admin vs. recruiter), email notifications
 - **Phase 3** — Interview scheduling, offer management, reporting dashboard
