@@ -11,10 +11,12 @@ import type {
   UpdateCandidatePayload,
 } from '../types';
 
-const baseURL = 'http://localhost:5000/api';
+// Same-origin path. In dev the Vite server proxies /api to the backend on the
+// host machine, so the backend itself is never exposed to the network.
+const baseURL = '/api';
 const api = axios.create({ baseURL });
 
-/** Direct URL to stream/download a candidate's stored CV file. */
+/** Same-origin URL to stream/download a candidate's stored CV file. */
 export const cvFileUrl = (candidateId: number, fileId: number): string =>
   `${baseURL}/candidates/${candidateId}/cv/${fileId}`;
 
