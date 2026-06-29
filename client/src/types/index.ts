@@ -88,7 +88,7 @@ export interface CandidateDetail {
   currentStatus: string;
   createdAt: string;
   updatedAt: string;
-  cVFiles: CVFileInfo[];
+  cvFiles: CVFileInfo[];
   statusHistory: StatusHistoryEntry[];
 }
 

@@ -52,11 +52,11 @@ export default function CandidateDetailPage() {
           <Card>
             <Card.Header>CV files</Card.Header>
             <Card.Body>
-              {data.cVFiles.length === 0 ? (
+              {data.cvFiles.length === 0 ? (
                 <p className="text-muted mb-0">No files.</p>
               ) : (
                 <ul className="list-unstyled mb-0">
-                  {data.cVFiles.map((f) => (
+                  {data.cvFiles.map((f) => (
                     <li key={f.id} className="d-flex justify-content-between py-1">
                       <a href={cvFileUrl(candidateId, f.id)} target="_blank" rel="noreferrer">
                         {f.originalFileName}
