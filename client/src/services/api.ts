@@ -66,3 +66,7 @@ export const addStatus = async (id: number, payload: StatusChangePayload): Promi
   const { data } = await api.post<StatusHistoryEntry>(`/candidates/${id}/status`, payload);
   return data;
 };
+
+export const deleteCandidate = async (id: number): Promise<void> => {
+  await api.delete(`/candidates/${id}`);
+};

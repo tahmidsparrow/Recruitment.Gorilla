@@ -56,6 +56,16 @@ public class CandidatesController(
             : PhysicalFile(file.PhysicalPath, file.ContentType, file.OriginalFileName);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var deleted = await candidateService.DeleteAsync(id);
+        if (!deleted) return NotFound();
+
+        logger.LogInformation("Deleted candidate {Id} and its CV files.", id);
+        return NoContent();
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateDto dto)
     {

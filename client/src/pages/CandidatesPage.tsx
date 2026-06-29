@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, Button, Form, InputGroup, Spinner, Table } from 'react-bootstrap';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { getCandidates } from '../services/api';
+import { Alert, Badge, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteCandidate, getCandidates } from '../services/api';
+import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
 
@@ -11,11 +12,22 @@ export default function CandidatesPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [toDelete, setToDelete] = useState<CandidateListItem | null>(null);
+
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidates', { search, status, page }],
     queryFn: () => getCandidates({ search, status, page, pageSize: PAGE_SIZE }),
     placeholderData: keepPreviousData,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteCandidate(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      setToDelete(null);
+    },
   });
 
   const applySearch = (e: React.FormEvent) => {
@@ -75,6 +87,7 @@ export default function CandidatesPage() {
                 <th>Title</th>
                 <th>Status</th>
                 <th>Added</th>
+                <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -91,6 +104,15 @@ export default function CandidatesPage() {
                     </Badge>
                   </td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td className="text-end">
+                    <Button
+                      size="sm"
+                      variant="outline-danger"
+                      onClick={() => setToDelete(c)}
+                    >
+                      Delete
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -122,6 +144,33 @@ export default function CandidatesPage() {
           </div>
         </>
       )}
+
+      <Modal show={toDelete !== null} onHide={() => setToDelete(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete candidate</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s)
+          and full status history? This cannot be undone.
+          {deleteMutation.isError && (
+            <Alert variant="danger" className="mt-3 mb-0">
+              Delete failed. Please try again.
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setToDelete(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            disabled={deleteMutation.isPending}
+            onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}
+          >
+            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

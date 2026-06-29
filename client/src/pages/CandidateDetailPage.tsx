@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addStatus,
   cvFileUrl,
+  deleteCandidate,
   getCandidate,
   updateCandidate,
 } from '../services/api';
@@ -17,11 +18,21 @@ export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
   const candidateId = Number(id);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidate', candidateId],
     queryFn: () => getCandidate(candidateId),
     enabled: Number.isFinite(candidateId),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCandidate(candidateId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      navigate('/candidates');
+    },
   });
 
   if (isLoading) return <Spinner animation="border" />;
@@ -32,7 +43,39 @@ export default function CandidateDetailPage() {
       <Link to="/candidates" className="small">
         ← Back to candidates
       </Link>
-      <h2 className="my-3">{data.fullName}</h2>
+      <div className="d-flex justify-content-between align-items-center my-3">
+        <h2 className="mb-0">{data.fullName}</h2>
+        <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+          Delete candidate
+        </Button>
+      </div>
+
+      <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete candidate</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Permanently delete <strong>{data.fullName}</strong>, along with their CV file(s) and
+          full status history? This cannot be undone.
+          {deleteMutation.isError && (
+            <Alert variant="danger" className="mt-3 mb-0">
+              Delete failed. Please try again.
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate()}
+          >
+            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <Row className="g-4">
         <Col lg={7}>

@@ -121,6 +121,36 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return new CvFileResult(path, file.OriginalFileName, contentType);
     }
 
+    /// <summary>
+    /// Deletes a candidate and its related rows (CVFiles and StatusHistories cascade),
+    /// and removes the stored CV files from disk. Returns false if not found.
+    /// </summary>
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var candidate = await db.Candidates
+            .Include(c => c.CVFiles)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (candidate is null) return false;
+
+        foreach (var file in candidate.CVFiles)
+        {
+            var path = Path.Combine(env.ContentRootPath, "Uploads", file.StoredFileName);
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch
+            {
+                // Best-effort file cleanup; proceed with the DB delete regardless.
+            }
+        }
+
+        db.Candidates.Remove(candidate);
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto)
     {
         var candidate = await db.Candidates
