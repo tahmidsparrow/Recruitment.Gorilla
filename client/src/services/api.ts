@@ -1,9 +1,11 @@
-import axios, { isAxiosError } from 'axios';
+import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
   CVDraft,
   CandidateDetail,
   CreateCandidatePayload,
   DuplicateCandidate,
+  LoginPayload,
+  LoginResult,
   PagedResult,
   CandidateListItem,
   StatusChangePayload,
@@ -14,11 +16,107 @@ import type {
 // Same-origin path. In dev the Vite server proxies /api to the backend on the
 // host machine, so the backend itself is never exposed to the network.
 const baseURL = '/api';
-const api = axios.create({ baseURL });
+// withCredentials so the httpOnly refresh-token cookie rides along on /auth/* calls.
+const api = axios.create({ baseURL, withCredentials: true });
 
-/** Same-origin URL to stream/download a candidate's stored CV file. */
-export const cvFileUrl = (candidateId: number, fileId: number): string =>
-  `${baseURL}/candidates/${candidateId}/cv/${fileId}`;
+// The short-lived access token lives only in memory (not localStorage) to reduce
+// XSS exposure. Session persistence across reloads comes from the httpOnly refresh
+// cookie via refreshSession().
+let accessToken: string | null = null;
+export const getAccessToken = () => accessToken;
+
+interface RetriableConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// Attach the in-memory access token to every request.
+api.interceptors.request.use((cfg) => {
+  if (accessToken) cfg.headers.Authorization = `Bearer ${accessToken}`;
+  return cfg;
+});
+
+const isAuthUrl = (url?: string) =>
+  !!url && (url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout'));
+
+// Single-flight refresh so concurrent 401s trigger only one /refresh call.
+let refreshPromise: Promise<LoginResult | null> | null = null;
+
+export const refreshSession = async (): Promise<LoginResult | null> => {
+  try {
+    const { data } = await axios.post<LoginResult>(`${baseURL}/auth/refresh`, null, {
+      withCredentials: true,
+    });
+    accessToken = data.token;
+    return data;
+  } catch {
+    accessToken = null;
+    return null;
+  }
+};
+
+// On 401, try a single silent refresh and replay the request; otherwise go to login.
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const original = err.config as RetriableConfig | undefined;
+    const status = isAxiosError(err) ? err.response?.status : undefined;
+
+    if (status === 401 && original && !original._retry && !isAuthUrl(original.url)) {
+      original._retry = true;
+      refreshPromise = refreshPromise ?? refreshSession();
+      const result = await refreshPromise;
+      refreshPromise = null;
+
+      if (result) {
+        original.headers.Authorization = `Bearer ${result.token}`;
+        return api(original);
+      }
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login');
+      }
+    }
+    return Promise.reject(err);
+  }
+);
+
+export const login = async (payload: LoginPayload): Promise<LoginResult> => {
+  const { data } = await api.post<LoginResult>('/auth/login', payload);
+  accessToken = data.token;
+  return data;
+};
+
+export const logout = async (): Promise<void> => {
+  try {
+    await api.post('/auth/logout');
+  } catch {
+    // ignore network errors on logout
+  }
+  accessToken = null;
+};
+
+/**
+ * Downloads a candidate's stored CV file with the auth token attached, then
+ * triggers a browser save/open. (A plain <a href> can't send the bearer token.)
+ */
+export const downloadCvFile = async (candidateId: number, fileId: number): Promise<void> => {
+  const res = await api.get(`/candidates/${candidateId}/cv/${fileId}`, { responseType: 'blob' });
+
+  let filename = 'cv';
+  const cd = res.headers['content-disposition'] as string | undefined;
+  if (cd) {
+    const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+    if (m) filename = decodeURIComponent(m[1]);
+  }
+
+  const url = URL.createObjectURL(res.data as Blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
 
 export type CreateCandidateResult =
   | { kind: 'created'; candidate: CandidateDetail }

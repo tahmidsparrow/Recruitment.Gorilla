@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<CVFile> CVFiles => Set<CVFile>();
     public DbSet<StatusHistory> StatusHistories => Set<StatusHistory>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +44,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany(c => c.StatusHistories)
              .HasForeignKey(s => s.CandidateId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.TokenHash).HasMaxLength(100).IsRequired();
+            e.Property(t => t.Username).HasMaxLength(200).IsRequired();
+            e.Property(t => t.ReplacedByTokenHash).HasMaxLength(100);
+            e.Ignore(t => t.IsActive);
+            e.HasIndex(t => t.TokenHash).IsUnique();
         });
     }
 }

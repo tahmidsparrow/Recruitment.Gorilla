@@ -195,3 +195,50 @@ a:hover {
   border-radius: 8px;
   box-shadow: var(--ms-shadow-8);
 }
+
+/* ===== Login ===== */
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(1200px 600px at 100% 0%, var(--ms-primary-tint) 0%, transparent 55%),
+    radial-gradient(1000px 500px at 0% 100%, #eef6fc 0%, transparent 55%),
+    var(--ms-bg);
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: 10px;
+  box-shadow: var(--ms-shadow-8);
+  padding: 2.25rem 2rem;
+}
+.login-logo {
+  display: block;
+  height: 46px;
+  width: auto;
+  margin: 0 auto 1.5rem;
+}
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  text-align: center;
+}
+.login-subtitle {
+  color: var(--ms-text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== App bar: signed-in user + logout ===== */
+.navbar-user {
+  color: var(--ms-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}

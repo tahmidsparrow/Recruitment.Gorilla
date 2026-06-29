@@ -4,8 +4,8 @@ import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-boots
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addStatus,
-  cvFileUrl,
   deleteCandidate,
+  downloadCvFile,
   getCandidate,
   updateCandidate,
 } from '../services/api';
@@ -101,9 +101,13 @@ export default function CandidateDetailPage() {
                 <ul className="list-unstyled mb-0">
                   {data.cvFiles.map((f) => (
                     <li key={f.id} className="d-flex justify-content-between py-1">
-                      <a href={cvFileUrl(candidateId, f.id)} target="_blank" rel="noreferrer">
+                      <Button
+                        variant="link"
+                        className="p-0 text-start"
+                        onClick={() => downloadCvFile(candidateId, f.id)}
+                      >
                         {f.originalFileName}
-                      </a>
+                      </Button>
                       <span className="text-muted small">
                         {f.fileType} · {formatSize(f.fileSizeBytes)}
                       </span>

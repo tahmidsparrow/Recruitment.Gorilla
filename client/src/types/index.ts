@@ -98,3 +98,14 @@ export interface PagedResult<T> {
   page: number;
   pageSize: number;
 }
+
+export interface LoginPayload {
+  username: string;
+  password: string;
+}
+
+export interface LoginResult {
+  token: string;
+  username: string;
+  expiresAt: string;
+}

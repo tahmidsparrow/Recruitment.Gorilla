@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.API.Services;
@@ -5,6 +6,7 @@ using Recruitment.Gorilla.API.Services;
 namespace Recruitment.Gorilla.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/cvupload")]
 public class CVUploadController(
     CVParserService parser,
