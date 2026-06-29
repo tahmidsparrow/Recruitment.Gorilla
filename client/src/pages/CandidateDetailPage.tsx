@@ -130,7 +130,7 @@ export default function CandidateDetailPage() {
   );
 }
 
-type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'referenceName' | 'referenceEmail', string>>;
+type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 'referenceName' | 'referenceEmail', string>>;
 
 function ProfileEditor({
   candidate,
@@ -196,6 +196,7 @@ function ProfileEditor({
     const errs: ProfileFieldErrors = {};
     if (!form.fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'A valid email address is required.';
+    if (!form.roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
     if (form.isReferred && !form.referenceName?.trim())
       errs.referenceName = 'Reference name is required.';
     if (form.isReferred && !EMAIL_REGEX.test((form.referenceEmail ?? '').trim()))
@@ -262,13 +263,17 @@ function ProfileEditor({
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Role applied for</Form.Label>
+          <Form.Label>Role applied for <Req /></Form.Label>
           <SearchableSelect
             options={roleOptions}
             value={form.roleAppliedOptionId}
-            onChange={(roleAppliedOptionId) => setForm((f) => ({ ...f, roleAppliedOptionId }))}
+            onChange={(roleAppliedOptionId) => { setForm((f) => ({ ...f, roleAppliedOptionId })); clearFE('roleApplied'); }}
             placeholder="Search roles…"
+            isInvalid={!!fieldErrors.roleApplied}
           />
+          {fieldErrors.roleApplied && (
+            <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
+          )}
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>

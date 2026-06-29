@@ -16,12 +16,14 @@ export function SearchableSelect({
   onChange,
   placeholder,
   id,
+  isInvalid,
 }: {
   options: Option[];
   value: number | null;
   onChange: (id: number | null) => void;
   placeholder?: string;
   id?: string;
+  isInvalid?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -41,6 +43,7 @@ export function SearchableSelect({
         }}
         onChange={(e) => setQuery(e.target.value)}
         onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        isInvalid={isInvalid}
       />
       {selected && !open && (
         <button

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
-type FieldKey = 'fullName' | 'email' | 'initialStatus' | 'statusComment' | 'referenceName' | 'referenceEmail';
+type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'initialStatus' | 'statusComment' | 'referenceName' | 'referenceEmail';
 type FieldErrors = Partial<Record<FieldKey, string>>;
 
 function Req() {
@@ -123,6 +123,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     const errs: FieldErrors = {};
     if (!fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(email.trim())) errs.email = 'A valid email address is required.';
+    if (!roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
     if (!initialStatus) errs.initialStatus = 'Initial status is required.';
     if (initialStatusNeedsComment && !initialStatusComment.trim())
       errs.statusComment = `A comment is required for ${initialStatus}.`;
@@ -204,13 +205,17 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           <Form.Control value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Role applied for</Form.Label>
+          <Form.Label>Role applied for <Req /></Form.Label>
           <SearchableSelect
             options={roleOptions}
             value={roleAppliedOptionId}
-            onChange={setRoleAppliedOptionId}
+            onChange={(v) => { setRoleAppliedOptionId(v); clearFE('roleApplied'); }}
             placeholder="Search roles…"
+            isInvalid={!!fieldErrors.roleApplied}
           />
+          {fieldErrors.roleApplied && (
+            <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
+          )}
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
