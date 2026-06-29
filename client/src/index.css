@@ -39,6 +39,35 @@
     BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", sans-serif;
 }
 
+/* ===== Dark theme tokens =====
+   The :root --bs-* mappings reference --ms-*, so flipping the --ms-* neutrals
+   here cascades to every component (navbar, cards, tables, forms, modals,
+   login, searchable menus, badges). Activated by data-bs-theme="dark" on <html>. */
+[data-bs-theme='dark'] {
+  --ms-primary: #2b88d8;
+  --ms-primary-hover: #3a96e0;
+  --ms-primary-pressed: #6cb8f6;
+  --ms-primary-tint: rgba(0, 120, 212, 0.22);
+  --ms-primary-tint-2: rgba(0, 120, 212, 0.35);
+
+  --ms-bg: #1b1a19;
+  --ms-surface: #242322;
+  --ms-neutral-light: #322f2e;
+  --ms-neutral: #3b3a39;
+  --ms-border: #44413f;
+  --ms-text: #f3f2f1;
+  --ms-text-secondary: #c8c6c4;
+
+  --ms-shadow-4: 0 1.6px 3.6px rgba(0, 0, 0, 0.4), 0 0.3px 0.9px rgba(0, 0, 0, 0.3);
+  --ms-shadow-8: 0 3.2px 7.2px rgba(0, 0, 0, 0.5), 0 0.6px 1.8px rgba(0, 0, 0, 0.35);
+
+  /* Bootstrap emphasis/link tokens that aren't auto-derived from --ms-* */
+  --bs-primary-text-emphasis: var(--ms-primary-pressed);
+  --bs-link-color: var(--ms-primary-pressed);
+  --bs-link-color-rgb: 108, 184, 246;
+  --bs-link-hover-color: #8fcaf8;
+}
+
 body {
   margin: 0;
   background-color: var(--ms-bg);
@@ -234,6 +263,22 @@ a:hover {
   font-size: 0.9rem;
   text-align: center;
   margin-bottom: 1.5rem;
+}
+
+/* Dark mode: subtle dark-blue glow instead of the light radial accents. */
+[data-bs-theme='dark'] .login-shell {
+  background:
+    radial-gradient(1200px 600px at 100% 0%, rgba(0, 120, 212, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 500px at 0% 100%, rgba(0, 120, 212, 0.1) 0%, transparent 55%),
+    var(--ms-bg);
+}
+
+/* Dark mode: keep the (dark-inked) brand logo legible on a small light chip. */
+[data-bs-theme='dark'] .app-logo-img,
+[data-bs-theme='dark'] .login-logo {
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 /* ===== App bar: signed-in user + logout ===== */

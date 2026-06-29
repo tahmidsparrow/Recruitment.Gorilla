@@ -58,7 +58,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
       <div
         {...getRootProps()}
         className={`border border-2 border-dashed rounded p-5 text-center ${
-          isDragActive ? 'border-primary bg-light' : 'border-secondary-subtle'
+          isDragActive ? 'border-primary bg-body-tertiary' : 'border-secondary-subtle'
         }`}
         style={{ cursor: busy ? 'default' : 'pointer' }}
       >

@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <title>Recruitment Gorilla</title>
+    <script>
+      // Set the theme before paint to avoid a flash. Honors a saved choice,
+      // else the OS preference. Mirrored by src/theme/ThemeContext.tsx.
+      (function () {
+        try {
+          var saved = localStorage.getItem('rg-theme');
+          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-bs-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-bs-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

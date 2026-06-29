@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Button, Form, Spinner } from 'react-bootstrap';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../auth/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface LocationState {
   from?: string;
@@ -43,7 +44,8 @@ export default function LoginPage() {
 
   return (
     <div className="login-shell">
-      <div className="login-card">
+      <div className="login-card position-relative">
+        <ThemeToggle className="position-absolute top-0 end-0 mt-3 me-3" />
         <img src="/logo.png" alt="Requirement Gorilla" className="login-logo" />
         <h1 className="login-title">Sign in</h1>
         <p className="login-subtitle">Recruitment Gorilla — admin access</p>

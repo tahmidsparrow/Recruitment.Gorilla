@@ -58,7 +58,14 @@ Each CV file has **Preview** + **Download**. Preview calls `previewCvFile` (auth
 ## Theme (`index.css`)
 - Microsoft Fluent: primary `#0078d4`, neutral surfaces, depth shadows, Segoe UI. Defined as `--ms-*` variables and mapped onto Bootstrap's `--bs-*` (including `--bs-btn-*` for buttons, which Bootstrap 5.3 reads).
 - Custom classes: `.app-navbar`, `.app-logo-img`, `.login-shell`/`.login-card`, status badge tint, modal elevation.
-- **Don't hardcode colors** in components — rely on Bootstrap classes/variants which inherit the theme.
+- **Don't hardcode colors** in components — rely on the `--ms-*` tokens / Bootstrap classes which inherit the theme. Avoid fixed light utilities like `bg-light`/`bg-white`/`text-dark` (use `bg-body-tertiary` etc. so they adapt to dark mode).
+
+### Dark mode / theming
+- **Token flip:** light is the `:root` `--ms-*` tokens; a `[data-bs-theme="dark"]` block in `index.css` overrides those neutrals/accents. Because the `--bs-*` variables map to `--ms-*`, the whole app (navbar, cards, tables, forms, modals, login, searchable menus, badges, status colors) flips automatically. Bootstrap 5.3 / react-bootstrap also honor `data-bs-theme`.
+- **State:** `theme/ThemeContext.tsx` (`ThemeProvider` + `useTheme`) holds `'light' | 'dark'`, sets `data-bs-theme` on `<html>`, and persists to `localStorage['rg-theme']`. Wrapped around `<App/>` in `main.tsx`.
+- **No-flash init:** an inline script in `index.html` sets the attribute before paint (saved choice → else OS `prefers-color-scheme`).
+- **Toggle:** `components/ThemeToggle.tsx` (sun/moon, no dependency) in the navbar and on the login card.
+- **Dark-only tweaks:** the dark login gradient and a white "chip" behind the (dark-inked) brand logo so it stays legible. When adding UI, verify both modes and don't reintroduce hardcoded light classes.
 
 ## Build / typecheck
 ```bash

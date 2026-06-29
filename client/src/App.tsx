@@ -16,6 +16,7 @@ import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
 import ConfigurationPage from './pages/ConfigurationPage';
+import ThemeToggle from './components/ThemeToggle';
 
 function ProtectedLayout() {
   const { isAuthenticated, loading, username, logout } = useAuth();
@@ -54,6 +55,7 @@ function ProtectedLayout() {
               <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>
             </Nav>
             <div className="d-flex align-items-center gap-3">
+              <ThemeToggle />
               <span className="navbar-user">{username}</span>
               <Button size="sm" variant="outline-secondary" onClick={handleLogout}>
                 Sign out
