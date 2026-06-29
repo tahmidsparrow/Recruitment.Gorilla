@@ -12,6 +12,7 @@ server/Recruitment.Gorilla.API/Uploads/
 
 # Log files (log4net output)
 server/Recruitment.Gorilla.API/Logs/
+.run-logs/
 
 # Node
 node_modules/
