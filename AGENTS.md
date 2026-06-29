@@ -1,0 +1,64 @@
+# AGENTS.md — Read This First
+
+You are working on **Recruitment Gorilla**, a recruitment management system: an admin uploads CVs (PDF/Word) in bulk, the app extracts candidate details for review, stores candidates, and tracks an append-only status history shown as a timeline.
+
+This file is the entry point for any AI agent (or new human contributor). Detailed docs live in **[`ai-docs/`](ai-docs/)** — read [`ai-docs/README.md`](ai-docs/README.md) next.
+
+## Golden rules
+1. **Follow the existing patterns.** This codebase has a consistent flow; match it rather than introducing new styles or libraries. The layered flow and conventions are in [`ai-docs/conventions.md`](ai-docs/conventions.md) and [`ai-docs/feature-playbook.md`](ai-docs/feature-playbook.md).
+2. **Never expose the backend to the network.** Only the frontend (Vite, port 5173) is reachable on the LAN; it proxies `/api` to the backend on `localhost:5000`. Keep it that way. See [`ai-docs/architecture.md`](ai-docs/architecture.md).
+3. **No secrets in source.** The DB connection string, `Jwt:Key`, and `Auth:PasswordHash` live in **.NET user secrets**, never in `appsettings.json` or commits. See [`ai-docs/dev-setup.md`](ai-docs/dev-setup.md).
+4. **Keep docs in sync.** If you change code, update the matching file in `ai-docs/`.
+5. **Commits:** do not add Claude/Anthropic (or any AI) as author or co-author. Commit only when asked. Branch off the default branch first if needed.
+6. **Confirm before destructive or outward-facing actions** (deleting data, pushing, exposing services).
+
+## The flow in one picture
+```
+Browser (5173)  ──/api──►  Vite dev proxy  ──►  ASP.NET Core API (localhost:5000)  ──►  MySQL
+  React 19/TS                                    Controller → Service → AppDbContext (EF Core)
+  TanStack Query                                 JWT auth (access token + httpOnly refresh cookie)
+  react-bootstrap (Fluent theme)
+```
+Adding a feature almost always follows: **Entity → AppDbContext → migration → DTO → Service → Controller (`[Authorize]`) → `api.ts` → `types` → Query/Mutation → page/component → verify.** Full recipe: [`ai-docs/feature-playbook.md`](ai-docs/feature-playbook.md).
+
+## Tech stack (pinned)
+- **Backend:** ASP.NET Core Web API on **.NET 10**, EF Core **9.0.0** + Pomelo MySQL **9.0.0**, JWT bearer auth, log4net, Swagger.
+- **Frontend:** React **19** + TypeScript + **Vite**, TanStack Query v5, Axios, react-bootstrap 2 + Bootstrap 5 (Microsoft Fluent theme), react-router-dom 7, react-dropzone.
+- **DB:** MySQL 8+. **Files:** stored on local disk under `server/Recruitment.Gorilla.API/Uploads/`.
+
+## Quickstart
+```bash
+# 1. Secrets (once per machine) — see ai-docs/dev-setup.md for full details incl. the password-hash snippet
+cd server/Recruitment.Gorilla.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=RecruitmentGorilla;User=root;Password=<yours>;"
+dotnet user-secrets set "Jwt:Key" "<random 32+ byte base64>"
+dotnet user-secrets set "Auth:PasswordHash" "<pbkdf2 hash>"   # default login is admin/admin
+
+# 2. Database
+dotnet ef database update
+
+# 3. Run (two terminals)
+cd server/Recruitment.Gorilla.API && $env:ASPNETCORE_ENVIRONMENT="Development"; dotnet run --urls http://localhost:5000
+cd client && npm install && npm run dev      # http://localhost:5173
+
+# 4. Verify a change
+cd server/Recruitment.Gorilla.API && dotnet build     # stop the running API first (it locks the exe)
+cd client && npx tsc -b
+```
+Default admin login: **admin / admin**.
+
+## Where things are
+| Area | Path |
+|---|---|
+| API entry/config | `server/Recruitment.Gorilla.API/Program.cs` |
+| Controllers | `server/Recruitment.Gorilla.API/Controllers/` |
+| Services (business logic) | `server/Recruitment.Gorilla.API/Services/` |
+| EF entities | `server/Recruitment.Gorilla.API/Models/` |
+| DbContext | `server/Recruitment.Gorilla.API/Data/AppDbContext.cs` |
+| DTOs | `server/Recruitment.Gorilla.API/DTOs/` |
+| Frontend API layer | `client/src/services/api.ts` |
+| Shared TS types | `client/src/types/index.ts` |
+| Pages / components | `client/src/pages/`, `client/src/components/` |
+| Auth (frontend) | `client/src/auth/AuthContext.tsx` |
+| Theme | `client/src/index.css` |
+| Full docs | `ai-docs/` |

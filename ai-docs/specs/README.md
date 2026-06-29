@@ -1,0 +1,16 @@
+# Specs
+
+Feature specifications. Write one **before** implementing a non-trivial feature, using [../spec-template.md](../spec-template.md).
+
+## Why
+A spec captures the intent, data/API contract, and acceptance criteria so any agent can implement it consistently (and review against it afterward). It also leaves a durable record of *why* a feature is shaped the way it is.
+
+## Convention
+- One file per feature: `specs/<kebab-case-feature-name>.md`.
+- Keep the `Status` field current: `Draft → Approved → Implemented`.
+- When implemented, link the spec from the relevant `ai-docs/` reference doc if it changes the architecture, data model, or API surface.
+
+## Index
+| Spec | Status | Notes |
+|---|---|---|
+| [example-candidate-notes.md](example-candidate-notes.md) | Example | Worked example demonstrating the template + full-stack flow. Not necessarily implemented. |
