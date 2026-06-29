@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createCandidate, getInitialStatusOptions, getRoleOptions, getSkillOptions } from '../services/api';
 import { SearchableSelect, SearchableMultiSelect } from './SearchableSelect';
+import { useToast } from './ToastStack';
 import type { CVDraft, DuplicateCandidate } from '../types';
 
 interface Props {
@@ -13,8 +14,15 @@ interface Props {
 }
 
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+type FieldKey = 'fullName' | 'email' | 'initialStatus' | 'statusComment' | 'referenceName' | 'referenceEmail';
+type FieldErrors = Partial<Record<FieldKey, string>>;
+
+function Req() {
+  return <span className="required-star" aria-hidden="true">*</span>;
+}
 
 export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
+  const { addToast } = useToast();
   const [fullName, setFullName] = useState(draft.fullName ?? '');
   const [email, setEmail] = useState(draft.email ?? '');
   const [phone, setPhone] = useState(draft.phone ?? '');
@@ -35,8 +43,9 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [changedBy, setChangedBy] = useState('');
 
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<DuplicateCandidate | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const { data: statusOptions = [] } = useQuery({
     queryKey: ['status-options', 'initial'],
@@ -62,9 +71,12 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     }
   }, [initialStatus, statusOptions]);
 
+  const clearFE = (field: FieldKey) =>
+    setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
+
   const save = async (allowDuplicate: boolean) => {
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     try {
       const result = await createCandidate({
         fullName: fullName.trim(),
@@ -97,9 +109,10 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         setDuplicate(result.duplicate);
         return;
       }
+      addToast('Candidate saved successfully.');
       onSaved();
     } catch {
-      setError('Failed to save candidate. Please try again.');
+      setSaveError('Failed to save candidate. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -107,26 +120,20 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) {
-      setError('Full name is required.');
+    const errs: FieldErrors = {};
+    if (!fullName.trim()) errs.fullName = 'Full name is required.';
+    if (!EMAIL_REGEX.test(email.trim())) errs.email = 'A valid email address is required.';
+    if (!initialStatus) errs.initialStatus = 'Initial status is required.';
+    if (initialStatusNeedsComment && !initialStatusComment.trim())
+      errs.statusComment = `A comment is required for ${initialStatus}.`;
+    if (isReferred && !referenceName.trim()) errs.referenceName = 'Reference name is required.';
+    if (isReferred && !EMAIL_REGEX.test(referenceEmail.trim()))
+      errs.referenceEmail = 'A valid reference email is required.';
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
       return;
     }
-    if (!EMAIL_REGEX.test(email.trim())) {
-      setError('A valid email address is required.');
-      return;
-    }
-    if (!initialStatus) {
-      setError('Initial status is required.');
-      return;
-    }
-    if (initialStatusNeedsComment && !initialStatusComment.trim()) {
-      setError(`${initialStatus} requires a comment.`);
-      return;
-    }
-    if (isReferred && (!referenceName.trim() || !EMAIL_REGEX.test(referenceEmail.trim()))) {
-      setError('A referred candidate requires a reference name and a valid reference email.');
-      return;
-    }
+    setFieldErrors({});
     void save(false);
   };
 
@@ -137,7 +144,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         <span className="text-muted small">{draft.originalFileName}</span>
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {saveError && <Alert variant="danger">{saveError}</Alert>}
 
       {duplicate && (
         <Alert variant="warning">
@@ -158,12 +165,23 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
 
       <Row className="g-3">
         <Col md={6}>
-          <Form.Label>Full name *</Form.Label>
-          <Form.Control value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          <Form.Label>Full name <Req /></Form.Label>
+          <Form.Control
+            value={fullName}
+            onChange={(e) => { setFullName(e.target.value); clearFE('fullName'); }}
+            isInvalid={!!fieldErrors.fullName}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.fullName}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
-          <Form.Label>Email *</Form.Label>
-          <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Form.Label>Email <Req /></Form.Label>
+          <Form.Control
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); clearFE('email'); }}
+            isInvalid={!!fieldErrors.email}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.email}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
           <Form.Label>Phone</Form.Label>
@@ -220,10 +238,11 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Initial status</Form.Label>
+          <Form.Label>Initial status <Req /></Form.Label>
           <Form.Select
             value={initialStatus}
-            onChange={(e) => setInitialStatus(e.target.value)}
+            onChange={(e) => { setInitialStatus(e.target.value); clearFE('initialStatus'); }}
+            isInvalid={!!fieldErrors.initialStatus}
           >
             <option value="" disabled>
               Select status
@@ -234,16 +253,19 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
               </option>
             ))}
           </Form.Select>
+          <Form.Control.Feedback type="invalid">{fieldErrors.initialStatus}</Form.Control.Feedback>
         </Col>
         {initialStatusNeedsComment && (
           <Col md={12}>
-            <Form.Label>Status comment *</Form.Label>
+            <Form.Label>Status comment <Req /></Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
               value={initialStatusComment}
-              onChange={(e) => setInitialStatusComment(e.target.value)}
+              onChange={(e) => { setInitialStatusComment(e.target.value); clearFE('statusComment'); }}
+              isInvalid={!!fieldErrors.statusComment}
             />
+            <Form.Control.Feedback type="invalid">{fieldErrors.statusComment}</Form.Control.Feedback>
           </Col>
         )}
 
@@ -260,19 +282,23 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         {isReferred && (
           <>
             <Col md={6}>
-              <Form.Label>Reference name *</Form.Label>
+              <Form.Label>Reference name <Req /></Form.Label>
               <Form.Control
                 value={referenceName}
-                onChange={(e) => setReferenceName(e.target.value)}
+                onChange={(e) => { setReferenceName(e.target.value); clearFE('referenceName'); }}
+                isInvalid={!!fieldErrors.referenceName}
               />
+              <Form.Control.Feedback type="invalid">{fieldErrors.referenceName}</Form.Control.Feedback>
             </Col>
             <Col md={6}>
-              <Form.Label>Reference email *</Form.Label>
+              <Form.Label>Reference email <Req /></Form.Label>
               <Form.Control
                 type="email"
                 value={referenceEmail}
-                onChange={(e) => setReferenceEmail(e.target.value)}
+                onChange={(e) => { setReferenceEmail(e.target.value); clearFE('referenceEmail'); }}
+                isInvalid={!!fieldErrors.referenceEmail}
               />
+              <Form.Control.Feedback type="invalid">{fieldErrors.referenceEmail}</Form.Control.Feedback>
             </Col>
             <Col md={6}>
               <Form.Label>Employee ID</Form.Label>

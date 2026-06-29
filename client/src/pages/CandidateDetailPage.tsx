@@ -16,10 +16,15 @@ import {
 import StatusTimeline from '../components/StatusTimeline';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
+import { useToast } from '../components/ToastStack';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+
+function Req() {
+  return <span className="required-star" aria-hidden="true">*</span>;
+}
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -125,6 +130,8 @@ export default function CandidateDetailPage() {
   );
 }
 
+type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'referenceName' | 'referenceEmail', string>>;
+
 function ProfileEditor({
   candidate,
   onSaved,
@@ -132,9 +139,11 @@ function ProfileEditor({
   candidate: CandidateDetail;
   onSaved: () => void;
 }) {
+  const { addToast } = useToast();
   const [form, setForm] = useState(candidate);
   const [skillIds, setSkillIds] = useState<number[]>(candidate.skillOptions.map((s) => s.id));
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
+
   useEffect(() => {
     setForm(candidate);
     setSkillIds(candidate.skillOptions.map((s) => s.id));
@@ -151,6 +160,9 @@ function ProfileEditor({
 
   const set = (field: keyof CandidateDetail, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const clearFE = (field: keyof ProfileFieldErrors) =>
+    setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -172,38 +184,50 @@ function ProfileEditor({
         referenceEmail: form.isReferred ? form.referenceEmail || null : null,
         referenceEmployeeId: form.isReferred ? form.referenceEmployeeId || null : null,
       }),
-    onSuccess: onSaved,
+    onSuccess: () => {
+      addToast('Profile saved successfully.');
+      onSaved();
+    },
+    onError: () => addToast('Save failed. Please try again.', 'danger'),
   });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs: ProfileFieldErrors = {};
+    if (!form.fullName.trim()) errs.fullName = 'Full name is required.';
+    if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'A valid email address is required.';
+    if (form.isReferred && !form.referenceName?.trim())
+      errs.referenceName = 'Reference name is required.';
+    if (form.isReferred && !EMAIL_REGEX.test((form.referenceEmail ?? '').trim()))
+      errs.referenceEmail = 'A valid reference email is required.';
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    mutation.mutate();
+  };
+
   return (
-    <Form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!form.fullName.trim()) {
-          setError('Full name is required.');
-          return;
-        }
-        if (!EMAIL_REGEX.test(form.email.trim())) {
-          setError('A valid email address is required.');
-          return;
-        }
-        if (form.isReferred && (!form.referenceName?.trim() || !EMAIL_REGEX.test((form.referenceEmail ?? '').trim()))) {
-          setError('A referred candidate requires a reference name and a valid reference email.');
-          return;
-        }
-        setError(null);
-        mutation.mutate();
-      }}
-    >
-      {error && <Alert variant="danger">{error}</Alert>}
+    <Form onSubmit={handleSubmit} noValidate>
       <Row className="g-3">
         <Col md={6}>
-          <Form.Label>Full name</Form.Label>
-          <Form.Control value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
+          <Form.Label>Full name <Req /></Form.Label>
+          <Form.Control
+            value={form.fullName}
+            onChange={(e) => { set('fullName', e.target.value); clearFE('fullName'); }}
+            isInvalid={!!fieldErrors.fullName}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.fullName}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
-          <Form.Label>Email</Form.Label>
-          <Form.Control value={form.email} onChange={(e) => set('email', e.target.value)} />
+          <Form.Label>Email <Req /></Form.Label>
+          <Form.Control
+            value={form.email}
+            onChange={(e) => { set('email', e.target.value); clearFE('email'); }}
+            isInvalid={!!fieldErrors.email}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.email}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
           <Form.Label>Phone</Form.Label>
@@ -287,19 +311,23 @@ function ProfileEditor({
         {form.isReferred && (
           <>
             <Col md={6}>
-              <Form.Label>Reference name *</Form.Label>
+              <Form.Label>Reference name <Req /></Form.Label>
               <Form.Control
                 value={form.referenceName ?? ''}
-                onChange={(e) => set('referenceName', e.target.value)}
+                onChange={(e) => { set('referenceName', e.target.value); clearFE('referenceName'); }}
+                isInvalid={!!fieldErrors.referenceName}
               />
+              <Form.Control.Feedback type="invalid">{fieldErrors.referenceName}</Form.Control.Feedback>
             </Col>
             <Col md={6}>
-              <Form.Label>Reference email *</Form.Label>
+              <Form.Label>Reference email <Req /></Form.Label>
               <Form.Control
                 type="email"
                 value={form.referenceEmail ?? ''}
-                onChange={(e) => set('referenceEmail', e.target.value)}
+                onChange={(e) => { set('referenceEmail', e.target.value); clearFE('referenceEmail'); }}
+                isInvalid={!!fieldErrors.referenceEmail}
               />
+              <Form.Control.Feedback type="invalid">{fieldErrors.referenceEmail}</Form.Control.Feedback>
             </Col>
             <Col md={6}>
               <Form.Label>Employee ID</Form.Label>
@@ -316,8 +344,6 @@ function ProfileEditor({
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save changes'}
         </Button>
-        {mutation.isSuccess && <span className="text-success small">Saved.</span>}
-        {mutation.isError && <span className="text-danger small">Save failed.</span>}
       </div>
     </Form>
   );
@@ -393,13 +419,15 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
             <iframe title="CV preview" src={preview.url} className="cv-preview-frame" />
           ) : (
             <Alert variant="info" className="mb-0">
-              In-app preview isn’t available for this file type. Use Download to open it.
+              In-app preview isn't available for this file type. Use Download to open it.
             </Alert>
           ))}
       </Card.Body>
     </Card>
   );
 }
+
+type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt', string>>;
 
 function AddStatus({
   candidateId,
@@ -408,12 +436,14 @@ function AddStatus({
   candidateId: number;
   onAdded: () => void;
 }) {
+  const { addToast } = useToast();
   const [status, setStatus] = useState('');
   const [comment, setComment] = useState('');
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
   const [changedBy, setChangedBy] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
   const queryClient = useQueryClient();
 
   const { data: statusOptions = [] } = useQuery({
@@ -429,12 +459,9 @@ function AddStatus({
   const requiresTaskDetails = status === 'Technical Assessment';
   const requiresSubmissionUrl = status === 'Submission Receieved';
   const requiresInterviewAt = status === 'Interview Scheduled';
-  const canSubmit =
-    !!status &&
-    (!requiresComment || !!comment.trim()) &&
-    (!requiresTaskDetails || !!taskDetails.trim()) &&
-    (!requiresSubmissionUrl || !!submissionUrl.trim()) &&
-    (!requiresInterviewAt || !!interviewAt);
+
+  const clearFE = (field: keyof AddStatusFieldErrors) =>
+    setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -452,19 +479,31 @@ function AddStatus({
       setTaskDetails('');
       setSubmissionUrl('');
       setInterviewAt('');
+      setFieldErrors({});
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
+      addToast('Status added.');
       onAdded();
     },
+    onError: () => addToast('Failed to add status.', 'danger'),
   });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs: AddStatusFieldErrors = {};
+    if (!status) errs.status = 'Status is required.';
+    if (requiresComment && !comment.trim()) errs.comment = 'A comment is required.';
+    if (requiresTaskDetails && !taskDetails.trim()) errs.taskDetails = 'Task details are required.';
+    if (requiresSubmissionUrl && !submissionUrl.trim()) errs.submissionUrl = 'Submission link is required.';
+    if (requiresInterviewAt && !interviewAt) errs.interviewAt = 'Interview date/time is required.';
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    mutation.mutate();
+  };
+
   return (
-    <Form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (canSubmit) mutation.mutate();
-      }}
-    >
-      {mutation.isError && <Alert variant="danger">Failed to add status.</Alert>}
+    <Form onSubmit={handleSubmit} noValidate>
       {statusOptions.length === 0 && (
         <Alert variant="info">
           No next status is available from the candidate&apos;s current status.
@@ -472,10 +511,11 @@ function AddStatus({
       )}
       <Row className="g-2">
         <Col md={7}>
+          <Form.Label className="mb-1">New status <Req /></Form.Label>
           <Form.Select
-            aria-label="New status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => { setStatus(e.target.value); clearFE('status'); }}
+            isInvalid={!!fieldErrors.status}
           >
             <option value="">Select status</option>
             {statusOptions.map((option) => (
@@ -484,8 +524,10 @@ function AddStatus({
               </option>
             ))}
           </Form.Select>
+          <Form.Control.Feedback type="invalid">{fieldErrors.status}</Form.Control.Feedback>
         </Col>
         <Col md={5}>
+          <Form.Label className="mb-1">Changed by</Form.Label>
           <Form.Control
             placeholder="Changed by"
             value={changedBy}
@@ -494,50 +536,55 @@ function AddStatus({
         </Col>
         {requiresTaskDetails && (
           <Col md={12}>
+            <Form.Label className="mb-1">Task details <Req /></Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
-              placeholder="Assigned task details *"
               value={taskDetails}
-              onChange={(e) => setTaskDetails(e.target.value)}
-              required
+              onChange={(e) => { setTaskDetails(e.target.value); clearFE('taskDetails'); }}
+              isInvalid={!!fieldErrors.taskDetails}
             />
+            <Form.Control.Feedback type="invalid">{fieldErrors.taskDetails}</Form.Control.Feedback>
           </Col>
         )}
         {requiresSubmissionUrl && (
           <Col md={12}>
+            <Form.Label className="mb-1">Submission link <Req /></Form.Label>
             <Form.Control
               type="url"
-              placeholder="Submission link *"
               value={submissionUrl}
-              onChange={(e) => setSubmissionUrl(e.target.value)}
-              required
+              onChange={(e) => { setSubmissionUrl(e.target.value); clearFE('submissionUrl'); }}
+              isInvalid={!!fieldErrors.submissionUrl}
             />
+            <Form.Control.Feedback type="invalid">{fieldErrors.submissionUrl}</Form.Control.Feedback>
           </Col>
         )}
         {requiresInterviewAt && (
           <Col md={12}>
-            <Form.Label className="mb-1">Interview date/time *</Form.Label>
+            <Form.Label className="mb-1">Interview date/time <Req /></Form.Label>
             <Form.Control
               type="datetime-local"
               value={interviewAt}
-              onChange={(e) => setInterviewAt(e.target.value)}
-              required
+              onChange={(e) => { setInterviewAt(e.target.value); clearFE('interviewAt'); }}
+              isInvalid={!!fieldErrors.interviewAt}
             />
+            <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
           </Col>
         )}
         <Col md={12}>
+          {requiresComment && <Form.Label className="mb-1">Comment <Req /></Form.Label>}
           <Form.Control
             as="textarea"
             rows={2}
-            placeholder={requiresComment ? 'Comment *' : 'Comment (optional)'}
+            placeholder={requiresComment ? '' : 'Comment (optional)'}
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            required={requiresComment}
+            onChange={(e) => { setComment(e.target.value); clearFE('comment'); }}
+            isInvalid={!!fieldErrors.comment}
           />
+          <Form.Control.Feedback type="invalid">{fieldErrors.comment}</Form.Control.Feedback>
         </Col>
       </Row>
-      <Button type="submit" size="sm" className="mt-2" disabled={!canSubmit || mutation.isPending}>
+      <Button type="submit" size="sm" className="mt-2" disabled={mutation.isPending}>
         {mutation.isPending ? 'Adding…' : 'Add status'}
       </Button>
     </Form>

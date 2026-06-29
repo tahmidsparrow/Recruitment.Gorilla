@@ -11,6 +11,7 @@ import {
   updateRoleOption,
   updateSkillOption,
 } from '../services/api';
+import { useToast } from '../components/ToastStack';
 import type { UpsertOptionPayload } from '../types';
 
 interface Opt {
@@ -62,6 +63,7 @@ function OptionSection({
   queryKey: string;
   api: SectionApi;
 }) {
+  const { addToast } = useToast();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Opt | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -69,6 +71,7 @@ function OptionSection({
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nameInvalid, setNameInvalid] = useState(false);
 
   const { data: options = [], isLoading } = useQuery({
     queryKey: ['config', queryKey, 'all'],
@@ -84,6 +87,7 @@ function OptionSection({
     },
     onSuccess: () => {
       void invalidate();
+      addToast(editing ? `${noun.charAt(0).toUpperCase() + noun.slice(1)} updated.` : `${noun.charAt(0).toUpperCase() + noun.slice(1)} added.`);
       setShowModal(false);
     },
     onError: () => setError(`Could not save ${noun}. The name may already exist.`),
@@ -100,6 +104,7 @@ function OptionSection({
     setSortOrder((options.at(-1)?.sortOrder ?? 0) + 1);
     setIsActive(true);
     setError(null);
+    setNameInvalid(false);
     setShowModal(true);
   };
 
@@ -109,6 +114,7 @@ function OptionSection({
     setSortOrder(o.sortOrder);
     setIsActive(o.isActive);
     setError(null);
+    setNameInvalid(false);
     setShowModal(true);
   };
 
@@ -169,12 +175,15 @@ function OptionSection({
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Form
+          noValidate
           onSubmit={(e) => {
             e.preventDefault();
             if (!name.trim()) {
-              setError('Name is required.');
+              setNameInvalid(true);
+              setError(null);
               return;
             }
+            setNameInvalid(false);
             saveMutation.mutate();
           }}
         >
@@ -186,8 +195,14 @@ function OptionSection({
           <Modal.Body>
             {error && <p className="text-danger small">{error}</p>}
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
-              <Form.Control value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+              <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
+              <Form.Control
+                value={name}
+                onChange={(e) => { setName(e.target.value); if (nameInvalid) setNameInvalid(false); }}
+                isInvalid={nameInvalid}
+                autoFocus
+              />
+              <Form.Control.Feedback type="invalid">Name is required.</Form.Control.Feedback>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Sort order</Form.Label>

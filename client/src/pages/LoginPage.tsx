@@ -58,7 +58,7 @@ export default function LoginPage() {
 
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>Username</Form.Label>
+            <Form.Label>Username <span className="required-star" aria-hidden="true">*</span></Form.Label>
             <Form.Control
               autoFocus
               value={username}
@@ -68,7 +68,7 @@ export default function LoginPage() {
             />
           </Form.Group>
           <Form.Group className="mb-4">
-            <Form.Label>Password</Form.Label>
+            <Form.Label>Password <span className="required-star" aria-hidden="true">*</span></Form.Label>
             <Form.Control
               type="password"
               value={password}

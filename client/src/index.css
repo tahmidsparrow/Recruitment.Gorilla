@@ -210,6 +210,14 @@ a:hover {
   color: var(--ms-text-secondary);
   margin-bottom: 0.25rem;
 }
+.required-star {
+  color: var(--bs-danger);
+  margin-left: 0.15em;
+}
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+  box-shadow: 0 0 0 1px var(--bs-danger);
+}
 
 /* ===== Status badge (candidates list) ===== */
 .badge.bg-info {
