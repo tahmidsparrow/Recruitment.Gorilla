@@ -7,6 +7,7 @@ import {
   deleteCandidate,
   downloadCvFile,
   getCandidate,
+  getCandidateRoles,
   getNextStatusOptions,
   updateCandidate,
 } from '../services/api';
@@ -148,10 +149,18 @@ function ProfileEditor({
   onSaved: () => void;
 }) {
   const [form, setForm] = useState(candidate);
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => setForm(candidate), [candidate]);
+
+  const { data: roleOptions = [] } = useQuery({
+    queryKey: ['candidate-roles'],
+    queryFn: getCandidateRoles,
+  });
 
   const set = (field: keyof CandidateDetail, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -163,17 +172,33 @@ function ProfileEditor({
         skills: form.skills || null,
         summary: form.summary || null,
         linkedInUrl: form.linkedInUrl || null,
+        githubUrl: form.githubUrl || null,
+        portfolioUrl: form.portfolioUrl || null,
+        appliedRole: form.appliedRole || null,
+        isReferred: form.isReferred,
+        referenceName: form.isReferred ? form.referenceName || null : null,
+        referenceEmail: form.isReferred ? form.referenceEmail || null : null,
+        referenceEmployeeId: form.isReferred ? form.referenceEmployeeId || null : null,
       }),
-    onSuccess: onSaved,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['candidate-roles'] });
+      onSaved();
+    },
   });
 
   return (
     <Form
       onSubmit={(e) => {
         e.preventDefault();
+        if (form.isReferred && (!form.referenceName?.trim() || !form.referenceEmail?.trim())) {
+          setError('A referred candidate requires a reference name and email.');
+          return;
+        }
+        setError(null);
         mutation.mutate();
       }}
     >
+      {error && <Alert variant="danger">{error}</Alert>}
       <Row className="g-3">
         <Col md={6}>
           <Form.Label>Full name</Form.Label>
@@ -194,12 +219,40 @@ function ProfileEditor({
             onChange={(e) => set('currentTitle', e.target.value)}
           />
         </Col>
-        <Col md={12}>
+        <Col md={6}>
           <Form.Label>LinkedIn URL</Form.Label>
           <Form.Control
             value={form.linkedInUrl ?? ''}
             onChange={(e) => set('linkedInUrl', e.target.value)}
           />
+        </Col>
+        <Col md={6}>
+          <Form.Label>GitHub URL</Form.Label>
+          <Form.Control
+            value={form.githubUrl ?? ''}
+            onChange={(e) => set('githubUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Portfolio website</Form.Label>
+          <Form.Control
+            value={form.portfolioUrl ?? ''}
+            onChange={(e) => set('portfolioUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Role applied for</Form.Label>
+          <Form.Control
+            list="role-options-edit"
+            value={form.appliedRole ?? ''}
+            onChange={(e) => set('appliedRole', e.target.value)}
+            placeholder="e.g. Backend Engineer"
+          />
+          <datalist id="role-options-edit">
+            {roleOptions.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
@@ -219,6 +272,43 @@ function ProfileEditor({
             onChange={(e) => set('summary', e.target.value)}
           />
         </Col>
+
+        <Col md={12}>
+          <hr className="mb-2" />
+          <Form.Check
+            type="checkbox"
+            id="is-referred-edit"
+            label="This candidate has been referred"
+            checked={form.isReferred}
+            onChange={(e) => setForm((f) => ({ ...f, isReferred: e.target.checked }))}
+          />
+        </Col>
+        {form.isReferred && (
+          <>
+            <Col md={6}>
+              <Form.Label>Reference name *</Form.Label>
+              <Form.Control
+                value={form.referenceName ?? ''}
+                onChange={(e) => set('referenceName', e.target.value)}
+              />
+            </Col>
+            <Col md={6}>
+              <Form.Label>Reference email *</Form.Label>
+              <Form.Control
+                type="email"
+                value={form.referenceEmail ?? ''}
+                onChange={(e) => set('referenceEmail', e.target.value)}
+              />
+            </Col>
+            <Col md={6}>
+              <Form.Label>Employee ID</Form.Label>
+              <Form.Control
+                value={form.referenceEmployeeId ?? ''}
+                onChange={(e) => set('referenceEmployeeId', e.target.value)}
+              />
+            </Col>
+          </>
+        )}
       </Row>
 
       <div className="mt-3 d-flex align-items-center gap-2">

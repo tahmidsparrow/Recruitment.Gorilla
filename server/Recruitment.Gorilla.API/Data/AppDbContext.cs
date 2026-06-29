@@ -22,6 +22,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.Phone).HasMaxLength(50);
             e.Property(c => c.CurrentTitle).HasMaxLength(200);
             e.Property(c => c.LinkedInUrl).HasMaxLength(500);
+            e.Property(c => c.GithubUrl).HasMaxLength(500);
+            e.Property(c => c.PortfolioUrl).HasMaxLength(500);
+            e.Property(c => c.AppliedRole).HasMaxLength(150);
+            e.Property(c => c.ReferenceName).HasMaxLength(200);
+            e.Property(c => c.ReferenceEmail).HasMaxLength(200);
+            e.Property(c => c.ReferenceEmployeeId).HasMaxLength(100);
             e.Property(c => c.CurrentStatus).HasMaxLength(100).IsRequired();
         });
 

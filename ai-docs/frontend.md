@@ -32,13 +32,15 @@ React 19 + TypeScript + Vite. Root: `client/`.
 ## `services/api.ts`
 - Axios instance: `baseURL = '/api'` (same-origin → Vite proxies to backend), `withCredentials: true`.
 - **Auth interceptors**: attach in-memory access token on requests; on 401, do a single silent `/auth/refresh` and replay the request, else redirect to `/login`. See [auth.md](auth.md).
-- One exported, typed function per endpoint: `uploadCV`, `getCandidates`, `getCandidate`, `getStatusOptions`, `getInitialStatusOptions`, `getNextStatusOptions`, `createCandidate`, `updateCandidate`, `addStatus`, `deleteCandidate`, `downloadCvFile`, `login`, `logout`, `refreshSession`.
+- One exported, typed function per endpoint: `uploadCV`, `getCandidates`, `getCandidate`, `getCandidateRoles`, `getStatusOptions`, `getInitialStatusOptions`, `getNextStatusOptions`, `createCandidate`, `updateCandidate`, `addStatus`, `deleteCandidate`, `downloadCvFile`, `login`, `logout`, `refreshSession`.
 - **Authenticated file download**: `downloadCvFile` fetches the CV as a blob (so the bearer token is sent) and triggers a browser save — a plain `<a href>` can't carry the token.
 
 ## Key flows
 - **Upload** (`UploadPage` + `BulkUploader` + `CandidateForm`): drop multiple PDFs/`.docx` → each posts to `/cvupload` → drafts queue → review/edit in `CandidateForm` with database-backed initial-status dropdown → `createCandidate`. Reject/Discontinued require an initial-status comment. Handles the duplicate-email 409 ("save anyway / open existing").
 - **List** (`CandidatesPage`): paged table, search by name/email, database-backed status filter, per-row delete (confirm modal). Responsive: columns hide progressively on small screens (email shown under the name on mobile).
 - **Detail** (`CandidateDetailPage`): editable profile, database-backed add-status dropdown that only shows valid next statuses, dynamic prerequisite fields, `StatusTimeline` (newest on top), CV download links, delete (confirm modal).
+
+Both the upload `CandidateForm` and the detail `ProfileEditor` include **GitHub URL**, **Portfolio website**, a **Role applied for** searchable dropdown (`<input list>` + `<datalist>` fed by `['candidate-roles']`), and a **"This candidate has been referred"** checkbox that reveals Reference name\* / Reference email\* / Employee ID (name+email required when checked, mirrored server-side). Invalidate `['candidate-roles']` after create/update so new roles appear in suggestions.
 
 ## Theme (`index.css`)
 - Microsoft Fluent: primary `#0078d4`, neutral surfaces, depth shadows, Segoe UI. Defined as `--ms-*` variables and mapped onto Bootstrap's `--bs-*` (including `--bs-btn-*` for buttons, which Bootstrap 5.3 reads).

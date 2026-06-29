@@ -45,6 +45,7 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
   - **PDF** via PdfPig (also reads hyperlink annotations to recover LinkedIn URLs shown as labels).
   - **Word** via DocumentFormat.OpenXml (paragraph text). Only `.docx` (not legacy `.doc`).
   - Email regex tolerates whitespace around `@`; name detection uses the leading ALL-CAPS run with double-space / clean-line fallbacks.
+  - **LinkedIn and GitHub** URLs are pulled via the shared `MatchUrl` helper (visible text first, then hyperlink annotations); GitHub flows into `CVDraftDto.GithubUrl`.
 - **Known limitation:** this is best-effort. The admin always reviews/edits before saving. Robust LLM-based extraction is deferred to Phase 2 — if you implement it, send the extracted raw text to Claude and return structured JSON, keeping the human-review step.
 
 ## File storage
@@ -74,6 +75,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | PUT | `/api/candidates/{id}` | required | Update profile |
 | POST | `/api/candidates/{id}/status` | required | Append status change |
 | GET | `/api/candidates/{id}/cv/{fileId}` | required | Stream original CV file |
+| GET | `/api/candidates/roles` | required | Distinct applied-role values (role suggestions) |
 | DELETE | `/api/candidates/{id}` | required | Delete candidate + files |
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |

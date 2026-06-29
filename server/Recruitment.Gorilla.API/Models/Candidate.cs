@@ -10,6 +10,13 @@ public class Candidate
     public string? Skills { get; set; }
     public string? Summary { get; set; }
     public string? LinkedInUrl { get; set; }
+    public string? GithubUrl { get; set; }
+    public string? PortfolioUrl { get; set; }
+    public string? AppliedRole { get; set; }
+    public bool IsReferred { get; set; }
+    public string? ReferenceName { get; set; }
+    public string? ReferenceEmail { get; set; }
+    public string? ReferenceEmployeeId { get; set; }
     public string CurrentStatus { get; set; } = "Uploaded";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

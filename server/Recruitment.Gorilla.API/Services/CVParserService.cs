@@ -18,7 +18,11 @@ public class CVParserService
     private static readonly Regex LinkedInRegex =
         new(@"linkedin\.com/in/[\w\-]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public (string? Name, string? Email, string? Phone, string? LinkedIn, string? Skills, string? Summary)
+    // Matches a GitHub profile URL (e.g. github.com/jane-doe), excluding sub-paths beyond the user.
+    private static readonly Regex GithubRegex =
+        new(@"github\.com/[\w\-]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    public (string? Name, string? Email, string? Phone, string? LinkedIn, string? Github, string? Skills, string? Summary)
         Parse(string filePath, string fileType)
     {
         var hyperlinks = new List<string>();
@@ -62,7 +66,7 @@ public class CVParserService
         return sb.ToString();
     }
 
-    private static (string? Name, string? Email, string? Phone, string? LinkedIn, string? Skills, string? Summary)
+    private static (string? Name, string? Email, string? Phone, string? LinkedIn, string? Github, string? Skills, string? Summary)
         ExtractFields(string text, List<string> hyperlinks)
     {
         var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -74,13 +78,9 @@ public class CVParserService
 
         var phone = PhoneRegex.Match(text).Value.NullIfEmpty();
 
-        // Prefer a LinkedIn URL in the visible text; otherwise fall back to hyperlink targets.
-        var linkedinMatch = LinkedInRegex.Match(text);
-        var linkedin = linkedinMatch.Success
-            ? linkedinMatch.Value
-            : hyperlinks
-                .Select(h => LinkedInRegex.Match(h))
-                .FirstOrDefault(m => m.Success)?.Value;
+        // Prefer a URL in the visible text; otherwise fall back to hyperlink targets.
+        var linkedin = MatchUrl(text, hyperlinks, LinkedInRegex);
+        var github = MatchUrl(text, hyperlinks, GithubRegex);
 
         string? skills = null;
         string? summary = null;
@@ -111,7 +111,15 @@ public class CVParserService
             }
         }
 
-        return (name, email, phone, linkedin, skills, summary);
+        return (name, email, phone, linkedin, github, skills, summary);
+    }
+
+    /// <summary>Finds a URL in the visible text, falling back to the page's hyperlink targets.</summary>
+    private static string? MatchUrl(string text, List<string> hyperlinks, Regex regex)
+    {
+        var match = regex.Match(text);
+        if (match.Success) return match.Value;
+        return hyperlinks.Select(h => regex.Match(h)).FirstOrDefault(m => m.Success)?.Value;
     }
 
     /// <summary>

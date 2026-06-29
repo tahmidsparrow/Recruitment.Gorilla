@@ -10,8 +10,10 @@ A recruitment management system for streamlining CV ingestion, candidate trackin
 
 - **Admin Login** — the app is gated behind a single admin account (JWT auth with refresh-token rotation)
 - **Bulk CV Upload** — drag-and-drop multiple PDF or Word (.docx) files at once
-- **Auto-extraction** — name, email, phone, job title, LinkedIn, and skills are parsed directly from the CV
+- **Auto-extraction** — name, email, phone, job title, LinkedIn, GitHub, and skills are parsed directly from the CV
 - **Admin Review** — extracted data is presented as an editable form before saving
+- **Rich Candidate Profile** — GitHub & portfolio links, plus the role the candidate is interviewing for (searchable/creatable dropdown)
+- **Reference Section** — record a referrer (name, email, employee id) behind a "has been referred" toggle; name + email required when referred
 - **Duplicate Detection** — warns when a candidate with the same email already exists (save-anyway override)
 - **Status Tracking** — assign a status to each candidate at any point in the pipeline
 - **Status History** — every status change is recorded with a timestamp and admin comment
@@ -181,6 +183,7 @@ See [ai-docs/data-model.md](ai-docs/data-model.md) for full detail. Tables: **Ca
 | `PUT` | `/api/candidates/{id}` | ✓ | Update candidate profile |
 | `POST` | `/api/candidates/{id}/status` | ✓ | Add a status change with comment |
 | `GET` | `/api/candidates/{id}/cv/{fileId}` | ✓ | Stream/download the original CV file |
+| `GET` | `/api/candidates/roles` | ✓ | Distinct applied-role values (role suggestions) |
 | `DELETE` | `/api/candidates/{id}` | ✓ | Delete candidate + CV files + history |
 | `GET` | `/api/status-options` | ✓ | Active status dropdown options |
 | `GET` | `/api/status-options/initial` | ✓ | Initial status dropdown options |
@@ -199,7 +202,7 @@ Text is extracted (PdfPig for PDF, OpenXml for `.docx`) and fields are pulled wi
 | Name | Leading run of ALL-CAPS header words, with double-space / clean-line fallbacks |
 | Email | Regex, tolerant of whitespace around `@` (e.g. `name @ domain`) |
 | Phone | Regex: `(\+?\d[\d\s\-().]{7,}\d)` |
-| LinkedIn | Visible `linkedin.com/in/...`, else recovered from the PDF's hyperlink annotations |
+| LinkedIn / GitHub | Visible `linkedin.com/in/...` / `github.com/...`, else recovered from the PDF's hyperlink annotations |
 | Skills / Summary | Text block following a matching heading |
 
 Extraction is best-effort and **always editable** before saving. Robust LLM-based extraction is planned for Phase 2.

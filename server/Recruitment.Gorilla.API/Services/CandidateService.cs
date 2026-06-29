@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Gorilla.API.Data;
 using Recruitment.Gorilla.API.DTOs;
@@ -7,6 +8,9 @@ namespace Recruitment.Gorilla.API.Services;
 
 public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 {
+    private static readonly Regex ReferenceEmailRegex =
+        new(@"^[\w.+-]+@[\w-]+\.[a-z]{2,}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private const string Uploaded = "Uploaded";
     private const string TechnicalAssessment = "Technical Assessment";
     private const string SubmissionReceieved = "Submission Receieved";
@@ -37,7 +41,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .Take(pageSize)
             .Select(c => new CandidateListItemDto(
                 c.Id, c.FullName, c.Email, c.Phone,
-                c.CurrentTitle, c.CurrentStatus, c.CreatedAt))
+                c.CurrentTitle, c.AppliedRole, c.CurrentStatus, c.CreatedAt))
             .ToListAsync();
 
         return new PagedResult<CandidateListItemDto>(items, total, page, pageSize);
@@ -64,8 +68,34 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .OrderBy(c => c.Id)
             .Select(c => new CandidateListItemDto(
                 c.Id, c.FullName, c.Email, c.Phone,
-                c.CurrentTitle, c.CurrentStatus, c.CreatedAt))
+                c.CurrentTitle, c.AppliedRole, c.CurrentStatus, c.CreatedAt))
             .FirstOrDefaultAsync();
+    }
+
+    /// <summary>Distinct non-empty applied roles, for the role suggestions dropdown.</summary>
+    public async Task<List<string>> GetDistinctRolesAsync() =>
+        await db.Candidates
+            .Where(c => c.AppliedRole != null && c.AppliedRole != "")
+            .Select(c => c.AppliedRole!)
+            .Distinct()
+            .OrderBy(r => r)
+            .ToListAsync();
+
+    /// <summary>
+    /// When a candidate is marked as referred, a reference name and a valid reference
+    /// email are required. Returns an error message or null. Used by create and update.
+    /// </summary>
+    public static string? ValidateReference(bool isReferred, string? referenceName, string? referenceEmail)
+    {
+        if (!isReferred) return null;
+
+        if (string.IsNullOrWhiteSpace(referenceName) || string.IsNullOrWhiteSpace(referenceEmail))
+            return "A referred candidate requires a reference name and a reference email.";
+
+        if (!ReferenceEmailRegex.IsMatch(referenceEmail))
+            return "The reference email is not a valid email address.";
+
+        return null;
     }
 
     public async Task<bool> IsActiveStatusAsync(string status) =>
@@ -159,6 +189,13 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             Skills = dto.Skills,
             Summary = dto.Summary,
             LinkedInUrl = dto.LinkedInUrl,
+            GithubUrl = dto.GithubUrl,
+            PortfolioUrl = dto.PortfolioUrl,
+            AppliedRole = dto.AppliedRole,
+            IsReferred = dto.IsReferred,
+            ReferenceName = dto.IsReferred ? dto.ReferenceName : null,
+            ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null,
+            ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null,
             CurrentStatus = dto.InitialStatus,
         };
 
@@ -246,6 +283,13 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.Skills = dto.Skills;
         candidate.Summary = dto.Summary;
         candidate.LinkedInUrl = dto.LinkedInUrl;
+        candidate.GithubUrl = dto.GithubUrl;
+        candidate.PortfolioUrl = dto.PortfolioUrl;
+        candidate.AppliedRole = dto.AppliedRole;
+        candidate.IsReferred = dto.IsReferred;
+        candidate.ReferenceName = dto.IsReferred ? dto.ReferenceName : null;
+        candidate.ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null;
+        candidate.ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null;
         candidate.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
@@ -286,8 +330,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
     private static CandidateDetailDto MapToDetail(Candidate c) => new(
         c.Id, c.FullName, c.Email, c.Phone, c.CurrentTitle,
-        c.Skills, c.Summary, c.LinkedInUrl, c.CurrentStatus,
-        c.CreatedAt, c.UpdatedAt,
+        c.Skills, c.Summary, c.LinkedInUrl,
+        c.GithubUrl, c.PortfolioUrl, c.AppliedRole,
+        c.IsReferred, c.ReferenceName, c.ReferenceEmail, c.ReferenceEmployeeId,
+        c.CurrentStatus, c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
         c.StatusHistories.Select(s => new StatusHistoryDto(
             s.Id,

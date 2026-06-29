@@ -44,14 +44,14 @@ public class CVUploadController(
         using (var stream = System.IO.File.Create(fullPath))
             file.CopyTo(stream);
 
-        var (name, email, phone, linkedin, skills, summary) = parser.Parse(fullPath, fileType);
+        var (name, email, phone, linkedin, github, skills, summary) = parser.Parse(fullPath, fileType);
 
         logger.LogInformation(
             "Parsed CV '{FileName}' ({FileType}, {Size} bytes) stored as {StoredName}.",
             file.FileName, fileType, file.Length, storedName);
 
         return Ok(new CVDraftDto(
-            name, email, phone, null, skills, summary, linkedin,
+            name, email, phone, null, skills, summary, linkedin, github,
             file.FileName, storedName, fileType, file.Length));
     }
 }

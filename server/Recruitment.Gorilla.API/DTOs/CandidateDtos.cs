@@ -8,6 +8,7 @@ public record CVDraftDto(
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
+    string? GithubUrl,
     string OriginalFileName,
     string StoredFileName,
     string FileType,
@@ -22,6 +23,13 @@ public record CreateCandidateDto(
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
+    string? GithubUrl,
+    string? PortfolioUrl,
+    string? AppliedRole,
+    bool IsReferred,
+    string? ReferenceName,
+    string? ReferenceEmail,
+    string? ReferenceEmployeeId,
     string StoredFileName,
     string OriginalFileName,
     string FileType,
@@ -50,7 +58,14 @@ public record UpdateCandidateDto(
     string? CurrentTitle,
     string? Skills,
     string? Summary,
-    string? LinkedInUrl
+    string? LinkedInUrl,
+    string? GithubUrl,
+    string? PortfolioUrl,
+    string? AppliedRole,
+    bool IsReferred,
+    string? ReferenceName,
+    string? ReferenceEmail,
+    string? ReferenceEmployeeId
 );
 
 public record StatusChangeDto(
@@ -68,6 +83,7 @@ public record CandidateListItemDto(
     string Email,
     string? Phone,
     string? CurrentTitle,
+    string? AppliedRole,
     string CurrentStatus,
     DateTime CreatedAt
 );
@@ -81,6 +97,13 @@ public record CandidateDetailDto(
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
+    string? GithubUrl,
+    string? PortfolioUrl,
+    string? AppliedRole,
+    bool IsReferred,
+    string? ReferenceName,
+    string? ReferenceEmail,
+    string? ReferenceEmployeeId,
     string CurrentStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt,

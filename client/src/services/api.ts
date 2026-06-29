@@ -142,6 +142,12 @@ export const getCandidate = async (id: number): Promise<CandidateDetail> => {
   return data;
 };
 
+/** Distinct applied-role values already in use, for the role suggestions dropdown. */
+export const getCandidateRoles = async (): Promise<string[]> => {
+  const { data } = await api.get<string[]>('/candidates/roles');
+  return data;
+};
+
 export const getStatusOptions = async (): Promise<StatusOption[]> => {
   const { data } = await api.get<StatusOption[]>('/status-options');
   return data;

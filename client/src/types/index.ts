@@ -6,6 +6,7 @@ export interface CVDraft {
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
+  githubUrl: string | null;
   originalFileName: string;
   storedFileName: string;
   fileType: string;
@@ -20,6 +21,13 @@ export interface CreateCandidatePayload {
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  appliedRole: string | null;
+  isReferred: boolean;
+  referenceName: string | null;
+  referenceEmail: string | null;
+  referenceEmployeeId: string | null;
   storedFileName: string;
   originalFileName: string;
   fileType: string;
@@ -43,6 +51,13 @@ export interface UpdateCandidatePayload {
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  appliedRole: string | null;
+  isReferred: boolean;
+  referenceName: string | null;
+  referenceEmail: string | null;
+  referenceEmployeeId: string | null;
 }
 
 export interface StatusChangePayload {
@@ -60,6 +75,7 @@ export interface CandidateListItem {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  appliedRole: string | null;
   currentStatus: string;
   createdAt: string;
 }
@@ -99,6 +115,13 @@ export interface CandidateDetail {
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  appliedRole: string | null;
+  isReferred: boolean;
+  referenceName: string | null;
+  referenceEmail: string | null;
+  referenceEmployeeId: string | null;
   currentStatus: string;
   createdAt: string;
   updatedAt: string;

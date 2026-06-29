@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createCandidate, getInitialStatusOptions } from '../services/api';
+import { createCandidate, getCandidateRoles, getInitialStatusOptions } from '../services/api';
 import type { CVDraft, DuplicateCandidate } from '../types';
 
 interface Props {
@@ -17,6 +17,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [phone, setPhone] = useState(draft.phone ?? '');
   const [currentTitle, setCurrentTitle] = useState(draft.currentTitle ?? '');
   const [linkedInUrl, setLinkedInUrl] = useState(draft.linkedInUrl ?? '');
+  const [githubUrl, setGithubUrl] = useState(draft.githubUrl ?? '');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [appliedRole, setAppliedRole] = useState('');
+  const [isReferred, setIsReferred] = useState(false);
+  const [referenceName, setReferenceName] = useState('');
+  const [referenceEmail, setReferenceEmail] = useState('');
+  const [referenceEmployeeId, setReferenceEmployeeId] = useState('');
   const [skills, setSkills] = useState(draft.skills ?? '');
   const [summary, setSummary] = useState(draft.summary ?? '');
   const [initialStatus, setInitialStatus] = useState('');
@@ -30,6 +37,11 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const { data: statusOptions = [] } = useQuery({
     queryKey: ['status-options', 'initial'],
     queryFn: getInitialStatusOptions,
+  });
+
+  const { data: roleOptions = [] } = useQuery({
+    queryKey: ['candidate-roles'],
+    queryFn: getCandidateRoles,
   });
 
   const initialStatusNeedsComment =
@@ -53,6 +65,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         skills: skills.trim() || null,
         summary: summary.trim() || null,
         linkedInUrl: linkedInUrl.trim() || null,
+        githubUrl: githubUrl.trim() || null,
+        portfolioUrl: portfolioUrl.trim() || null,
+        appliedRole: appliedRole.trim() || null,
+        isReferred,
+        referenceName: isReferred ? referenceName.trim() || null : null,
+        referenceEmail: isReferred ? referenceEmail.trim() || null : null,
+        referenceEmployeeId: isReferred ? referenceEmployeeId.trim() || null : null,
         storedFileName: draft.storedFileName,
         originalFileName: draft.originalFileName,
         fileType: draft.fileType,
@@ -83,6 +102,10 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     }
     if (initialStatusNeedsComment && !initialStatusComment.trim()) {
       setError(`${initialStatus} requires a comment.`);
+      return;
+    }
+    if (isReferred && (!referenceName.trim() || !referenceEmail.trim())) {
+      setError('A referred candidate requires a reference name and email.');
       return;
     }
     void save(false);
@@ -131,9 +154,31 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           <Form.Label>Current title</Form.Label>
           <Form.Control value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} />
         </Col>
-        <Col md={12}>
+        <Col md={6}>
           <Form.Label>LinkedIn URL</Form.Label>
           <Form.Control value={linkedInUrl} onChange={(e) => setLinkedInUrl(e.target.value)} />
+        </Col>
+        <Col md={6}>
+          <Form.Label>GitHub URL</Form.Label>
+          <Form.Control value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Portfolio website</Form.Label>
+          <Form.Control value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Role applied for</Form.Label>
+          <Form.Control
+            list="role-options"
+            value={appliedRole}
+            onChange={(e) => setAppliedRole(e.target.value)}
+            placeholder="e.g. Backend Engineer"
+          />
+          <datalist id="role-options">
+            {roleOptions.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
@@ -178,6 +223,45 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
               required
             />
           </Col>
+        )}
+
+        <Col md={12}>
+          <hr className="mb-2" />
+          <Form.Check
+            type="checkbox"
+            id="is-referred"
+            label="This candidate has been referred"
+            checked={isReferred}
+            onChange={(e) => setIsReferred(e.target.checked)}
+          />
+        </Col>
+        {isReferred && (
+          <>
+            <Col md={6}>
+              <Form.Label>Reference name *</Form.Label>
+              <Form.Control
+                value={referenceName}
+                onChange={(e) => setReferenceName(e.target.value)}
+                required
+              />
+            </Col>
+            <Col md={6}>
+              <Form.Label>Reference email *</Form.Label>
+              <Form.Control
+                type="email"
+                value={referenceEmail}
+                onChange={(e) => setReferenceEmail(e.target.value)}
+                required
+              />
+            </Col>
+            <Col md={6}>
+              <Form.Label>Employee ID</Form.Label>
+              <Form.Control
+                value={referenceEmployeeId}
+                onChange={(e) => setReferenceEmployeeId(e.target.value)}
+              />
+            </Col>
+          </>
         )}
       </Row>
 

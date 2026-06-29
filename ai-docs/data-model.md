@@ -24,8 +24,17 @@ The core profile. Holds a **denormalized `CurrentStatus`** for fast list queries
 | Skills | text | nullable |
 | Summary | text | nullable |
 | LinkedInUrl | varchar(500) | nullable |
+| GithubUrl | varchar(500) | nullable; auto-parsed from CV when present |
+| PortfolioUrl | varchar(500) | nullable |
+| AppliedRole | varchar(150) | nullable; role being interviewed for (free-text w/ suggestions) |
+| IsReferred | bool | default false |
+| ReferenceName | varchar(200) | nullable; required when IsReferred |
+| ReferenceEmail | varchar(200) | nullable; required (+valid) when IsReferred |
+| ReferenceEmployeeId | varchar(100) | nullable |
 | CurrentStatus | varchar(100) | required; mirrors latest StatusHistory.Status |
 | CreatedAt / UpdatedAt | datetime | UTC |
+
+> Reference fields are cleared server-side when `IsReferred` is false. The reference rule (name + valid email required when referred) is enforced on **both** create and update via `CandidateService.ValidateReference`. Distinct `AppliedRole` values are served from `GET /api/candidates/roles` for the role suggestions dropdown.
 
 ### CVFile (`CVFiles`)
 One row per uploaded file. The physical file is on disk under `Uploads/` as `{GUID}{ext}`; the DB keeps the mapping and original name.

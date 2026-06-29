@@ -37,6 +37,10 @@ public class CandidatesController(
         if (validationError is not null)
             return BadRequest(validationError);
 
+        var referenceError = CandidateService.ValidateReference(dto.IsReferred, dto.ReferenceName, dto.ReferenceEmail);
+        if (referenceError is not null)
+            return BadRequest(referenceError);
+
         var (created, duplicate) = await candidateService.CreateAsync(dto);
 
         if (duplicate is not null)
@@ -72,9 +76,20 @@ public class CandidatesController(
         return NoContent();
     }
 
+    [HttpGet("roles")]
+    public async Task<IActionResult> GetRoles()
+    {
+        var roles = await candidateService.GetDistinctRolesAsync();
+        return Ok(roles);
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateDto dto)
     {
+        var referenceError = CandidateService.ValidateReference(dto.IsReferred, dto.ReferenceName, dto.ReferenceEmail);
+        if (referenceError is not null)
+            return BadRequest(referenceError);
+
         var updated = await candidateService.UpdateAsync(id, dto);
         return updated is null ? NotFound() : Ok(updated);
     }
