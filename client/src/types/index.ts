@@ -28,6 +28,8 @@ export interface CreateCandidatePayload {
   referenceName: string | null;
   referenceEmail: string | null;
   referenceEmployeeId: string | null;
+  roleAppliedOptionId: number | null;
+  skillOptionIds: number[];
   storedFileName: string;
   originalFileName: string;
   fileType: string;
@@ -58,6 +60,28 @@ export interface UpdateCandidatePayload {
   referenceName: string | null;
   referenceEmail: string | null;
   referenceEmployeeId: string | null;
+  roleAppliedOptionId: number | null;
+  skillOptionIds: number[];
+}
+
+export interface RoleAppliedOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface SkillOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface UpsertOptionPayload {
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 export interface StatusChangePayload {
@@ -122,6 +146,9 @@ export interface CandidateDetail {
   referenceName: string | null;
   referenceEmail: string | null;
   referenceEmployeeId: string | null;
+  roleAppliedOptionId: number | null;
+  roleApplied: string | null;
+  skillOptions: SkillOption[];
   currentStatus: string;
   createdAt: string;
   updatedAt: string;

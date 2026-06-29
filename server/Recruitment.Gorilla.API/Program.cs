@@ -35,6 +35,7 @@ builder.Services.AddScoped<CandidateService>();
 builder.Services.AddScoped<CVParserService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<StatusOptionService>();
+builder.Services.AddScoped<ConfigurationService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it via user secrets.");

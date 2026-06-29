@@ -8,7 +8,7 @@ namespace Recruitment.Gorilla.API.Services;
 
 public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 {
-    private static readonly Regex ReferenceEmailRegex =
+    private static readonly Regex EmailRegex =
         new(@"^[\w.+-]+@[\w-]+\.[a-z]{2,}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private const string Uploaded = "Uploaded";
@@ -41,7 +41,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .Take(pageSize)
             .Select(c => new CandidateListItemDto(
                 c.Id, c.FullName, c.Email, c.Phone,
-                c.CurrentTitle, c.AppliedRole, c.CurrentStatus, c.CreatedAt))
+                c.CurrentTitle,
+                c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
+                c.CurrentStatus, c.CreatedAt))
             .ToListAsync();
 
         return new PagedResult<CandidateListItemDto>(items, total, page, pageSize);
@@ -52,6 +54,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         var c = await db.Candidates
             .Include(x => x.CVFiles)
             .Include(x => x.StatusHistories.OrderByDescending(s => s.ChangedAt))
+            .Include(x => x.RoleAppliedOption)
+            .Include(x => x.CandidateSkills).ThenInclude(cs => cs.SkillOption)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (c is null) return null;
@@ -68,7 +72,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .OrderBy(c => c.Id)
             .Select(c => new CandidateListItemDto(
                 c.Id, c.FullName, c.Email, c.Phone,
-                c.CurrentTitle, c.AppliedRole, c.CurrentStatus, c.CreatedAt))
+                c.CurrentTitle,
+                c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
+                c.CurrentStatus, c.CreatedAt))
             .FirstOrDefaultAsync();
     }
 
@@ -92,8 +98,36 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         if (string.IsNullOrWhiteSpace(referenceName) || string.IsNullOrWhiteSpace(referenceEmail))
             return "A referred candidate requires a reference name and a reference email.";
 
-        if (!ReferenceEmailRegex.IsMatch(referenceEmail))
+        if (!EmailRegex.IsMatch(referenceEmail))
             return "The reference email is not a valid email address.";
+
+        return null;
+    }
+
+    /// <summary>
+    /// Validates core candidate fields and that any selected role/skill options exist
+    /// and are active. Returns an error message or null. Used by create and update.
+    /// </summary>
+    public async Task<string?> ValidateCandidateAsync(
+        string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "Full name is required.";
+
+        if (string.IsNullOrWhiteSpace(email) || !EmailRegex.IsMatch(email.Trim()))
+            return "A valid email address is required.";
+
+        if (roleAppliedOptionId is int roleId &&
+            !await db.RoleAppliedOptions.AnyAsync(r => r.Id == roleId && r.IsActive))
+            return "The selected role is not a valid active option.";
+
+        if (skillOptionIds is { Count: > 0 })
+        {
+            var ids = skillOptionIds.Distinct().ToList();
+            var validCount = await db.SkillOptions.CountAsync(s => ids.Contains(s.Id) && s.IsActive);
+            if (validCount != ids.Count)
+                return "One or more selected skills are not valid active options.";
+        }
 
         return null;
     }
@@ -196,8 +230,12 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             ReferenceName = dto.IsReferred ? dto.ReferenceName : null,
             ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null,
             ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null,
+            RoleAppliedOptionId = dto.RoleAppliedOptionId,
             CurrentStatus = dto.InitialStatus,
         };
+
+        foreach (var skillId in (dto.SkillOptionIds ?? []).Distinct())
+            candidate.CandidateSkills.Add(new CandidateSkill { SkillOptionId = skillId });
 
         candidate.CVFiles.Add(new CVFile
         {
@@ -217,7 +255,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         db.Candidates.Add(candidate);
         await db.SaveChangesAsync();
 
-        return (MapToDetail(candidate), null);
+        // Reload with role/skill navigations for a complete detail response.
+        return ((await GetByIdAsync(candidate.Id))!, null);
     }
 
     public async Task<CvFileResult?> GetCvFileAsync(int candidateId, int fileId)
@@ -270,8 +309,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto)
     {
         var candidate = await db.Candidates
-            .Include(x => x.CVFiles)
-            .Include(x => x.StatusHistories.OrderByDescending(s => s.ChangedAt))
+            .Include(x => x.CandidateSkills)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (candidate is null) return null;
@@ -290,10 +328,17 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.ReferenceName = dto.IsReferred ? dto.ReferenceName : null;
         candidate.ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null;
         candidate.ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null;
+        candidate.RoleAppliedOptionId = dto.RoleAppliedOptionId;
         candidate.UpdatedAt = DateTime.UtcNow;
 
+        // Replace the candidate's skills with the new selection.
+        var newSkillIds = (dto.SkillOptionIds ?? []).Distinct().ToHashSet();
+        candidate.CandidateSkills.Clear();
+        foreach (var skillId in newSkillIds)
+            candidate.CandidateSkills.Add(new CandidateSkill { SkillOptionId = skillId });
+
         await db.SaveChangesAsync();
-        return MapToDetail(candidate);
+        return await GetByIdAsync(id);
     }
 
     public async Task<StatusHistoryDto?> AddStatusAsync(int id, StatusChangeDto dto)
@@ -333,6 +378,11 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         c.Skills, c.Summary, c.LinkedInUrl,
         c.GithubUrl, c.PortfolioUrl, c.AppliedRole,
         c.IsReferred, c.ReferenceName, c.ReferenceEmail, c.ReferenceEmployeeId,
+        c.RoleAppliedOptionId,
+        c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : null,
+        c.CandidateSkills
+            .Select(cs => new SkillOptionDto(cs.SkillOption.Id, cs.SkillOption.Name, cs.SkillOption.SortOrder, cs.SkillOption.IsActive))
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name).ToList(),
         c.CurrentStatus, c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
         c.StatusHistories.Select(s => new StatusHistoryDto(

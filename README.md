@@ -12,8 +12,12 @@ A recruitment management system for streamlining CV ingestion, candidate trackin
 - **Bulk CV Upload** — drag-and-drop multiple PDF or Word (.docx) files at once
 - **Auto-extraction** — name, email, phone, job title, LinkedIn, GitHub, and skills are parsed directly from the CV
 - **Admin Review** — extracted data is presented as an editable form before saving
-- **Rich Candidate Profile** — GitHub & portfolio links, plus the role the candidate is interviewing for (searchable/creatable dropdown)
+- **Rich Candidate Profile** — GitHub & portfolio links, plus a configurable Role Applied (searchable single-select) and Skills (searchable multi-select)
 - **Reference Section** — record a referrer (name, email, employee id) behind a "has been referred" toggle; name + email required when referred
+- **Configuration Page** — admin-manage Role Applied and Skill values (add / edit / activate)
+- **Status Colors** — colour-coded status badges across the list, detail, and timeline
+- **In-app CV Preview** — preview PDF CVs inside the app (authenticated); download fallback for other types
+- **Form Validation** — required fields and email format are validated client-side (backend stays authoritative)
 - **Duplicate Detection** — warns when a candidate with the same email already exists (save-anyway override)
 - **Status Tracking** — assign a status to each candidate at any point in the pipeline
 - **Status History** — every status change is recorded with a timestamp and admin comment
@@ -188,6 +192,10 @@ See [ai-docs/data-model.md](ai-docs/data-model.md) for full detail. Tables: **Ca
 | `GET` | `/api/status-options` | ✓ | Active status dropdown options |
 | `GET` | `/api/status-options/initial` | ✓ | Initial status dropdown options |
 | `GET` | `/api/status-options/next/{candidateId}` | ✓ | Allowed next statuses for a candidate |
+| `GET`·`POST` | `/api/config/roles` | ✓ | List / create Role Applied options |
+| `PUT`·`DELETE` | `/api/config/roles/{id}` | ✓ | Update / soft-disable-or-delete a Role Applied option |
+| `GET`·`POST` | `/api/config/skills` | ✓ | List / create Skill options |
+| `PUT`·`DELETE` | `/api/config/skills/{id}` | ✓ | Update / soft-disable-or-delete a Skill option |
 
 All `✓` endpoints require a bearer access token. Auth design (rotation, hashing, hardening): [ai-docs/auth.md](ai-docs/auth.md).
 

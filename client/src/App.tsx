@@ -15,6 +15,7 @@ import LoginPage from './pages/LoginPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
+import ConfigurationPage from './pages/ConfigurationPage';
 
 function ProtectedLayout() {
   const { isAuthenticated, loading, username, logout } = useAuth();
@@ -50,6 +51,7 @@ function ProtectedLayout() {
             <Nav className="me-auto">
               <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>
               <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>
+              <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>
             </Nav>
             <div className="d-flex align-items-center gap-3">
               <span className="navbar-user">{username}</span>
@@ -79,6 +81,7 @@ export default function App() {
             <Route path="/upload" element={<UploadPage />} />
             <Route path="/candidates" element={<CandidatesPage />} />
             <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+            <Route path="/configuration" element={<ConfigurationPage />} />
           </Route>
         </Routes>
       </AuthProvider>

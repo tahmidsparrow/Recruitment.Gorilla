@@ -1,3 +1,4 @@
+import { getStatusVariant, statusBadgeTextDark } from '../utils/statusColors';
 import type { StatusHistoryEntry } from '../types';
 
 interface Props {
@@ -20,14 +21,13 @@ export default function StatusTimeline({ history }: Props) {
       {history.map((entry, i) => {
         const isLatest = i === 0;
         const isLast = i === history.length - 1;
+        const variant = getStatusVariant(entry.status);
         return (
           <li key={entry.id} className="d-flex">
             {/* node + connector rail */}
             <div className="d-flex flex-column align-items-center me-3">
               <span
-                className={`rounded-circle border ${
-                  isLatest ? 'bg-primary border-primary' : 'bg-white border-secondary'
-                }`}
+                className={`rounded-circle border bg-${variant} border-${variant}`}
                 style={{ width: 14, height: 14, marginTop: 4 }}
               />
               {!isLast && <span className="flex-grow-1 bg-secondary-subtle" style={{ width: 2 }} />}
@@ -35,10 +35,10 @@ export default function StatusTimeline({ history }: Props) {
 
             <div className={isLast ? 'pb-1' : 'pb-4'}>
               <div className="d-flex align-items-center gap-2">
-                <span className={`fw-semibold ${isLatest ? 'text-primary' : ''}`}>
+                <span className={`badge bg-${variant} ${statusBadgeTextDark(entry.status) ? 'text-dark' : ''}`}>
                   {entry.status}
                 </span>
-                {isLatest && <span className="badge bg-primary-subtle text-primary">Current</span>}
+                {isLatest && <span className="text-primary small fw-semibold">Current</span>}
               </div>
               <div className="text-muted small">
                 {formatDate(entry.changedAt)} · {entry.changedBy}

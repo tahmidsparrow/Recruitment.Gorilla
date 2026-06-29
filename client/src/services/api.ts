@@ -8,10 +8,13 @@ import type {
   LoginResult,
   PagedResult,
   CandidateListItem,
+  RoleAppliedOption,
+  SkillOption,
   StatusOption,
   StatusChangePayload,
   StatusHistoryEntry,
   UpdateCandidatePayload,
+  UpsertOptionPayload,
 } from '../types';
 
 // Same-origin path. In dev the Vite server proxies /api to the backend on the
@@ -189,4 +192,58 @@ export const addStatus = async (id: number, payload: StatusChangePayload): Promi
 
 export const deleteCandidate = async (id: number): Promise<void> => {
   await api.delete(`/candidates/${id}`);
+};
+
+// ----- Configuration: Role Applied options -----
+export const getRoleOptions = async (includeInactive = false): Promise<RoleAppliedOption[]> => {
+  const { data } = await api.get<RoleAppliedOption[]>('/config/roles', { params: { includeInactive } });
+  return data;
+};
+
+export const createRoleOption = async (payload: UpsertOptionPayload): Promise<RoleAppliedOption> => {
+  const { data } = await api.post<RoleAppliedOption>('/config/roles', payload);
+  return data;
+};
+
+export const updateRoleOption = async (id: number, payload: UpsertOptionPayload): Promise<RoleAppliedOption> => {
+  const { data } = await api.put<RoleAppliedOption>(`/config/roles/${id}`, payload);
+  return data;
+};
+
+export const deleteRoleOption = async (id: number): Promise<void> => {
+  await api.delete(`/config/roles/${id}`);
+};
+
+// ----- Configuration: Skill options -----
+export const getSkillOptions = async (includeInactive = false): Promise<SkillOption[]> => {
+  const { data } = await api.get<SkillOption[]>('/config/skills', { params: { includeInactive } });
+  return data;
+};
+
+export const createSkillOption = async (payload: UpsertOptionPayload): Promise<SkillOption> => {
+  const { data } = await api.post<SkillOption>('/config/skills', payload);
+  return data;
+};
+
+export const updateSkillOption = async (id: number, payload: UpsertOptionPayload): Promise<SkillOption> => {
+  const { data } = await api.put<SkillOption>(`/config/skills/${id}`, payload);
+  return data;
+};
+
+export const deleteSkillOption = async (id: number): Promise<void> => {
+  await api.delete(`/config/skills/${id}`);
+};
+
+/**
+ * Fetches a CV file (with auth) as a blob and returns an object URL + content type
+ * for in-app preview. Caller must URL.revokeObjectURL(url) on cleanup.
+ */
+export const previewCvFile = async (
+  candidateId: number,
+  fileId: number
+): Promise<{ url: string; contentType: string }> => {
+  const res = await api.get(`/candidates/${candidateId}/cv/${fileId}`, { responseType: 'blob' });
+  const blob = res.data as Blob;
+  const contentType = (res.headers['content-type'] as string | undefined) ?? blob.type ?? '';
+  return { url: URL.createObjectURL(blob), contentType };
 };

@@ -5,8 +5,8 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 ## Structure
 | Folder | Purpose |
 |---|---|
-| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`. |
-| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`. |
+| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`, `ConfigurationController`. |
+| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`, `ConfigurationService`. |
 | `Models/` | EF entities. |
 | `Data/AppDbContext.cs` | DbSets + Fluent config. |
 | `DTOs/` | Request/response `record`s. |
@@ -80,5 +80,11 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |
 | GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
+| GET/POST | `/api/config/roles` | required | List (active, or `?includeInactive=true`) / create Role Applied options |
+| PUT/DELETE | `/api/config/roles/{id}` | required | Update / soft-disable-or-delete a Role Applied option |
+| GET/POST | `/api/config/skills` | required | List / create Skill options |
+| PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
+
+Config notes: `ConfigurationService` enforces unique names (409 on duplicate) and **soft-disables** (IsActive=false) an option that's referenced by a candidate instead of hard-deleting. `CandidateService.ValidateCandidateAsync` checks required full name, valid email, and that any selected role/skill IDs exist and are active (400 otherwise). **CV preview** reuses the existing authenticated `GET /api/candidates/{id}/cv/{fileId}` endpoint — the client fetches it as a blob and renders PDFs inline; no separate preview route was added.
 
 Swagger UI is at `http://localhost:5000/swagger` in Development.

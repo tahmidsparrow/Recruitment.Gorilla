@@ -1,20 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addStatus,
   deleteCandidate,
   downloadCvFile,
   getCandidate,
-  getCandidateRoles,
   getNextStatusOptions,
+  getRoleOptions,
+  getSkillOptions,
+  previewCvFile,
   updateCandidate,
 } from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
-import type { CandidateDetail } from '../types';
+import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
+import { getStatusVariant, statusBadgeTextDark } from '../utils/statusColors';
+import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
+const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
 
 export default function CandidateDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +51,12 @@ export default function CandidateDetailPage() {
         ← Back to candidates
       </Link>
       <div className="d-flex justify-content-between align-items-center my-3">
-        <h2 className="mb-0">{data.fullName}</h2>
+        <div className="d-flex align-items-center gap-3">
+          <h2 className="mb-0">{data.fullName}</h2>
+          <Badge bg={getStatusVariant(data.currentStatus)} text={statusBadgeTextDark(data.currentStatus) ? 'dark' : undefined}>
+            {data.currentStatus}
+          </Badge>
+        </div>
         <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
           Delete candidate
         </Button>
@@ -94,31 +104,7 @@ export default function CandidateDetailPage() {
             </Card.Body>
           </Card>
 
-          <Card>
-            <Card.Header>CV files</Card.Header>
-            <Card.Body>
-              {data.cvFiles.length === 0 ? (
-                <p className="text-muted mb-0">No files.</p>
-              ) : (
-                <ul className="list-unstyled mb-0">
-                  {data.cvFiles.map((f) => (
-                    <li key={f.id} className="d-flex justify-content-between py-1">
-                      <Button
-                        variant="link"
-                        className="p-0 text-start"
-                        onClick={() => downloadCvFile(candidateId, f.id)}
-                      >
-                        {f.originalFileName}
-                      </Button>
-                      <span className="text-muted small">
-                        {f.fileType} · {formatSize(f.fileSizeBytes)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card.Body>
-          </Card>
+          <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
         </Col>
 
         <Col lg={5}>
@@ -149,18 +135,24 @@ function ProfileEditor({
   onSaved: () => void;
 }) {
   const [form, setForm] = useState(candidate);
+  const [skillIds, setSkillIds] = useState<number[]>(candidate.skillOptions.map((s) => s.id));
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => setForm(candidate), [candidate]);
+  useEffect(() => {
+    setForm(candidate);
+    setSkillIds(candidate.skillOptions.map((s) => s.id));
+  }, [candidate]);
 
   const { data: roleOptions = [] } = useQuery({
-    queryKey: ['candidate-roles'],
-    queryFn: getCandidateRoles,
+    queryKey: ['config', 'roles'],
+    queryFn: () => getRoleOptions(),
+  });
+  const { data: skillOptions = [] } = useQuery({
+    queryKey: ['config', 'skills'],
+    queryFn: () => getSkillOptions(),
   });
 
   const set = (field: keyof CandidateDetail, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
-
-  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -174,24 +166,31 @@ function ProfileEditor({
         linkedInUrl: form.linkedInUrl || null,
         githubUrl: form.githubUrl || null,
         portfolioUrl: form.portfolioUrl || null,
-        appliedRole: form.appliedRole || null,
+        appliedRole: null,
+        roleAppliedOptionId: form.roleAppliedOptionId,
+        skillOptionIds: skillIds,
         isReferred: form.isReferred,
         referenceName: form.isReferred ? form.referenceName || null : null,
         referenceEmail: form.isReferred ? form.referenceEmail || null : null,
         referenceEmployeeId: form.isReferred ? form.referenceEmployeeId || null : null,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['candidate-roles'] });
-      onSaved();
-    },
+    onSuccess: onSaved,
   });
 
   return (
     <Form
       onSubmit={(e) => {
         e.preventDefault();
-        if (form.isReferred && (!form.referenceName?.trim() || !form.referenceEmail?.trim())) {
-          setError('A referred candidate requires a reference name and email.');
+        if (!form.fullName.trim()) {
+          setError('Full name is required.');
+          return;
+        }
+        if (!EMAIL_REGEX.test(form.email.trim())) {
+          setError('A valid email address is required.');
+          return;
+        }
+        if (form.isReferred && (!form.referenceName?.trim() || !EMAIL_REGEX.test((form.referenceEmail ?? '').trim()))) {
+          setError('A referred candidate requires a reference name and a valid reference email.');
           return;
         }
         setError(null);
@@ -242,20 +241,24 @@ function ProfileEditor({
         </Col>
         <Col md={6}>
           <Form.Label>Role applied for</Form.Label>
-          <Form.Control
-            list="role-options-edit"
-            value={form.appliedRole ?? ''}
-            onChange={(e) => set('appliedRole', e.target.value)}
-            placeholder="e.g. Backend Engineer"
+          <SearchableSelect
+            options={roleOptions}
+            value={form.roleAppliedOptionId}
+            onChange={(roleAppliedOptionId) => setForm((f) => ({ ...f, roleAppliedOptionId }))}
+            placeholder="Search roles…"
           />
-          <datalist id="role-options-edit">
-            {roleOptions.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
+          <SearchableMultiSelect
+            options={skillOptions}
+            value={skillIds}
+            onChange={setSkillIds}
+            placeholder="Search skills…"
+          />
+        </Col>
+        <Col md={12}>
+          <Form.Label>Skills summary (from CV)</Form.Label>
           <Form.Control
             as="textarea"
             rows={2}
@@ -319,6 +322,84 @@ function ProfileEditor({
         {mutation.isError && <span className="text-danger small">Save failed.</span>}
       </div>
     </Form>
+  );
+}
+
+function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFileInfo[] }) {
+  const [preview, setPreview] = useState<{ url: string; contentType: string } | null>(null);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const urlRef = useRef<string | null>(null);
+
+  const revoke = () => {
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+  };
+  useEffect(() => revoke, []); // revoke any object URL on unmount
+
+  const openPreview = async (fileId: number) => {
+    setError(null);
+    setLoadingId(fileId);
+    try {
+      revoke();
+      const { url, contentType } = await previewCvFile(candidateId, fileId);
+      urlRef.current = url;
+      setPreview({ url, contentType });
+    } catch {
+      setError('Could not load preview.');
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const isPdf = preview?.contentType.includes('pdf') ?? false;
+
+  return (
+    <Card>
+      <Card.Header>CV files</Card.Header>
+      <Card.Body>
+        {files.length === 0 ? (
+          <p className="text-muted mb-0">No files.</p>
+        ) : (
+          <ul className="list-unstyled mb-3">
+            {files.map((f) => (
+              <li key={f.id} className="d-flex justify-content-between align-items-center py-1">
+                <span className="text-truncate">{f.originalFileName}</span>
+                <span className="d-flex align-items-center gap-2 ms-2">
+                  <span className="text-muted small text-nowrap">
+                    {f.fileType} · {formatSize(f.fileSizeBytes)}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline-primary"
+                    disabled={loadingId === f.id}
+                    onClick={() => openPreview(f.id)}
+                  >
+                    {loadingId === f.id ? 'Loading…' : 'Preview'}
+                  </Button>
+                  <Button size="sm" variant="outline-secondary" onClick={() => downloadCvFile(candidateId, f.id)}>
+                    Download
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+
+        {preview &&
+          (isPdf ? (
+            <iframe title="CV preview" src={preview.url} className="cv-preview-frame" />
+          ) : (
+            <Alert variant="info" className="mb-0">
+              In-app preview isn’t available for this file type. Use Download to open it.
+            </Alert>
+          ))}
+      </Card.Body>
+    </Card>
   );
 }
 

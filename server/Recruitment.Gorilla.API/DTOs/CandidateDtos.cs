@@ -30,6 +30,8 @@ public record CreateCandidateDto(
     string? ReferenceName,
     string? ReferenceEmail,
     string? ReferenceEmployeeId,
+    int? RoleAppliedOptionId,
+    List<int>? SkillOptionIds,
     string StoredFileName,
     string OriginalFileName,
     string FileType,
@@ -65,7 +67,9 @@ public record UpdateCandidateDto(
     bool IsReferred,
     string? ReferenceName,
     string? ReferenceEmail,
-    string? ReferenceEmployeeId
+    string? ReferenceEmployeeId,
+    int? RoleAppliedOptionId,
+    List<int>? SkillOptionIds
 );
 
 public record StatusChangeDto(
@@ -104,6 +108,9 @@ public record CandidateDetailDto(
     string? ReferenceName,
     string? ReferenceEmail,
     string? ReferenceEmployeeId,
+    int? RoleAppliedOptionId,
+    string? RoleApplied,
+    List<SkillOptionDto> SkillOptions,
     string CurrentStatus,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -136,6 +143,14 @@ public record StatusOptionDto(
     int SortOrder,
     bool IsInitial
 );
+
+public record RoleAppliedOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+
+public record UpsertRoleAppliedOptionDto(string Name, int SortOrder, bool IsActive);
+
+public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+
+public record UpsertSkillOptionDto(string Name, int SortOrder, bool IsActive);
 
 public record PagedResult<T>(
     List<T> Items,

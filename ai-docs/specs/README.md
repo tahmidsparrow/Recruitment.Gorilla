@@ -16,3 +16,4 @@ A spec captures the intent, data/API contract, and acceptance criteria so any ag
 | [example-candidate-notes.md](example-candidate-notes.md) | Example | Worked example demonstrating the template + full-stack flow. Not necessarily implemented. |
 | [database-backed-status-options.md](database-backed-status-options.md) | Implemented | Status dropdown values now come from the database. |
 | [candidate-profile-fields-and-references.md](candidate-profile-fields-and-references.md) | Implemented | Add GitHub/Portfolio/role fields + a single reference section to the candidate profile. |
+| [candidate-ux-validation-config-and-preview.md](candidate-ux-validation-config-and-preview.md) | Implemented | Login cleanup, frontend validation, config-backed role/skills, status colors, and CV preview. |

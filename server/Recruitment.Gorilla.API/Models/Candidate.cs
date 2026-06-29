@@ -13,6 +13,8 @@ public class Candidate
     public string? GithubUrl { get; set; }
     public string? PortfolioUrl { get; set; }
     public string? AppliedRole { get; set; }
+    public int? RoleAppliedOptionId { get; set; }
+    public RoleAppliedOption? RoleAppliedOption { get; set; }
     public bool IsReferred { get; set; }
     public string? ReferenceName { get; set; }
     public string? ReferenceEmail { get; set; }
@@ -23,4 +25,5 @@ public class Candidate
 
     public ICollection<CVFile> CVFiles { get; set; } = [];
     public ICollection<StatusHistory> StatusHistories { get; set; } = [];
+    public ICollection<CandidateSkill> CandidateSkills { get; set; } = [];
 }

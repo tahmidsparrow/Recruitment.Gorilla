@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Alert, Badge, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
+import { getStatusVariant, statusBadgeTextDark } from '../utils/statusColors';
 import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
@@ -113,7 +114,10 @@ export default function CandidatesPage() {
                   <td className="d-none d-lg-table-cell text-break">{c.email}</td>
                   <td className="d-none d-md-table-cell">{c.currentTitle ?? '—'}</td>
                   <td>
-                    <Badge bg="info" text="dark">
+                    <Badge
+                      bg={getStatusVariant(c.currentStatus)}
+                      text={statusBadgeTextDark(c.currentStatus) ? 'dark' : undefined}
+                    >
                       {c.currentStatus}
                     </Badge>
                   </td>

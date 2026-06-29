@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createCandidate, getCandidateRoles, getInitialStatusOptions } from '../services/api';
+import { createCandidate, getInitialStatusOptions, getRoleOptions, getSkillOptions } from '../services/api';
+import { SearchableSelect, SearchableMultiSelect } from './SearchableSelect';
 import type { CVDraft, DuplicateCandidate } from '../types';
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
   onSaved: () => void;
   onCancel: () => void;
 }
+
+const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
 
 export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [fullName, setFullName] = useState(draft.fullName ?? '');
@@ -19,7 +22,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [linkedInUrl, setLinkedInUrl] = useState(draft.linkedInUrl ?? '');
   const [githubUrl, setGithubUrl] = useState(draft.githubUrl ?? '');
   const [portfolioUrl, setPortfolioUrl] = useState('');
-  const [appliedRole, setAppliedRole] = useState('');
+  const [roleAppliedOptionId, setRoleAppliedOptionId] = useState<number | null>(null);
+  const [skillOptionIds, setSkillOptionIds] = useState<number[]>([]);
   const [isReferred, setIsReferred] = useState(false);
   const [referenceName, setReferenceName] = useState('');
   const [referenceEmail, setReferenceEmail] = useState('');
@@ -40,8 +44,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   });
 
   const { data: roleOptions = [] } = useQuery({
-    queryKey: ['candidate-roles'],
-    queryFn: getCandidateRoles,
+    queryKey: ['config', 'roles'],
+    queryFn: () => getRoleOptions(),
+  });
+
+  const { data: skillOptions = [] } = useQuery({
+    queryKey: ['config', 'skills'],
+    queryFn: () => getSkillOptions(),
   });
 
   const initialStatusNeedsComment =
@@ -67,7 +76,9 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         linkedInUrl: linkedInUrl.trim() || null,
         githubUrl: githubUrl.trim() || null,
         portfolioUrl: portfolioUrl.trim() || null,
-        appliedRole: appliedRole.trim() || null,
+        appliedRole: null,
+        roleAppliedOptionId,
+        skillOptionIds,
         isReferred,
         referenceName: isReferred ? referenceName.trim() || null : null,
         referenceEmail: isReferred ? referenceEmail.trim() || null : null,
@@ -96,23 +107,31 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !email.trim() || !initialStatus) {
-      setError('Full name, email, and initial status are required.');
+    if (!fullName.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError('A valid email address is required.');
+      return;
+    }
+    if (!initialStatus) {
+      setError('Initial status is required.');
       return;
     }
     if (initialStatusNeedsComment && !initialStatusComment.trim()) {
       setError(`${initialStatus} requires a comment.`);
       return;
     }
-    if (isReferred && (!referenceName.trim() || !referenceEmail.trim())) {
-      setError('A referred candidate requires a reference name and email.');
+    if (isReferred && (!referenceName.trim() || !EMAIL_REGEX.test(referenceEmail.trim()))) {
+      setError('A referred candidate requires a reference name and a valid reference email.');
       return;
     }
     void save(false);
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form onSubmit={handleSubmit} noValidate>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="mb-0">Review extracted details</h5>
         <span className="text-muted small">{draft.originalFileName}</span>
@@ -140,11 +159,11 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
       <Row className="g-3">
         <Col md={6}>
           <Form.Label>Full name *</Form.Label>
-          <Form.Control value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          <Form.Control value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </Col>
         <Col md={6}>
           <Form.Label>Email *</Form.Label>
-          <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </Col>
         <Col md={6}>
           <Form.Label>Phone</Form.Label>
@@ -168,20 +187,24 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         </Col>
         <Col md={6}>
           <Form.Label>Role applied for</Form.Label>
-          <Form.Control
-            list="role-options"
-            value={appliedRole}
-            onChange={(e) => setAppliedRole(e.target.value)}
-            placeholder="e.g. Backend Engineer"
+          <SearchableSelect
+            options={roleOptions}
+            value={roleAppliedOptionId}
+            onChange={setRoleAppliedOptionId}
+            placeholder="Search roles…"
           />
-          <datalist id="role-options">
-            {roleOptions.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
+          <SearchableMultiSelect
+            options={skillOptions}
+            value={skillOptionIds}
+            onChange={setSkillOptionIds}
+            placeholder="Search skills…"
+          />
+        </Col>
+        <Col md={12}>
+          <Form.Label>Skills summary (from CV)</Form.Label>
           <Form.Control as="textarea" rows={2} value={skills} onChange={(e) => setSkills(e.target.value)} />
         </Col>
         <Col md={12}>
@@ -220,7 +243,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
               rows={2}
               value={initialStatusComment}
               onChange={(e) => setInitialStatusComment(e.target.value)}
-              required
             />
           </Col>
         )}
@@ -242,7 +264,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
               <Form.Control
                 value={referenceName}
                 onChange={(e) => setReferenceName(e.target.value)}
-                required
               />
             </Col>
             <Col md={6}>
@@ -251,7 +272,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
                 type="email"
                 value={referenceEmail}
                 onChange={(e) => setReferenceEmail(e.target.value)}
-                required
               />
             </Col>
             <Col md={6}>

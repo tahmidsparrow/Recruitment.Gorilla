@@ -9,6 +9,9 @@ Candidate 1───* StatusHistory   (cascade delete)
 RefreshToken    (standalone; auth)
 StatusOption    (standalone lookup)
 StatusOption 1───* StatusTransition (from/to lookup)
+RoleAppliedOption (standalone lookup)  ── Candidate.RoleAppliedOptionId (restrict)
+SkillOption       (standalone lookup)
+Candidate *───* SkillOption  via CandidateSkill (cascade from Candidate, restrict on SkillOption)
 ```
 
 ### Candidate (`Candidates`)
@@ -26,7 +29,8 @@ The core profile. Holds a **denormalized `CurrentStatus`** for fast list queries
 | LinkedInUrl | varchar(500) | nullable |
 | GithubUrl | varchar(500) | nullable; auto-parsed from CV when present |
 | PortfolioUrl | varchar(500) | nullable |
-| AppliedRole | varchar(150) | nullable; role being interviewed for (free-text w/ suggestions) |
+| AppliedRole | varchar(150) | nullable; legacy free-text role (kept for back-compat; forms now use RoleAppliedOptionId) |
+| RoleAppliedOptionId | int? FK → RoleAppliedOption | nullable; configured role the candidate is interviewing for |
 | IsReferred | bool | default false |
 | ReferenceName | varchar(200) | nullable; required when IsReferred |
 | ReferenceEmail | varchar(200) | nullable; required (+valid) when IsReferred |
@@ -100,8 +104,15 @@ Lookup table for allowed movement from one status option to another. The UI hide
 | SortOrder | int | next-status dropdown order |
 | IsActive | bool | inactive transitions are hidden/blocked |
 
+### RoleAppliedOption (`RoleAppliedOptions`) & SkillOption (`SkillOptions`)
+Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt`. Inactive values are hidden from candidate forms but kept for history. Both are seeded with starter values.
+
+### CandidateSkill (`CandidateSkills`)
+Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(CandidateId, SkillOptionId)`; cascade-delete from Candidate, restrict on SkillOption. Candidate forms select skills from active `SkillOptions` only (not creatable from the candidate form).
+
 ## Key design rules
-- **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits.
+- **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.
+- **Role/Skill values come from `RoleAppliedOptions`/`SkillOptions`** (configurable). Deleting a config value that's in use **soft-disables** it (IsActive=false) instead of hard-deleting. The legacy free-text `Candidate.AppliedRole`/`Candidate.Skills` columns are retained for back-compat but the UI uses the configured values.
 - **CurrentStatus is denormalized** — whenever you append a `StatusHistory`, update `Candidate.CurrentStatus` and `UpdatedAt` in the same save (see `CandidateService.AddStatusAsync`).
 - **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment for Interview Completed/Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).

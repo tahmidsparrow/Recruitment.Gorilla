@@ -11,6 +11,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<StatusOption> StatusOptions => Set<StatusOption>();
     public DbSet<StatusTransition> StatusTransitions => Set<StatusTransition>();
+    public DbSet<RoleAppliedOption> RoleAppliedOptions => Set<RoleAppliedOption>();
+    public DbSet<SkillOption> SkillOptions => Set<SkillOption>();
+    public DbSet<CandidateSkill> CandidateSkills => Set<CandidateSkill>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +32,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.ReferenceEmail).HasMaxLength(200);
             e.Property(c => c.ReferenceEmployeeId).HasMaxLength(100);
             e.Property(c => c.CurrentStatus).HasMaxLength(100).IsRequired();
+            e.HasOne(c => c.RoleAppliedOption)
+             .WithMany()
+             .HasForeignKey(c => c.RoleAppliedOptionId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<CVFile>(e =>
@@ -135,8 +142,61 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new StatusTransition { Id = 26, FromStatusOptionId = 8, ToStatusOptionId = 12, SortOrder = 4, IsActive = true },
                 new StatusTransition { Id = 27, FromStatusOptionId = 9, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
                 new StatusTransition { Id = 28, FromStatusOptionId = 11, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
-                new StatusTransition { Id = 29, FromStatusOptionId = 4, ToStatusOptionId = 12, SortOrder = 1, IsActive = true }
+                new StatusTransition { Id = 29, FromStatusOptionId = 4, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
+                // Uploaded -> Call for Interview
+                new StatusTransition { Id = 30, FromStatusOptionId = 13, ToStatusOptionId = 2, SortOrder = 5, IsActive = true }
             );
+        });
+
+        modelBuilder.Entity<RoleAppliedOption>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Name).HasMaxLength(200).IsRequired();
+            e.Property(r => r.IsActive).HasDefaultValue(true);
+            e.HasIndex(r => r.Name).IsUnique();
+
+            var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new RoleAppliedOption { Id = 1, Name = "Backend Engineer", SortOrder = 1, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 2, Name = "Frontend Engineer", SortOrder = 2, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 3, Name = "Full Stack Engineer", SortOrder = 3, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 4, Name = "Machine Learning Engineer", SortOrder = 4, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
+            );
+        });
+
+        modelBuilder.Entity<SkillOption>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).HasMaxLength(200).IsRequired();
+            e.Property(s => s.IsActive).HasDefaultValue(true);
+            e.HasIndex(s => s.Name).IsUnique();
+
+            var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new SkillOption { Id = 1, Name = "C#", SortOrder = 1, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 2, Name = ".NET", SortOrder = 2, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 3, Name = "React", SortOrder = 3, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 4, Name = "TypeScript", SortOrder = 4, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 5, Name = "SQL", SortOrder = 5, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 6, Name = "Python", SortOrder = 6, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 7, Name = "AWS", SortOrder = 7, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
+                new SkillOption { Id = 8, Name = "Docker", SortOrder = 8, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
+            );
+        });
+
+        modelBuilder.Entity<CandidateSkill>(e =>
+        {
+            e.HasKey(cs => new { cs.CandidateId, cs.SkillOptionId });
+            e.HasOne(cs => cs.Candidate)
+             .WithMany(c => c.CandidateSkills)
+             .HasForeignKey(cs => cs.CandidateId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(cs => cs.SkillOption)
+             .WithMany(s => s.CandidateSkills)
+             .HasForeignKey(cs => cs.SkillOptionId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

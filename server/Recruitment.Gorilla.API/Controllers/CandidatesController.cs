@@ -33,6 +33,11 @@ public class CandidatesController(
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
+        var candidateError = await candidateService.ValidateCandidateAsync(
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds);
+        if (candidateError is not null)
+            return BadRequest(candidateError);
+
         var validationError = await candidateService.ValidateInitialStatusAsync(dto);
         if (validationError is not null)
             return BadRequest(validationError);
@@ -86,6 +91,11 @@ public class CandidatesController(
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateDto dto)
     {
+        var candidateError = await candidateService.ValidateCandidateAsync(
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds);
+        if (candidateError is not null)
+            return BadRequest(candidateError);
+
         var referenceError = CandidateService.ValidateReference(dto.IsReferred, dto.ReferenceName, dto.ReferenceEmail);
         if (referenceError is not null)
             return BadRequest(referenceError);

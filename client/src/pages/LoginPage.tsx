@@ -61,8 +61,7 @@ export default function LoginPage() {
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
-              autoComplete="username"
+              autoComplete="off"
               required
             />
           </Form.Group>
@@ -72,8 +71,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••"
-              autoComplete="current-password"
+              autoComplete="off"
               required
             />
           </Form.Group>

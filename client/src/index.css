@@ -242,3 +242,41 @@ a:hover {
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* ===== Searchable select dropdown ===== */
+.searchable-menu {
+  position: absolute;
+  z-index: 1050;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: 6px;
+  box-shadow: var(--ms-shadow-8);
+}
+.searchable-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--ms-text);
+}
+.searchable-item:hover,
+.searchable-item:focus {
+  background: var(--ms-primary-tint);
+  color: var(--ms-primary-pressed);
+}
+
+/* ===== CV preview ===== */
+.cv-preview-frame {
+  width: 100%;
+  height: 480px;
+  border: 1px solid var(--ms-border);
+  border-radius: 6px;
+}
