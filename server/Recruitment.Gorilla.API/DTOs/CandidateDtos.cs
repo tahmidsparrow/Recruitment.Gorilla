@@ -27,7 +27,19 @@ public record CreateCandidateDto(
     string FileType,
     long FileSizeBytes,
     string InitialStatus,
-    string ChangedBy
+    string ChangedBy,
+    bool AllowDuplicate = false
+);
+
+public record DuplicateCandidateDto(
+    string Message,
+    CandidateListItemDto Existing
+);
+
+public record CvFileResult(
+    string PhysicalPath,
+    string OriginalFileName,
+    string ContentType
 );
 
 public record UpdateCandidateDto(

@@ -29,8 +29,22 @@ public class CandidatesController(CandidateService candidateService) : Controlle
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
-        var created = await candidateService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var (created, duplicate) = await candidateService.CreateAsync(dto);
+
+        if (duplicate is not null)
+            return Conflict(new DuplicateCandidateDto(
+                $"A candidate with email '{duplicate.Email}' already exists.", duplicate));
+
+        return CreatedAtAction(nameof(GetById), new { id = created!.Id }, created);
+    }
+
+    [HttpGet("{id}/cv/{fileId}")]
+    public async Task<IActionResult> GetCvFile(int id, int fileId)
+    {
+        var file = await candidateService.GetCvFileAsync(id, fileId);
+        return file is null
+            ? NotFound()
+            : PhysicalFile(file.PhysicalPath, file.ContentType, file.OriginalFileName);
     }
 
     [HttpPut("{id}")]

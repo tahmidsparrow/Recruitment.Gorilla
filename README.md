@@ -188,10 +188,11 @@ Recruitment.Gorilla/
 |---|---|---|
 | `POST` | `/api/cvupload` | Upload CV file, returns extracted candidate draft |
 | `GET` | `/api/candidates` | List all candidates (paged, searchable) |
-| `POST` | `/api/candidates` | Save a new candidate |
+| `POST` | `/api/candidates` | Save a new candidate (409 + existing record if email already exists; resend with `allowDuplicate: true` to override) |
 | `GET` | `/api/candidates/{id}` | Get candidate detail + status history |
 | `PUT` | `/api/candidates/{id}` | Update candidate profile |
 | `POST` | `/api/candidates/{id}/status` | Add a status change with comment |
+| `GET` | `/api/candidates/{id}/cv/{fileId}` | Stream/download the original stored CV file |
 
 ---
 

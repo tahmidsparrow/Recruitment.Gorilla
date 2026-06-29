@@ -127,6 +127,13 @@ Recruitment.Gorilla/
 ### 3 — Status Change
 - `POST /api/candidates/{id}/status` — appends `StatusHistory` row, updates `CurrentStatus`
 
+### 3b — Email De-duplication
+- On `POST /api/candidates`, if a candidate with the same email already exists the API returns **409 Conflict** with the existing candidate summary (warn-but-allow)
+- The admin can resubmit with `allowDuplicate: true` to save anyway, or open the existing record
+
+### 3c — Original CV Download
+- `GET /api/candidates/{id}/cv/{fileId}` streams the stored file (`application/pdf` or Word MIME type) with its original filename so the admin can view the source CV
+
 ### 4 — Status Timeline
 - Frontend renders a vertical chain of status nodes (newest on top)
 - Each node: status label · date · admin comment
@@ -161,13 +168,15 @@ Recruitment.Gorilla/
 |---|---|---|
 | 1 | Scaffold monorepo — dotnet webapi + Vite React | ✅ Done |
 | 2 | Pin NuGet packages, resolve EF Core / Pomelo version conflict | ✅ Done |
-| 3 | Define EF Core entities, AppDbContext, initial MySQL migration | ⬜ Next |
-| 4 | Build CV upload API (save file, parse, return draft) | ⬜ Pending |
-| 5 | Build Candidates CRUD API + status-change endpoint | ⬜ Pending |
-| 6 | Set up React shell (Bootstrap, TanStack Query, routing) | ⬜ Pending |
-| 7 | Build Upload page (BulkUploader + CandidateForm) | ⬜ Pending |
-| 8 | Build Candidates list page (table, search, filter) | ⬜ Pending |
-| 9 | Build Candidate detail page (profile editor + StatusTimeline) | ⬜ Pending |
+| 3 | Define EF Core entities, AppDbContext, initial MySQL migration | ✅ Done |
+| 4 | Build CV upload API (save file, parse, return draft) | ✅ Done |
+| 5 | Build Candidates CRUD API + status-change endpoint | ✅ Done |
+| 5b | CV download endpoint + email de-duplication | ✅ Done |
+| 6 | Set up React shell (Bootstrap, TanStack Query, routing) | ✅ Done |
+| 7 | Build Upload page (BulkUploader + CandidateForm) | ✅ Done |
+| 8 | Build Candidates list page (table, search, filter) | ✅ Done |
+| 9 | Build Candidate detail page (profile editor + StatusTimeline) | ✅ Done |
+| 10 | Run `dotnet ef database update` against MySQL + end-to-end test | ⬜ Next |
 
 ---
 
@@ -176,3 +185,5 @@ Recruitment.Gorilla/
 - MySQL connection string goes in `appsettings.json` under `ConnectionStrings:DefaultConnection`
 - Status values are free-form strings for Phase 1; a defined enum/lookup table will be added in a later phase
 - CV file collision prevention: files are stored as `{GUID}{original-extension}`, original name preserved in DB
+- CV extraction uses regex heuristics (PdfPig/OpenXml) in Phase 1; LLM-based structured extraction (raw text → Claude → JSON) is deferred to **Phase 2**
+- Legacy `.doc` (binary Word) is not supported — only `.docx`

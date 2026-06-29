@@ -5,7 +5,7 @@ using Recruitment.Gorilla.API.Models;
 
 namespace Recruitment.Gorilla.API.Services;
 
-public class CandidateService(AppDbContext db)
+public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 {
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
         string? search, string? status, int page, int pageSize)
@@ -45,8 +45,33 @@ public class CandidateService(AppDbContext db)
         return MapToDetail(c);
     }
 
-    public async Task<CandidateDetailDto> CreateAsync(CreateCandidateDto dto)
+    public async Task<CandidateListItemDto?> FindDuplicateAsync(string email)
     {
+        if (string.IsNullOrWhiteSpace(email)) return null;
+
+        return await db.Candidates
+            .Where(c => c.Email == email)
+            .OrderBy(c => c.Id)
+            .Select(c => new CandidateListItemDto(
+                c.Id, c.FullName, c.Email, c.Phone,
+                c.CurrentTitle, c.CurrentStatus, c.CreatedAt))
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Creates a candidate. If an existing candidate shares the same email and the
+    /// caller has not set AllowDuplicate, the existing record is returned in
+    /// <c>Duplicate</c> and nothing is saved (warn-but-allow).
+    /// </summary>
+    public async Task<(CandidateDetailDto? Created, CandidateListItemDto? Duplicate)> CreateAsync(CreateCandidateDto dto)
+    {
+        if (!dto.AllowDuplicate)
+        {
+            var existing = await FindDuplicateAsync(dto.Email);
+            if (existing is not null)
+                return (null, existing);
+        }
+
         var candidate = new Candidate
         {
             FullName = dto.FullName,
@@ -76,7 +101,24 @@ public class CandidateService(AppDbContext db)
         db.Candidates.Add(candidate);
         await db.SaveChangesAsync();
 
-        return MapToDetail(candidate);
+        return (MapToDetail(candidate), null);
+    }
+
+    public async Task<CvFileResult?> GetCvFileAsync(int candidateId, int fileId)
+    {
+        var file = await db.CVFiles
+            .FirstOrDefaultAsync(f => f.Id == fileId && f.CandidateId == candidateId);
+
+        if (file is null) return null;
+
+        var path = Path.Combine(env.ContentRootPath, "Uploads", file.StoredFileName);
+        if (!File.Exists(path)) return null;
+
+        var contentType = file.FileType == "PDF"
+            ? "application/pdf"
+            : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        return new CvFileResult(path, file.OriginalFileName, contentType);
     }
 
     public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto)

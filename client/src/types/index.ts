@@ -26,6 +26,12 @@ export interface CreateCandidatePayload {
   fileSizeBytes: number;
   initialStatus: string;
   changedBy: string;
+  allowDuplicate?: boolean;
+}
+
+export interface DuplicateCandidate {
+  message: string;
+  existing: CandidateListItem;
 }
 
 export interface UpdateCandidatePayload {
