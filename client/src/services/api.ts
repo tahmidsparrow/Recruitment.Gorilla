@@ -2,19 +2,24 @@ import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
   CVDraft,
   CandidateDetail,
+  ChangePasswordPayload,
   CreateCandidatePayload,
+  CreateUserPayload,
   DuplicateCandidate,
   LoginPayload,
   LoginResult,
   PagedResult,
   CandidateListItem,
+  ResetPasswordPayload,
   RoleAppliedOption,
   SkillOption,
   StatusOption,
   StatusChangePayload,
   StatusHistoryEntry,
   UpdateCandidatePayload,
+  UpdateUserPayload,
   UpsertOptionPayload,
+  UserListItem,
 } from '../types';
 
 // Same-origin path. In dev the Vite server proxies /api to the backend on the
@@ -96,6 +101,30 @@ export const logout = async (): Promise<void> => {
     // ignore network errors on logout
   }
   accessToken = null;
+};
+
+export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
+  await api.post('/auth/change-password', payload);
+};
+
+// ----- User management (SuperAdmin only) -----
+export const getUsers = async (): Promise<UserListItem[]> => {
+  const { data } = await api.get<UserListItem[]>('/users');
+  return data;
+};
+
+export const createUser = async (payload: CreateUserPayload): Promise<UserListItem> => {
+  const { data } = await api.post<UserListItem>('/users', payload);
+  return data;
+};
+
+export const updateUser = async (id: number, payload: UpdateUserPayload): Promise<UserListItem> => {
+  const { data } = await api.put<UserListItem>(`/users/${id}`, payload);
+  return data;
+};
+
+export const resetUserPassword = async (id: number, payload: ResetPasswordPayload): Promise<void> => {
+  await api.post(`/users/${id}/reset-password`, payload);
 };
 
 /**

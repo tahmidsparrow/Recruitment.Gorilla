@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.Data;
 using Recruitment.Gorilla.API.Models;
 
@@ -14,54 +15,39 @@ public record TokenPair(
     DateTime AccessExpiresAt,
     string RefreshToken,
     DateTime RefreshExpiresAt,
-    string Username);
+    User User);
 
 public class AuthService(AppDbContext db, IConfiguration config)
 {
-    private string Username => config["Auth:Username"] ?? "admin";
     private int AccessTokenMinutes => config.GetValue("Jwt:AccessTokenMinutes", 15);
     private int RefreshTokenDays => config.GetValue("Jwt:RefreshTokenDays", 7);
 
     // ----- Credentials -----
 
-    public bool VerifyCredentials(string username, string password)
+    /// <summary>Returns the user when the email matches an active account with the given password; otherwise null.</summary>
+    public async Task<User?> VerifyCredentialsAsync(string email, string password)
     {
-        if (!string.Equals(username, Username, StringComparison.OrdinalIgnoreCase))
-            return false;
+        var user = await db.Users
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Email == email);
 
-        var stored = config["Auth:PasswordHash"];
-        if (string.IsNullOrWhiteSpace(stored))
-            throw new InvalidOperationException("Auth:PasswordHash is not configured.");
+        if (user is null || !user.IsActive)
+            return null;
 
-        return VerifyPassword(password, stored);
-    }
-
-    /// <summary>Verifies a password against a "iterations.saltB64.hashB64" PBKDF2-SHA256 hash.</summary>
-    private static bool VerifyPassword(string password, string stored)
-    {
-        var parts = stored.Split('.');
-        if (parts.Length != 3) return false;
-
-        var iterations = int.Parse(parts[0]);
-        var salt = Convert.FromBase64String(parts[1]);
-        var expected = Convert.FromBase64String(parts[2]);
-
-        var actual = Rfc2898DeriveBytes.Pbkdf2(
-            password, salt, iterations, HashAlgorithmName.SHA256, expected.Length);
-
-        return CryptographicOperations.FixedTimeEquals(actual, expected);
+        return PasswordHasher.Verify(password, user.PasswordHash) ? user : null;
     }
 
     // ----- Token issuance -----
 
-    public async Task<TokenPair> CreateTokenPairAsync(string username)
+    public async Task<TokenPair> CreateTokenPairAsync(User user)
     {
-        var (accessToken, accessExpires) = CreateAccessToken(username);
-        var (rawRefresh, refreshExpires) = await IssueRefreshTokenAsync(username);
-        return new TokenPair(accessToken, accessExpires, rawRefresh, refreshExpires, username);
+        user.LastLoginAt = DateTime.UtcNow;
+        var (accessToken, accessExpires) = CreateAccessToken(user);
+        var (rawRefresh, refreshExpires) = await IssueRefreshTokenAsync(user);
+        return new TokenPair(accessToken, accessExpires, rawRefresh, refreshExpires, user);
     }
 
-    private (string Token, DateTime ExpiresAt) CreateAccessToken(string username)
+    private (string Token, DateTime ExpiresAt) CreateAccessToken(User user)
     {
         var key = config["Jwt:Key"]!;
         var expiresAt = DateTime.UtcNow.AddMinutes(AccessTokenMinutes);
@@ -69,13 +55,16 @@ public class AuthService(AppDbContext db, IConfiguration config)
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, username),
-            new Claim(ClaimTypes.Role, "Admin"),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Name, user.Name),
+            new(ClaimTypes.Email, user.Email),
         };
+        claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Role)));
+        if (user.MustChangePassword)
+            claims.Add(new Claim("must_change_password", "true"));
 
         var token = new JwtSecurityToken(
             issuer: config["Jwt:Issuer"],
@@ -87,7 +76,7 @@ public class AuthService(AppDbContext db, IConfiguration config)
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
 
-    private async Task<(string RawToken, DateTime ExpiresAt)> IssueRefreshTokenAsync(string username)
+    private async Task<(string RawToken, DateTime ExpiresAt)> IssueRefreshTokenAsync(User user)
     {
         var raw = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         var expiresAt = DateTime.UtcNow.AddDays(RefreshTokenDays);
@@ -95,7 +84,7 @@ public class AuthService(AppDbContext db, IConfiguration config)
         db.RefreshTokens.Add(new RefreshToken
         {
             TokenHash = HashToken(raw),
-            Username = username,
+            Username = user.Id.ToString(),
             ExpiresAt = expiresAt,
         });
         await db.SaveChangesAsync();
@@ -105,7 +94,10 @@ public class AuthService(AppDbContext db, IConfiguration config)
 
     // ----- Rotation / revocation -----
 
-    /// <summary>Validates and rotates a refresh token. Returns a new pair, or null if invalid.</summary>
+    /// <summary>
+    /// Validates and rotates a refresh token, rebuilding the access token from the user's
+    /// current roles and active state. Returns a new pair, or null if invalid/inactive.
+    /// </summary>
     public async Task<TokenPair?> RefreshAsync(string rawRefreshToken)
     {
         var hash = HashToken(rawRefreshToken);
@@ -114,13 +106,25 @@ public class AuthService(AppDbContext db, IConfiguration config)
         if (existing is null || !existing.IsActive)
             return null;
 
-        var (newRaw, refreshExpires) = await RotateAsync(existing);
-        var (accessToken, accessExpires) = CreateAccessToken(existing.Username);
+        // Re-load the user so role changes / deactivation take effect on the next refresh.
+        User? user = null;
+        if (int.TryParse(existing.Username, out var userId))
+            user = await db.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == userId);
 
-        return new TokenPair(accessToken, accessExpires, newRaw, refreshExpires, existing.Username);
+        if (user is null || !user.IsActive)
+        {
+            existing.RevokedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return null;
+        }
+
+        var (newRaw, refreshExpires) = await RotateAsync(existing, user);
+        var (accessToken, accessExpires) = CreateAccessToken(user);
+
+        return new TokenPair(accessToken, accessExpires, newRaw, refreshExpires, user);
     }
 
-    private async Task<(string RawToken, DateTime ExpiresAt)> RotateAsync(RefreshToken current)
+    private async Task<(string RawToken, DateTime ExpiresAt)> RotateAsync(RefreshToken current, User user)
     {
         var newRaw = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         var newHash = HashToken(newRaw);
@@ -132,7 +136,7 @@ public class AuthService(AppDbContext db, IConfiguration config)
         db.RefreshTokens.Add(new RefreshToken
         {
             TokenHash = newHash,
-            Username = current.Username,
+            Username = user.Id.ToString(),
             ExpiresAt = expiresAt,
         });
         await db.SaveChangesAsync();
@@ -149,6 +153,25 @@ public class AuthService(AppDbContext db, IConfiguration config)
             existing.RevokedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
         }
+    }
+
+    // ----- Password change (self-service) -----
+
+    public enum ChangePasswordResult { Success, UserNotFound, WrongCurrentPassword }
+
+    public async Task<ChangePasswordResult> ChangePasswordAsync(int userId, string currentPassword, string newPassword)
+    {
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return ChangePasswordResult.UserNotFound;
+
+        if (!PasswordHasher.Verify(currentPassword, user.PasswordHash))
+            return ChangePasswordResult.WrongCurrentPassword;
+
+        user.PasswordHash = PasswordHasher.Hash(newPassword);
+        user.MustChangePassword = false;
+        user.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return ChangePasswordResult.Success;
     }
 
     private static string HashToken(string raw) =>

@@ -11,15 +11,27 @@ import {
 } from 'react-router-dom';
 import { Button, Container, Navbar, Nav, Spinner } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
 import ConfigurationPage from './pages/ConfigurationPage';
+import UsersPage from './pages/UsersPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import ThemeToggle from './components/ThemeToggle';
 
 function ProtectedLayout() {
-  const { isAuthenticated, loading, username, logout } = useAuth();
+  const {
+    isAuthenticated,
+    loading,
+    user,
+    logout,
+    mustChangePassword,
+    isAdminOrAbove,
+    isSuperAdmin,
+    canWriteCandidates,
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,6 +45,12 @@ function ProtectedLayout() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  // First-login (or post-reset) users are confined to the change-password page
+  // until they set a new password.
+  if (mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   const handleLogout = async () => {
@@ -50,13 +68,16 @@ function ProtectedLayout() {
           <Navbar.Toggle />
           <Navbar.Collapse>
             <Nav className="me-auto">
-              <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>
+              {canWriteCandidates && <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>}
               <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>
-              <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>
+              {isAdminOrAbove && <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>}
+              {isSuperAdmin && <Nav.Link as={NavLink} to="/users">Users</Nav.Link>}
             </Nav>
             <div className="d-flex align-items-center gap-3">
               <ThemeToggle />
-              <span className="navbar-user">{username}</span>
+              <Nav.Link as={NavLink} to="/change-password" className="navbar-user p-0">
+                {user?.name}
+              </Nav.Link>
               <Button size="sm" variant="outline-secondary" onClick={handleLogout}>
                 Sign out
               </Button>
@@ -80,10 +101,33 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<CandidatesPage />} />
-            <Route path="/upload" element={<UploadPage />} />
+            <Route
+              path="/upload"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <UploadPage />
+                </RequireRole>
+              }
+            />
             <Route path="/candidates" element={<CandidatesPage />} />
             <Route path="/candidates/:id" element={<CandidateDetailPage />} />
-            <Route path="/configuration" element={<ConfigurationPage />} />
+            <Route
+              path="/configuration"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin']}>
+                  <ConfigurationPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <RequireRole roles={['SuperAdmin']}>
+                  <UsersPage />
+                </RequireRole>
+              }
+            />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>
       </AuthProvider>

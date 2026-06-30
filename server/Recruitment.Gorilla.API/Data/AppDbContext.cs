@@ -14,6 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RoleAppliedOption> RoleAppliedOptions => Set<RoleAppliedOption>();
     public DbSet<SkillOption> SkillOptions => Set<SkillOption>();
     public DbSet<CandidateSkill> CandidateSkills => Set<CandidateSkill>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +38,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(c => c.RoleAppliedOptionId)
              .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(c => c.OwnerUser)
+             .WithMany()
+             .HasForeignKey(c => c.OwnerUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<CVFile>(e =>
@@ -184,6 +190,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new SkillOption { Id = 7, Name = "AWS", SortOrder = 7, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
                 new SkillOption { Id = 8, Name = "Docker", SortOrder = 8, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
             );
+        });
+
+        modelBuilder.Entity<User>(e =>
+        {
+            e.HasKey(u => u.Id);
+            e.Property(u => u.Name).HasMaxLength(200).IsRequired();
+            e.Property(u => u.Email).HasMaxLength(200).IsRequired();
+            e.Property(u => u.PasswordHash).HasMaxLength(400).IsRequired();
+            e.Property(u => u.IsActive).HasDefaultValue(true);
+            e.HasIndex(u => u.Email).IsUnique();
+            e.HasMany(u => u.Roles)
+             .WithOne(r => r.User)
+             .HasForeignKey(r => r.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserRole>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Role).HasMaxLength(50).IsRequired();
+            e.HasIndex(r => new { r.UserId, r.Role }).IsUnique();
         });
 
         modelBuilder.Entity<CandidateSkill>(e =>

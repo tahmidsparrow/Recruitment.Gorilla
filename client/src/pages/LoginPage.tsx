@@ -15,7 +15,7 @@ export default function LoginPage() {
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from ?? '/candidates';
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,12 +29,12 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      await login({ username: username.trim(), password });
-      navigate(from, { replace: true });
+      const user = await login({ email: email.trim(), password });
+      navigate(user.mustChangePassword ? '/change-password' : from, { replace: true });
     } catch (err) {
       setError(
         isAxiosError(err) && err.response?.status === 401
-          ? 'Invalid username or password.'
+          ? 'Invalid email or password.'
           : 'Unable to sign in. Please try again.'
       );
     } finally {
@@ -58,12 +58,13 @@ export default function LoginPage() {
 
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>Username <span className="required-star" aria-hidden="true">*</span></Form.Label>
+            <Form.Label>Email <span className="required-star" aria-hidden="true">*</span></Form.Label>
             <Form.Control
               autoFocus
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="off"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
               required
             />
           </Form.Group>

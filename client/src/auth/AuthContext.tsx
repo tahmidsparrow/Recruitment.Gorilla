@@ -7,20 +7,37 @@ import {
   type ReactNode,
 } from 'react';
 import { login as apiLogin, logout as apiLogout, refreshSession } from '../services/api';
-import type { LoginPayload } from '../types';
+import type { AuthUser, LoginPayload, LoginResult, Role } from '../types';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
-  username: string | null;
+  user: AuthUser | null;
   loading: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  /** Re-sync auth state from the latest token (e.g. after changing password). */
+  refresh: () => Promise<void>;
+  hasRole: (role: Role) => boolean;
+  hasAnyRole: (...roles: Role[]) => boolean;
+  isSuperAdmin: boolean;
+  isAdminOrAbove: boolean;
+  canWriteCandidates: boolean;
+  mustChangePassword: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function toUser(res: LoginResult): AuthUser {
+  return {
+    name: res.name,
+    email: res.email,
+    roles: res.roles,
+    mustChangePassword: res.mustChangePassword,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [username, setUsername] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // On first load, try to restore a session from the httpOnly refresh cookie.
@@ -28,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     refreshSession()
       .then((res) => {
-        if (mounted && res) setUsername(res.username);
+        if (mounted && res) setUser(toUser(res));
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -38,22 +55,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      isAuthenticated: username !== null,
-      username,
+  const value = useMemo<AuthContextValue>(() => {
+    const roles = user?.roles ?? [];
+    const hasRole = (role: Role) => roles.includes(role);
+    const hasAnyRole = (...want: Role[]) => want.some((r) => roles.includes(r));
+    return {
+      isAuthenticated: user !== null,
+      user,
       loading,
       login: async (payload) => {
         const res = await apiLogin(payload);
-        setUsername(res.username);
+        const u = toUser(res);
+        setUser(u);
+        return u;
       },
       logout: async () => {
         await apiLogout();
-        setUsername(null);
+        setUser(null);
       },
-    }),
-    [username, loading]
-  );
+      refresh: async () => {
+        const res = await refreshSession();
+        setUser(res ? toUser(res) : null);
+      },
+      hasRole,
+      hasAnyRole,
+      isSuperAdmin: hasRole('SuperAdmin'),
+      isAdminOrAbove: hasAnyRole('SuperAdmin', 'Admin'),
+      canWriteCandidates: hasAnyRole('SuperAdmin', 'Admin', 'Recruiter'),
+      mustChangePassword: user?.mustChangePassword ?? false,
+    };
+  }, [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

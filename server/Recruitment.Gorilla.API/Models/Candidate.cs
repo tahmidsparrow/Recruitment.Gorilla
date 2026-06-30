@@ -20,6 +20,11 @@ public class Candidate
     public string? ReferenceEmail { get; set; }
     public string? ReferenceEmployeeId { get; set; }
     public string CurrentStatus { get; set; } = "Uploaded";
+
+    /// <summary>The user who owns this candidate (the creator). Recruiters only see their own.</summary>
+    public int? OwnerUserId { get; set; }
+    public User? OwnerUser { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -36,7 +36,6 @@ export interface CreateCandidatePayload {
   fileSizeBytes: number;
   initialStatus: string;
   initialStatusComment: string | null;
-  changedBy: string;
   allowDuplicate?: boolean;
 }
 
@@ -90,7 +89,6 @@ export interface StatusChangePayload {
   taskDetails: string | null;
   submissionUrl: string | null;
   interviewAt: string | null;
-  changedBy: string;
 }
 
 export interface CandidateListItem {
@@ -163,13 +161,60 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
+export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Viewer';
+
+export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Viewer'];
+
 export interface LoginPayload {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface LoginResult {
   token: string;
-  username: string;
+  name: string;
+  email: string;
+  roles: Role[];
+  mustChangePassword: boolean;
   expiresAt: string;
+}
+
+export interface AuthUser {
+  name: string;
+  email: string;
+  roles: Role[];
+  mustChangePassword: boolean;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UserListItem {
+  id: number;
+  name: string;
+  email: string;
+  roles: Role[];
+  isActive: boolean;
+  mustChangePassword: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  roles: Role[];
+  temporaryPassword: string;
+}
+
+export interface UpdateUserPayload {
+  name: string;
+  roles: Role[];
+  isActive: boolean;
+}
+
+export interface ResetPasswordPayload {
+  temporaryPassword: string;
 }

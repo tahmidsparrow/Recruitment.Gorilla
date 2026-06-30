@@ -4,11 +4,13 @@ import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bo
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
 
 export default function CandidatesPage() {
+  const { canWriteCandidates } = useAuth();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -48,9 +50,11 @@ export default function CandidatesPage() {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Candidates</h2>
-        <Link to="/upload" className="btn btn-primary">
-          Upload CVs
-        </Link>
+        {canWriteCandidates && (
+          <Link to="/upload" className="btn btn-primary">
+            Upload CVs
+          </Link>
+        )}
       </div>
 
       <div className="d-flex flex-wrap gap-2 mb-3">
@@ -100,7 +104,7 @@ export default function CandidatesPage() {
                 <th className="d-none d-md-table-cell">Title</th>
                 <th>Status</th>
                 <th className="d-none d-md-table-cell">Added</th>
-                <th className="text-end">Actions</th>
+                {canWriteCandidates && <th className="text-end">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -119,15 +123,17 @@ export default function CandidatesPage() {
                   <td className="d-none d-md-table-cell text-nowrap">
                     {new Date(c.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="text-end">
-                    <Button
-                      size="sm"
-                      variant="outline-danger"
-                      onClick={() => setToDelete(c)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
+                  {canWriteCandidates && (
+                    <td className="text-end">
+                      <Button
+                        size="sm"
+                        variant="outline-danger"
+                        onClick={() => setToDelete(c)}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Recruitment.Gorilla.API.Auth;
+using Recruitment.Gorilla.API.Authorization;
 using Recruitment.Gorilla.API.Data;
+using Recruitment.Gorilla.API.Models;
 using Recruitment.Gorilla.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,11 +34,15 @@ if (string.IsNullOrWhiteSpace(connStr))
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CandidateService>();
 builder.Services.AddScoped<CVParserService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<StatusOptionService>();
 builder.Services.AddScoped<ConfigurationService>();
+builder.Services.AddSingleton<IAuthorizationHandler, PasswordChangedHandler>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it via user secrets.");
@@ -64,10 +71,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Default-deny: every endpoint requires an authenticated user unless [AllowAnonymous].
+// Default-deny: every endpoint requires an authenticated user (unless [AllowAnonymous]),
+// and a user with a pending forced password change is blocked from all but the
+// change-password endpoint.
 builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .AddRequirements(new PasswordChangedRequirement())
         .Build());
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
@@ -86,6 +96,41 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Apply pending migrations and seed the first Super Admin from config (once, when the
+// Users table is empty). The seed reuses the existing Auth:PasswordHash so the current
+// admin keeps its password, now logging in by email.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    if (!await db.Users.AnyAsync())
+    {
+        var passwordHash = app.Configuration["Auth:PasswordHash"];
+        if (string.IsNullOrWhiteSpace(passwordHash))
+        {
+            app.Logger.LogWarning(
+                "No users exist and Auth:PasswordHash is not configured — no Super Admin was seeded.");
+        }
+        else
+        {
+            var email = app.Configuration["Auth:SeedAdminEmail"] ?? "admin@recruitmentgorilla.com";
+            var name = app.Configuration["Auth:SeedAdminName"] ?? "Super Admin";
+            db.Users.Add(new User
+            {
+                Name = name,
+                Email = email,
+                PasswordHash = passwordHash,
+                MustChangePassword = false,
+                IsActive = true,
+                Roles = [new UserRole { Role = Roles.SuperAdmin }],
+            });
+            await db.SaveChangesAsync();
+            app.Logger.LogInformation("Seeded initial Super Admin '{Email}'.", email);
+        }
+    }
+}
 
 app.Logger.LogInformation("Recruitment.Gorilla API starting in {Environment} environment.",
     app.Environment.EnvironmentName);

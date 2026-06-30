@@ -38,7 +38,9 @@ public record CreateCandidateDto(
     long FileSizeBytes,
     string InitialStatus,
     string? InitialStatusComment,
-    string ChangedBy,
+    // Deprecated: the server now derives the actor from the authenticated user.
+    // Kept nullable for back-compat so omitting it doesn't fail model validation.
+    string? ChangedBy = null,
     bool AllowDuplicate = false
 );
 
@@ -78,7 +80,8 @@ public record StatusChangeDto(
     string? TaskDetails,
     string? SubmissionUrl,
     DateTime? InterviewAt,
-    string ChangedBy
+    // Deprecated: the server now derives the actor from the authenticated user.
+    string? ChangedBy = null
 );
 
 public record CandidateListItemDto(

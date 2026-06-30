@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.API.Services;
 
 namespace Recruitment.Gorilla.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = Roles.AdminOrAbove)]
 [Route("api/config")]
 public class ConfigurationController(
     ConfigurationService config,

@@ -22,9 +22,12 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     private const string Discontinued = "Discontinued";
 
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
-        string? search, string? status, int page, int pageSize)
+        string? search, string? status, int page, int pageSize, int? ownerUserId = null)
     {
         var query = db.Candidates.AsQueryable();
+
+        if (ownerUserId is int owner)
+            query = query.Where(c => c.OwnerUserId == owner);
 
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(c =>
@@ -49,7 +52,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return new PagedResult<CandidateListItemDto>(items, total, page, pageSize);
     }
 
-    public async Task<CandidateDetailDto?> GetByIdAsync(int id)
+    public async Task<CandidateDetailDto?> GetByIdAsync(int id, int? ownerUserId = null)
     {
         var c = await db.Candidates
             .Include(x => x.CVFiles)
@@ -59,6 +62,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (c is null) return null;
+        if (ownerUserId is int owner && c.OwnerUserId != owner) return null;
 
         return MapToDetail(c);
     }
@@ -205,7 +209,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     /// caller has not set AllowDuplicate, the existing record is returned in
     /// <c>Duplicate</c> and nothing is saved (warn-but-allow).
     /// </summary>
-    public async Task<(CandidateDetailDto? Created, CandidateListItemDto? Duplicate)> CreateAsync(CreateCandidateDto dto)
+    public async Task<(CandidateDetailDto? Created, CandidateListItemDto? Duplicate)> CreateAsync(
+        CreateCandidateDto dto, int? ownerUserId, string? changedBy)
     {
         if (!dto.AllowDuplicate)
         {
@@ -232,6 +237,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null,
             RoleAppliedOptionId = dto.RoleAppliedOptionId,
             CurrentStatus = dto.InitialStatus,
+            OwnerUserId = ownerUserId,
         };
 
         foreach (var skillId in (dto.SkillOptionIds ?? []).Distinct())
@@ -249,7 +255,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         {
             Status = dto.InitialStatus,
             Comment = dto.InitialStatusComment,
-            ChangedBy = dto.ChangedBy,
+            ChangedBy = changedBy ?? dto.ChangedBy ?? "Unknown",
         });
 
         db.Candidates.Add(candidate);
@@ -280,13 +286,14 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     /// Deletes a candidate and its related rows (CVFiles and StatusHistories cascade),
     /// and removes the stored CV files from disk. Returns false if not found.
     /// </summary>
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int? ownerUserId = null)
     {
         var candidate = await db.Candidates
             .Include(c => c.CVFiles)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (candidate is null) return false;
+        if (ownerUserId is int owner && candidate.OwnerUserId != owner) return false;
 
         foreach (var file in candidate.CVFiles)
         {
@@ -306,13 +313,14 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return true;
     }
 
-    public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto)
+    public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto, int? ownerUserId = null)
     {
         var candidate = await db.Candidates
             .Include(x => x.CandidateSkills)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (candidate is null) return null;
+        if (ownerUserId is int owner && candidate.OwnerUserId != owner) return null;
 
         candidate.FullName = dto.FullName;
         candidate.Email = dto.Email;
@@ -341,7 +349,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return await GetByIdAsync(id);
     }
 
-    public async Task<StatusHistoryDto?> AddStatusAsync(int id, StatusChangeDto dto)
+    public async Task<StatusHistoryDto?> AddStatusAsync(int id, StatusChangeDto dto, string? changedBy = null)
     {
         var candidate = await db.Candidates.FindAsync(id);
         if (candidate is null) return null;
@@ -354,7 +362,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             TaskDetails = dto.TaskDetails,
             SubmissionUrl = dto.SubmissionUrl,
             InterviewAt = dto.InterviewAt,
-            ChangedBy = dto.ChangedBy,
+            ChangedBy = changedBy ?? dto.ChangedBy ?? "Unknown",
         };
 
         db.StatusHistories.Add(entry);

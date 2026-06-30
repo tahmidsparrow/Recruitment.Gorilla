@@ -17,6 +17,7 @@ import StatusTimeline from '../components/StatusTimeline';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
+import { useAuth } from '../auth/AuthContext';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
@@ -31,6 +32,7 @@ export default function CandidateDetailPage() {
   const candidateId = Number(id);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { canWriteCandidates } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -60,9 +62,11 @@ export default function CandidateDetailPage() {
           <h2 className="mb-0">{data.fullName}</h2>
           <StatusBadge status={data.currentStatus} />
         </div>
-        <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
-          Delete candidate
-        </Button>
+        {canWriteCandidates && (
+          <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+            Delete candidate
+          </Button>
+        )}
       </div>
 
       <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
@@ -99,6 +103,7 @@ export default function CandidateDetailPage() {
             <Card.Body>
               <ProfileEditor
                 candidate={data}
+                canWrite={canWriteCandidates}
                 onSaved={() => {
                   void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
                   void queryClient.invalidateQueries({ queryKey: ['candidates'] });
@@ -114,13 +119,17 @@ export default function CandidateDetailPage() {
           <Card>
             <Card.Header>Status history</Card.Header>
             <Card.Body>
-              <AddStatus
-                candidateId={candidateId}
-                onAdded={() =>
-                  queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                }
-              />
-              <hr />
+              {canWriteCandidates && (
+                <>
+                  <AddStatus
+                    candidateId={candidateId}
+                    onAdded={() =>
+                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
+                    }
+                  />
+                  <hr />
+                </>
+              )}
               <StatusTimeline history={data.statusHistory} />
             </Card.Body>
           </Card>
@@ -134,9 +143,11 @@ type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 
 
 function ProfileEditor({
   candidate,
+  canWrite,
   onSaved,
 }: {
   candidate: CandidateDetail;
+  canWrite: boolean;
   onSaved: () => void;
 }) {
   const { addToast } = useToast();
@@ -211,6 +222,7 @@ function ProfileEditor({
 
   return (
     <Form onSubmit={handleSubmit} noValidate>
+      <fieldset disabled={!canWrite} className="border-0 p-0 m-0">
       <Row className="g-3">
         <Col md={6}>
           <Form.Label>Full name <Req /></Form.Label>
@@ -344,12 +356,15 @@ function ProfileEditor({
           </>
         )}
       </Row>
+      </fieldset>
 
-      <div className="mt-3 d-flex align-items-center gap-2">
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Saving…' : 'Save changes'}
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="mt-3 d-flex align-items-center gap-2">
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Saving…' : 'Save changes'}
+          </Button>
+        </div>
+      )}
     </Form>
   );
 }
@@ -447,7 +462,6 @@ function AddStatus({
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
-  const [changedBy, setChangedBy] = useState('');
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
   const queryClient = useQueryClient();
 
@@ -476,7 +490,6 @@ function AddStatus({
         taskDetails: taskDetails.trim() || null,
         submissionUrl: submissionUrl.trim() || null,
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
-        changedBy: changedBy.trim() || 'admin',
       }),
     onSuccess: () => {
       setStatus('');
@@ -485,6 +498,7 @@ function AddStatus({
       setSubmissionUrl('');
       setInterviewAt('');
       setFieldErrors({});
+
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
       addToast('Status added.');
       onAdded();
@@ -515,7 +529,7 @@ function AddStatus({
         </Alert>
       )}
       <Row className="g-2">
-        <Col md={7}>
+        <Col md={12}>
           <Form.Label className="mb-1">New status <Req /></Form.Label>
           <Form.Select
             value={status}
@@ -530,14 +544,6 @@ function AddStatus({
             ))}
           </Form.Select>
           <Form.Control.Feedback type="invalid">{fieldErrors.status}</Form.Control.Feedback>
-        </Col>
-        <Col md={5}>
-          <Form.Label className="mb-1">Changed by</Form.Label>
-          <Form.Control
-            placeholder="Changed by"
-            value={changedBy}
-            onChange={(e) => setChangedBy(e.target.value)}
-          />
         </Col>
         {requiresTaskDetails && (
           <Col md={12}>

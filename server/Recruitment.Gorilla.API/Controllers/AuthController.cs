@@ -7,30 +7,33 @@ namespace Recruitment.Gorilla.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-[AllowAnonymous]
 public class AuthController(
     AuthService auth,
+    CurrentUser currentUser,
     IWebHostEnvironment env,
     ILogger<AuthController> logger) : ControllerBase
 {
     private const string RefreshCookie = "rg_refresh";
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        if (!auth.VerifyCredentials(dto.Username, dto.Password))
+        var user = await auth.VerifyCredentialsAsync(dto.Email.Trim(), dto.Password);
+        if (user is null)
         {
-            logger.LogWarning("Failed login attempt for user '{Username}'.", dto.Username);
-            return Unauthorized(new { message = "Invalid username or password." });
+            logger.LogWarning("Failed login attempt for '{Email}'.", dto.Email);
+            return Unauthorized(new { message = "Invalid email or password." });
         }
 
-        var pair = await auth.CreateTokenPairAsync(dto.Username);
+        var pair = await auth.CreateTokenPairAsync(user);
         SetRefreshCookie(pair.RefreshToken, pair.RefreshExpiresAt);
 
-        logger.LogInformation("User '{Username}' logged in.", pair.Username);
-        return Ok(new AuthResultDto(pair.AccessToken, pair.Username, pair.AccessExpiresAt));
+        logger.LogInformation("User '{Email}' logged in.", user.Email);
+        return Ok(ToResult(pair));
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh()
     {
@@ -46,9 +49,10 @@ public class AuthController(
         }
 
         SetRefreshCookie(pair.RefreshToken, pair.RefreshExpiresAt);
-        return Ok(new AuthResultDto(pair.AccessToken, pair.Username, pair.AccessExpiresAt));
+        return Ok(ToResult(pair));
     }
 
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -59,6 +63,38 @@ public class AuthController(
         DeleteRefreshCookie();
         return NoContent();
     }
+
+    /// <summary>
+    /// Self-service password change. Reachable while a forced password change is pending
+    /// (see <see cref="Authorization.PasswordChangedRequirement"/>); requires authentication.
+    /// </summary>
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (currentUser.UserId is not int userId)
+            return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 8)
+            return BadRequest(new { message = "New password must be at least 8 characters." });
+
+        var result = await auth.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
+        return result switch
+        {
+            AuthService.ChangePasswordResult.Success => NoContent(),
+            AuthService.ChangePasswordResult.WrongCurrentPassword =>
+                BadRequest(new { message = "Current password is incorrect." }),
+            _ => Unauthorized(),
+        };
+    }
+
+    private static AuthResultDto ToResult(TokenPair pair) => new(
+        pair.AccessToken,
+        pair.User.Name,
+        pair.User.Email,
+        pair.User.Roles.Select(r => r.Role).ToArray(),
+        pair.User.MustChangePassword,
+        pair.AccessExpiresAt);
 
     private void SetRefreshCookie(string token, DateTime expiresAt) =>
         Response.Cookies.Append(RefreshCookie, token, BuildCookieOptions(expiresAt));

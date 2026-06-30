@@ -14,7 +14,7 @@ interface Props {
 }
 
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
-type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'initialStatus' | 'statusComment' | 'referenceName' | 'referenceEmail';
+type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'referenceName' | 'referenceEmail';
 type FieldErrors = Partial<Record<FieldKey, string>>;
 
 function Req() {
@@ -39,9 +39,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [skills, setSkills] = useState(draft.skills ?? '');
   const [summary, setSummary] = useState(draft.summary ?? '');
   const [initialStatus, setInitialStatus] = useState('');
-  const [initialStatusComment, setInitialStatusComment] = useState('');
-  const [changedBy, setChangedBy] = useState('');
-
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<DuplicateCandidate | null>(null);
@@ -61,9 +58,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     queryKey: ['config', 'skills'],
     queryFn: () => getSkillOptions(),
   });
-
-  const initialStatusNeedsComment =
-    initialStatus === 'Reject' || initialStatus === 'Discontinued';
 
   useEffect(() => {
     if (!initialStatus && statusOptions.length > 0) {
@@ -100,8 +94,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         fileType: draft.fileType,
         fileSizeBytes: draft.fileSizeBytes,
         initialStatus,
-        initialStatusComment: initialStatusComment.trim() || null,
-        changedBy: changedBy.trim() || 'admin',
+        initialStatusComment: null,
         allowDuplicate,
       });
 
@@ -124,9 +117,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     if (!fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(email.trim())) errs.email = 'A valid email address is required.';
     if (!roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
-    if (!initialStatus) errs.initialStatus = 'Initial status is required.';
-    if (initialStatusNeedsComment && !initialStatusComment.trim())
-      errs.statusComment = `A comment is required for ${initialStatus}.`;
     if (isReferred && !referenceName.trim()) errs.referenceName = 'Reference name is required.';
     if (isReferred && !EMAIL_REGEX.test(referenceEmail.trim()))
       errs.referenceEmail = 'A valid reference email is required.';
@@ -234,46 +224,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           <Form.Label>Summary</Form.Label>
           <Form.Control as="textarea" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} />
         </Col>
-        <Col md={6}>
-          <Form.Label>Reviewed by</Form.Label>
-          <Form.Control
-            placeholder="admin"
-            value={changedBy}
-            onChange={(e) => setChangedBy(e.target.value)}
-          />
-        </Col>
-        <Col md={6}>
-          <Form.Label>Initial status <Req /></Form.Label>
-          <Form.Select
-            value={initialStatus}
-            onChange={(e) => { setInitialStatus(e.target.value); clearFE('initialStatus'); }}
-            isInvalid={!!fieldErrors.initialStatus}
-          >
-            <option value="" disabled>
-              Select status
-            </option>
-            {statusOptions.map((option) => (
-              <option key={option.id} value={option.name}>
-                {option.name}
-              </option>
-            ))}
-          </Form.Select>
-          <Form.Control.Feedback type="invalid">{fieldErrors.initialStatus}</Form.Control.Feedback>
-        </Col>
-        {initialStatusNeedsComment && (
-          <Col md={12}>
-            <Form.Label>Status comment <Req /></Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={2}
-              value={initialStatusComment}
-              onChange={(e) => { setInitialStatusComment(e.target.value); clearFE('statusComment'); }}
-              isInvalid={!!fieldErrors.statusComment}
-            />
-            <Form.Control.Feedback type="invalid">{fieldErrors.statusComment}</Form.Control.Feedback>
-          </Col>
-        )}
-
         <Col md={12}>
           <hr className="mb-2" />
           <Form.Check

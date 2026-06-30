@@ -6,6 +6,8 @@ Entities live in `server/Recruitment.Gorilla.API/Models/`; mapping/constraints a
 ```
 Candidate 1───* CVFile          (cascade delete)
 Candidate 1───* StatusHistory   (cascade delete)
+User 1───* UserRole             (cascade delete; auth)
+User 1───* Candidate            (Candidate.OwnerUserId, set null on delete)
 RefreshToken    (standalone; auth)
 StatusOption    (standalone lookup)
 StatusOption 1───* StatusTransition (from/to lookup)
@@ -31,6 +33,7 @@ The core profile. Holds a **denormalized `CurrentStatus`** for fast list queries
 | PortfolioUrl | varchar(500) | nullable |
 | AppliedRole | varchar(150) | nullable; legacy free-text role (kept for back-compat; forms now use RoleAppliedOptionId) |
 | RoleAppliedOptionId | int? FK → RoleAppliedOption | nullable; configured role the candidate is interviewing for |
+| OwnerUserId | int? FK → User | nullable; set to the creating Recruiter's id for per-role scoping (SetNull on user delete). Legacy/admin-created rows are NULL |
 | IsReferred | bool | default false |
 | ReferenceName | varchar(200) | nullable; required when IsReferred |
 | ReferenceEmail | varchar(200) | nullable; required (+valid) when IsReferred |
@@ -75,11 +78,35 @@ Server-side store for auth refresh tokens (rotation + revocation). Only the **SH
 |---|---|---|
 | Id | int PK | |
 | TokenHash | varchar(100) | unique index; SHA-256(token) base64 |
-| Username | varchar(200) | |
+| Username | varchar(200) | holds the **user id** (string); refresh re-loads that user to rebuild claims |
 | ExpiresAt / CreatedAt | datetime | |
 | RevokedAt | datetime? | set on rotation or logout |
 | ReplacedByTokenHash | varchar(100)? | rotation audit trail |
 | IsActive | (computed) | `RevokedAt == null && now < ExpiresAt`; `[NotMapped]` via `Ignore` |
+
+### User (`Users`)
+Application accounts. Login is by **email**. See [auth.md](auth.md).
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| Name | varchar(200) | required; display name |
+| Email | varchar(200) | required; **unique** index; login identifier |
+| PasswordHash | varchar(400) | PBKDF2 `iterations.salt.hash` |
+| MustChangePassword | bool | true after creation / admin reset; forces change on first login |
+| IsActive | bool | default true; soft-deactivate (no hard delete) |
+| CreatedByUserId | int? | self-reference to the creating admin (no FK constraint) |
+| LastLoginAt | datetime? | set on successful login |
+| CreatedAt / UpdatedAt | datetime | UTC |
+
+### UserRole (`UserRoles`)
+One row per role a user holds (a user may have several). Unique index `(UserId, Role)`; cascade-delete from User.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| UserId | int FK → User | cascade delete |
+| Role | varchar(50) | one of `SuperAdmin`, `Admin`, `Recruiter`, `Viewer` (see `Auth/Roles.cs`) |
 
 ### StatusOption (`StatusOptions`)
 Lookup table for candidate status dropdown values. Candidate and history rows still store the status text so historical labels remain readable even if configuration changes later.
