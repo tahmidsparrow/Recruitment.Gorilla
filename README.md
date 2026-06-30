@@ -2,8 +2,6 @@
 
 A recruitment management system for streamlining CV ingestion, candidate tracking, and hiring pipeline management.
 
-> **Contributing (AI agents or humans):** start with [AGENTS.md](AGENTS.md) and the context/spec docs in [ai-docs/](ai-docs/) to build in the project's established style and flow.
-
 ---
 
 ## Phase 1 Features
