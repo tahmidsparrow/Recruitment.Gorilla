@@ -375,3 +375,92 @@ a:hover {
 [data-bs-theme='dark'] .status--muted { --status-color: #b6b4b2; --status-tint: rgba(182, 180, 178, 0.2); }
 [data-bs-theme='dark'] .status--uploaded { --status-color: #4fd0d4; --status-tint: rgba(79, 208, 212, 0.18); }
 [data-bs-theme='dark'] .status--intake { --status-color: #e6c34d; --status-tint: rgba(230, 195, 77, 0.2); }
+
+/* ===== Dashboard KPI cards ("Stage Performance" style) =====
+   Each tone sets --kpi-accent (solid; icon chip + progress fill) and --kpi-tint
+   (translucent; hover background). Hover recolors the whole card to its accent so
+   the hovered card identifies itself. */
+.kpi--orange { --kpi-accent: #ff6b35; --kpi-tint: rgba(255, 107, 53, 0.10); }
+.kpi--teal   { --kpi-accent: #3d8e8e; --kpi-tint: rgba(61, 142, 142, 0.10); }
+.kpi--green  { --kpi-accent: #22a06b; --kpi-tint: rgba(34, 160, 107, 0.10); }
+.kpi--red    { --kpi-accent: #d13438; --kpi-tint: rgba(209, 52, 56, 0.10); }
+.kpi--blue   { --kpi-accent: #2196f3; --kpi-tint: rgba(33, 150, 243, 0.10); }
+.kpi--purple { --kpi-accent: #8764b8; --kpi-tint: rgba(135, 100, 184, 0.10); }
+
+.kpi-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+    background-color 0.18s ease, border-color 0.18s ease;
+}
+.kpi-card:hover {
+  background-color: var(--kpi-tint);
+  border-color: var(--kpi-accent);
+  transform: translateY(-3px);
+  box-shadow: var(--ms-shadow-8);
+}
+
+.kpi-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--kpi-accent);
+  color: #fff;
+  flex: 0 0 auto;
+  transition: transform 0.18s ease;
+}
+.kpi-card:hover .kpi-card__icon {
+  transform: scale(1.08);
+}
+
+.kpi-card__bar {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ms-neutral);
+  overflow: hidden;
+}
+.kpi-card__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--kpi-accent);
+  transition: width 0.5s ease;
+}
+
+/* Dark theme — lighter accents + stronger tints for contrast on dark surfaces. */
+[data-bs-theme='dark'] .kpi--orange { --kpi-accent: #ff8659; --kpi-tint: rgba(255, 134, 89, 0.16); }
+[data-bs-theme='dark'] .kpi--teal   { --kpi-accent: #5fb3b3; --kpi-tint: rgba(95, 179, 179, 0.16); }
+[data-bs-theme='dark'] .kpi--green  { --kpi-accent: #4cc38a; --kpi-tint: rgba(76, 195, 138, 0.16); }
+[data-bs-theme='dark'] .kpi--red    { --kpi-accent: #f1707a; --kpi-tint: rgba(241, 112, 122, 0.16); }
+[data-bs-theme='dark'] .kpi--blue   { --kpi-accent: #64b5f6; --kpi-tint: rgba(100, 181, 246, 0.16); }
+[data-bs-theme='dark'] .kpi--purple { --kpi-accent: #b8a0e0; --kpi-tint: rgba(184, 160, 224, 0.16); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .kpi-card__icon,
+  .kpi-card__bar-fill {
+    transition: none;
+  }
+  .kpi-card:hover {
+    transform: none;
+  }
+}
+
+/* ===== Priority badge (Active Job Openings) ===== */
+.priority-badge {
+  display: inline-block;
+  padding: 0.15em 0.55em;
+  border-radius: 0.375rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.priority--high { color: #d13438; background: rgba(209, 52, 56, 0.12); }
+.priority--medium { color: #0078d4; background: rgba(0, 120, 212, 0.12); }
+.priority--low { color: #605e5c; background: rgba(96, 94, 92, 0.14); }
+[data-bs-theme='dark'] .priority--high { color: #f1707a; background: rgba(241, 112, 122, 0.18); }
+[data-bs-theme='dark'] .priority--medium { color: #6cb8f6; background: rgba(108, 184, 246, 0.18); }
+[data-bs-theme='dark'] .priority--low { color: #b6b4b2; background: rgba(182, 180, 178, 0.2); }
+
+/* Active Job Openings table — subtle row hover + muted meta icons */
+.job-openings-table td { vertical-align: middle; }
+.job-openings-table .job-meta-icon { color: var(--ms-text-secondary); flex: 0 0 auto; }
+.job-openings-table .job-id { color: var(--ms-text-secondary); font-variant-numeric: tabular-nums; }
