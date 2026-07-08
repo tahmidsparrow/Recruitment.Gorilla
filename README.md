@@ -6,6 +6,7 @@ A recruitment management system for streamlining CV ingestion, candidate trackin
 
 ## Phase 1 Features
 
+- **Dashboard** — landing page with KPI cards, pipeline funnel, status donut, applications trend, role/skill breakdowns, upcoming interviews, and a recent-activity feed (all owner-scoped and theme-aware)
 - **Admin Login** — the app is gated behind a single admin account (JWT auth with refresh-token rotation)
 - **Bulk CV Upload** — drag-and-drop multiple PDF or Word (.docx) files at once
 - **Auto-extraction** — name, email, phone, job title, LinkedIn, GitHub, and skills are parsed directly from the CV
@@ -175,6 +176,7 @@ See [ai-docs/data-model.md](ai-docs/data-model.md) for full detail. Tables: **Ca
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
+| `GET` | `/api/dashboard` | ✓ | Aggregated dashboard metrics (KPIs, status breakdown, trend, role/skill counts, upcoming interviews, recent activity) — owner-scoped |
 | `POST` | `/api/auth/login` | — | Log in; returns access token + sets httpOnly refresh cookie |
 | `POST` | `/api/auth/refresh` | cookie | Rotate refresh token, issue new access token |
 | `POST` | `/api/auth/logout` | cookie | Revoke refresh token, clear cookie |

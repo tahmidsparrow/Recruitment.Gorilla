@@ -5,6 +5,7 @@ import type {
   ChangePasswordPayload,
   CreateCandidatePayload,
   CreateUserPayload,
+  DashboardData,
   DuplicateCandidate,
   LoginPayload,
   LoginResult,
@@ -159,6 +160,11 @@ export const uploadCV = async (file: File): Promise<CVDraft> => {
   const form = new FormData();
   form.append('file', file);
   const { data } = await api.post<CVDraft>('/cvupload', form);
+  return data;
+};
+
+export const getDashboard = async (): Promise<DashboardData> => {
+  const { data } = await api.get<DashboardData>('/dashboard');
   return data;
 };
 
