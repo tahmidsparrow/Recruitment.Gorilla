@@ -13,15 +13,15 @@ Recruitment.Gorilla/
 ├── client/                    # React 19 + TypeScript (Vite)
 │   └── src/
 │       ├── auth/AuthContext.tsx
-│       ├── components/        # BulkUploader, CandidateForm, StatusTimeline
-│       ├── pages/             # LoginPage, UploadPage, CandidatesPage, CandidateDetailPage
+│       ├── components/        # BulkUploader, CandidateForm, StatusTimeline, dashboard/*
+│       ├── pages/             # DashboardPage, LoginPage, UploadPage, CandidatesPage, CandidateDetailPage, ConfigurationPage
 │       ├── services/api.ts    # typed Axios layer + auth interceptors
 │       ├── types/index.ts     # shared TS types
 │       └── index.css          # Microsoft Fluent theme
 └── server/
     └── Recruitment.Gorilla.API/
-        ├── Controllers/       # Auth, Candidates, CVUpload
-        ├── Services/          # AuthService, CandidateService, CVParserService
+        ├── Controllers/       # Auth, Candidates, CVUpload, Configuration, Dashboard
+        ├── Services/          # AuthService, CandidateService, CVParserService, DashboardService
         ├── Models/            # Candidate, CVFile, StatusHistory, RefreshToken
         ├── Data/AppDbContext.cs
         ├── DTOs/
