@@ -18,13 +18,17 @@ public class ConfigurationService(AppDbContext db)
         await db.RoleAppliedOptions
             .Where(r => r.IsActive)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
-            .Select(r => new RoleAppliedOptionDto(r.Id, r.Name, r.SortOrder, r.IsActive))
+            .Select(r => new RoleAppliedOptionDto(
+                r.Id, r.Name, r.SortOrder, r.IsActive,
+                r.Location, r.Department, r.Priority, r.PostedDate))
             .ToListAsync();
 
     public async Task<List<RoleAppliedOptionDto>> GetAllRolesAsync() =>
         await db.RoleAppliedOptions
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
-            .Select(r => new RoleAppliedOptionDto(r.Id, r.Name, r.SortOrder, r.IsActive))
+            .Select(r => new RoleAppliedOptionDto(
+                r.Id, r.Name, r.SortOrder, r.IsActive,
+                r.Location, r.Department, r.Priority, r.PostedDate))
             .ToListAsync();
 
     public async Task<(RoleAppliedOptionDto? Created, bool Conflict)> CreateRoleAsync(UpsertRoleAppliedOptionDto dto)
@@ -33,7 +37,16 @@ public class ConfigurationService(AppDbContext db)
         if (await db.RoleAppliedOptions.AnyAsync(r => r.Name == name))
             return (null, true);
 
-        var entity = new RoleAppliedOption { Name = name, SortOrder = dto.SortOrder, IsActive = dto.IsActive };
+        var entity = new RoleAppliedOption
+        {
+            Name = name,
+            SortOrder = dto.SortOrder,
+            IsActive = dto.IsActive,
+            Location = Clean(dto.Location),
+            Department = Clean(dto.Department),
+            Priority = Clean(dto.Priority),
+            PostedDate = dto.PostedDate,
+        };
         db.RoleAppliedOptions.Add(entity);
         await db.SaveChangesAsync();
         return (ToDto(entity), false);
@@ -51,10 +64,18 @@ public class ConfigurationService(AppDbContext db)
         entity.Name = name;
         entity.SortOrder = dto.SortOrder;
         entity.IsActive = dto.IsActive;
+        entity.Location = Clean(dto.Location);
+        entity.Department = Clean(dto.Department);
+        entity.Priority = Clean(dto.Priority);
+        entity.PostedDate = dto.PostedDate;
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return (ToDto(entity), false, false);
     }
+
+    /// <summary>Trim to null so empty strings aren't persisted.</summary>
+    private static string? Clean(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     /// <summary>Soft-disable when referenced by a candidate; otherwise hard delete. False if not found.</summary>
     public async Task<bool> DeleteRoleAsync(int id)
@@ -139,6 +160,7 @@ public class ConfigurationService(AppDbContext db)
         return true;
     }
 
-    private static RoleAppliedOptionDto ToDto(RoleAppliedOption r) => new(r.Id, r.Name, r.SortOrder, r.IsActive);
+    private static RoleAppliedOptionDto ToDto(RoleAppliedOption r) =>
+        new(r.Id, r.Name, r.SortOrder, r.IsActive, r.Location, r.Department, r.Priority, r.PostedDate);
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
 }

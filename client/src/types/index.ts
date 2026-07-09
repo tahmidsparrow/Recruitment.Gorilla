@@ -68,6 +68,11 @@ export interface RoleAppliedOption {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  // Job-opening posting metadata (optional)
+  location?: string | null;
+  department?: string | null;
+  priority?: string | null;
+  postedDate?: string | null;
 }
 
 export interface SkillOption {
@@ -81,6 +86,11 @@ export interface UpsertOptionPayload {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  // Optional job-opening fields — only sent for role options (skills ignore them).
+  location?: string | null;
+  department?: string | null;
+  priority?: string | null;
+  postedDate?: string | null;
 }
 
 export interface StatusChangePayload {
@@ -217,4 +227,68 @@ export interface UpdateUserPayload {
 
 export interface ResetPasswordPayload {
   temporaryPassword: string;
+}
+
+// ----- Dashboard -----
+export interface DashboardKpis {
+  totalCandidates: number;
+  inProcess: number;
+  recommended: number;
+  rejected: number;
+  newThisWeek: number;
+  referredCount: number;
+  referredPercent: number;
+}
+
+export interface StatusCount {
+  status: string;
+  count: number;
+  sortOrder: number;
+}
+
+export interface NameCount {
+  name: string;
+  count: number;
+}
+
+export interface TrendPoint {
+  date: string;
+  count: number;
+}
+
+export interface UpcomingInterview {
+  candidateId: number;
+  fullName: string;
+  role: string | null;
+  currentStatus: string;
+  interviewAt: string;
+}
+
+export interface ActivityItem {
+  candidateId: number;
+  fullName: string;
+  status: string;
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface JobOpening {
+  id: number;
+  title: string;
+  location: string | null;
+  department: string | null;
+  priority: string | null;
+  postedDate: string;
+  applicants: number;
+}
+
+export interface DashboardData {
+  kpis: DashboardKpis;
+  statusBreakdown: StatusCount[];
+  byRole: NameCount[];
+  topSkills: NameCount[];
+  applicationsTrend: TrendPoint[];
+  upcomingInterviews: UpcomingInterview[];
+  recentActivity: ActivityItem[];
+  activeJobOpenings: JobOpening[];
 }

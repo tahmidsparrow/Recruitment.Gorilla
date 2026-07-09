@@ -159,6 +159,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(r => r.Id);
             e.Property(r => r.Name).HasMaxLength(200).IsRequired();
             e.Property(r => r.IsActive).HasDefaultValue(true);
+            e.Property(r => r.Location).HasMaxLength(100);
+            e.Property(r => r.Department).HasMaxLength(100);
+            e.Property(r => r.Priority).HasMaxLength(20);
             e.HasIndex(r => r.Name).IsUnique();
 
             var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);

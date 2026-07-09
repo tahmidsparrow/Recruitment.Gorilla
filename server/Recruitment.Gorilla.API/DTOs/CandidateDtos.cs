@@ -147,9 +147,24 @@ public record StatusOptionDto(
     bool IsInitial
 );
 
-public record RoleAppliedOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+public record RoleAppliedOptionDto(
+    int Id,
+    string Name,
+    int SortOrder,
+    bool IsActive,
+    string? Location = null,
+    string? Department = null,
+    string? Priority = null,
+    DateTime? PostedDate = null);
 
-public record UpsertRoleAppliedOptionDto(string Name, int SortOrder, bool IsActive);
+public record UpsertRoleAppliedOptionDto(
+    string Name,
+    int SortOrder,
+    bool IsActive,
+    string? Location = null,
+    string? Department = null,
+    string? Priority = null,
+    DateTime? PostedDate = null);
 
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 

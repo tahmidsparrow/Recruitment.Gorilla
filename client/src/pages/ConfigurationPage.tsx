@@ -19,7 +19,13 @@ interface Opt {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  location?: string | null;
+  department?: string | null;
+  priority?: string | null;
+  postedDate?: string | null;
 }
+
+const PRIORITIES = ['High', 'Medium', 'Low'];
 
 interface SectionApi {
   list: (includeInactive: boolean) => Promise<Opt[]>;
@@ -46,7 +52,7 @@ export default function ConfigurationPage() {
   return (
     <div>
       <h2 className="mb-4">Configuration</h2>
-      <OptionSection title="Roles applied" noun="role" queryKey="roles" api={rolesApi} />
+      <OptionSection title="Roles applied / Job openings" noun="role" queryKey="roles" api={rolesApi} jobFields />
       <OptionSection title="Skills" noun="skill" queryKey="skills" api={skillsApi} />
     </div>
   );
@@ -57,11 +63,13 @@ function OptionSection({
   noun,
   queryKey,
   api,
+  jobFields = false,
 }: {
   title: string;
   noun: string;
   queryKey: string;
   api: SectionApi;
+  jobFields?: boolean;
 }) {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
@@ -70,6 +78,10 @@ function OptionSection({
   const [name, setName] = useState('');
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
+  const [location, setLocation] = useState('');
+  const [department, setDepartment] = useState('');
+  const [priority, setPriority] = useState('');
+  const [postedDate, setPostedDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [nameInvalid, setNameInvalid] = useState(false);
 
@@ -83,6 +95,12 @@ function OptionSection({
   const saveMutation = useMutation({
     mutationFn: () => {
       const payload: UpsertOptionPayload = { name: name.trim(), sortOrder, isActive };
+      if (jobFields) {
+        payload.location = location.trim() || null;
+        payload.department = department.trim() || null;
+        payload.priority = priority || null;
+        payload.postedDate = postedDate || null;
+      }
       return editing ? api.update(editing.id, payload) : api.create(payload);
     },
     onSuccess: () => {
@@ -103,6 +121,10 @@ function OptionSection({
     setName('');
     setSortOrder((options.at(-1)?.sortOrder ?? 0) + 1);
     setIsActive(true);
+    setLocation('');
+    setDepartment('');
+    setPriority('');
+    setPostedDate('');
     setError(null);
     setNameInvalid(false);
     setShowModal(true);
@@ -113,6 +135,10 @@ function OptionSection({
     setName(o.name);
     setSortOrder(o.sortOrder);
     setIsActive(o.isActive);
+    setLocation(o.location ?? '');
+    setDepartment(o.department ?? '');
+    setPriority(o.priority ?? '');
+    setPostedDate(o.postedDate ? o.postedDate.slice(0, 10) : '');
     setError(null);
     setNameInvalid(false);
     setShowModal(true);
@@ -136,6 +162,9 @@ function OptionSection({
             <thead>
               <tr>
                 <th>Name</th>
+                {jobFields && <th className="d-none d-md-table-cell">Location</th>}
+                {jobFields && <th className="d-none d-md-table-cell">Department</th>}
+                {jobFields && <th className="d-none d-lg-table-cell">Priority</th>}
                 <th style={{ width: 90 }}>Order</th>
                 <th style={{ width: 110 }}>Status</th>
                 <th className="text-end" style={{ width: 170 }}>
@@ -147,6 +176,9 @@ function OptionSection({
               {options.map((o) => (
                 <tr key={o.id}>
                   <td>{o.name}</td>
+                  {jobFields && <td className="d-none d-md-table-cell">{o.location ?? '—'}</td>}
+                  {jobFields && <td className="d-none d-md-table-cell">{o.department ?? '—'}</td>}
+                  {jobFields && <td className="d-none d-lg-table-cell">{o.priority ?? '—'}</td>}
                   <td>{o.sortOrder}</td>
                   <td>
                     <Badge bg={o.isActive ? 'success' : 'secondary'}>
@@ -212,10 +244,53 @@ function OptionSection({
                 onChange={(e) => setSortOrder(Number(e.target.value))}
               />
             </Form.Group>
+            {jobFields && (
+              <>
+                <div className="row g-2 mb-3">
+                  <div className="col-sm-6">
+                    <Form.Label>Location</Form.Label>
+                    <Form.Control
+                      placeholder="Remote / Office / Hybrid"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Label>Department</Form.Label>
+                    <Form.Control
+                      placeholder="Engineering"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="row g-2 mb-3">
+                  <div className="col-sm-6">
+                    <Form.Label>Priority</Form.Label>
+                    <Form.Select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                      <option value="">None</option>
+                      {PRIORITIES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Label>Posted date</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={postedDate}
+                      onChange={(e) => setPostedDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             <Form.Check
               type="checkbox"
               id={`${queryKey}-active`}
-              label="Active (shown in candidate forms)"
+              label={jobFields ? 'Active (open — shown in candidate forms & job openings)' : 'Active (shown in candidate forms)'}
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
             />

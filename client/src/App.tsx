@@ -13,6 +13,7 @@ import { Button, Container, Navbar, Nav, Spinner } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
@@ -68,6 +69,7 @@ function ProtectedLayout() {
           <Navbar.Toggle />
           <Navbar.Collapse>
             <Nav className="me-auto">
+              <Nav.Link as={NavLink} to="/" end>Dashboard</Nav.Link>
               {canWriteCandidates && <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>}
               <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>
               {isAdminOrAbove && <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>}
@@ -100,7 +102,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<CandidatesPage />} />
+            <Route path="/" element={<DashboardPage />} />
             <Route
               path="/upload"
               element={
