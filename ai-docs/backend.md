@@ -5,8 +5,8 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 ## Structure
 | Folder | Purpose |
 |---|---|
-| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`, `ConfigurationController`. |
-| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`, `ConfigurationService`. |
+| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`, `ConfigurationController`, `UsersController`, `DashboardController`. |
+| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`, `ConfigurationService`, `UserService`, `DashboardService`. |
 | `Models/` | EF entities. |
 | `Data/AppDbContext.cs` | DbSets + Fluent config. |
 | `DTOs/` | Request/response `record`s. |
@@ -19,7 +19,7 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 1. log4net logging provider (`AddLog4Net("log4net.config")`); log dir anchored via `RG_LOG_DIR` env var to `Logs/`.
 2. Controllers, Swagger.
 3. `AddDbContext<AppDbContext>` using MySQL connection string (fails fast if missing).
-4. Service registrations: `CandidateService`, `CVParserService`, `AuthService`, `StatusOptionService` (all scoped).
+4. Service registrations (all scoped): `CandidateService`, `CVParserService`, `AuthService`, `UserService`, `CurrentUser`, `StatusOptionService`, `ConfigurationService`, `DashboardService`.
 5. JWT auth (hardened — see [auth.md](auth.md)) + default-deny fallback authorization policy.
 6. CORS from `AllowedOrigins`.
 7. Pipeline: Swagger (Dev) → `UseCors` → **`UseAuthentication` → `UseAuthorization`** → `MapControllers`.
@@ -59,12 +59,21 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
 - Prerequisite details are stored on `StatusHistory`: task details, submission URL, interview date/time, and comments.
 - Future admin configuration can edit/add options and transitions against the same tables without changing candidate history storage.
 
+## Dashboard aggregation
+- `DashboardController` (`GET /api/dashboard`, `[Authorize]`, all roles) delegates to `DashboardService.GetAsync(ownerUserId)`. It computes the same **owner scope** as `CandidatesController` (`ReadOwnerScope`: null for SuperAdmin/Admin/Viewer, else the caller's user id) so a recruiter's figures match their candidate list.
+- `DashboardService` returns one `DashboardDto` built from read-only aggregations over existing tables — no new entities:
+  - **KPIs** (total, in-process, recommended, rejected, new-this-week, referred count/%) bucketed from a single `GroupBy(CurrentStatus)`; terminal sets are `private static readonly HashSet<string>` of the exact seeded status strings.
+  - **Status breakdown** ordered by `StatusOptions.SortOrder`; **applications trend** groups `CreatedAt.Date` over the last 30 days and **zero-fills** missing days in C#; **by-role** and **top-skills** counts; **upcoming interviews** (future `StatusHistory.InterviewAt`); **recent activity** (latest status changes).
+  - **Active job openings** = active `RoleAppliedOptions` projected to `JobOpeningDto`, with applicant counts derived by role.
+- **MySQL translation note:** group by a scalar FK (e.g. `cs.SkillOptionId`, `c.RoleAppliedOptionId`) then resolve names/rows from a dictionary — grouping directly by a joined navigation (`cs.SkillOption.Name`) is **not** translatable by Pomelo and throws at runtime.
+
 ## Logging
 log4net (`log4net.config`): console + daily rolling file under `Logs/`. App categories log at INFO; framework noise at WARN. Log audit events on writes.
 
 ## API surface (current)
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
+| GET | `/api/dashboard` | required | Aggregated dashboard payload (owner-scoped): KPIs, status breakdown, 30-day trend, by-role/top-skill counts, upcoming interviews, recent activity, active job openings |
 | POST | `/api/auth/login` | anon | Issue access token + refresh cookie |
 | POST | `/api/auth/refresh` | anon (cookie) | Rotate refresh, new access token |
 | POST | `/api/auth/logout` | anon (cookie) | Revoke refresh, clear cookie |
@@ -80,8 +89,8 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |
 | GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
-| GET/POST | `/api/config/roles` | required | List (active, or `?includeInactive=true`) / create Role Applied options |
-| PUT/DELETE | `/api/config/roles/{id}` | required | Update / soft-disable-or-delete a Role Applied option |
+| GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (incl. optional job-opening fields: Location, Department, Priority, PostedDate) |
+| PUT/DELETE | `/api/config/roles/{id}` | Admin+ | Update / soft-disable-or-delete a Role Applied option |
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
 

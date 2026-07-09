@@ -134,6 +134,17 @@ Lookup table for allowed movement from one status option to another. The UI hide
 ### RoleAppliedOption (`RoleAppliedOptions`) & SkillOption (`SkillOptions`)
 Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt`. Inactive values are hidden from candidate forms but kept for history. Both are seeded with starter values.
 
+**`RoleAppliedOption` doubles as a job opening.** An active role *is* an open position, and it carries optional posting metadata surfaced in the dashboard's "Active Job Openings" table (migration `AddJobOpeningFieldsToRoleAppliedOption`):
+
+| Field | Type | Notes |
+|---|---|---|
+| Location | varchar(100) | nullable; e.g. Remote / Office / Hybrid |
+| Department | varchar(100) | nullable; e.g. Engineering |
+| Priority | varchar(20) | nullable; High / Medium / Low |
+| PostedDate | datetime | nullable; falls back to `CreatedAt` for the table's Date column |
+
+Applicants per opening are **derived by role** (candidates whose `RoleAppliedOptionId` matches), not a stored count. There is no separate `JobOpening` table.
+
 ### CandidateSkill (`CandidateSkills`)
 Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(CandidateId, SkillOptionId)`; cascade-delete from Candidate, restrict on SkillOption. Candidate forms select skills from active `SkillOptions` only (not creatable from the candidate form).
 
@@ -144,3 +155,4 @@ Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(Candidat
 - **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment for Interview Completed/Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).
+- **The dashboard adds no tables.** `GET /api/dashboard` is a read-only aggregation over existing entities (Candidates, StatusHistories, RoleAppliedOptions, CandidateSkills), owner-scoped like the candidate list. See [backend.md](backend.md) / [frontend.md](frontend.md).

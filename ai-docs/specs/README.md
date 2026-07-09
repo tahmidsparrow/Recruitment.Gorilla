@@ -17,3 +17,4 @@ A spec captures the intent, data/API contract, and acceptance criteria so any ag
 | [database-backed-status-options.md](database-backed-status-options.md) | Implemented | Status dropdown values now come from the database. |
 | [candidate-profile-fields-and-references.md](candidate-profile-fields-and-references.md) | Implemented | Add GitHub/Portfolio/role fields + a single reference section to the candidate profile. |
 | [candidate-ux-validation-config-and-preview.md](candidate-ux-validation-config-and-preview.md) | Implemented | Login cleanup, frontend validation, config-backed role/skills, status colors, and CV preview. |
+| [recruitment-dashboard-and-job-openings.md](recruitment-dashboard-and-job-openings.md) | Implemented | Dashboard landing page (KPIs, charts, activity) + Active Job Openings backed by role posting fields. |
