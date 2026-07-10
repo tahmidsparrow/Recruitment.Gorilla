@@ -47,7 +47,7 @@ public class CandidatesController(
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
         var candidateError = await candidateService.ValidateCandidateAsync(
-            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds);
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience);
         if (candidateError is not null)
             return BadRequest(candidateError);
 
@@ -113,7 +113,7 @@ public class CandidatesController(
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateDto dto)
     {
         var candidateError = await candidateService.ValidateCandidateAsync(
-            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds);
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience);
         if (candidateError is not null)
             return BadRequest(candidateError);
 

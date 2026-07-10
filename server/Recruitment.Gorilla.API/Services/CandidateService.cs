@@ -115,13 +115,17 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     /// and are active. Returns an error message or null. Used by create and update.
     /// </summary>
     public async Task<string?> ValidateCandidateAsync(
-        string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds)
+        string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds,
+        string? relevantExperience)
     {
         if (string.IsNullOrWhiteSpace(fullName))
             return "Full name is required.";
 
         if (string.IsNullOrWhiteSpace(email) || !EmailRegex.IsMatch(email.Trim()))
             return "A valid email address is required.";
+
+        if (string.IsNullOrWhiteSpace(relevantExperience))
+            return "Relevant experience is required.";
 
         if (roleAppliedOptionId is int roleId &&
             !await db.RoleAppliedOptions.AnyAsync(r => r.Id == roleId && r.IsActive))
@@ -238,6 +242,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             Email = dto.Email,
             Phone = dto.Phone,
             CurrentTitle = dto.CurrentTitle,
+            RelevantExperience = dto.RelevantExperience.Trim(),
             Skills = dto.Skills,
             Summary = dto.Summary,
             LinkedInUrl = dto.LinkedInUrl,
@@ -339,6 +344,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.Email = dto.Email;
         candidate.Phone = dto.Phone;
         candidate.CurrentTitle = dto.CurrentTitle;
+        candidate.RelevantExperience = dto.RelevantExperience.Trim();
         candidate.Skills = dto.Skills;
         candidate.Summary = dto.Summary;
         candidate.LinkedInUrl = dto.LinkedInUrl;
@@ -443,6 +449,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
     private static CandidateDetailDto MapToDetail(Candidate c) => new(
         c.Id, c.FullName, c.Email, c.Phone, c.CurrentTitle,
+        c.RelevantExperience,
         c.Skills, c.Summary, c.LinkedInUrl,
         c.GithubUrl, c.PortfolioUrl, c.AppliedRole,
         c.IsReferred, c.ReferenceName, c.ReferenceEmail, c.ReferenceEmployeeId,

@@ -31,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.Email).HasMaxLength(200).IsRequired();
             e.Property(c => c.Phone).HasMaxLength(50);
             e.Property(c => c.CurrentTitle).HasMaxLength(200);
+            e.Property(c => c.RelevantExperience).HasMaxLength(100).IsRequired();
             e.Property(c => c.LinkedInUrl).HasMaxLength(500);
             e.Property(c => c.GithubUrl).HasMaxLength(500);
             e.Property(c => c.PortfolioUrl).HasMaxLength(500);

@@ -7,6 +7,8 @@ public class Candidate
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
     public string? CurrentTitle { get; set; }
+    /// <summary>Free-text relevant experience, e.g. "3 Years". Required; existing rows backfilled to "0 Years".</summary>
+    public string RelevantExperience { get; set; } = "0 Years";
     public string? Skills { get; set; }
     public string? Summary { get; set; }
     public string? LinkedInUrl { get; set; }
