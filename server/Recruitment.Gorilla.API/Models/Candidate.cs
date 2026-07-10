@@ -7,6 +7,8 @@ public class Candidate
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
     public string? CurrentTitle { get; set; }
+    /// <summary>Free-text relevant experience, e.g. "3 Years". Required; existing rows backfilled to "0 Years".</summary>
+    public string RelevantExperience { get; set; } = "0 Years";
     public string? Skills { get; set; }
     public string? Summary { get; set; }
     public string? LinkedInUrl { get; set; }
@@ -31,4 +33,5 @@ public class Candidate
     public ICollection<CVFile> CVFiles { get; set; } = [];
     public ICollection<StatusHistory> StatusHistories { get; set; } = [];
     public ICollection<CandidateSkill> CandidateSkills { get; set; } = [];
+    public ICollection<Interview> Interviews { get; set; } = [];
 }

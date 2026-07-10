@@ -10,11 +10,11 @@ React 19 + TypeScript + Vite. Root: `client/`.
 | `src/auth/AuthContext.tsx` | Auth state, login/logout, silent session restore. |
 | `src/services/api.ts` | Typed Axios layer + auth interceptors (the only HTTP caller). |
 | `src/types/index.ts` | Shared types mirroring API DTOs. |
-| `src/pages/` | `DashboardPage`, `LoginPage`, `UploadPage`, `CandidatesPage`, `CandidateDetailPage`, `ConfigurationPage`, `UsersPage`, `ChangePasswordPage`. |
-| `src/components/` | `BulkUploader`, `CandidateForm`, `StatusTimeline`, `SearchableSelect`, `StatusBadge`, `ThemeToggle`, `ToastStack`, `RequireRole`. |
-| `src/components/dashboard/` | Dashboard widgets: `KpiCard`, `kpiIcons`, `PipelineFunnelChart`, `StatusDonutChart`, `TrendChart`, `CountBarChart`, `ActiveJobOpeningsTable`. |
-| `src/utils/` | `statusColors.ts` (status → tone class); `chartColors.ts` (resolves chart colors from the status tokens + chart chrome per theme). |
-| `src/index.css` | Microsoft Fluent theme (CSS variables). |
+| `src/pages/` | `DashboardPage`, `LoginPage`, `UploadPage`, `CandidatesPage`, `CandidateDetailPage`, `InterviewPage`, `ConfigurationPage`, `UsersPage`, `ChangePasswordPage`. |
+| `src/components/` | `BulkUploader`, `CandidateForm`, `StatusTimeline`, `SearchableSelect`, `StatusBadge`, `ThemeToggle`, `ToastStack`, `RequireRole`, `NotificationBell`, `ReadOnlyCandidateProfile`, `EvaluationForm`. |
+| `src/components/dashboard/` | Dashboard widgets: `KpiCard`, `kpiIcons`, `PipelineFunnelChart`, `StatusDonutChart`, `TrendChart`, `CountBarChart`, `ActiveJobOpeningsTable`, `MyInterviewsCard`. |
+| `src/utils/` | `statusColors.ts` (status → tone class); `chartColors.ts` (chart colors from status tokens + chrome per theme); `evaluationCriteria.ts` (interview-form catalog — keys match the backend); `skillColors.ts` (stable hash of a skill name → colorful badge class). |
+| `src/index.css` | Coastal theme (CSS variables). |
 | `public/logo.png` | Brand logo. |
 | `vite.config.ts` | Dev server host + `/api` proxy. |
 
@@ -24,17 +24,17 @@ React 19 + TypeScript + Vite. Root: `client/`.
   - shows a spinner while `loading` (initial silent refresh in flight),
   - redirects to `/login` (preserving `from`) when not authenticated,
   - otherwise renders the **app bar** (logo, nav links with Fluent pivot underline, username + Sign out) and `<Outlet />`.
-- Routes: `/` → `DashboardPage` (landing), `/candidates` → `CandidatesPage`, `/upload` → `UploadPage`, `/candidates/:id` → `CandidateDetailPage`, `/configuration` (Admin+), `/users` (SuperAdmin), `/change-password`. The **Dashboard** nav link (`to="/" end`) is first and visible to all roles; the dashboard is owner-scoped server-side.
+- Routes: `/` → `DashboardPage` (landing), `/candidates` → `CandidatesPage`, `/upload` → `UploadPage`, `/candidates/:id` → `CandidateDetailPage`, `/interviews/:id` → `InterviewPage`, `/configuration` (Admin+), `/users` (SuperAdmin), `/change-password`. The **Dashboard** nav link (`to="/" end`) is first and visible to all roles; the dashboard is owner-scoped server-side. The navbar also hosts a **`NotificationBell`** (all roles).
 
 ## Data fetching (TanStack Query)
-- Reads: `useQuery` with array keys — `['dashboard']`, `['candidates', { search, status, page }]`, `['candidate', id]`, `['status-options']`, `['status-options', 'initial']`, `['status-options', 'next', id]`. Use `keepPreviousData` for paged lists.
+- Reads: `useQuery` with array keys — `['dashboard']`, `['candidates', { search, status, page }]`, `['candidate', id]`, `['status-options']`, `['status-options', 'initial']`, `['status-options', 'next', id]`, `['notifications']` (60s `refetchInterval`), `['my-interviews']`, `['assignable-users']`, `['interview', id]`. Use `keepPreviousData` for paged lists.
 - Writes: `useMutation`; on success invalidate keys — e.g. after create/delete/status change, `invalidateQueries({ queryKey: ['candidates'] })` and/or `['candidate', id]`.
 - All calls go through `services/api.ts` functions; never call Axios in a component.
 
 ## `services/api.ts`
 - Axios instance: `baseURL = '/api'` (same-origin → Vite proxies to backend), `withCredentials: true`.
 - **Auth interceptors**: attach in-memory access token on requests; on 401, do a single silent `/auth/refresh` and replay the request, else redirect to `/login`. See [auth.md](auth.md).
-- One exported, typed function per endpoint: `getDashboard`, `uploadCV`, `getCandidates`, `getCandidate`, `getStatusOptions`, `getInitialStatusOptions`, `getNextStatusOptions`, `createCandidate`, `updateCandidate`, `addStatus`, `deleteCandidate`, `downloadCvFile`, `previewCvFile`, `getRoleOptions`/`createRoleOption`/`updateRoleOption`/`deleteRoleOption`, `getSkillOptions`/`createSkillOption`/`updateSkillOption`/`deleteSkillOption`, `login`, `logout`, `refreshSession`. (`getCandidateRoles` from the prior free-text role feature remains but is unused by the forms.)
+- One exported, typed function per endpoint: `getDashboard`, `uploadCV`, `getCandidates`, `getCandidate`, `getStatusOptions`, `getInitialStatusOptions`, `getNextStatusOptions`, `createCandidate`, `updateCandidate`, `addStatus`, `deleteCandidate`, `downloadCvFile`, `previewCvFile`, `getRoleOptions`/`createRoleOption`/`updateRoleOption`/`deleteRoleOption`, `getSkillOptions`/`createSkillOption`/`updateSkillOption`/`deleteSkillOption`, `getAssignableUsers`, `getMyInterviews`, `getInterview`, `saveEvaluation`, `getNotifications`/`markNotificationRead`/`markAllNotificationsRead`, `login`, `logout`, `refreshSession`. (`getCandidateRoles` from the prior free-text role feature remains but is unused by the forms.)
 - **Authenticated file download**: `downloadCvFile` fetches the CV as a blob (so the bearer token is sent) and triggers a browser save — a plain `<a href>` can't carry the token.
 
 ## Key flows
@@ -53,6 +53,13 @@ Single `useQuery(['dashboard'])` → `getDashboard()`, rendered as react-bootstr
 
 Charts are added under **`recharts`** (the only chart dependency). New chart chrome/colors go through `chartColors.ts`, not hardcoded hex.
 
+### Interviews, evaluations & notifications
+- **Scheduling:** in `CandidateDetailPage`'s `AddStatus`, choosing **Interview Scheduled** reveals a required **Interviewers** `SearchableMultiSelect` (options from `['assignable-users']`); the payload adds `interviewerUserIds`, and success invalidates `['notifications']` + `['my-interviews']`.
+- **Notification bell (`components/NotificationBell.tsx`, navbar):** `['notifications']` query with a 60s `refetchInterval`; unread badge; dropdown of the latest ~15; clicking marks read (mutation) and navigates to the item's `linkUrl`; "Mark all read".
+- **Dashboard "My interviews" (`components/dashboard/MyInterviewsCard.tsx`):** `['my-interviews']` list of the caller's assigned interviews with date/time (highlight <24h) and an evaluation-state badge (Pending/Draft/Submitted); rows link to `/interviews/:id`.
+- **Interview page (`pages/InterviewPage.tsx`, `/interviews/:id`):** a **hero header card** (candidate **initials avatar + name + Role Applied For**, calendar chip with a relative badge Today/Tomorrow/In N days/Completed, interviewer avatar pills) above two columns with a staggered `.anim-fade-up` entry — left `ReadOnlyCandidateProfile` (non-editable card; **header** = "Position on Last Organization" + LinkedIn/GitHub/Portfolio icon links + status pill, no name/avatar; **body** = email/phone/**Relevant Experience** detail tiles, colorful skill badges via `utils/skillColors.ts`, an **extendable Summary** (Show more/less), and CV files as `.cv-file-item` tiles with Preview (`outline-primary`) + a **yellow `.btn-cv-download`** (hover lift + icon bounce) reusing `previewCvFile`/`downloadCvFile`); right `EvaluationForm` driven by `utils/evaluationCriteria.ts`. Sections A–D are **independent collapsible accent panels** (`.eval-panel--a|b|c|d`, react-bootstrap `Collapse`, per-section icon + live `n/3 rated · avg` summary, rotating chevron); ratings use a **segmented 1–5 pill group** (click again to clear, `aria-pressed`); a top progress bar tracks `Rated X of 12`; general assessment / recommendation / overall rating live in a static "Summary & recommendation" panel. Recommendation options are `Recommended/Hold/Reject/Other`; picking **Other** reveals a required "Please specify" text box (blocks Submit until filled). **Save draft** any time; **Submit** confirms via modal then locks (server returns 409 after). Read-only/submitted views reuse the panels with **filled-dot rating scales**. Admin+ also see other interviewers' evaluations read-only in an accordion. A 404 (not assigned / not admin) renders a friendly "not available" message. All animations respect `prefers-reduced-motion`.
+- **Status timeline interviewer links (`components/StatusTimeline.tsx`):** the "Interview Scheduled" entry lists its interviewers; each name is a `<Link>` to `/interviews/{interviewId}` (from the entry's `interviewId` + `interviewers`).
+
 ### Configuration page (`pages/ConfigurationPage.tsx`, route `/configuration`, navbar link)
 Manages **Roles applied / Job openings** and **Skills** lookups: a reusable `OptionSection` renders a table (all values incl. inactive via `includeInactive=true`) with Add/Edit modals and Delete. Query keys `['config','roles','all']` / `['config','skills','all']`; mutations invalidate the `['config']` prefix so candidate forms refresh too. The Roles section passes `jobFields` so its modal/table also edit **Location, Department, Priority, Posted date** — the posting metadata shown in the dashboard's Active Job Openings table.
 
@@ -66,7 +73,7 @@ Each CV file has **Preview** + **Download**. Preview calls `previewCvFile` (auth
 `LoginPage` no longer hints credentials (placeholders removed, `autoComplete="off"`, no app-prefill).
 
 ## Theme (`index.css`)
-- Microsoft Fluent: primary `#0078d4`, neutral surfaces, depth shadows, Segoe UI. Defined as `--ms-*` variables and mapped onto Bootstrap's `--bs-*` (including `--bs-btn-*` for buttons, which Bootstrap 5.3 reads).
+- **Coastal** (shared with the GorillaHR project): primary teal `#468189`, deep-navy ink `#031926`, cool neutral surfaces, depth shadows, Segoe UI. Defined as `--ms-*` variables and mapped onto Bootstrap's `--bs-*` (including `--bs-btn-*` for buttons, which Bootstrap 5.3 reads). Semantic status/priority/skill colors are intentionally kept distinct from the brand hue.
 - Custom classes: `.app-navbar`, `.app-logo-img`, `.login-shell`/`.login-card`, status badge tint, modal elevation, dashboard KPI cards (`.kpi-card`, `.kpi--<tone>`, `.kpi-card__icon/__bar`), and priority badges (`.priority-badge`, `.priority--high|medium|low`) — all with `[data-bs-theme="dark"]` overrides.
 - **Don't hardcode colors** in components — rely on the `--ms-*` tokens / Bootstrap classes which inherit the theme. Avoid fixed light utilities like `bg-light`/`bg-white`/`text-dark` (use `bg-body-tertiary` etc. so they adapt to dark mode).
 

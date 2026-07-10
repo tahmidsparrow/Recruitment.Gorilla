@@ -20,6 +20,7 @@ public record CreateCandidateDto(
     string Email,
     string? Phone,
     string? CurrentTitle,
+    string RelevantExperience,
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
@@ -60,6 +61,7 @@ public record UpdateCandidateDto(
     string Email,
     string? Phone,
     string? CurrentTitle,
+    string RelevantExperience,
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
@@ -80,6 +82,9 @@ public record StatusChangeDto(
     string? TaskDetails,
     string? SubmissionUrl,
     DateTime? InterviewAt,
+    // Required (non-empty) when Status == "Interview Scheduled": the users to assign
+    // as interviewers. Each must be an existing active user.
+    List<int>? InterviewerUserIds = null,
     // Deprecated: the server now derives the actor from the authenticated user.
     string? ChangedBy = null
 );
@@ -101,6 +106,7 @@ public record CandidateDetailDto(
     string Email,
     string? Phone,
     string? CurrentTitle,
+    string RelevantExperience,
     string? Skills,
     string? Summary,
     string? LinkedInUrl,
@@ -137,7 +143,9 @@ public record StatusHistoryDto(
     string? SubmissionUrl,
     DateTime? InterviewAt,
     DateTime ChangedAt,
-    string ChangedBy
+    string ChangedBy,
+    int? InterviewId,
+    List<InterviewInterviewerDto> Interviewers
 );
 
 public record StatusOptionDto(

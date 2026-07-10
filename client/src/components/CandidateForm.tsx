@@ -14,7 +14,7 @@ interface Props {
 }
 
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
-type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'referenceName' | 'referenceEmail';
+type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'relevantExperience' | 'referenceName' | 'referenceEmail';
 type FieldErrors = Partial<Record<FieldKey, string>>;
 
 function Req() {
@@ -27,6 +27,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [email, setEmail] = useState(draft.email ?? '');
   const [phone, setPhone] = useState(draft.phone ?? '');
   const [currentTitle, setCurrentTitle] = useState(draft.currentTitle ?? '');
+  const [relevantExperience, setRelevantExperience] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState(draft.linkedInUrl ?? '');
   const [githubUrl, setGithubUrl] = useState(draft.githubUrl ?? '');
   const [portfolioUrl, setPortfolioUrl] = useState('');
@@ -77,6 +78,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         email: email.trim(),
         phone: phone.trim() || null,
         currentTitle: currentTitle.trim() || null,
+        relevantExperience: relevantExperience.trim(),
         skills: skills.trim() || null,
         summary: summary.trim() || null,
         linkedInUrl: linkedInUrl.trim() || null,
@@ -116,6 +118,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     const errs: FieldErrors = {};
     if (!fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(email.trim())) errs.email = 'A valid email address is required.';
+    if (!relevantExperience.trim()) errs.relevantExperience = 'Relevant experience is required.';
     if (!roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
     if (isReferred && !referenceName.trim()) errs.referenceName = 'Reference name is required.';
     if (isReferred && !EMAIL_REGEX.test(referenceEmail.trim()))
@@ -181,6 +184,16 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         <Col md={6}>
           <Form.Label>Current title</Form.Label>
           <Form.Control value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Relevant Experience <Req /></Form.Label>
+          <Form.Control
+            value={relevantExperience}
+            placeholder="e.g. 3 Years"
+            onChange={(e) => { setRelevantExperience(e.target.value); clearFE('relevantExperience'); }}
+            isInvalid={!!fieldErrors.relevantExperience}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.relevantExperience}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
           <Form.Label>LinkedIn URL</Form.Label>

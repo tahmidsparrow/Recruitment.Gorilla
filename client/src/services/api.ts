@@ -1,5 +1,6 @@
 import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
+  AssignableUser,
   CVDraft,
   CandidateDetail,
   ChangePasswordPayload,
@@ -7,8 +8,12 @@ import type {
   CreateUserPayload,
   DashboardData,
   DuplicateCandidate,
+  InterviewDetail,
+  InterviewEvaluation,
   LoginPayload,
   LoginResult,
+  MyInterview,
+  NotificationList,
   PagedResult,
   CandidateListItem,
   ResetPasswordPayload,
@@ -19,6 +24,7 @@ import type {
   StatusHistoryEntry,
   UpdateCandidatePayload,
   UpdateUserPayload,
+  UpsertEvaluationPayload,
   UpsertOptionPayload,
   UserListItem,
 } from '../types';
@@ -281,4 +287,42 @@ export const previewCvFile = async (
   const blob = res.data as Blob;
   const contentType = (res.headers['content-type'] as string | undefined) ?? blob.type ?? '';
   return { url: URL.createObjectURL(blob), contentType };
+};
+
+// ----- Interviews & evaluations -----
+export const getAssignableUsers = async (): Promise<AssignableUser[]> => {
+  const { data } = await api.get<AssignableUser[]>('/interviews/assignable-users');
+  return data;
+};
+
+export const getMyInterviews = async (): Promise<MyInterview[]> => {
+  const { data } = await api.get<MyInterview[]>('/interviews/mine');
+  return data;
+};
+
+export const getInterview = async (id: number): Promise<InterviewDetail> => {
+  const { data } = await api.get<InterviewDetail>(`/interviews/${id}`);
+  return data;
+};
+
+export const saveEvaluation = async (
+  interviewId: number,
+  payload: UpsertEvaluationPayload
+): Promise<InterviewEvaluation> => {
+  const { data } = await api.put<InterviewEvaluation>(`/interviews/${interviewId}/evaluation`, payload);
+  return data;
+};
+
+// ----- Notifications -----
+export const getNotifications = async (): Promise<NotificationList> => {
+  const { data } = await api.get<NotificationList>('/notifications');
+  return data;
+};
+
+export const markNotificationRead = async (id: number): Promise<void> => {
+  await api.post(`/notifications/${id}/read`);
+};
+
+export const markAllNotificationsRead = async (): Promise<void> => {
+  await api.post('/notifications/read-all');
 };

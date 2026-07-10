@@ -59,6 +59,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .Include(x => x.StatusHistories.OrderByDescending(s => s.ChangedAt))
             .Include(x => x.RoleAppliedOption)
             .Include(x => x.CandidateSkills).ThenInclude(cs => cs.SkillOption)
+            .Include(x => x.Interviews).ThenInclude(i => i.Interviewers).ThenInclude(ii => ii.User)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (c is null) return null;
@@ -113,13 +115,17 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     /// and are active. Returns an error message or null. Used by create and update.
     /// </summary>
     public async Task<string?> ValidateCandidateAsync(
-        string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds)
+        string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds,
+        string? relevantExperience)
     {
         if (string.IsNullOrWhiteSpace(fullName))
             return "Full name is required.";
 
         if (string.IsNullOrWhiteSpace(email) || !EmailRegex.IsMatch(email.Trim()))
             return "A valid email address is required.";
+
+        if (string.IsNullOrWhiteSpace(relevantExperience))
+            return "Relevant experience is required.";
 
         if (roleAppliedOptionId is int roleId &&
             !await db.RoleAppliedOptions.AnyAsync(r => r.Id == roleId && r.IsActive))
@@ -187,8 +193,19 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         if (dto.Status == CodeReview && !HasStatus(candidate, SubmissionReceieved))
             return "Code Review requires Submission Receieved to exist in the candidate history.";
 
-        if (dto.Status == InterviewScheduled && dto.InterviewAt is null)
-            return "Interview Scheduled requires interview date/time.";
+        if (dto.Status == InterviewScheduled)
+        {
+            if (dto.InterviewAt is null)
+                return "Interview Scheduled requires interview date/time.";
+
+            if (dto.InterviewerUserIds is not { Count: > 0 })
+                return "Interview Scheduled requires at least one interviewer.";
+
+            var ids = dto.InterviewerUserIds.Distinct().ToList();
+            var validCount = await db.Users.CountAsync(u => ids.Contains(u.Id) && u.IsActive);
+            if (validCount != ids.Count)
+                return "One or more selected interviewers are not valid active users.";
+        }
 
         if (dto.Status == InterviewCompleted)
         {
@@ -225,6 +242,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             Email = dto.Email,
             Phone = dto.Phone,
             CurrentTitle = dto.CurrentTitle,
+            RelevantExperience = dto.RelevantExperience.Trim(),
             Skills = dto.Skills,
             Summary = dto.Summary,
             LinkedInUrl = dto.LinkedInUrl,
@@ -326,6 +344,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         candidate.Email = dto.Email;
         candidate.Phone = dto.Phone;
         candidate.CurrentTitle = dto.CurrentTitle;
+        candidate.RelevantExperience = dto.RelevantExperience.Trim();
         candidate.Skills = dto.Skills;
         candidate.Summary = dto.Summary;
         candidate.LinkedInUrl = dto.LinkedInUrl;
@@ -349,7 +368,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return await GetByIdAsync(id);
     }
 
-    public async Task<StatusHistoryDto?> AddStatusAsync(int id, StatusChangeDto dto, string? changedBy = null)
+    public async Task<StatusHistoryDto?> AddStatusAsync(
+        int id, StatusChangeDto dto, string? changedBy = null, int? currentUserId = null)
     {
         var candidate = await db.Candidates.FindAsync(id);
         if (candidate is null) return null;
@@ -368,7 +388,51 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         db.StatusHistories.Add(entry);
         candidate.CurrentStatus = dto.Status;
         candidate.UpdatedAt = DateTime.UtcNow;
+
+        // When scheduling an interview, create the Interview + assigned interviewers in the
+        // same save (StatusHistory nav sets the FK). Notifications follow once we have the Id.
+        Interview? interview = null;
+        if (dto.Status == InterviewScheduled && dto.InterviewAt is not null &&
+            dto.InterviewerUserIds is { Count: > 0 })
+        {
+            interview = new Interview
+            {
+                CandidateId = id,
+                StatusHistory = entry,
+                ScheduledAt = dto.InterviewAt.Value,
+                CreatedByUserId = currentUserId,
+                Interviewers = dto.InterviewerUserIds
+                    .Distinct()
+                    .Select(uid => new InterviewInterviewer { UserId = uid })
+                    .ToList(),
+            };
+            db.Interviews.Add(interview);
+        }
+
         await db.SaveChangesAsync();
+
+        if (interview is not null)
+        {
+            foreach (var uid in dto.InterviewerUserIds!.Distinct())
+            {
+                db.Notifications.Add(new Notification
+                {
+                    UserId = uid,
+                    Title = "Interview assigned",
+                    Message = $"You have been assigned to interview {candidate.FullName}.",
+                    LinkUrl = $"/interviews/{interview.Id}",
+                });
+            }
+            await db.SaveChangesAsync();
+        }
+
+        var interviewers = interview is null
+            ? []
+            : await db.Users
+                .Where(u => dto.InterviewerUserIds!.Contains(u.Id))
+                .OrderBy(u => u.Name)
+                .Select(u => new InterviewInterviewerDto(u.Id, u.Name))
+                .ToListAsync();
 
         return new StatusHistoryDto(
             entry.Id,
@@ -378,11 +442,14 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             entry.SubmissionUrl,
             entry.InterviewAt,
             entry.ChangedAt,
-            entry.ChangedBy);
+            entry.ChangedBy,
+            interview?.Id,
+            interviewers);
     }
 
     private static CandidateDetailDto MapToDetail(Candidate c) => new(
         c.Id, c.FullName, c.Email, c.Phone, c.CurrentTitle,
+        c.RelevantExperience,
         c.Skills, c.Summary, c.LinkedInUrl,
         c.GithubUrl, c.PortfolioUrl, c.AppliedRole,
         c.IsReferred, c.ReferenceName, c.ReferenceEmail, c.ReferenceEmployeeId,
@@ -393,7 +460,21 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .OrderBy(s => s.SortOrder).ThenBy(s => s.Name).ToList(),
         c.CurrentStatus, c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
-        c.StatusHistories.Select(s => new StatusHistoryDto(
+        c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList()
+    );
+
+    /// <summary>
+    /// Maps a status-history entry to its DTO, attaching the linked interview id and its
+    /// interviewers when the entry created one (the "Interview Scheduled" entry).
+    /// </summary>
+    private static StatusHistoryDto ToStatusHistoryDto(StatusHistory s, IEnumerable<Interview> interviews)
+    {
+        var interview = interviews.FirstOrDefault(i => i.StatusHistoryId == s.Id);
+        var interviewers = interview?.Interviewers
+            .OrderBy(ii => ii.User.Name)
+            .Select(ii => new InterviewInterviewerDto(ii.UserId, ii.User.Name))
+            .ToList() ?? [];
+        return new StatusHistoryDto(
             s.Id,
             s.Status,
             s.Comment,
@@ -401,8 +482,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             s.SubmissionUrl,
             s.InterviewAt,
             s.ChangedAt,
-            s.ChangedBy)).ToList()
-    );
+            s.ChangedBy,
+            interview?.Id,
+            interviewers);
+    }
 
     private static bool RequiresComment(string status) =>
         status is Reject or Discontinued;

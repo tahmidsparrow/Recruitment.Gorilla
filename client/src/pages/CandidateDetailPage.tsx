@@ -6,6 +6,7 @@ import {
   addStatus,
   deleteCandidate,
   downloadCvFile,
+  getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
   getRoleOptions,
@@ -139,7 +140,7 @@ export default function CandidateDetailPage() {
   );
 }
 
-type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 'referenceName' | 'referenceEmail', string>>;
+type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 'relevantExperience' | 'referenceName' | 'referenceEmail', string>>;
 
 function ProfileEditor({
   candidate,
@@ -182,6 +183,7 @@ function ProfileEditor({
         email: form.email,
         phone: form.phone || null,
         currentTitle: form.currentTitle || null,
+        relevantExperience: form.relevantExperience.trim(),
         skills: form.skills || null,
         summary: form.summary || null,
         linkedInUrl: form.linkedInUrl || null,
@@ -207,6 +209,7 @@ function ProfileEditor({
     const errs: ProfileFieldErrors = {};
     if (!form.fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'A valid email address is required.';
+    if (!form.relevantExperience?.trim()) errs.relevantExperience = 'Relevant experience is required.';
     if (!form.roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
     if (form.isReferred && !form.referenceName?.trim())
       errs.referenceName = 'Reference name is required.';
@@ -252,6 +255,16 @@ function ProfileEditor({
             value={form.currentTitle ?? ''}
             onChange={(e) => set('currentTitle', e.target.value)}
           />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Relevant Experience <Req /></Form.Label>
+          <Form.Control
+            value={form.relevantExperience ?? ''}
+            placeholder="e.g. 3 Years"
+            onChange={(e) => { set('relevantExperience', e.target.value); clearFE('relevantExperience'); }}
+            isInvalid={!!fieldErrors.relevantExperience}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.relevantExperience}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
           <Form.Label>LinkedIn URL</Form.Label>
@@ -447,7 +460,7 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
   );
 }
 
-type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt', string>>;
+type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt' | 'interviewers', string>>;
 
 function AddStatus({
   candidateId,
@@ -462,6 +475,7 @@ function AddStatus({
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
+  const [interviewerIds, setInterviewerIds] = useState<number[]>([]);
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
   const queryClient = useQueryClient();
 
@@ -478,6 +492,13 @@ function AddStatus({
   const requiresTaskDetails = status === 'Technical Assessment';
   const requiresSubmissionUrl = status === 'Submission Receieved';
   const requiresInterviewAt = status === 'Interview Scheduled';
+  const requiresInterviewers = status === 'Interview Scheduled';
+
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: getAssignableUsers,
+    enabled: requiresInterviewers,
+  });
 
   const clearFE = (field: keyof AddStatusFieldErrors) =>
     setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
@@ -490,6 +511,7 @@ function AddStatus({
         taskDetails: taskDetails.trim() || null,
         submissionUrl: submissionUrl.trim() || null,
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
+        interviewerUserIds: requiresInterviewers ? interviewerIds : null,
       }),
     onSuccess: () => {
       setStatus('');
@@ -497,9 +519,12 @@ function AddStatus({
       setTaskDetails('');
       setSubmissionUrl('');
       setInterviewAt('');
+      setInterviewerIds([]);
       setFieldErrors({});
 
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['my-interviews'] });
       addToast('Status added.');
       onAdded();
     },
@@ -514,6 +539,8 @@ function AddStatus({
     if (requiresTaskDetails && !taskDetails.trim()) errs.taskDetails = 'Task details are required.';
     if (requiresSubmissionUrl && !submissionUrl.trim()) errs.submissionUrl = 'Submission link is required.';
     if (requiresInterviewAt && !interviewAt) errs.interviewAt = 'Interview date/time is required.';
+    if (requiresInterviewers && interviewerIds.length === 0)
+      errs.interviewers = 'Select at least one interviewer.';
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       return;
@@ -580,6 +607,21 @@ function AddStatus({
               isInvalid={!!fieldErrors.interviewAt}
             />
             <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
+          </Col>
+        )}
+        {requiresInterviewers && (
+          <Col md={12}>
+            <Form.Label className="mb-1">Interviewers <Req /></Form.Label>
+            <SearchableMultiSelect
+              options={assignableUsers.map((u) => ({ id: u.id, name: u.name }))}
+              value={interviewerIds}
+              onChange={(ids) => { setInterviewerIds(ids); clearFE('interviewers'); }}
+              placeholder="Search users to assign…"
+            />
+            {fieldErrors.interviewers && (
+              <div className="text-danger small mt-1">{fieldErrors.interviewers}</div>
+            )}
+            <Form.Text muted>Assigned users are notified and can fill the evaluation form.</Form.Text>
           </Col>
         )}
         <Col md={12}>

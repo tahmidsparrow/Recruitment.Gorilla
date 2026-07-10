@@ -18,6 +18,7 @@ export interface CreateCandidatePayload {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
@@ -49,6 +50,7 @@ export interface UpdateCandidatePayload {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
@@ -99,6 +101,8 @@ export interface StatusChangePayload {
   taskDetails: string | null;
   submissionUrl: string | null;
   interviewAt: string | null;
+  // Required (non-empty) when status === 'Interview Scheduled'.
+  interviewerUserIds?: number[] | null;
 }
 
 export interface CandidateListItem {
@@ -129,6 +133,8 @@ export interface StatusHistoryEntry {
   interviewAt: string | null;
   changedAt: string;
   changedBy: string;
+  interviewId: number | null;
+  interviewers: { userId: number; name: string }[];
 }
 
 export interface StatusOption {
@@ -144,6 +150,7 @@ export interface CandidateDetail {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
@@ -291,4 +298,79 @@ export interface DashboardData {
   upcomingInterviews: UpcomingInterview[];
   recentActivity: ActivityItem[];
   activeJobOpenings: JobOpening[];
+}
+
+// ----- Interviews & evaluations -----
+export interface AssignableUser {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export type EvaluationState = 'None' | 'Draft' | 'Submitted';
+
+export interface MyInterview {
+  id: number;
+  candidateId: number;
+  candidateName: string;
+  role: string | null;
+  scheduledAt: string;
+  evaluationState: EvaluationState;
+}
+
+export interface EvaluationItem {
+  criterionKey: string;
+  rating: number | null;
+  comment: string | null;
+}
+
+export interface InterviewEvaluation {
+  id: number;
+  interviewerUserId: number;
+  interviewerName: string;
+  generalAssessment: string | null;
+  recommendation: string | null;
+  recommendationOther: string | null;
+  overallRating: number | null;
+  isSubmitted: boolean;
+  submittedAt: string | null;
+  items: EvaluationItem[];
+}
+
+export interface InterviewInterviewerInfo {
+  userId: number;
+  name: string;
+}
+
+export interface InterviewDetail {
+  id: number;
+  scheduledAt: string;
+  candidate: CandidateDetail;
+  interviewers: InterviewInterviewerInfo[];
+  canEvaluate: boolean;
+  myEvaluation: InterviewEvaluation | null;
+  allEvaluations: InterviewEvaluation[] | null;
+}
+
+export interface UpsertEvaluationPayload {
+  generalAssessment: string | null;
+  recommendation: string | null;
+  recommendationOther: string | null;
+  overallRating: number | null;
+  items: EvaluationItem[];
+  submit: boolean;
+}
+
+export interface AppNotification {
+  id: number;
+  title: string;
+  message: string;
+  linkUrl: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationList {
+  items: AppNotification[];
+  unreadCount: number;
 }
