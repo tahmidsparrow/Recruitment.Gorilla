@@ -5,8 +5,8 @@ ASP.NET Core Web API, .NET 10. Project root: `server/Recruitment.Gorilla.API/`.
 ## Structure
 | Folder | Purpose |
 |---|---|
-| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`, `ConfigurationController`, `UsersController`, `DashboardController`. |
-| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`, `ConfigurationService`, `UserService`, `DashboardService`. |
+| `Controllers/` | HTTP endpoints (thin). `AuthController`, `CandidatesController`, `CVUploadController`, `StatusOptionsController`, `ConfigurationController`, `UsersController`, `DashboardController`, `InterviewsController`, `NotificationsController`. |
+| `Services/` | Business logic + EF access. `AuthService`, `CandidateService`, `CVParserService`, `StatusOptionService`, `ConfigurationService`, `UserService`, `DashboardService`, `InterviewService`, `NotificationService`. |
 | `Models/` | EF entities. |
 | `Data/AppDbContext.cs` | DbSets + Fluent config. |
 | `DTOs/` | Request/response `record`s. |
@@ -67,6 +67,12 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
   - **Active job openings** = active `RoleAppliedOptions` projected to `JobOpeningDto`, with applicant counts derived by role.
 - **MySQL translation note:** group by a scalar FK (e.g. `cs.SkillOptionId`, `c.RoleAppliedOptionId`) then resolve names/rows from a dictionary — grouping directly by a joined navigation (`cs.SkillOption.Name`) is **not** translatable by Pomelo and throws at runtime.
 
+## Interviews, evaluations & notifications
+- Moving a candidate to **Interview Scheduled** now also requires `InterviewerUserIds` (≥1 active user). `CandidateService.ValidateStatusChangeAsync` enforces it; `AddStatusAsync` creates the `Interview` + `InterviewInterviewer` rows (linked to the new `StatusHistory` via nav) and one `Notification` per interviewer, then returns the history entry. The returned `StatusHistoryDto` (and every entry in candidate detail) carries `InterviewId` + `Interviewers` — resolved by matching `Interview.StatusHistoryId` — so the timeline links each interviewer name to `/interviews/{id}`. `GetByIdAsync` includes `Candidate.Interviews` (`.AsSplitQuery()`).
+- `InterviewService` — `GetMineAsync` (assigned interviews + eval state), `GetDetailAsync(id, userId, isAdmin)` (**access = assigned OR Admin+**, returns the candidate snapshot via `CandidateService.GetByIdAsync`, the caller's evaluation, and — Admin+ only — every evaluation), `UpsertEvaluationAsync` (assigned-only; validates criterion keys/ratings/recommendation against `Models/EvaluationCriteria.cs` — recommendations are `Recommended/Hold/Reject/Other`, and **`Other` requires `RecommendationOther` text** (else 400); **Conflict once `IsSubmitted`**), `GetAssignableUsersAsync`.
+- `NotificationService` — `GetMineAsync` (+unread count), `MarkReadAsync`, `MarkAllReadAsync`; all scoped to the caller's `UserId`.
+- Both controllers are `[Authorize]` (all roles) and derive the caller from `CurrentUser`. `assignable-users` lives on `InterviewsController` because `UsersController` is class-level SuperAdmin-only.
+
 ## Logging
 log4net (`log4net.config`): console + daily rolling file under `Logs/`. App categories log at INFO; framework noise at WARN. Log audit events on writes.
 
@@ -74,6 +80,12 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/dashboard` | required | Aggregated dashboard payload (owner-scoped): KPIs, status breakdown, 30-day trend, by-role/top-skill counts, upcoming interviews, recent activity, active job openings |
+| GET | `/api/interviews/assignable-users` | required | Active users assignable as interviewers |
+| GET | `/api/interviews/mine` | required | Interviews the caller is assigned to (+ their eval state) |
+| GET | `/api/interviews/{id}` | required | Interview detail (assigned interviewer or Admin+; 404 otherwise) |
+| PUT | `/api/interviews/{id}/evaluation` | required | Save/submit the caller's evaluation (409 once submitted) |
+| GET | `/api/notifications` | required | Caller's notifications + unread count |
+| POST | `/api/notifications/{id}/read` · `/read-all` | required | Mark one / all read |
 | POST | `/api/auth/login` | anon | Issue access token + refresh cookie |
 | POST | `/api/auth/refresh` | anon (cookie) | Rotate refresh, new access token |
 | POST | `/api/auth/logout` | anon (cookie) | Revoke refresh, clear cookie |

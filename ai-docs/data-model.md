@@ -71,6 +71,10 @@ One row per uploaded file. The physical file is on disk under `Uploads/` as `{GU
 | ChangedAt | datetime | |
 | ChangedBy | varchar(200) | required; admin name/email |
 
+The `StatusHistoryDto` returned by the API also carries `InterviewId` + `Interviewers` (name list)
+for the "Interview Scheduled" entry — resolved by matching `Interview.StatusHistoryId` — so the
+timeline can link each interviewer to their interview. Not stored on the row itself.
+
 ### RefreshToken (`RefreshTokens`)
 Server-side store for auth refresh tokens (rotation + revocation). Only the **SHA-256 hash** of the opaque token is stored. See [auth.md](auth.md).
 
@@ -148,6 +152,42 @@ Applicants per opening are **derived by role** (candidates whose `RoleAppliedOpt
 ### CandidateSkill (`CandidateSkills`)
 Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(CandidateId, SkillOptionId)`; cascade-delete from Candidate, restrict on SkillOption. Candidate forms select skills from active `SkillOptions` only (not creatable from the candidate form).
 
+### Interview (`Interviews`)
+Created when a candidate moves to **Interview Scheduled** (see `CandidateService.AddStatusAsync`). One per scheduling event.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| CandidateId | int FK → Candidate | cascade delete |
+| StatusHistoryId | int? FK → StatusHistory | the "Interview Scheduled" entry; SetNull |
+| ScheduledAt | datetime | mirrors the history entry's InterviewAt |
+| CreatedByUserId | int? FK → User | who scheduled it; SetNull |
+| CreatedAt | datetime | UTC |
+
+### InterviewInterviewer (`InterviewInterviewers`)
+Join assigning users as interviewers. Composite PK `(InterviewId, UserId)`; cascade from Interview, restrict on User. Assignment grants that user read access to the interview + candidate snapshot and the right to submit one evaluation.
+
+### InterviewEvaluation (`InterviewEvaluations`)
+One interviewer's evaluation of one interview. Unique index `(InterviewId, InterviewerUserId)`; cascade from Interview, restrict on the interviewer User. **Draft until `IsSubmitted`; then locked** (API rejects further writes).
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | |
+| InterviewId | int FK → Interview | cascade delete |
+| InterviewerUserId | int FK → User | restrict |
+| GeneralAssessment | text | nullable |
+| Recommendation | varchar(20) | Recommended/Hold/Reject/Other |
+| RecommendationOther | varchar(1000) | nullable; required (server-validated) when Recommendation = Other |
+| OverallRating | int | 1–5, nullable |
+| IsSubmitted / SubmittedAt | bool / datetime? | submit lock |
+| CreatedAt / UpdatedAt | datetime | UTC |
+
+### InterviewEvaluationItem (`InterviewEvaluationItems`)
+Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is one of the fixed keys in `Models/EvaluationCriteria.cs` (mirrored in `client/src/utils/evaluationCriteria.ts`); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
+
+### Notification (`Notifications`)
+Per-user in-app notification (e.g. interview assignment). `Id`, `UserId` (FK → User, cascade), `Title` varchar(200), `Message` varchar(500), `LinkUrl` varchar(300)? (client route), `IsRead` bool (index `(UserId, IsRead)`), `CreatedAt`. In-app only — no email is sent.
+
 ## Key design rules
 - **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.
 - **Role/Skill values come from `RoleAppliedOptions`/`SkillOptions`** (configurable). Deleting a config value that's in use **soft-disables** it (IsActive=false) instead of hard-deleting. The legacy free-text `Candidate.AppliedRole`/`Candidate.Skills` columns are retained for back-compat but the UI uses the configured values.
@@ -156,3 +196,4 @@ Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(Candidat
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).
 - **The dashboard adds no tables.** `GET /api/dashboard` is a read-only aggregation over existing entities (Candidates, StatusHistories, RoleAppliedOptions, CandidateSkills), owner-scoped like the candidate list. See [backend.md](backend.md) / [frontend.md](frontend.md).
+- **Interview access is by assignment, not ownership.** An `Interview` (and the candidate snapshot shown with it) is readable by its assigned interviewers **or** Admin+, deliberately bypassing recruiter owner-scoping. An evaluation is visible to its author and Admin+ only; it locks on submit. See the spec [specs/interview-assignment-and-evaluation.md](specs/interview-assignment-and-evaluation.md).
