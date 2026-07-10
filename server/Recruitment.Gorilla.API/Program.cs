@@ -43,6 +43,8 @@ builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<StatusOptionService>();
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<InterviewService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddSingleton<IAuthorizationHandler, PasswordChangedHandler>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]

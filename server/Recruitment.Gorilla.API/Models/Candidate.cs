@@ -31,4 +31,5 @@ public class Candidate
     public ICollection<CVFile> CVFiles { get; set; } = [];
     public ICollection<StatusHistory> StatusHistories { get; set; } = [];
     public ICollection<CandidateSkill> CandidateSkills { get; set; } = [];
+    public ICollection<Interview> Interviews { get; set; } = [];
 }

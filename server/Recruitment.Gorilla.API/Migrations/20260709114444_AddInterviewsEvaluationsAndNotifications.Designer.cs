@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709114444_AddInterviewsEvaluationsAndNotifications")]
+    partial class AddInterviewsEvaluationsAndNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,6 +210,9 @@ namespace Recruitment.Gorilla.API.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdditionalComments")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -229,9 +235,9 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<string>("RecommendationOther")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
+                    b.Property<string>("Rounds")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("datetime(6)");
@@ -1196,7 +1202,7 @@ namespace Recruitment.Gorilla.API.Migrations
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Interview", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
-                        .WithMany("Interviews")
+                        .WithMany()
                         .HasForeignKey("CandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1324,8 +1330,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("CVFiles");
 
                     b.Navigation("CandidateSkills");
-
-                    b.Navigation("Interviews");
 
                     b.Navigation("StatusHistories");
                 });

@@ -16,6 +16,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CandidateSkill> CandidateSkills => Set<CandidateSkill>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Interview> Interviews => Set<Interview>();
+    public DbSet<InterviewInterviewer> InterviewInterviewers => Set<InterviewInterviewer>();
+    public DbSet<InterviewEvaluation> InterviewEvaluations => Set<InterviewEvaluation>();
+    public DbSet<InterviewEvaluationItem> InterviewEvaluationItems => Set<InterviewEvaluationItem>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -227,6 +232,77 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany(s => s.CandidateSkills)
              .HasForeignKey(cs => cs.SkillOptionId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Interview>(e =>
+        {
+            e.HasKey(i => i.Id);
+            e.HasOne(i => i.Candidate)
+             .WithMany(c => c.Interviews)
+             .HasForeignKey(i => i.CandidateId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.StatusHistory)
+             .WithMany()
+             .HasForeignKey(i => i.StatusHistoryId)
+             .OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(i => i.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(i => i.CreatedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<InterviewInterviewer>(e =>
+        {
+            e.HasKey(ii => new { ii.InterviewId, ii.UserId });
+            e.HasOne(ii => ii.Interview)
+             .WithMany(i => i.Interviewers)
+             .HasForeignKey(ii => ii.InterviewId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ii => ii.User)
+             .WithMany()
+             .HasForeignKey(ii => ii.UserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<InterviewEvaluation>(e =>
+        {
+            e.HasKey(ev => ev.Id);
+            e.Property(ev => ev.Recommendation).HasMaxLength(20);
+            e.Property(ev => ev.RecommendationOther).HasMaxLength(1000);
+            e.HasIndex(ev => new { ev.InterviewId, ev.InterviewerUserId }).IsUnique();
+            e.HasOne(ev => ev.Interview)
+             .WithMany(i => i.Evaluations)
+             .HasForeignKey(ev => ev.InterviewId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ev => ev.InterviewerUser)
+             .WithMany()
+             .HasForeignKey(ev => ev.InterviewerUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<InterviewEvaluationItem>(e =>
+        {
+            e.HasKey(it => it.Id);
+            e.Property(it => it.CriterionKey).HasMaxLength(60).IsRequired();
+            e.Property(it => it.Comment).HasMaxLength(1000);
+            e.HasIndex(it => new { it.InterviewEvaluationId, it.CriterionKey }).IsUnique();
+            e.HasOne(it => it.InterviewEvaluation)
+             .WithMany(ev => ev.Items)
+             .HasForeignKey(it => it.InterviewEvaluationId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notification>(e =>
+        {
+            e.HasKey(n => n.Id);
+            e.Property(n => n.Title).HasMaxLength(200).IsRequired();
+            e.Property(n => n.Message).HasMaxLength(500).IsRequired();
+            e.Property(n => n.LinkUrl).HasMaxLength(300);
+            e.HasIndex(n => new { n.UserId, n.IsRead });
+            e.HasOne(n => n.User)
+             .WithMany()
+             .HasForeignKey(n => n.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

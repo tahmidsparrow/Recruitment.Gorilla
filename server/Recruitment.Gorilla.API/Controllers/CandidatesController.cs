@@ -11,6 +11,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/candidates")]
 public class CandidatesController(
     CandidateService candidateService,
+    InterviewService interviewService,
     CurrentUser currentUser,
     ILogger<CandidatesController> logger) : ControllerBase
 {
@@ -77,8 +78,10 @@ public class CandidatesController(
     [HttpGet("{id}/cv/{fileId}")]
     public async Task<IActionResult> GetCvFile(int id, int fileId)
     {
-        // Enforce read scope before serving the file.
-        if (await candidateService.GetByIdAsync(id, ReadOwnerScope) is null)
+        // Enforce read scope before serving the file. Assigned interviewers get access to
+        // the candidate's CV too (parallels the interview page bypassing owner-scope).
+        if (await candidateService.GetByIdAsync(id, ReadOwnerScope) is null &&
+            !await interviewService.IsAssignedInterviewerForCandidateAsync(id, currentUser.UserId ?? 0))
             return NotFound();
 
         var file = await candidateService.GetCvFileAsync(id, fileId);
@@ -134,7 +137,7 @@ public class CandidatesController(
         if (validationError is not null)
             return BadRequest(validationError);
 
-        var entry = await candidateService.AddStatusAsync(id, dto, currentUser.Name);
+        var entry = await candidateService.AddStatusAsync(id, dto, currentUser.Name, currentUser.UserId);
         if (entry is null) return NotFound();
 
         logger.LogInformation("Candidate {Id} status changed to '{Status}' by {ChangedBy}.",
