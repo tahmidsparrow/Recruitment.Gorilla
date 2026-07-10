@@ -7,10 +7,10 @@
 
 import { getStatusTone, type StatusTone } from './statusColors';
 
-/** Neutral single-hue used for single-series magnitude charts (role, skills, trend). */
+/** Brand single-hue used for single-series magnitude charts (role, skills, trend). */
 export const ACCENT: Record<'light' | 'dark', string> = {
-  light: '#0078d4', // Fluent primary blue
-  dark: '#6cb8f6',
+  light: '#468189', // Coastal primary teal
+  dark: '#8fc6cc',
 };
 
 /**
@@ -25,7 +25,7 @@ function resolveTone(tone: StatusTone): string {
   document.body.appendChild(probe);
   const value = getComputedStyle(probe).getPropertyValue('--status-color').trim();
   probe.remove();
-  return value || '#605e5c';
+  return value || '#5f7d80';
 }
 
 /**
@@ -55,18 +55,18 @@ export interface ChartChrome {
 export const chartChrome = (theme: 'light' | 'dark'): ChartChrome =>
   theme === 'dark'
     ? {
-        axis: '#b6b4b2',
+        axis: '#a7c2c4',
         grid: 'rgba(255, 255, 255, 0.08)',
-        tooltipBg: '#2b2b2b',
-        tooltipBorder: '#444444',
-        tooltipText: '#f3f2f1',
+        tooltipBg: '#0e2833',
+        tooltipBorder: '#244854',
+        tooltipText: '#e9f1f0',
       }
     : {
-        axis: '#605e5c',
-        grid: 'rgba(0, 0, 0, 0.08)',
+        axis: '#31575c',
+        grid: 'rgba(3, 25, 38, 0.08)',
         tooltipBg: '#ffffff',
-        tooltipBorder: '#e1dfdd',
-        tooltipText: '#242424',
+        tooltipBorder: '#dbe4e3',
+        tooltipText: '#031926',
       };
 
 /**
