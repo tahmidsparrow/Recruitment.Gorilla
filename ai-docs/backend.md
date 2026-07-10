@@ -106,6 +106,6 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
 
-Config notes: `ConfigurationService` enforces unique names (409 on duplicate) and **soft-disables** (IsActive=false) an option that's referenced by a candidate instead of hard-deleting. `CandidateService.ValidateCandidateAsync` checks required full name, valid email, and that any selected role/skill IDs exist and are active (400 otherwise). **CV preview** reuses the existing authenticated `GET /api/candidates/{id}/cv/{fileId}` endpoint — the client fetches it as a blob and renders PDFs inline; no separate preview route was added.
+Config notes: `ConfigurationService` enforces unique names (409 on duplicate) and **soft-disables** (IsActive=false) an option that's referenced by a candidate instead of hard-deleting. `CandidateService.ValidateCandidateAsync` checks required full name, valid email, required **relevant experience** (free text), and that any selected role/skill IDs exist and are active (400 otherwise). **CV preview** reuses the existing authenticated `GET /api/candidates/{id}/cv/{fileId}` endpoint — the client fetches it as a blob and renders PDFs inline; no separate preview route was added.
 
 Swagger UI is at `http://localhost:5000/swagger` in Development.

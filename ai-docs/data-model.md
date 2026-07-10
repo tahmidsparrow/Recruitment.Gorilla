@@ -26,6 +26,7 @@ The core profile. Holds a **denormalized `CurrentStatus`** for fast list queries
 | Email | varchar(200) | required; used for duplicate detection |
 | Phone | varchar(50) | nullable |
 | CurrentTitle | varchar(200) | nullable |
+| RelevantExperience | varchar(100) | **required** free text (e.g. "3 Years"); existing rows backfilled to "0 Years" by migration `AddCandidateRelevantExperience` |
 | Skills | text | nullable |
 | Summary | text | nullable |
 | LinkedInUrl | varchar(500) | nullable |
