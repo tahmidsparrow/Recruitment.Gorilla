@@ -6,6 +6,31 @@ import { getInterview } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
 
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('');
+
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 10h18M8 3v4M16 3v4" />
+  </svg>
+);
+
+/** Relative label for the scheduled date: Today / Tomorrow / In N days / Completed. */
+const relativeLabel = (scheduledAt: string): { label: string; soon: boolean } => {
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(new Date(scheduledAt)) - startOfDay(new Date())) / 86_400_000);
+  if (days < 0) return { label: 'Completed', soon: false };
+  if (days === 0) return { label: 'Today', soon: true };
+  if (days === 1) return { label: 'Tomorrow', soon: true };
+  return { label: `In ${days} days`, soon: false };
+};
+
 export default function InterviewPage() {
   const { id } = useParams();
   const interviewId = Number(id);
@@ -35,24 +60,41 @@ export default function InterviewPage() {
   const scheduled = new Date(data.scheduledAt).toLocaleString(undefined, {
     weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
+  const relative = relativeLabel(data.scheduledAt);
+  const role = data.candidate.roleApplied ?? data.candidate.appliedRole;
   const otherEvaluations = (data.allEvaluations ?? []).filter(
     (e) => e.interviewerUserId !== data.myEvaluation?.interviewerUserId
   );
 
   return (
     <div>
-      <div className="mb-3">
-        <h2 className="mb-1">Interview</h2>
-        <div className="text-muted">
-          {scheduled} · Interviewers: {data.interviewers.map((i) => i.name).join(', ')}
+      <div className="interview-hero mb-3 anim-fade-up">
+        <div className="d-flex flex-wrap align-items-center gap-3">
+          <div className="me-auto">
+            <div className="interview-hero__eyebrow">Interview</div>
+            <h2 className="mb-0">{data.candidate.fullName}</h2>
+            {role && <div className="text-muted">{role}</div>}
+          </div>
+          <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
+            <CalendarIcon /> {scheduled} · {relative.label}
+          </span>
+        </div>
+        <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
+          <span className="text-muted small">Interviewers:</span>
+          {data.interviewers.map((i) => (
+            <span key={i.userId} className="interviewer-pill">
+              <span className="interviewer-pill__avatar">{initials(i.name) || '?'}</span>
+              {i.name}
+            </span>
+          ))}
         </div>
       </div>
 
       <Row className="g-3">
-        <Col lg={5}>
+        <Col lg={5} className="anim-fade-up" style={{ animationDelay: '60ms' }}>
           <ReadOnlyCandidateProfile candidate={data.candidate} />
         </Col>
-        <Col lg={7}>
+        <Col lg={7} className="anim-fade-up" style={{ animationDelay: '120ms' }}>
           {data.canEvaluate ? (
             <EvaluationForm interviewId={interviewId} evaluation={data.myEvaluation} />
           ) : (
