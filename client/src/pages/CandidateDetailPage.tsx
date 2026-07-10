@@ -6,6 +6,7 @@ import {
   addStatus,
   deleteCandidate,
   downloadCvFile,
+  getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
   getRoleOptions,
@@ -447,7 +448,7 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
   );
 }
 
-type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt', string>>;
+type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt' | 'interviewers', string>>;
 
 function AddStatus({
   candidateId,
@@ -462,6 +463,7 @@ function AddStatus({
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
+  const [interviewerIds, setInterviewerIds] = useState<number[]>([]);
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
   const queryClient = useQueryClient();
 
@@ -478,6 +480,13 @@ function AddStatus({
   const requiresTaskDetails = status === 'Technical Assessment';
   const requiresSubmissionUrl = status === 'Submission Receieved';
   const requiresInterviewAt = status === 'Interview Scheduled';
+  const requiresInterviewers = status === 'Interview Scheduled';
+
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: getAssignableUsers,
+    enabled: requiresInterviewers,
+  });
 
   const clearFE = (field: keyof AddStatusFieldErrors) =>
     setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
@@ -490,6 +499,7 @@ function AddStatus({
         taskDetails: taskDetails.trim() || null,
         submissionUrl: submissionUrl.trim() || null,
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
+        interviewerUserIds: requiresInterviewers ? interviewerIds : null,
       }),
     onSuccess: () => {
       setStatus('');
@@ -497,9 +507,12 @@ function AddStatus({
       setTaskDetails('');
       setSubmissionUrl('');
       setInterviewAt('');
+      setInterviewerIds([]);
       setFieldErrors({});
 
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['my-interviews'] });
       addToast('Status added.');
       onAdded();
     },
@@ -514,6 +527,8 @@ function AddStatus({
     if (requiresTaskDetails && !taskDetails.trim()) errs.taskDetails = 'Task details are required.';
     if (requiresSubmissionUrl && !submissionUrl.trim()) errs.submissionUrl = 'Submission link is required.';
     if (requiresInterviewAt && !interviewAt) errs.interviewAt = 'Interview date/time is required.';
+    if (requiresInterviewers && interviewerIds.length === 0)
+      errs.interviewers = 'Select at least one interviewer.';
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       return;
@@ -580,6 +595,21 @@ function AddStatus({
               isInvalid={!!fieldErrors.interviewAt}
             />
             <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
+          </Col>
+        )}
+        {requiresInterviewers && (
+          <Col md={12}>
+            <Form.Label className="mb-1">Interviewers <Req /></Form.Label>
+            <SearchableMultiSelect
+              options={assignableUsers.map((u) => ({ id: u.id, name: u.name }))}
+              value={interviewerIds}
+              onChange={(ids) => { setInterviewerIds(ids); clearFE('interviewers'); }}
+              placeholder="Search users to assign…"
+            />
+            {fieldErrors.interviewers && (
+              <div className="text-danger small mt-1">{fieldErrors.interviewers}</div>
+            )}
+            <Form.Text muted>Assigned users are notified and can fill the evaluation form.</Form.Text>
           </Col>
         )}
         <Col md={12}>

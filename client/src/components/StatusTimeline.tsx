@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { StatusBadge, StatusDot } from './StatusBadge';
 import type { StatusHistoryEntry } from '../types';
 
@@ -54,6 +55,21 @@ export default function StatusTimeline({ history }: Props) {
               {entry.interviewAt && (
                 <div className="mt-1 small">
                   <span className="fw-semibold">Interview:</span> {formatDate(entry.interviewAt)}
+                </div>
+              )}
+              {entry.interviewers.length > 0 && (
+                <div className="mt-1 small">
+                  <span className="fw-semibold">Interviewers:</span>{' '}
+                  {entry.interviewers.map((iv, idx) => (
+                    <span key={iv.userId}>
+                      {idx > 0 && ', '}
+                      {entry.interviewId ? (
+                        <Link to={`/interviews/${entry.interviewId}`}>{iv.name}</Link>
+                      ) : (
+                        iv.name
+                      )}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>

@@ -20,7 +20,9 @@ import CandidateDetailPage from './pages/CandidateDetailPage';
 import ConfigurationPage from './pages/ConfigurationPage';
 import UsersPage from './pages/UsersPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
+import InterviewPage from './pages/InterviewPage';
 import ThemeToggle from './components/ThemeToggle';
+import NotificationBell from './components/NotificationBell';
 
 function ProtectedLayout() {
   const {
@@ -76,6 +78,7 @@ function ProtectedLayout() {
               {isSuperAdmin && <Nav.Link as={NavLink} to="/users">Users</Nav.Link>}
             </Nav>
             <div className="d-flex align-items-center gap-3">
+              <NotificationBell />
               <ThemeToggle />
               <Nav.Link as={NavLink} to="/change-password" className="navbar-user p-0">
                 {user?.name}
@@ -113,6 +116,7 @@ export default function App() {
             />
             <Route path="/candidates" element={<CandidatesPage />} />
             <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+            <Route path="/interviews/:id" element={<InterviewPage />} />
             <Route
               path="/configuration"
               element={

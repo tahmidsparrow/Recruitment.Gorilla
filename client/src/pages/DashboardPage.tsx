@@ -17,6 +17,7 @@ import StatusDonutChart from '../components/dashboard/StatusDonutChart';
 import TrendChart from '../components/dashboard/TrendChart';
 import CountBarChart from '../components/dashboard/CountBarChart';
 import ActiveJobOpeningsTable from '../components/dashboard/ActiveJobOpeningsTable';
+import MyInterviewsCard from '../components/dashboard/MyInterviewsCard';
 import type { ActivityItem, UpcomingInterview } from '../types';
 
 const relativeTime = (iso: string): string => {
@@ -158,6 +159,13 @@ export default function DashboardPage() {
             sub="Of total"
             percent={kpis.referredPercent}
           />
+        </Col>
+      </Row>
+
+      {/* My interviews (personal) */}
+      <Row className="g-3 mb-4">
+        <Col xs={12}>
+          <MyInterviewsCard />
         </Col>
       </Row>
 
