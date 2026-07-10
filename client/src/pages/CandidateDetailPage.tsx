@@ -140,7 +140,7 @@ export default function CandidateDetailPage() {
   );
 }
 
-type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 'referenceName' | 'referenceEmail', string>>;
+type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 'relevantExperience' | 'referenceName' | 'referenceEmail', string>>;
 
 function ProfileEditor({
   candidate,
@@ -183,6 +183,7 @@ function ProfileEditor({
         email: form.email,
         phone: form.phone || null,
         currentTitle: form.currentTitle || null,
+        relevantExperience: form.relevantExperience.trim(),
         skills: form.skills || null,
         summary: form.summary || null,
         linkedInUrl: form.linkedInUrl || null,
@@ -208,6 +209,7 @@ function ProfileEditor({
     const errs: ProfileFieldErrors = {};
     if (!form.fullName.trim()) errs.fullName = 'Full name is required.';
     if (!EMAIL_REGEX.test(form.email.trim())) errs.email = 'A valid email address is required.';
+    if (!form.relevantExperience?.trim()) errs.relevantExperience = 'Relevant experience is required.';
     if (!form.roleAppliedOptionId) errs.roleApplied = 'Role applied for is required.';
     if (form.isReferred && !form.referenceName?.trim())
       errs.referenceName = 'Reference name is required.';
@@ -253,6 +255,16 @@ function ProfileEditor({
             value={form.currentTitle ?? ''}
             onChange={(e) => set('currentTitle', e.target.value)}
           />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Relevant Experience <Req /></Form.Label>
+          <Form.Control
+            value={form.relevantExperience ?? ''}
+            placeholder="e.g. 3 Years"
+            onChange={(e) => { set('relevantExperience', e.target.value); clearFE('relevantExperience'); }}
+            isInvalid={!!fieldErrors.relevantExperience}
+          />
+          <Form.Control.Feedback type="invalid">{fieldErrors.relevantExperience}</Form.Control.Feedback>
         </Col>
         <Col md={6}>
           <Form.Label>LinkedIn URL</Form.Label>

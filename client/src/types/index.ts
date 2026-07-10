@@ -18,6 +18,7 @@ export interface CreateCandidatePayload {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
@@ -49,6 +50,7 @@ export interface UpdateCandidatePayload {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;
@@ -148,6 +150,7 @@ export interface CandidateDetail {
   email: string;
   phone: string | null;
   currentTitle: string | null;
+  relevantExperience: string;
   skills: string | null;
   summary: string | null;
   linkedInUrl: string | null;

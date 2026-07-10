@@ -7,14 +7,6 @@ import type { CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
-
 /* Inline icons (house style, currentColor). */
 const LinkedInIcon = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
@@ -32,6 +24,17 @@ const GlobeIcon = () => (
     <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
   </svg>
 );
+const FileIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+    <path d="M14 3v5h5" />
+  </svg>
+);
+const DownloadIcon = () => (
+  <svg className="btn-cv-download__icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16" />
+  </svg>
+);
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === '') return null;
@@ -43,12 +46,23 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+function Tile({ label, value }: { label: string; value: React.ReactNode }) {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <div className="profile-tile">
+      <div className="profile-field-label">{label}</div>
+      <div className="profile-tile__value">{value}</div>
+    </div>
+  );
+}
+
+const SUMMARY_COLLAPSE_THRESHOLD = 260;
+
 /** Non-editable candidate profile shown alongside the evaluation form. */
 export default function ReadOnlyCandidateProfile({ candidate }: { candidate: CandidateDetail }) {
   const [preview, setPreview] = useState<{ url: string; contentType: string } | null>(null);
   const [previewName, setPreviewName] = useState('');
-
-  const role = candidate.roleApplied ?? candidate.appliedRole;
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   const openPreview = async (fileId: number, name: string) => {
     if (preview) URL.revokeObjectURL(preview.url);
@@ -58,21 +72,21 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
   };
 
   const hasLinks = candidate.linkedInUrl || candidate.githubUrl || candidate.portfolioUrl;
+  const summaryIsLong = (candidate.summary?.length ?? 0) > SUMMARY_COLLAPSE_THRESHOLD;
+  const summaryCollapsed = summaryIsLong && !summaryExpanded;
 
   return (
     <Card className="h-100 profile-card">
       <div className="profile-header">
-        <div className="profile-avatar">{initials(candidate.fullName) || '?'}</div>
-        <div className="flex-grow-1">
-          <h5 className="mb-0">{candidate.fullName}</h5>
-          {candidate.currentTitle && <div className="profile-subtitle">{candidate.currentTitle}</div>}
-          <div className="mt-2"><StatusBadge status={candidate.currentStatus} /></div>
+        <div className="d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <div className="profile-field-label">Position on Last Organization</div>
+            <div className="profile-title">{candidate.currentTitle || '—'}</div>
+          </div>
+          <StatusBadge status={candidate.currentStatus} />
         </div>
-      </div>
-
-      <Card.Body>
         {hasLinks && (
-          <div className="profile-links mb-3">
+          <div className="profile-links mt-3">
             {candidate.linkedInUrl && (
               <a href={candidate.linkedInUrl} target="_blank" rel="noreferrer" className="profile-link">
                 <LinkedInIcon /> LinkedIn
@@ -90,11 +104,13 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
             )}
           </div>
         )}
+      </div>
 
-        <div className="profile-grid">
-          <Field label="Email" value={candidate.email} />
-          <Field label="Phone" value={candidate.phone} />
-          <Field label="Role applied for" value={role} />
+      <Card.Body>
+        <div className="profile-grid mb-3">
+          <Tile label="Email" value={candidate.email} />
+          <Tile label="Phone" value={candidate.phone} />
+          <Tile label="Relevant Experience" value={candidate.relevantExperience} />
         </div>
 
         {candidate.skillOptions.length > 0 && (
@@ -108,7 +124,23 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
           </div>
         )}
 
-        <Field label="Summary" value={candidate.summary} />
+        {candidate.summary && (
+          <div className="mb-3">
+            <div className="profile-field-label">Summary</div>
+            <div className={`profile-summary${summaryCollapsed ? ' profile-summary--collapsed' : ''}`}>
+              {candidate.summary}
+            </div>
+            {summaryIsLong && (
+              <button
+                type="button"
+                className="profile-summary-toggle"
+                onClick={() => setSummaryExpanded((v) => !v)}
+              >
+                {summaryExpanded ? 'Show less' : 'Show more'}
+              </button>
+            )}
+          </div>
+        )}
         {candidate.isReferred && (
           <Field
             label="Referred by"
@@ -118,13 +150,19 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
 
         {candidate.cvFiles.length > 0 && (
           <div className="mt-3">
-            <div className="profile-field-label mb-1">CV files</div>
+            <div className="profile-field-label mb-2">CV files</div>
             {candidate.cvFiles.map((f) => (
-              <div key={f.id} className="d-flex align-items-center justify-content-between gap-2 mb-1">
-                <span className="small text-truncate">{f.originalFileName} <span className="text-muted">({formatSize(f.fileSizeBytes)})</span></span>
+              <div key={f.id} className="cv-file-item">
+                <span className="cv-file-item__icon"><FileIcon /></span>
+                <span className="cv-file-item__meta">
+                  <span className="cv-file-item__name text-truncate">{f.originalFileName}</span>
+                  <span className="cv-file-item__size">{formatSize(f.fileSizeBytes)}</span>
+                </span>
                 <span className="d-flex gap-2 flex-shrink-0">
-                  <Button size="sm" variant="outline-secondary" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
-                  <Button size="sm" variant="outline-secondary" onClick={() => void downloadCvFile(candidate.id, f.id)}>Download</Button>
+                  <Button size="sm" variant="outline-primary" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
+                  <button type="button" className="btn btn-sm btn-cv-download" onClick={() => void downloadCvFile(candidate.id, f.id)}>
+                    <DownloadIcon /> Download
+                  </button>
                 </span>
               </div>
             ))}

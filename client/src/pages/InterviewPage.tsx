@@ -70,6 +70,7 @@ export default function InterviewPage() {
     <div>
       <div className="interview-hero mb-3 anim-fade-up">
         <div className="d-flex flex-wrap align-items-center gap-3">
+          <div className="profile-avatar">{initials(data.candidate.fullName) || '?'}</div>
           <div className="me-auto">
             <div className="interview-hero__eyebrow">Interview</div>
             <h2 className="mb-0">{data.candidate.fullName}</h2>
