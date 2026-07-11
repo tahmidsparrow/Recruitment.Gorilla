@@ -39,6 +39,12 @@ const jobId = (id: number) => `JOB-${String(id).padStart(3, '0')}`;
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' });
 
+/** True when the opening closes within the next 7 days. */
+const isClosingSoon = (iso: string): boolean => {
+  const diff = new Date(iso).getTime() - Date.now();
+  return diff >= 0 && diff < 7 * 24 * 3600 * 1000;
+};
+
 const priorityClass = (p: string) => {
   const key = p.toLowerCase();
   return key === 'high' || key === 'medium' || key === 'low' ? `priority--${key}` : 'priority--low';
@@ -66,10 +72,11 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
             <thead>
               <tr className="text-muted small text-uppercase">
                 <th>Job ID</th>
-                <th>Date</th>
+                <th>Posted</th>
                 <th>Job Title</th>
                 <th>Location</th>
                 <th>Department</th>
+                <th>End date</th>
                 <th>Applicants</th>
               </tr>
             </thead>
@@ -102,6 +109,15 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
                     )}
                   </td>
                   <td className="text-muted">{job.department ?? '—'}</td>
+                  <td className="text-nowrap">
+                    <span className="d-inline-flex align-items-center gap-2">
+                      <CalendarIcon />
+                      {formatDate(job.endDate)}
+                    </span>
+                    {isClosingSoon(job.endDate) && (
+                      <span className="job-closing-soon mt-1">Closing soon</span>
+                    )}
+                  </td>
                   <td>
                     <span className="d-inline-flex align-items-center gap-2">
                       <PersonIcon />

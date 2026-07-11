@@ -7,6 +7,10 @@ import type {
   CreateCandidatePayload,
   CreateUserPayload,
   DashboardData,
+  DashboardKpis,
+  StatusCount,
+  TrendPoint,
+  JobOpening,
   DuplicateCandidate,
   InterviewDetail,
   InterviewEvaluation,
@@ -18,6 +22,7 @@ import type {
   CandidateListItem,
   ResetPasswordPayload,
   RoleAppliedOption,
+  DeleteRoleResult,
   SkillOption,
   StatusOption,
   StatusChangePayload,
@@ -169,6 +174,28 @@ export const uploadCV = async (file: File): Promise<CVDraft> => {
   return data;
 };
 
+// Org-wide dashboard figures (all roles, no owner scope).
+export const getDashboardKpis = async (): Promise<DashboardKpis> => {
+  const { data } = await api.get<DashboardKpis>('/dashboard/kpis');
+  return data;
+};
+
+export const getStatusBreakdown = async (): Promise<StatusCount[]> => {
+  const { data } = await api.get<StatusCount[]>('/dashboard/status-breakdown');
+  return data;
+};
+
+export const getApplicationsTrend = async (days = 30): Promise<TrendPoint[]> => {
+  const { data } = await api.get<TrendPoint[]>('/dashboard/applications-trend', { params: { days } });
+  return data;
+};
+
+export const getJobOpenings = async (): Promise<JobOpening[]> => {
+  const { data } = await api.get<JobOpening[]>('/dashboard/job-openings');
+  return data;
+};
+
+// Owner-scoped remainder (by-role / top-skills / upcoming / activity).
 export const getDashboard = async (): Promise<DashboardData> => {
   const { data } = await api.get<DashboardData>('/dashboard');
   return data;
@@ -251,8 +278,9 @@ export const updateRoleOption = async (id: number, payload: UpsertOptionPayload)
   return data;
 };
 
-export const deleteRoleOption = async (id: number): Promise<void> => {
-  await api.delete(`/config/roles/${id}`);
+export const deleteRoleOption = async (id: number): Promise<DeleteRoleResult> => {
+  const { data } = await api.delete<DeleteRoleResult>(`/config/roles/${id}`);
+  return data;
 };
 
 // ----- Configuration: Skill options -----

@@ -15,7 +15,7 @@ const roleVariant: Record<Role, string> = {
   SuperAdmin: 'danger',
   Admin: 'primary',
   Recruiter: 'info',
-  Viewer: 'secondary',
+  Interviewer: 'secondary',
 };
 
 function errorMessage(err: unknown, fallback: string): string {

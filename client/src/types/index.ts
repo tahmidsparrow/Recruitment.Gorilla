@@ -70,11 +70,15 @@ export interface RoleAppliedOption {
   name: string;
   sortOrder: number;
   isActive: boolean;
-  // Job-opening posting metadata (optional)
+  // Job-opening posting metadata
   location?: string | null;
   department?: string | null;
   priority?: string | null;
-  postedDate?: string | null;
+  createdAt: string;   // = posted date (read-only)
+  endDate: string;     // required closing deadline
+  title: string;       // computed: "{name} — {posted date}"
+  recruiterUserId?: number | null;
+  recruiterName?: string | null;
 }
 
 export interface SkillOption {
@@ -88,11 +92,18 @@ export interface UpsertOptionPayload {
   name: string;
   sortOrder: number;
   isActive: boolean;
-  // Optional job-opening fields — only sent for role options (skills ignore them).
+  // Job-opening fields — only sent for role options (skills ignore them).
   location?: string | null;
   department?: string | null;
   priority?: string | null;
-  postedDate?: string | null;
+  endDate?: string | null;   // required for roles
+  recruiterUserId?: number | null;
+}
+
+export interface DeleteRoleResult {
+  deleted: boolean;
+  deactivated: boolean;
+  candidateCount: number;
 }
 
 export interface StatusChangePayload {
@@ -169,6 +180,8 @@ export interface CandidateDetail {
   updatedAt: string;
   cvFiles: CVFileInfo[];
   statusHistory: StatusHistoryEntry[];
+  roleEndDate: string | null;
+  roleClosed: boolean;
 }
 
 export interface PagedResult<T> {
@@ -178,9 +191,9 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
-export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Viewer';
+export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Interviewer';
 
-export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Viewer'];
+export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Interviewer'];
 
 export interface LoginPayload {
   email: string;
@@ -286,18 +299,16 @@ export interface JobOpening {
   department: string | null;
   priority: string | null;
   postedDate: string;
+  endDate: string;
   applicants: number;
 }
 
+/** Owner-scoped remainder (candidate-centric). Org-wide figures come from their own endpoints. */
 export interface DashboardData {
-  kpis: DashboardKpis;
-  statusBreakdown: StatusCount[];
   byRole: NameCount[];
   topSkills: NameCount[];
-  applicationsTrend: TrendPoint[];
   upcomingInterviews: UpcomingInterview[];
   recentActivity: ActivityItem[];
-  activeJobOpenings: JobOpening[];
 }
 
 // ----- Interviews & evaluations -----

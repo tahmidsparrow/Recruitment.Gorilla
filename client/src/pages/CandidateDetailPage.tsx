@@ -70,6 +70,15 @@ export default function CandidateDetailPage() {
         )}
       </div>
 
+      {data.roleClosed && (
+        <Alert variant="warning">
+          <strong>Job opening closed.</strong> This candidate's applied-for role ended
+          {data.roleEndDate ? ` on ${new Date(data.roleEndDate).toLocaleString()}` : ''}. Profile
+          edits and status changes are locked until an Admin extends the role's End Date in
+          Configuration.
+        </Alert>
+      )}
+
       <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Delete candidate</Modal.Title>
@@ -104,7 +113,7 @@ export default function CandidateDetailPage() {
             <Card.Body>
               <ProfileEditor
                 candidate={data}
-                canWrite={canWriteCandidates}
+                canWrite={canWriteCandidates && !data.roleClosed}
                 onSaved={() => {
                   void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
                   void queryClient.invalidateQueries({ queryKey: ['candidates'] });
@@ -120,7 +129,7 @@ export default function CandidateDetailPage() {
           <Card>
             <Card.Header>Status history</Card.Header>
             <Card.Body>
-              {canWriteCandidates && (
+              {canWriteCandidates && !data.roleClosed && (
                 <>
                   <AddStatus
                     candidateId={candidateId}

@@ -68,15 +68,3 @@ export const chartChrome = (theme: 'light' | 'dark'): ChartChrome =>
         tooltipBorder: '#dbe4e3',
         tooltipText: '#031926',
       };
-
-/**
- * Negative-terminal statuses (rejected / dropped). Excluded from the pipeline
- * funnel — they still appear in the full status donut. Mirrors the backend's
- * NegativeTerminal set in DashboardService.
- */
-export const NEGATIVE_TERMINAL = new Set([
-  'Reject',
-  'Not Recommended',
-  'Discontinued',
-  'Not Available',
-]);
