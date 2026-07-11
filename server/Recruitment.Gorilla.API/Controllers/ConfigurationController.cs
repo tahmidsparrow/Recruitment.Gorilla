@@ -22,9 +22,8 @@ public class ConfigurationController(
     [HttpPost("roles")]
     public async Task<IActionResult> CreateRole([FromBody] UpsertRoleAppliedOptionDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
-
-        var (created, conflict) = await config.CreateRoleAsync(dto);
+        var (created, conflict, error) = await config.CreateRoleAsync(dto);
+        if (error is not null) return BadRequest(error);
         if (conflict) return Conflict("A role with that name already exists.");
 
         logger.LogInformation("Created role option {Id} ('{Name}').", created!.Id, created.Name);
@@ -34,9 +33,8 @@ public class ConfigurationController(
     [HttpPut("roles/{id:int}")]
     public async Task<IActionResult> UpdateRole(int id, [FromBody] UpsertRoleAppliedOptionDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
-
-        var (updated, notFound, conflict) = await config.UpdateRoleAsync(id, dto);
+        var (updated, notFound, conflict, error) = await config.UpdateRoleAsync(id, dto);
+        if (error is not null) return BadRequest(error);
         if (notFound) return NotFound();
         if (conflict) return Conflict("A role with that name already exists.");
 
@@ -44,13 +42,16 @@ public class ConfigurationController(
         return Ok(updated);
     }
 
+    // Only a Super Admin may delete a role (overrides the class-level Admin+ policy).
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpDelete("roles/{id:int}")]
     public async Task<IActionResult> DeleteRole(int id)
     {
-        var ok = await config.DeleteRoleAsync(id);
-        if (!ok) return NotFound();
-        logger.LogInformation("Deleted/disabled role option {Id}.", id);
-        return NoContent();
+        var (found, deleted, deactivated, candidateCount) = await config.DeleteRoleAsync(id);
+        if (!found) return NotFound();
+        logger.LogInformation("Role option {Id} {Action} ({Count} candidates).",
+            id, deleted ? "deleted" : "deactivated", candidateCount);
+        return Ok(new { deleted, deactivated, candidateCount });
     }
 
     // ----- Skills -----

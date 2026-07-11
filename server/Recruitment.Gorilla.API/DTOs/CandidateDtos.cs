@@ -124,7 +124,9 @@ public record CandidateDetailDto(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     List<CVFileDto> CVFiles,
-    List<StatusHistoryDto> StatusHistory
+    List<StatusHistoryDto> StatusHistory,
+    DateTime? RoleEndDate,   // the applied-for job opening's closing date, if any
+    bool RoleClosed          // true when RoleEndDate has passed → edits/status locked
 );
 
 public record CVFileDto(
@@ -160,19 +162,24 @@ public record RoleAppliedOptionDto(
     string Name,
     int SortOrder,
     bool IsActive,
-    string? Location = null,
-    string? Department = null,
-    string? Priority = null,
-    DateTime? PostedDate = null);
+    string? Location,
+    string? Department,
+    string? Priority,
+    DateTime CreatedAt,   // = posted date (read-only)
+    DateTime EndDate,
+    string Title,         // computed: "{Name} — {CreatedAt:dd MMM yyyy}"
+    int? RecruiterUserId,
+    string? RecruiterName);
 
 public record UpsertRoleAppliedOptionDto(
     string Name,
     int SortOrder,
     bool IsActive,
+    DateTime EndDate,
     string? Location = null,
     string? Department = null,
     string? Priority = null,
-    DateTime? PostedDate = null);
+    int? RecruiterUserId = null);
 
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 

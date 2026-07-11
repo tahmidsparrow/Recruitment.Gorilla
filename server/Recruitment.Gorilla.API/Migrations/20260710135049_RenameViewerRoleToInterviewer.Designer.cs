@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710135049_RenameViewerRoleToInterviewer")]
+    partial class RenameViewerRoleToInterviewer
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -392,9 +395,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -409,12 +409,12 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<DateTime?>("PostedDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Priority")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
-
-                    b.Property<int?>("RecruiterUserId")
-                        .HasColumnType("int");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
@@ -427,8 +427,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.HasIndex("RecruiterUserId");
-
                     b.ToTable("RoleAppliedOptions");
 
                     b.HasData(
@@ -436,7 +434,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 1,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Backend Engineer",
                             SortOrder = 1,
@@ -446,7 +443,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 2,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Frontend Engineer",
                             SortOrder = 2,
@@ -456,7 +452,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 3,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Full Stack Engineer",
                             SortOrder = 3,
@@ -466,7 +461,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 4,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Machine Learning Engineer",
                             SortOrder = 4,
@@ -476,7 +470,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 5,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "DevOps Engineer",
                             SortOrder = 5,
@@ -486,7 +479,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 6,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "QA Engineer",
                             SortOrder = 6,
@@ -1292,16 +1284,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.User", "RecruiterUser")
-                        .WithMany()
-                        .HasForeignKey("RecruiterUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("RecruiterUser");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.StatusHistory", b =>

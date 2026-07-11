@@ -15,15 +15,16 @@ public class CandidatesController(
     CurrentUser currentUser,
     ILogger<CandidatesController> logger) : ControllerBase
 {
-    // Recruiters (anyone not Admin+ or Viewer) only see candidates they own; everyone
-    // else sees all. Null means "no owner filter".
+    // Admin+ see all candidates; a Recruiter only sees their own. Null means "no owner
+    // filter". (Interviewers can't reach the candidate list/detail endpoints at all.)
     private int? ReadOwnerScope =>
-        currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin, Roles.Viewer) ? null : currentUser.UserId;
+        currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin) ? null : currentUser.UserId;
 
     // For writes, only Admin+ act on any candidate; a Recruiter is limited to their own.
     private int? WriteOwnerScope =>
         currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin) ? null : currentUser.UserId;
 
+    [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
@@ -35,6 +36,7 @@ public class CandidatesController(
         return Ok(result);
     }
 
+    [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -101,6 +103,7 @@ public class CandidatesController(
         return NoContent();
     }
 
+    [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("roles")]
     public async Task<IActionResult> GetRoles()
     {
@@ -120,6 +123,11 @@ public class CandidatesController(
         var referenceError = CandidateService.ValidateReference(dto.IsReferred, dto.ReferenceName, dto.ReferenceEmail);
         if (referenceError is not null)
             return BadRequest(referenceError);
+
+        // Block edits once the candidate's applied-for job opening has ended (applies to all roles).
+        var lockError = await candidateService.GetRoleLockErrorAsync(id);
+        if (lockError is not null)
+            return BadRequest(lockError);
 
         var updated = await candidateService.UpdateAsync(id, dto, WriteOwnerScope);
         return updated is null ? NotFound() : Ok(updated);

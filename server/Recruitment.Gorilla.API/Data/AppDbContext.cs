@@ -169,15 +169,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(r => r.Department).HasMaxLength(100);
             e.Property(r => r.Priority).HasMaxLength(20);
             e.HasIndex(r => r.Name).IsUnique();
+            e.HasOne(r => r.RecruiterUser)
+             .WithMany()
+             .HasForeignKey(r => r.RecruiterUserId)
+             .OnDelete(DeleteBehavior.SetNull);
 
             var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            var seededEnd = new DateTime(2027, 12, 31, 0, 0, 0, DateTimeKind.Utc); // open by default
             e.HasData(
-                new RoleAppliedOption { Id = 1, Name = "Backend Engineer", SortOrder = 1, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 2, Name = "Frontend Engineer", SortOrder = 2, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 3, Name = "Full Stack Engineer", SortOrder = 3, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 4, Name = "Machine Learning Engineer", SortOrder = 4, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
+                new RoleAppliedOption { Id = 1, Name = "Backend Engineer", SortOrder = 1, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 2, Name = "Frontend Engineer", SortOrder = 2, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 3, Name = "Full Stack Engineer", SortOrder = 3, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 4, Name = "Machine Learning Engineer", SortOrder = 4, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded }
             );
         });
 

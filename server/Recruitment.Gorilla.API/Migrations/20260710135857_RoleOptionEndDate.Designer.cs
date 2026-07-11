@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710135857_RoleOptionEndDate")]
+    partial class RoleOptionEndDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -413,9 +416,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
-                    b.Property<int?>("RecruiterUserId")
-                        .HasColumnType("int");
-
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
@@ -426,8 +426,6 @@ namespace Recruitment.Gorilla.API.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
-
-                    b.HasIndex("RecruiterUserId");
 
                     b.ToTable("RoleAppliedOptions");
 
@@ -1292,16 +1290,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.User", "RecruiterUser")
-                        .WithMany()
-                        .HasForeignKey("RecruiterUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("RecruiterUser");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.StatusHistory", b =>

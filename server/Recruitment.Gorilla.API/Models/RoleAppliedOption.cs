@@ -2,9 +2,11 @@ namespace Recruitment.Gorilla.API.Models;
 
 /// <summary>
 /// Admin-managed lookup of roles a candidate can be considered for. Also doubles as a
-/// job opening: an active role is an open position, with optional posting metadata
-/// (location, department, priority, posted date) surfaced in the dashboard's
-/// "Active Job Openings" table. Applicants are derived by role.
+/// job opening: an active role is an open position, with posting metadata (location,
+/// department, priority) surfaced in the dashboard's "Active Job Openings" table.
+/// The <see cref="CreatedAt"/> is the (non-editable) posted date; <see cref="EndDate"/>
+/// is the required closing deadline after which the role's candidates are locked from
+/// edits/status changes. Applicants are derived by role.
 /// </summary>
 public class RoleAppliedOption
 {
@@ -13,12 +15,17 @@ public class RoleAppliedOption
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
 
-    // ----- Job-opening posting metadata (all optional) -----
-    public string? Location { get; set; }     // e.g. Remote / Office / Hybrid
-    public string? Department { get; set; }    // e.g. Engineering / Product
-    public string? Priority { get; set; }      // e.g. High / Medium / Low
-    public DateTime? PostedDate { get; set; }  // falls back to CreatedAt when null
+    // ----- Job-opening posting metadata -----
+    public string? Location { get; set; }     // Remote / Office / Hybrid / Contractual
+    public string? Department { get; set; }    // Engineering / Admin / HR
+    public string? Priority { get; set; }      // High / Medium / Low
+    /// <summary>Required closing deadline; after this, the role's candidates are locked.</summary>
+    public DateTime EndDate { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Optional recruiter assigned to this opening (any active user).</summary>
+    public int? RecruiterUserId { get; set; }
+    public User? RecruiterUser { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // = the posted date
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

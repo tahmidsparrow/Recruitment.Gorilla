@@ -158,13 +158,36 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return null;
     }
 
+    /// <summary>
+    /// Error string when a candidate's applied-for job opening has ended (its <c>EndDate</c>
+    /// has passed) — profile edits and status changes are then locked for everyone until an
+    /// Admin extends the End Date. Null when the role is open or the candidate has no role.
+    /// </summary>
+    private static string? RoleLockError(RoleAppliedOption? role) =>
+        role is not null && role.EndDate < DateTime.UtcNow
+            ? $"This job opening ('{role.Name}') ended on {role.EndDate:g}. Ask an Admin to extend the End Date before making changes."
+            : null;
+
+    /// <summary>Lock error for a candidate's current role (used before profile updates). Null if editable.</summary>
+    public async Task<string?> GetRoleLockErrorAsync(int candidateId)
+    {
+        var candidate = await db.Candidates
+            .Include(c => c.RoleAppliedOption)
+            .FirstOrDefaultAsync(c => c.Id == candidateId);
+        return candidate is null ? null : RoleLockError(candidate.RoleAppliedOption);
+    }
+
     public async Task<string?> ValidateStatusChangeAsync(int candidateId, StatusChangeDto dto)
     {
         var candidate = await db.Candidates
             .Include(c => c.StatusHistories)
+            .Include(c => c.RoleAppliedOption)
             .FirstOrDefaultAsync(c => c.Id == candidateId);
 
         if (candidate is null) return null;
+
+        if (RoleLockError(candidate.RoleAppliedOption) is string lockError)
+            return lockError;
 
         var transitionAllowed = await db.StatusTransitions.AnyAsync(t =>
             t.IsActive &&
@@ -460,7 +483,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .OrderBy(s => s.SortOrder).ThenBy(s => s.Name).ToList(),
         c.CurrentStatus, c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
-        c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList()
+        c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList(),
+        c.RoleAppliedOption != null ? c.RoleAppliedOption.EndDate : null,
+        c.RoleAppliedOption != null && c.RoleAppliedOption.EndDate < DateTime.UtcNow
     );
 
     /// <summary>
