@@ -111,7 +111,7 @@ One row per role a user holds (a user may have several). Unique index `(UserId, 
 |---|---|---|
 | Id | int PK | |
 | UserId | int FK → User | cascade delete |
-| Role | varchar(50) | one of `SuperAdmin`, `Admin`, `Recruiter`, `Viewer` (see `Auth/Roles.cs`) |
+| Role | varchar(50) | one of `SuperAdmin`, `Admin`, `Recruiter`, `Interviewer` — hierarchy top→bottom (see `Auth/Roles.cs`; the former `Viewer` was renamed by migration `RenameViewerRoleToInterviewer`) |
 
 ### StatusOption (`StatusOptions`)
 Lookup table for candidate status dropdown values. Candidate and history rows still store the status text so historical labels remain readable even if configuration changes later.
@@ -143,12 +143,13 @@ Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`
 
 | Field | Type | Notes |
 |---|---|---|
-| Location | varchar(100) | nullable; e.g. Remote / Office / Hybrid |
-| Department | varchar(100) | nullable; e.g. Engineering |
+| Location | varchar(100) | nullable; one of Remote / Office / Hybrid / Contractual (`Models/JobOpeningOptions.cs`, validated) |
+| Department | varchar(100) | nullable; one of Engineering / Admin / HR (validated) |
 | Priority | varchar(20) | nullable; High / Medium / Low |
-| PostedDate | datetime | nullable; falls back to `CreatedAt` for the table's Date column |
+| EndDate | datetime | **required** closing deadline (migration `RoleOptionEndDate`; existing rows backfilled to `CreatedAt + 30 days`). After it passes, the role's candidates are **locked** from profile edits + status changes until an Admin extends it |
+| RecruiterUserId | int? FK → User | nullable; optional recruiter assigned to the opening (migration `AddRoleRecruiter`; SetNull on user delete) |
 
-Applicants per opening are **derived by role** (candidates whose `RoleAppliedOptionId` matches), not a stored count. There is no separate `JobOpening` table.
+`CreatedAt` is the (non-editable) **posted date**; the API also returns a computed **`Title`** (`"{Name} — {posted date}"`). Applicants per opening are **derived by role** (candidates whose `RoleAppliedOptionId` matches), not a stored count. There is no separate `JobOpening` table. **Delete is SuperAdmin-only** — a role with assigned candidates is soft-disabled (returns the candidate count) rather than removed.
 
 ### CandidateSkill (`CandidateSkills`)
 Many-to-many join between `Candidate` and `SkillOption`. Composite PK `(CandidateId, SkillOptionId)`; cascade-delete from Candidate, restrict on SkillOption. Candidate forms select skills from active `SkillOptions` only (not creatable from the candidate form).

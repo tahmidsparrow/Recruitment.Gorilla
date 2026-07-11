@@ -24,7 +24,7 @@ React 19 + TypeScript + Vite. Root: `client/`.
   - shows a spinner while `loading` (initial silent refresh in flight),
   - redirects to `/login` (preserving `from`) when not authenticated,
   - otherwise renders the **app bar** (logo, nav links with Fluent pivot underline, username + Sign out) and `<Outlet />`.
-- Routes: `/` → `DashboardPage` (landing), `/candidates` → `CandidatesPage`, `/upload` → `UploadPage`, `/candidates/:id` → `CandidateDetailPage`, `/interviews/:id` → `InterviewPage`, `/configuration` (Admin+), `/users` (SuperAdmin), `/change-password`. The **Dashboard** nav link (`to="/" end`) is first and visible to all roles; the dashboard is owner-scoped server-side. The navbar also hosts a **`NotificationBell`** (all roles).
+- Routes: `/` → `DashboardPage` (landing), `/candidates` + `/candidates/:id` (Recruiter+, `RequireRole`), `/upload` (Recruiter+), `/interviews/:id` → `InterviewPage` (all roles), `/configuration` (Admin+), `/users` (SuperAdmin), `/change-password`. The **Dashboard** nav link (`to="/" end`) is first and visible to all roles; the **Candidates/Upload** links show only for `canWriteCandidates`. So an **Interviewer** (bottom of the hierarchy — `useAuth().isInterviewerOnly`) sees Dashboard only, plus the interview pages they're linked to. The navbar also hosts a **`NotificationBell`** (all roles).
 
 ## Data fetching (TanStack Query)
 - Reads: `useQuery` with array keys — `['dashboard']`, `['candidates', { search, status, page }]`, `['candidate', id]`, `['status-options']`, `['status-options', 'initial']`, `['status-options', 'next', id]`, `['notifications']` (60s `refetchInterval`), `['my-interviews']`, `['assignable-users']`, `['interview', id]`. Use `keepPreviousData` for paged lists.
@@ -45,11 +45,31 @@ React 19 + TypeScript + Vite. Root: `client/`.
 Both the upload `CandidateForm` and the detail `ProfileEditor` include **GitHub URL**, **Portfolio website**, a **Role applied for** single-select and a **Skills** multi-select (both `components/SearchableSelect.tsx`, fed by `['config','roles']` / `['config','skills']` — configured values only, **not creatable** from the candidate form), and a **"This candidate has been referred"** checkbox revealing Reference name\* / email\* / Employee ID. Forms validate required full name + email format client-side (mirrored server-side); the legacy free-text role datalist was replaced by the configured role select.
 
 ### Dashboard (`pages/DashboardPage.tsx`, route `/`)
-Single `useQuery(['dashboard'])` → `getDashboard()`, rendered as react-bootstrap `Row`/`Col`/`Card` sections:
-- **KPI cards** — six `components/dashboard/KpiCard`s ("Stage Performance" style: accent icon chip, big value, sub-label + %, thin progress bar). Tones/hover are CSS-token driven (`.kpi--<tone>` + `.kpi-card` in `index.css`, light + dark, `prefers-reduced-motion`-aware); icons are inline SVGs in `kpiIcons.tsx` (no icon lib).
-- **Charts** (recharts) — `PipelineFunnelChart` + `StatusDonutChart` (colored from the status tokens via `utils/chartColors.ts` so they match `StatusBadge`), `TrendChart` (30-day area), and two `CountBarChart`s (by role, top skills). Charts read the current `useTheme()` so colors flip with the theme.
-- **Lists** — upcoming interviews and recent activity (`ListGroup`, names link to `/candidates/:id`, `StatusBadge` pills).
-- **Active Job Openings** — `ActiveJobOpeningsTable`: Job ID (`JOB-00n`), posted date, title + priority badge (`.priority--high|medium|low`), location, department, applicants; "View All" → `/configuration`. Data is the active roles (see below).
+**One `useQuery` per section** (no single payload), rendered as react-bootstrap `Row`/`Col`/`Card`:
+the org-wide queries `['dashboard','kpis']`, `['dashboard','status-breakdown']`,
+`['dashboard','trend',days]`, `['dashboard','job-openings']` render **for every role**; the
+owner-scoped `['dashboard','scoped']` (`enabled: canWriteCandidates`) feeds the candidate-centric
+sections and renders only for candidate-managing roles. An **Interviewer** therefore sees the same
+KPIs / charts / openings as an Admin, plus their My-Interviews card, but not By-role/Top-skills/
+Upcoming/Activity.
+- **Hero kicker** — `components/dashboard/DashboardHero`: greeting + user name + date and
+  **pending-task chips** from `['my-interviews']` / `['notifications']` + the KPI query's
+  `inProcess`. Styled `.dashboard-hero-kicker` + `.hero-chip` (Coastal gradient, `anim-fade-up`,
+  dark + reduced-motion).
+- **KPI cards** — six `components/dashboard/KpiCard`s (accent icon chip, big value, sub-label + %,
+  thin progress bar; `.kpi--<tone>` tokens, light + dark, reduced-motion). Icons inline in
+  `kpiIcons.tsx`.
+- **Charts** (recharts) — `StatusDonutChart` (colored from the status tokens via
+  `utils/chartColors.ts` so it matches `StatusBadge`) beside `TrendChart` (area) with a **7D/30D/90D
+  range toggle** (`btn-group` → `trendDays` state → query key + `getApplicationsTrend(days)`), and
+  two `CountBarChart`s (by role, top skills). (The redundant pipeline funnel was removed — the donut
+  is the single status visual.) Charts read `useTheme()` so colors flip with the theme.
+- **Lists** — upcoming interviews and recent activity (`ListGroup`, names link to
+  `/candidates/:id`, `StatusBadge` pills).
+- **Active Job Openings** — `ActiveJobOpeningsTable`: Job ID (`JOB-00n`), posted date, title +
+  priority badge, location, department, **End date** (+ a `.job-closing-soon` badge when within 7
+  days), applicants; "View All" → `/configuration`. Backend returns **open** roles only (past their
+  End date drop off).
 
 Charts are added under **`recharts`** (the only chart dependency). New chart chrome/colors go through `chartColors.ts`, not hardcoded hex.
 
@@ -61,7 +81,7 @@ Charts are added under **`recharts`** (the only chart dependency). New chart chr
 - **Status timeline interviewer links (`components/StatusTimeline.tsx`):** the "Interview Scheduled" entry lists its interviewers; each name is a `<Link>` to `/interviews/{interviewId}` (from the entry's `interviewId` + `interviewers`).
 
 ### Configuration page (`pages/ConfigurationPage.tsx`, route `/configuration`, navbar link)
-Manages **Roles applied / Job openings** and **Skills** lookups: a reusable `OptionSection` renders a table (all values incl. inactive via `includeInactive=true`) with Add/Edit modals and Delete. Query keys `['config','roles','all']` / `['config','skills','all']`; mutations invalidate the `['config']` prefix so candidate forms refresh too. The Roles section passes `jobFields` so its modal/table also edit **Location, Department, Priority, Posted date** — the posting metadata shown in the dashboard's Active Job Openings table.
+Manages **Roles applied / Job openings** and **Skills** lookups: a reusable `OptionSection` renders a table (all values incl. inactive via `includeInactive=true`) with Add/Edit modals and Delete. Query keys `['config','roles','all']` / `['config','skills','all']`; mutations invalidate the `['config']` prefix so candidate forms refresh too. The Roles section (`jobFields`) uses the label **"Role Name"**, shows a read-only auto **Title** preview (`name — posted date`) and read-only **Posted date** (= `createdAt`), a required **End date & time** (`datetime-local`), **Location**/**Department** as dropdowns (fixed sets mirroring `JobOpeningOptions.cs`), Priority, and an optional **Recruiter** — a `SearchableSelect` over active users (`getAssignableUsers`) whose option label is `"Name (email)"` so it matches on either; the assigned recruiter's name shows in the table. Rows past their End date show a red **Closed** marker. **Delete is shown only to Super Admins** and opens a confirm modal; the result toast reports whether the role was deleted or (having candidates) deactivated.
 
 ### Status colors (`utils/statusColors.ts` + `components/StatusBadge.tsx`)
 `getStatusClass(status)` maps a status to a **tone** modifier class (`status--reject|success|interview|assessment|muted|uploaded|intake`). The colors are CSS design tokens in `index.css` (`--status-color` solid for the dot, `--status-tint` translucent for the badge background), with a `[data-bs-theme="dark"]` override block so a future dark theme just flips `data-bs-theme` on `<html>` — no component changes. Use the shared `StatusBadge` / `StatusDot` components (do not reintroduce per-call Bootstrap `bg-*` variants); applied to the candidate list, detail header, and `StatusTimeline`.

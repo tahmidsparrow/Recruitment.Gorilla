@@ -3,18 +3,22 @@
 Multi-user, role-based accounts stored in the database. **Login is by email.** JWT access tokens + rotating refresh tokens. The backend is the real gate (not just the UI), because the API is reachable through the Vite proxy.
 
 ## Roles & permission matrix
-Four roles; a user may hold **several** at once (`UserRole` rows, one per role). Constants live in `Auth/Roles.cs` (`Roles.AdminOrAbove`, `Roles.CanWriteCandidate`) — use them instead of string literals.
+Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interviewer**; a user may hold **several** at once (`UserRole` rows, one per role). A higher role can do everything a lower one can (each policy allow-list in `Auth/Roles.cs` includes the roles above it). Constants live in `Auth/Roles.cs` (`Roles.AdminOrAbove`, `Roles.CanWriteCandidate`, `Roles.SuperAdmin`) — use them instead of string literals.
 
-| Capability | SuperAdmin | Admin | Recruiter | Viewer |
+| Capability | SuperAdmin | Admin | Recruiter | Interviewer |
 |---|---|---|---|---|
 | Manage users & assign roles (`/api/users`) | ✅ | – | – | – |
 | Configuration: roles/skills (`/api/config/*`) | ✅ | ✅ | – | – |
-| View candidates | all | all | **own only** | all (read-only) |
+| **Delete** a job-opening role | ✅ | – | – | – |
+| View / browse candidates | all | all | **own only** | – |
 | Create / upload candidate | ✅ | ✅ | ✅ (becomes owner) | – |
 | Edit / change status / delete candidate | ✅ (all) | ✅ (all) | **own only** | – |
+| Dashboard + assigned interviews + evaluations | ✅ | ✅ | ✅ | ✅ |
 
-- **Recruiter scoping**: `CandidatesController` derives a read/write owner scope from `CurrentUser`. Recruiters only see/edit candidates whose `Candidate.OwnerUserId` is their user id; everyone else passes `null` (no filter). New candidates a Recruiter creates are stamped with their id as owner. Legacy rows have `OwnerUserId = NULL` → visible to Admin+ only.
-- **Viewer** is read-only across all candidates: write endpoints are gated by `[Authorize(Roles = Roles.CanWriteCandidate)]`, and the UI hides write controls.
+- **Recruiter scoping**: `CandidatesController` derives a read/write owner scope from `CurrentUser`. Recruiters only see/edit candidates whose `Candidate.OwnerUserId` is their user id; Admin+ pass `null` (no filter). New candidates a Recruiter creates are stamped with their id as owner. Legacy rows have `OwnerUserId = NULL` → visible to Admin+ only.
+- **Interviewer** (bottom of the hierarchy; the former "Viewer", renamed) can **only** reach the dashboard, their assigned interviews (`/api/interviews/*`, `/api/notifications/*`), and evaluations. Candidate list/detail GETs are gated by `[Authorize(Roles = Roles.CanWriteCandidate)]`, and the UI hides those menu items/routes. They still see a candidate's read-only snapshot + CV **through** an interview they're assigned to.
+- **Job-opening delete is SuperAdmin-only** (`[Authorize(Roles = Roles.SuperAdmin)]` on `DELETE /api/config/roles/{id}`); a role with candidates is soft-disabled and the response reports the count.
+- **End-date lock**: once a `RoleAppliedOption.EndDate` passes, `CandidateService` blocks profile updates and status changes for that role's candidates (all roles, incl. Admin) until an Admin extends the End Date.
 
 ## Token model
 - **Access token** — short-lived JWT (default 15 min, `Jwt:AccessTokenMinutes`), HS256, returned in the login/refresh response **body**. The client keeps it **in memory only** (not localStorage) to limit XSS exposure.

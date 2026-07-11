@@ -60,11 +60,13 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
 - Future admin configuration can edit/add options and transitions against the same tables without changing candidate history storage.
 
 ## Dashboard aggregation
-- `DashboardController` (`GET /api/dashboard`, `[Authorize]`, all roles) delegates to `DashboardService.GetAsync(ownerUserId)`. It computes the same **owner scope** as `CandidatesController` (`ReadOwnerScope`: null for SuperAdmin/Admin/Viewer, else the caller's user id) so a recruiter's figures match their candidate list.
-- `DashboardService` returns one `DashboardDto` built from read-only aggregations over existing tables — no new entities:
-  - **KPIs** (total, in-process, recommended, rejected, new-this-week, referred count/%) bucketed from a single `GroupBy(CurrentStatus)`; terminal sets are `private static readonly HashSet<string>` of the exact seeded status strings.
-  - **Status breakdown** ordered by `StatusOptions.SortOrder`; **applications trend** groups `CreatedAt.Date` over the last 30 days and **zero-fills** missing days in C#; **by-role** and **top-skills** counts; **upcoming interviews** (future `StatusHistory.InterviewAt`); **recent activity** (latest status changes).
-  - **Active job openings** = active `RoleAppliedOptions` projected to `JobOpeningDto`, with applicant counts derived by role.
+- `DashboardController` is `[Authorize]` (all roles). It splits into **org-wide** endpoints (no owner scope — every role sees the same figures) and one **owner-scoped** endpoint:
+  - `GET /api/dashboard/kpis` → `DashboardService.GetKpisAsync()` — total/in-process/recommended/rejected/new-this-week/referred, bucketed from a single `GroupBy(CurrentStatus)` (terminal sets are `HashSet<string>` of the exact seeded status strings).
+  - `GET /api/dashboard/status-breakdown` → `GetStatusBreakdownAsync()` ordered by `StatusOptions.SortOrder`.
+  - `GET /api/dashboard/applications-trend?days=` → `GetApplicationsTrendAsync(days)`; `days ∈ {7,30,90}` (else 30); groups `CreatedAt.Date` and **zero-fills** missing days in C#.
+  - `GET /api/dashboard/job-openings` → `GetJobOpeningsAsync()` — **open** roles only (`IsActive && EndDate >= now`) projected to `JobOpeningDto` (incl. `EndDate`), applicant counts derived by role.
+  - `GET /api/dashboard` → `GetScopedAsync(ownerUserId)` — the candidate-centric remainder (**by-role, top-skills, upcoming interviews, recent activity**), owner-scoped like `CandidatesController` (`ReadOwnerScope`: null for Admin+, else the caller's id). The frontend only calls this for `canWriteCandidates` roles.
+- **Upcoming interviews** come from the `Interviews` table (`ScheduledAt >= now` **and** candidate still `Interview Scheduled`) — not `StatusHistory.InterviewAt` — so completed/rejected or re-scheduled candidates don't linger or duplicate.
 - **MySQL translation note:** group by a scalar FK (e.g. `cs.SkillOptionId`, `c.RoleAppliedOptionId`) then resolve names/rows from a dictionary — grouping directly by a joined navigation (`cs.SkillOption.Name`) is **not** translatable by Pomelo and throws at runtime.
 
 ## Interviews, evaluations & notifications
@@ -79,7 +81,8 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 ## API surface (current)
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/dashboard` | required | Aggregated dashboard payload (owner-scoped): KPIs, status breakdown, 30-day trend, by-role/top-skill counts, upcoming interviews, recent activity, active job openings |
+| GET | `/api/dashboard/kpis` · `/status-breakdown` · `/applications-trend?days=` · `/job-openings` | required (any role) | **Org-wide** figures — every role sees the same numbers |
+| GET | `/api/dashboard` | required | **Owner-scoped** remainder: by-role/top-skill counts, upcoming interviews, recent activity |
 | GET | `/api/interviews/assignable-users` | required | Active users assignable as interviewers |
 | GET | `/api/interviews/mine` | required | Interviews the caller is assigned to (+ their eval state) |
 | GET | `/api/interviews/{id}` | required | Interview detail (assigned interviewer or Admin+; 404 otherwise) |
@@ -101,11 +104,12 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |
 | GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
-| GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (incl. optional job-opening fields: Location, Department, Priority, PostedDate) |
-| PUT/DELETE | `/api/config/roles/{id}` | Admin+ | Update / soft-disable-or-delete a Role Applied option |
+| GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (job-opening fields: required **EndDate**, Location/Department from fixed sets, Priority, optional **RecruiterUserId**). Returns computed `Title` + `CreatedAt` (posted date) + `RecruiterName` |
+| PUT | `/api/config/roles/{id}` | Admin+ | Update a Role Applied option |
+| DELETE | `/api/config/roles/{id}` | **SuperAdmin** | Soft-disable if it has candidates (returns `{deleted,deactivated,candidateCount}`), else hard-delete |
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
 
-Config notes: `ConfigurationService` enforces unique names (409 on duplicate) and **soft-disables** (IsActive=false) an option that's referenced by a candidate instead of hard-deleting. `CandidateService.ValidateCandidateAsync` checks required full name, valid email, required **relevant experience** (free text), and that any selected role/skill IDs exist and are active (400 otherwise). **CV preview** reuses the existing authenticated `GET /api/candidates/{id}/cv/{fileId}` endpoint — the client fetches it as a blob and renders PDFs inline; no separate preview route was added.
+Config notes: `ConfigurationService` enforces unique names (409 on duplicate), validates a role's **required EndDate**, its Location/Department against `Models/JobOpeningOptions.cs`, and (when set) that `RecruiterUserId` is an existing active user (400 otherwise), and **soft-disables** (IsActive=false) a role/skill referenced by a candidate instead of hard-deleting. **Role delete is SuperAdmin-only.** `CandidateService.ValidateCandidateAsync` checks required full name, valid email, required **relevant experience** (free text), and that any selected role/skill IDs exist and are active (400 otherwise). **End-date lock:** `CandidateService.GetRoleLockErrorAsync` / `ValidateStatusChangeAsync` block profile updates and status changes once the candidate's role `EndDate` has passed (returns a 400 error string); `CandidateDetailDto` carries `RoleEndDate` + `RoleClosed` for the UI. **CV preview** reuses the existing authenticated `GET /api/candidates/{id}/cv/{fileId}` endpoint — the client fetches it as a blob and renders PDFs inline; no separate preview route was added.
 
 Swagger UI is at `http://localhost:5000/swagger` in Development.
