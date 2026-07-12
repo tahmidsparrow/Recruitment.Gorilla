@@ -88,6 +88,13 @@ export interface SkillOption {
   isActive: boolean;
 }
 
+export interface InterviewTypeOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface UpsertOptionPayload {
   name: string;
   sortOrder: number;
@@ -114,6 +121,8 @@ export interface StatusChangePayload {
   interviewAt: string | null;
   // Required (non-empty) when status === 'Interview Scheduled'.
   interviewerUserIds?: number[] | null;
+  // Optional when status === 'Interview Scheduled': interview type tag ids.
+  interviewTypeOptionIds?: number[] | null;
 }
 
 export interface CandidateListItem {
@@ -146,6 +155,16 @@ export interface StatusHistoryEntry {
   changedBy: string;
   interviewId: number | null;
   interviewers: { userId: number; name: string }[];
+  interviewTags: string[];
+  evaluationSummaries: EvaluationSummary[];
+}
+
+export interface EvaluationSummary {
+  interviewerName: string;
+  overallRating: number | null;
+  recommendation: string | null;
+  recommendationOther: string | null;
+  submittedAt: string | null;
 }
 
 export interface StatusOption {
@@ -361,6 +380,8 @@ export interface InterviewDetail {
   canEvaluate: boolean;
   myEvaluation: InterviewEvaluation | null;
   allEvaluations: InterviewEvaluation[] | null;
+  notes: string | null;
+  interviewTags: string[];
 }
 
 export interface UpsertEvaluationPayload {

@@ -24,6 +24,7 @@ import type {
   RoleAppliedOption,
   DeleteRoleResult,
   SkillOption,
+  InterviewTypeOption,
   StatusOption,
   StatusChangePayload,
   StatusHistoryEntry,
@@ -301,6 +302,32 @@ export const updateSkillOption = async (id: number, payload: UpsertOptionPayload
 
 export const deleteSkillOption = async (id: number): Promise<void> => {
   await api.delete(`/config/skills/${id}`);
+};
+
+// ----- Configuration: Interview type options -----
+export const getInterviewTypeOptions = async (includeInactive = false): Promise<InterviewTypeOption[]> => {
+  const { data } = await api.get<InterviewTypeOption[]>('/config/interview-types', { params: { includeInactive } });
+  return data;
+};
+
+export const createInterviewTypeOption = async (payload: UpsertOptionPayload): Promise<InterviewTypeOption> => {
+  const { data } = await api.post<InterviewTypeOption>('/config/interview-types', payload);
+  return data;
+};
+
+export const updateInterviewTypeOption = async (id: number, payload: UpsertOptionPayload): Promise<InterviewTypeOption> => {
+  const { data } = await api.put<InterviewTypeOption>(`/config/interview-types/${id}`, payload);
+  return data;
+};
+
+export const deleteInterviewTypeOption = async (id: number): Promise<void> => {
+  await api.delete(`/config/interview-types/${id}`);
+};
+
+/** Active interview type tags for the schedule form (readable by any authorized user). */
+export const getActiveInterviewTypes = async (): Promise<InterviewTypeOption[]> => {
+  const { data } = await api.get<InterviewTypeOption[]>('/interviews/types');
+  return data;
 };
 
 /**

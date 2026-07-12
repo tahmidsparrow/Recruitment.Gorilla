@@ -4,13 +4,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createRoleOption,
   createSkillOption,
+  createInterviewTypeOption,
   deleteRoleOption,
   deleteSkillOption,
+  deleteInterviewTypeOption,
   getAssignableUsers,
   getRoleOptions,
   getSkillOptions,
+  getInterviewTypeOptions,
   updateRoleOption,
   updateSkillOption,
+  updateInterviewTypeOption,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastStack';
@@ -71,12 +75,20 @@ const skillsApi: SectionApi = {
   remove: deleteSkillOption,
 };
 
+const interviewTypesApi: SectionApi = {
+  list: getInterviewTypeOptions,
+  create: createInterviewTypeOption,
+  update: updateInterviewTypeOption,
+  remove: deleteInterviewTypeOption,
+};
+
 export default function ConfigurationPage() {
   return (
     <div>
       <h2 className="mb-4">Configuration</h2>
       <OptionSection title="Roles applied / Job openings" noun="role" queryKey="roles" api={rolesApi} jobFields />
       <OptionSection title="Skills" noun="skill" queryKey="skills" api={skillsApi} />
+      <OptionSection title="Interview Types" noun="interview type" queryKey="interview-types" api={interviewTypesApi} />
     </div>
   );
 }

@@ -367,6 +367,8 @@ a:hover {
   border-radius: 50%;
   background: var(--status-color);
   flex: 0 0 auto;
+  /* Soft ring so the solid dot reads distinctly from the tinted status badge. */
+  box-shadow: 0 0 0 2px var(--ms-surface), 0 0 0 5px var(--status-tint);
 }
 .status-badge {
   display: inline-block;
@@ -630,6 +632,90 @@ a.hero-chip:hover {
   font-weight: 700;
 }
 
+/* ===== Interview-completed evaluation summary cards (status timeline) ===== */
+.eval-summary {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  background: var(--ms-surface);
+  padding: 0.6rem 0.7rem;
+  border-left: 3px solid var(--ms-primary);
+}
+.eval-summary__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ms-primary);
+  margin-bottom: 0.55rem;
+}
+.eval-summary__count {
+  margin-left: auto;
+  background: var(--ms-primary);
+  color: #fff;
+  border-radius: 999px;
+  min-width: 1.2rem;
+  padding: 0 0.35rem;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.3rem;
+}
+.eval-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.5rem;
+}
+.eval-card {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 10px;
+  background: var(--bs-body-bg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.eval-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--ms-primary);
+  box-shadow: 0 4px 14px rgba(3, 25, 38, 0.08);
+}
+.eval-card__avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ms-primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.eval-card__body { min-width: 0; flex: 1 1 auto; }
+.eval-card__top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: space-between;
+}
+.eval-card__name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eval-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+}
+
 /* ===== Interview evaluation ===== */
 .eval-criterion { padding: 0.7rem 0; border-bottom: 1px solid var(--bs-border-color); }
 .eval-criterion:last-child { border-bottom: 0; padding-bottom: 0.2rem; }
@@ -705,7 +791,13 @@ a.hero-chip:hover {
 .eval-panel__body { padding: 0.25rem 1rem 1rem; }
 
 /* Segmented 1-5 rating pills */
-.rating-group { display: flex; gap: 0.3rem; }
+.rating-group { display: flex; gap: 0.3rem; padding: 2px; border-radius: 10px; }
+/* Flags a required rating group left empty on a failed submit. */
+.rating-group--invalid {
+  box-shadow: 0 0 0 1px var(--bs-danger);
+  background: rgba(var(--bs-danger-rgb), 0.06);
+}
+.rating-group--invalid .rating-btn { border-color: rgba(var(--bs-danger-rgb), 0.5); }
 .rating-btn {
   width: 32px;
   height: 32px;
