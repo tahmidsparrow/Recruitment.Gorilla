@@ -36,7 +36,9 @@ public record InterviewDetailDto(
     List<InterviewInterviewerDto> Interviewers,
     bool CanEvaluate,                          // caller is an assigned interviewer
     InterviewEvaluationDto? MyEvaluation,      // the caller's evaluation, if any
-    List<InterviewEvaluationDto>? AllEvaluations // Admin+ only; null otherwise
+    List<InterviewEvaluationDto>? AllEvaluations, // Admin+ only; null otherwise
+    string? Notes,                             // recruiter's note = the scheduled entry's comment
+    List<string> InterviewTags                 // interview type tags (Technical, HR, …)
 );
 
 public record UpsertEvaluationDto(

@@ -21,6 +21,11 @@ public class InterviewsController(
     public async Task<IActionResult> GetAssignableUsers() =>
         Ok(await interviews.GetAssignableUsersAsync());
 
+    /// <summary>Active interview type tags for the schedule form (readable by any authorized user).</summary>
+    [HttpGet("types")]
+    public async Task<IActionResult> GetInterviewTypes() =>
+        Ok(await interviews.GetActiveInterviewTypesAsync());
+
     /// <summary>Interviews the current user is assigned to.</summary>
     [HttpGet("mine")]
     public async Task<IActionResult> GetMine()

@@ -85,6 +85,9 @@ public record StatusChangeDto(
     // Required (non-empty) when Status == "Interview Scheduled": the users to assign
     // as interviewers. Each must be an existing active user.
     List<int>? InterviewerUserIds = null,
+    // Optional when Status == "Interview Scheduled": interview type tags (Technical, HR, …).
+    // Each must be an active InterviewTypeOption.
+    List<int>? InterviewTypeOptionIds = null,
     // Deprecated: the server now derives the actor from the authenticated user.
     string? ChangedBy = null
 );
@@ -147,7 +150,18 @@ public record StatusHistoryDto(
     DateTime ChangedAt,
     string ChangedBy,
     int? InterviewId,
-    List<InterviewInterviewerDto> Interviewers
+    List<InterviewInterviewerDto> Interviewers,
+    List<string> InterviewTags,
+    // Live per-interviewer evaluation summary for an "Interview Completed" entry (empty otherwise).
+    List<EvaluationSummaryDto> EvaluationSummaries
+);
+
+public record EvaluationSummaryDto(
+    string InterviewerName,
+    int? OverallRating,
+    string? Recommendation,
+    string? RecommendationOther,
+    DateTime? SubmittedAt
 );
 
 public record StatusOptionDto(
@@ -184,6 +198,10 @@ public record UpsertRoleAppliedOptionDto(
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 
 public record UpsertSkillOptionDto(string Name, int SortOrder, bool IsActive);
+
+public record InterviewTypeOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+
+public record UpsertInterviewTypeOptionDto(string Name, int SortOrder, bool IsActive);
 
 public record PagedResult<T>(
     List<T> Items,

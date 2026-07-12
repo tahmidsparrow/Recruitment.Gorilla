@@ -194,6 +194,69 @@ public class ConfigurationService(AppDbContext db)
         return true;
     }
 
+    // ----- Interview type options -----
+
+    public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
+        await db.InterviewTypeOptions
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
+            .ToListAsync();
+
+    public async Task<List<InterviewTypeOptionDto>> GetAllInterviewTypesAsync() =>
+        await db.InterviewTypeOptions
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
+            .ToListAsync();
+
+    public async Task<(InterviewTypeOptionDto? Created, bool Conflict)> CreateInterviewTypeAsync(UpsertInterviewTypeOptionDto dto)
+    {
+        var name = dto.Name.Trim();
+        if (await db.InterviewTypeOptions.AnyAsync(t => t.Name == name))
+            return (null, true);
+
+        var entity = new InterviewTypeOption { Name = name, SortOrder = dto.SortOrder, IsActive = dto.IsActive };
+        db.InterviewTypeOptions.Add(entity);
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false);
+    }
+
+    public async Task<(InterviewTypeOptionDto? Updated, bool NotFound, bool Conflict)> UpdateInterviewTypeAsync(int id, UpsertInterviewTypeOptionDto dto)
+    {
+        var entity = await db.InterviewTypeOptions.FindAsync(id);
+        if (entity is null) return (null, true, false);
+
+        var name = dto.Name.Trim();
+        if (await db.InterviewTypeOptions.AnyAsync(t => t.Id != id && t.Name == name))
+            return (null, false, true);
+
+        entity.Name = name;
+        entity.SortOrder = dto.SortOrder;
+        entity.IsActive = dto.IsActive;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false, false);
+    }
+
+    public async Task<bool> DeleteInterviewTypeAsync(int id)
+    {
+        var entity = await db.InterviewTypeOptions.FindAsync(id);
+        if (entity is null) return false;
+
+        var inUse = await db.InterviewTags.AnyAsync(t => t.InterviewTypeOptionId == id);
+        if (inUse)
+        {
+            entity.IsActive = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            db.InterviewTypeOptions.Remove(entity);
+        }
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     /// <summary>Auto-generated title: role name + the posted (created) date.</summary>
     public static string RoleTitle(string name, DateTime createdAt) => $"{name} — {createdAt:dd MMM yyyy}";
 
@@ -202,4 +265,5 @@ public class ConfigurationService(AppDbContext db)
             r.CreatedAt, r.EndDate, RoleTitle(r.Name, r.CreatedAt),
             r.RecruiterUserId, r.RecruiterUser?.Name);
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
+    private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);
 }

@@ -93,4 +93,44 @@ public class ConfigurationController(
         logger.LogInformation("Deleted/disabled skill option {Id}.", id);
         return NoContent();
     }
+
+    // ----- Interview types -----
+
+    [HttpGet("interview-types")]
+    public async Task<IActionResult> GetInterviewTypes([FromQuery] bool includeInactive = false) =>
+        Ok(includeInactive ? await config.GetAllInterviewTypesAsync() : await config.GetActiveInterviewTypesAsync());
+
+    [HttpPost("interview-types")]
+    public async Task<IActionResult> CreateInterviewType([FromBody] UpsertInterviewTypeOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (created, conflict) = await config.CreateInterviewTypeAsync(dto);
+        if (conflict) return Conflict("An interview type with that name already exists.");
+
+        logger.LogInformation("Created interview type option {Id} ('{Name}').", created!.Id, created.Name);
+        return Ok(created);
+    }
+
+    [HttpPut("interview-types/{id:int}")]
+    public async Task<IActionResult> UpdateInterviewType(int id, [FromBody] UpsertInterviewTypeOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (updated, notFound, conflict) = await config.UpdateInterviewTypeAsync(id, dto);
+        if (notFound) return NotFound();
+        if (conflict) return Conflict("An interview type with that name already exists.");
+
+        logger.LogInformation("Updated interview type option {Id}.", id);
+        return Ok(updated);
+    }
+
+    [HttpDelete("interview-types/{id:int}")]
+    public async Task<IActionResult> DeleteInterviewType(int id)
+    {
+        var ok = await config.DeleteInterviewTypeAsync(id);
+        if (!ok) return NotFound();
+        logger.LogInformation("Deleted/disabled interview type option {Id}.", id);
+        return NoContent();
+    }
 }
