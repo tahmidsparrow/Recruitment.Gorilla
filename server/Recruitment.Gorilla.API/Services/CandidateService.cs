@@ -60,6 +60,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .Include(x => x.RoleAppliedOption)
             .Include(x => x.CandidateSkills).ThenInclude(cs => cs.SkillOption)
             .Include(x => x.Interviews).ThenInclude(i => i.Interviewers).ThenInclude(ii => ii.User)
+            .Include(x => x.Interviews).ThenInclude(i => i.Tags).ThenInclude(t => t.InterviewTypeOption)
+            .Include(x => x.Interviews).ThenInclude(i => i.Evaluations).ThenInclude(e => e.InterviewerUser)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id);
 
@@ -158,13 +160,36 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
         return null;
     }
 
+    /// <summary>
+    /// Error string when a candidate's applied-for job opening has ended (its <c>EndDate</c>
+    /// has passed) — profile edits and status changes are then locked for everyone until an
+    /// Admin extends the End Date. Null when the role is open or the candidate has no role.
+    /// </summary>
+    private static string? RoleLockError(RoleAppliedOption? role) =>
+        role is not null && role.EndDate < DateTime.UtcNow
+            ? $"This job opening ('{role.Name}') ended on {role.EndDate:g}. Ask an Admin to extend the End Date before making changes."
+            : null;
+
+    /// <summary>Lock error for a candidate's current role (used before profile updates). Null if editable.</summary>
+    public async Task<string?> GetRoleLockErrorAsync(int candidateId)
+    {
+        var candidate = await db.Candidates
+            .Include(c => c.RoleAppliedOption)
+            .FirstOrDefaultAsync(c => c.Id == candidateId);
+        return candidate is null ? null : RoleLockError(candidate.RoleAppliedOption);
+    }
+
     public async Task<string?> ValidateStatusChangeAsync(int candidateId, StatusChangeDto dto)
     {
         var candidate = await db.Candidates
             .Include(c => c.StatusHistories)
+            .Include(c => c.RoleAppliedOption)
             .FirstOrDefaultAsync(c => c.Id == candidateId);
 
         if (candidate is null) return null;
+
+        if (RoleLockError(candidate.RoleAppliedOption) is string lockError)
+            return lockError;
 
         var transitionAllowed = await db.StatusTransitions.AnyAsync(t =>
             t.IsActive &&
@@ -205,6 +230,14 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             var validCount = await db.Users.CountAsync(u => ids.Contains(u.Id) && u.IsActive);
             if (validCount != ids.Count)
                 return "One or more selected interviewers are not valid active users.";
+
+            if (dto.InterviewTypeOptionIds is { Count: > 0 })
+            {
+                var typeIds = dto.InterviewTypeOptionIds.Distinct().ToList();
+                var validTypeCount = await db.InterviewTypeOptions.CountAsync(t => typeIds.Contains(t.Id) && t.IsActive);
+                if (validTypeCount != typeIds.Count)
+                    return "One or more selected interview types are not valid active options.";
+            }
         }
 
         if (dto.Status == InterviewCompleted)
@@ -213,6 +246,15 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
                 return "Interview Completed requires Interview Scheduled to exist in the candidate history.";
             if (string.IsNullOrWhiteSpace(dto.Comment))
                 return "Interview Completed requires a comment.";
+
+            var hasSubmittedEvaluation = await db.Interviews
+                .Where(i => i.CandidateId == candidateId)
+                .OrderByDescending(i => i.CreatedAt)
+                .Take(1)
+                .SelectMany(i => i.Evaluations)
+                .AnyAsync(ev => ev.IsSubmitted);
+            if (!hasSubmittedEvaluation)
+                return "Interview Completed requires at least one submitted interviewer evaluation.";
         }
 
         if (dto.Status == Recommended && !HasAnyStatus(candidate, [CodeReview, InterviewCompleted]))
@@ -385,6 +427,20 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             ChangedBy = changedBy ?? dto.ChangedBy ?? "Unknown",
         };
 
+        // On completion, link the entry to the interview it concludes. The per-interviewer
+        // evaluation summary is surfaced live (structured) via StatusHistoryDto.EvaluationSummaries,
+        // rendered as cards on the timeline — not baked into the comment text.
+        if (dto.Status == InterviewCompleted)
+        {
+            var completedInterviewId = await db.Interviews
+                .Where(i => i.CandidateId == id)
+                .OrderByDescending(i => i.CreatedAt)
+                .Select(i => (int?)i.Id)
+                .FirstOrDefaultAsync();
+            if (completedInterviewId is int cid)
+                entry.InterviewId = cid;
+        }
+
         db.StatusHistories.Add(entry);
         candidate.CurrentStatus = dto.Status;
         candidate.UpdatedAt = DateTime.UtcNow;
@@ -404,6 +460,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
                 Interviewers = dto.InterviewerUserIds
                     .Distinct()
                     .Select(uid => new InterviewInterviewer { UserId = uid })
+                    .ToList(),
+                Tags = (dto.InterviewTypeOptionIds ?? [])
+                    .Distinct()
+                    .Select(tid => new InterviewTag { InterviewTypeOptionId = tid })
                     .ToList(),
             };
             db.Interviews.Add(interview);
@@ -434,6 +494,14 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
                 .Select(u => new InterviewInterviewerDto(u.Id, u.Name))
                 .ToListAsync();
 
+        var interviewTags = interview is null || dto.InterviewTypeOptionIds is not { Count: > 0 }
+            ? []
+            : await db.InterviewTypeOptions
+                .Where(t => dto.InterviewTypeOptionIds.Contains(t.Id))
+                .OrderBy(t => t.Name)
+                .Select(t => t.Name)
+                .ToListAsync();
+
         return new StatusHistoryDto(
             entry.Id,
             entry.Status,
@@ -444,7 +512,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             entry.ChangedAt,
             entry.ChangedBy,
             interview?.Id,
-            interviewers);
+            interviewers,
+            interviewTags,
+            []);
     }
 
     private static CandidateDetailDto MapToDetail(Candidate c) => new(
@@ -460,7 +530,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .OrderBy(s => s.SortOrder).ThenBy(s => s.Name).ToList(),
         c.CurrentStatus, c.CreatedAt, c.UpdatedAt,
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
-        c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList()
+        c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList(),
+        c.RoleAppliedOption != null ? c.RoleAppliedOption.EndDate : null,
+        c.RoleAppliedOption != null && c.RoleAppliedOption.EndDate < DateTime.UtcNow
     );
 
     /// <summary>
@@ -469,11 +541,31 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     /// </summary>
     private static StatusHistoryDto ToStatusHistoryDto(StatusHistory s, IEnumerable<Interview> interviews)
     {
-        var interview = interviews.FirstOrDefault(i => i.StatusHistoryId == s.Id);
-        var interviewers = interview?.Interviewers
+        // The scheduled entry carries the interview's interviewers + type tags (via StatusHistoryId).
+        var scheduled = interviews.FirstOrDefault(i => i.StatusHistoryId == s.Id);
+        var interviewers = scheduled?.Interviewers
             .OrderBy(ii => ii.User.Name)
             .Select(ii => new InterviewInterviewerDto(ii.UserId, ii.User.Name))
             .ToList() ?? [];
+        var interviewTags = scheduled?.Tags
+            .Select(t => t.InterviewTypeOption.Name)
+            .OrderBy(n => n)
+            .ToList() ?? [];
+
+        // An "Interview Completed" entry links (InterviewId) to the interview it concludes; surface
+        // a live, structured per-interviewer evaluation summary for card rendering on the timeline.
+        var completed = s.InterviewId is int iid ? interviews.FirstOrDefault(i => i.Id == iid) : null;
+        var evaluationSummaries = completed?.Evaluations
+            .Where(e => e.IsSubmitted)
+            .OrderBy(e => e.InterviewerUser != null ? e.InterviewerUser.Name : "")
+            .Select(e => new EvaluationSummaryDto(
+                e.InterviewerUser != null ? e.InterviewerUser.Name : "Unknown",
+                e.OverallRating,
+                e.Recommendation,
+                e.RecommendationOther,
+                e.SubmittedAt))
+            .ToList() ?? [];
+
         return new StatusHistoryDto(
             s.Id,
             s.Status,
@@ -483,8 +575,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             s.InterviewAt,
             s.ChangedAt,
             s.ChangedBy,
-            interview?.Id,
-            interviewers);
+            scheduled?.Id ?? s.InterviewId,
+            interviewers,
+            interviewTags,
+            evaluationSummaries);
     }
 
     private static bool RequiresComment(string status) =>

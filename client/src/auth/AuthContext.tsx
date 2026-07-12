@@ -22,6 +22,8 @@ interface AuthContextValue {
   isSuperAdmin: boolean;
   isAdminOrAbove: boolean;
   canWriteCandidates: boolean;
+  /** Bottom of the hierarchy: holds no SuperAdmin/Admin/Recruiter role (dashboard + assigned interviews only). */
+  isInterviewerOnly: boolean;
   mustChangePassword: boolean;
 }
 
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSuperAdmin: hasRole('SuperAdmin'),
       isAdminOrAbove: hasAnyRole('SuperAdmin', 'Admin'),
       canWriteCandidates: hasAnyRole('SuperAdmin', 'Admin', 'Recruiter'),
+      isInterviewerOnly: user !== null && !hasAnyRole('SuperAdmin', 'Admin', 'Recruiter'),
       mustChangePassword: user?.mustChangePassword ?? false,
     };
   }, [user, loading]);

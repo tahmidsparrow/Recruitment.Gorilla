@@ -73,7 +73,7 @@ function ProtectedLayout() {
             <Nav className="me-auto">
               <Nav.Link as={NavLink} to="/" end>Dashboard</Nav.Link>
               {canWriteCandidates && <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>}
-              <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>
+              {canWriteCandidates && <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>}
               {isAdminOrAbove && <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>}
               {isSuperAdmin && <Nav.Link as={NavLink} to="/users">Users</Nav.Link>}
             </Nav>
@@ -114,8 +114,22 @@ export default function App() {
                 </RequireRole>
               }
             />
-            <Route path="/candidates" element={<CandidatesPage />} />
-            <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+            <Route
+              path="/candidates"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <CandidatesPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/candidates/:id"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <CandidateDetailPage />
+                </RequireRole>
+              }
+            />
             <Route path="/interviews/:id" element={<InterviewPage />} />
             <Route
               path="/configuration"

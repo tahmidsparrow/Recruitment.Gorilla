@@ -7,6 +7,10 @@ import type {
   CreateCandidatePayload,
   CreateUserPayload,
   DashboardData,
+  DashboardKpis,
+  StatusCount,
+  TrendPoint,
+  JobOpening,
   DuplicateCandidate,
   InterviewDetail,
   InterviewEvaluation,
@@ -18,7 +22,9 @@ import type {
   CandidateListItem,
   ResetPasswordPayload,
   RoleAppliedOption,
+  DeleteRoleResult,
   SkillOption,
+  InterviewTypeOption,
   StatusOption,
   StatusChangePayload,
   StatusHistoryEntry,
@@ -169,6 +175,28 @@ export const uploadCV = async (file: File): Promise<CVDraft> => {
   return data;
 };
 
+// Org-wide dashboard figures (all roles, no owner scope).
+export const getDashboardKpis = async (): Promise<DashboardKpis> => {
+  const { data } = await api.get<DashboardKpis>('/dashboard/kpis');
+  return data;
+};
+
+export const getStatusBreakdown = async (): Promise<StatusCount[]> => {
+  const { data } = await api.get<StatusCount[]>('/dashboard/status-breakdown');
+  return data;
+};
+
+export const getApplicationsTrend = async (days = 30): Promise<TrendPoint[]> => {
+  const { data } = await api.get<TrendPoint[]>('/dashboard/applications-trend', { params: { days } });
+  return data;
+};
+
+export const getJobOpenings = async (): Promise<JobOpening[]> => {
+  const { data } = await api.get<JobOpening[]>('/dashboard/job-openings');
+  return data;
+};
+
+// Owner-scoped remainder (by-role / top-skills / upcoming / activity).
 export const getDashboard = async (): Promise<DashboardData> => {
   const { data } = await api.get<DashboardData>('/dashboard');
   return data;
@@ -251,8 +279,9 @@ export const updateRoleOption = async (id: number, payload: UpsertOptionPayload)
   return data;
 };
 
-export const deleteRoleOption = async (id: number): Promise<void> => {
-  await api.delete(`/config/roles/${id}`);
+export const deleteRoleOption = async (id: number): Promise<DeleteRoleResult> => {
+  const { data } = await api.delete<DeleteRoleResult>(`/config/roles/${id}`);
+  return data;
 };
 
 // ----- Configuration: Skill options -----
@@ -273,6 +302,32 @@ export const updateSkillOption = async (id: number, payload: UpsertOptionPayload
 
 export const deleteSkillOption = async (id: number): Promise<void> => {
   await api.delete(`/config/skills/${id}`);
+};
+
+// ----- Configuration: Interview type options -----
+export const getInterviewTypeOptions = async (includeInactive = false): Promise<InterviewTypeOption[]> => {
+  const { data } = await api.get<InterviewTypeOption[]>('/config/interview-types', { params: { includeInactive } });
+  return data;
+};
+
+export const createInterviewTypeOption = async (payload: UpsertOptionPayload): Promise<InterviewTypeOption> => {
+  const { data } = await api.post<InterviewTypeOption>('/config/interview-types', payload);
+  return data;
+};
+
+export const updateInterviewTypeOption = async (id: number, payload: UpsertOptionPayload): Promise<InterviewTypeOption> => {
+  const { data } = await api.put<InterviewTypeOption>(`/config/interview-types/${id}`, payload);
+  return data;
+};
+
+export const deleteInterviewTypeOption = async (id: number): Promise<void> => {
+  await api.delete(`/config/interview-types/${id}`);
+};
+
+/** Active interview type tags for the schedule form (readable by any authorized user). */
+export const getActiveInterviewTypes = async (): Promise<InterviewTypeOption[]> => {
+  const { data } = await api.get<InterviewTypeOption[]>('/interviews/types');
+  return data;
 };
 
 /**

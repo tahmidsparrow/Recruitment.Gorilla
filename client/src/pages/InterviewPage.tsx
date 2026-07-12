@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import { getInterview } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
+import { skillColorClass } from '../utils/skillColors';
 
 const initials = (name: string) =>
   name
@@ -75,6 +76,13 @@ export default function InterviewPage() {
             <div className="interview-hero__eyebrow">Interview</div>
             <h2 className="mb-0">{data.candidate.fullName}</h2>
             {role && <div className="text-muted">{role}</div>}
+            {data.interviewTags.length > 0 && (
+              <div className="d-flex flex-wrap gap-1 mt-2">
+                {data.interviewTags.map((tag) => (
+                  <span key={tag} className={skillColorClass(tag)}>{tag}</span>
+                ))}
+              </div>
+            )}
           </div>
           <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
             <CalendarIcon /> {scheduled} · {relative.label}
@@ -93,6 +101,12 @@ export default function InterviewPage() {
 
       <Row className="g-3">
         <Col lg={5} className="anim-fade-up" style={{ animationDelay: '60ms' }}>
+          {data.notes && (
+            <Alert variant="info" className="interview-notes mb-3">
+              <div className="fw-semibold mb-1">Notes from the recruiter</div>
+              <div style={{ whiteSpace: 'pre-line' }}>{data.notes}</div>
+            </Alert>
+          )}
           <ReadOnlyCandidateProfile candidate={data.candidate} />
         </Col>
         <Col lg={7} className="anim-fade-up" style={{ animationDelay: '120ms' }}>

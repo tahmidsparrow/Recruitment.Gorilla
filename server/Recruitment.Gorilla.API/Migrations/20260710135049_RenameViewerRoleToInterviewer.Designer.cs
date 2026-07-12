@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710135049_RenameViewerRoleToInterviewer")]
+    partial class RenameViewerRoleToInterviewer
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -300,112 +303,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.ToTable("InterviewInterviewers");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTag", b =>
-                {
-                    b.Property<int>("InterviewId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("InterviewTypeOptionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("InterviewId", "InterviewTypeOptionId");
-
-                    b.HasIndex("InterviewTypeOptionId");
-
-                    b.ToTable("InterviewTags");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTypeOption", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("InterviewTypeOptions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Technical",
-                            SortOrder = 1,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "HR",
-                            SortOrder = 2,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Managerial",
-                            SortOrder = 3,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "1st Level",
-                            SortOrder = 4,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "2nd Level",
-                            SortOrder = 5,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Final Round",
-                            SortOrder = 6,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -498,9 +395,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -515,12 +409,12 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<DateTime?>("PostedDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Priority")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
-
-                    b.Property<int?>("RecruiterUserId")
-                        .HasColumnType("int");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
@@ -533,8 +427,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.HasIndex("RecruiterUserId");
-
                     b.ToTable("RoleAppliedOptions");
 
                     b.HasData(
@@ -542,7 +434,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 1,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Backend Engineer",
                             SortOrder = 1,
@@ -552,7 +443,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 2,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Frontend Engineer",
                             SortOrder = 2,
@@ -562,7 +452,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 3,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Full Stack Engineer",
                             SortOrder = 3,
@@ -572,7 +461,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 4,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "Machine Learning Engineer",
                             SortOrder = 4,
@@ -582,7 +470,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 5,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "DevOps Engineer",
                             SortOrder = 5,
@@ -592,7 +479,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         {
                             Id = 6,
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndDate = new DateTime(2027, 12, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "QA Engineer",
                             SortOrder = 6,
@@ -734,9 +620,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Property<DateTime?>("InterviewAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("InterviewId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -753,8 +636,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CandidateId");
-
-                    b.HasIndex("InterviewId");
 
                     b.ToTable("StatusHistories");
                 });
@@ -1195,14 +1076,6 @@ namespace Recruitment.Gorilla.API.Migrations
                             IsActive = true,
                             SortOrder = 5,
                             ToStatusOptionId = 2
-                        },
-                        new
-                        {
-                            Id = 31,
-                            FromStatusOptionId = 8,
-                            IsActive = true,
-                            SortOrder = 5,
-                            ToStatusOptionId = 3
                         });
                 });
 
@@ -1402,25 +1275,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTag", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.Interview", "Interview")
-                        .WithMany("Tags")
-                        .HasForeignKey("InterviewId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Recruitment.Gorilla.API.Models.InterviewTypeOption", "InterviewTypeOption")
-                        .WithMany("Tags")
-                        .HasForeignKey("InterviewTypeOptionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Interview");
-
-                    b.Navigation("InterviewTypeOption");
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Notification", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.User", "User")
@@ -1432,16 +1286,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.User", "RecruiterUser")
-                        .WithMany()
-                        .HasForeignKey("RecruiterUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("RecruiterUser");
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.StatusHistory", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
@@ -1450,14 +1294,7 @@ namespace Recruitment.Gorilla.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Recruitment.Gorilla.API.Models.Interview", "Interview")
-                        .WithMany()
-                        .HasForeignKey("InterviewId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Candidate");
-
-                    b.Navigation("Interview");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.StatusTransition", b =>
@@ -1506,18 +1343,11 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("Evaluations");
 
                     b.Navigation("Interviewers");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewEvaluation", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTypeOption", b =>
-                {
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.SkillOption", b =>

@@ -39,16 +39,18 @@ public record JobOpeningDto(
     string? Department,
     string? Priority,
     DateTime PostedDate,
+    DateTime EndDate,       // closing deadline; past-due roles are excluded from the table
     int Applicants
 );
 
+/// <summary>
+/// Owner-scoped remainder of the dashboard (candidate-centric). The org-wide KPI cards,
+/// status breakdown, applications trend, and job openings are served from their own
+/// all-roles endpoints (see <see cref="Controllers.DashboardController"/>).
+/// </summary>
 public record DashboardDto(
-    DashboardKpisDto Kpis,
-    List<StatusCountDto> StatusBreakdown,          // funnel + donut share this
     List<NameCountDto> ByRole,
     List<NameCountDto> TopSkills,                  // top 8
-    List<TrendPointDto> ApplicationsTrend,         // last 30 days, zero-filled
-    List<UpcomingInterviewDto> UpcomingInterviews, // next 10, future only
-    List<ActivityItemDto> RecentActivity,          // latest 10 status changes
-    List<JobOpeningDto> ActiveJobOpenings          // active roles as job openings
+    List<UpcomingInterviewDto> UpcomingInterviews, // next 10, pending only
+    List<ActivityItemDto> RecentActivity           // latest 10 status changes
 );

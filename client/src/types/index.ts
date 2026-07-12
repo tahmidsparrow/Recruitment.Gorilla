@@ -70,14 +70,25 @@ export interface RoleAppliedOption {
   name: string;
   sortOrder: number;
   isActive: boolean;
-  // Job-opening posting metadata (optional)
+  // Job-opening posting metadata
   location?: string | null;
   department?: string | null;
   priority?: string | null;
-  postedDate?: string | null;
+  createdAt: string;   // = posted date (read-only)
+  endDate: string;     // required closing deadline
+  title: string;       // computed: "{name} — {posted date}"
+  recruiterUserId?: number | null;
+  recruiterName?: string | null;
 }
 
 export interface SkillOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface InterviewTypeOption {
   id: number;
   name: string;
   sortOrder: number;
@@ -88,11 +99,18 @@ export interface UpsertOptionPayload {
   name: string;
   sortOrder: number;
   isActive: boolean;
-  // Optional job-opening fields — only sent for role options (skills ignore them).
+  // Job-opening fields — only sent for role options (skills ignore them).
   location?: string | null;
   department?: string | null;
   priority?: string | null;
-  postedDate?: string | null;
+  endDate?: string | null;   // required for roles
+  recruiterUserId?: number | null;
+}
+
+export interface DeleteRoleResult {
+  deleted: boolean;
+  deactivated: boolean;
+  candidateCount: number;
 }
 
 export interface StatusChangePayload {
@@ -103,6 +121,8 @@ export interface StatusChangePayload {
   interviewAt: string | null;
   // Required (non-empty) when status === 'Interview Scheduled'.
   interviewerUserIds?: number[] | null;
+  // Optional when status === 'Interview Scheduled': interview type tag ids.
+  interviewTypeOptionIds?: number[] | null;
 }
 
 export interface CandidateListItem {
@@ -135,6 +155,16 @@ export interface StatusHistoryEntry {
   changedBy: string;
   interviewId: number | null;
   interviewers: { userId: number; name: string }[];
+  interviewTags: string[];
+  evaluationSummaries: EvaluationSummary[];
+}
+
+export interface EvaluationSummary {
+  interviewerName: string;
+  overallRating: number | null;
+  recommendation: string | null;
+  recommendationOther: string | null;
+  submittedAt: string | null;
 }
 
 export interface StatusOption {
@@ -169,6 +199,8 @@ export interface CandidateDetail {
   updatedAt: string;
   cvFiles: CVFileInfo[];
   statusHistory: StatusHistoryEntry[];
+  roleEndDate: string | null;
+  roleClosed: boolean;
 }
 
 export interface PagedResult<T> {
@@ -178,9 +210,9 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
-export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Viewer';
+export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Interviewer';
 
-export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Viewer'];
+export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Interviewer'];
 
 export interface LoginPayload {
   email: string;
@@ -286,18 +318,16 @@ export interface JobOpening {
   department: string | null;
   priority: string | null;
   postedDate: string;
+  endDate: string;
   applicants: number;
 }
 
+/** Owner-scoped remainder (candidate-centric). Org-wide figures come from their own endpoints. */
 export interface DashboardData {
-  kpis: DashboardKpis;
-  statusBreakdown: StatusCount[];
   byRole: NameCount[];
   topSkills: NameCount[];
-  applicationsTrend: TrendPoint[];
   upcomingInterviews: UpcomingInterview[];
   recentActivity: ActivityItem[];
-  activeJobOpenings: JobOpening[];
 }
 
 // ----- Interviews & evaluations -----
@@ -350,6 +380,8 @@ export interface InterviewDetail {
   canEvaluate: boolean;
   myEvaluation: InterviewEvaluation | null;
   allEvaluations: InterviewEvaluation[] | null;
+  notes: string | null;
+  interviewTags: string[];
 }
 
 export interface UpsertEvaluationPayload {

@@ -12,5 +12,13 @@ public class StatusHistory
     public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
     public string ChangedBy { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Set only on an "Interview Completed" entry: the interview whose evaluations this entry
+    /// summarizes and links to. Independent of <see cref="Interview.StatusHistoryId"/> (which
+    /// points the other way, from an interview to its "Interview Scheduled" entry).
+    /// </summary>
+    public int? InterviewId { get; set; }
+    public Interview? Interview { get; set; }
+
     public Candidate Candidate { get; set; } = null!;
 }

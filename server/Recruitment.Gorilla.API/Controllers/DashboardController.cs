@@ -10,10 +10,30 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/dashboard")]
 public class DashboardController(DashboardService dashboardService, CurrentUser currentUser) : ControllerBase
 {
-    // Same read scope as CandidatesController: recruiters only see their own candidates.
+    // Owner scope for the candidate-centric sections only: Admin+ see all; a Recruiter is
+    // limited to their own. (The org-wide endpoints below are deliberately unscoped.)
     private int? ReadOwnerScope =>
-        currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin, Roles.Viewer) ? null : currentUser.UserId;
+        currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin) ? null : currentUser.UserId;
+
+    // ---- Org-wide figures — visible to every authenticated role, no owner scope ----
+
+    [HttpGet("kpis")]
+    public async Task<IActionResult> GetKpis() => Ok(await dashboardService.GetKpisAsync());
+
+    [HttpGet("status-breakdown")]
+    public async Task<IActionResult> GetStatusBreakdown() =>
+        Ok(await dashboardService.GetStatusBreakdownAsync());
+
+    [HttpGet("applications-trend")]
+    public async Task<IActionResult> GetApplicationsTrend([FromQuery] int days = 30) =>
+        Ok(await dashboardService.GetApplicationsTrendAsync(days));
+
+    [HttpGet("job-openings")]
+    public async Task<IActionResult> GetJobOpenings() =>
+        Ok(await dashboardService.GetJobOpeningsAsync());
+
+    // ---- Owner-scoped remainder (by-role / top-skills / upcoming / activity) ----
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await dashboardService.GetAsync(ReadOwnerScope));
+    public async Task<IActionResult> Get() => Ok(await dashboardService.GetScopedAsync(ReadOwnerScope));
 }

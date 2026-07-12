@@ -15,27 +15,28 @@ public class ConfigurationService(AppDbContext db)
     // ----- Role Applied options -----
 
     public async Task<List<RoleAppliedOptionDto>> GetActiveRolesAsync() =>
-        await db.RoleAppliedOptions
+        (await db.RoleAppliedOptions
+            .Include(r => r.RecruiterUser)
             .Where(r => r.IsActive)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
-            .Select(r => new RoleAppliedOptionDto(
-                r.Id, r.Name, r.SortOrder, r.IsActive,
-                r.Location, r.Department, r.Priority, r.PostedDate))
-            .ToListAsync();
+            .ToListAsync())
+            .Select(ToDto).ToList();
 
     public async Task<List<RoleAppliedOptionDto>> GetAllRolesAsync() =>
-        await db.RoleAppliedOptions
+        (await db.RoleAppliedOptions
+            .Include(r => r.RecruiterUser)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
-            .Select(r => new RoleAppliedOptionDto(
-                r.Id, r.Name, r.SortOrder, r.IsActive,
-                r.Location, r.Department, r.Priority, r.PostedDate))
-            .ToListAsync();
+            .ToListAsync())
+            .Select(ToDto).ToList();
 
-    public async Task<(RoleAppliedOptionDto? Created, bool Conflict)> CreateRoleAsync(UpsertRoleAppliedOptionDto dto)
+    public async Task<(RoleAppliedOptionDto? Created, bool Conflict, string? Error)> CreateRoleAsync(UpsertRoleAppliedOptionDto dto)
     {
+        if (ValidateRole(dto) is string error) return (null, false, error);
+        if (await ValidateRecruiterAsync(dto.RecruiterUserId) is string recErr) return (null, false, recErr);
+
         var name = dto.Name.Trim();
         if (await db.RoleAppliedOptions.AnyAsync(r => r.Name == name))
-            return (null, true);
+            return (null, true, null);
 
         var entity = new RoleAppliedOption
         {
@@ -45,21 +46,26 @@ public class ConfigurationService(AppDbContext db)
             Location = Clean(dto.Location),
             Department = Clean(dto.Department),
             Priority = Clean(dto.Priority),
-            PostedDate = dto.PostedDate,
+            EndDate = dto.EndDate,
+            RecruiterUserId = dto.RecruiterUserId,
         };
         db.RoleAppliedOptions.Add(entity);
         await db.SaveChangesAsync();
-        return (ToDto(entity), false);
+        await db.Entry(entity).Reference(e => e.RecruiterUser).LoadAsync();
+        return (ToDto(entity), false, null);
     }
 
-    public async Task<(RoleAppliedOptionDto? Updated, bool NotFound, bool Conflict)> UpdateRoleAsync(int id, UpsertRoleAppliedOptionDto dto)
+    public async Task<(RoleAppliedOptionDto? Updated, bool NotFound, bool Conflict, string? Error)> UpdateRoleAsync(int id, UpsertRoleAppliedOptionDto dto)
     {
+        if (ValidateRole(dto) is string error) return (null, false, false, error);
+        if (await ValidateRecruiterAsync(dto.RecruiterUserId) is string recErr) return (null, false, false, recErr);
+
         var entity = await db.RoleAppliedOptions.FindAsync(id);
-        if (entity is null) return (null, true, false);
+        if (entity is null) return (null, true, false, null);
 
         var name = dto.Name.Trim();
         if (await db.RoleAppliedOptions.AnyAsync(r => r.Id != id && r.Name == name))
-            return (null, false, true);
+            return (null, false, true, null);
 
         entity.Name = name;
         entity.SortOrder = dto.SortOrder;
@@ -67,34 +73,62 @@ public class ConfigurationService(AppDbContext db)
         entity.Location = Clean(dto.Location);
         entity.Department = Clean(dto.Department);
         entity.Priority = Clean(dto.Priority);
-        entity.PostedDate = dto.PostedDate;
+        entity.EndDate = dto.EndDate;
+        entity.RecruiterUserId = dto.RecruiterUserId;
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return (ToDto(entity), false, false);
+        await db.Entry(entity).Reference(e => e.RecruiterUser).LoadAsync();
+        return (ToDto(entity), false, false, null);
+    }
+
+    /// <summary>Validates required fields and the Location/Department option sets. Null when valid.</summary>
+    private static string? ValidateRole(UpsertRoleAppliedOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            return "Role name is required.";
+        if (dto.EndDate == default)
+            return "End date is required.";
+        if (dto.Location is not null && !JobOpeningOptions.Locations.Contains(dto.Location))
+            return "Invalid location.";
+        if (dto.Department is not null && !JobOpeningOptions.Departments.Contains(dto.Department))
+            return "Invalid department.";
+        return null;
+    }
+
+    /// <summary>Assigned recruiter (when set) must be an existing active user. Null when valid.</summary>
+    private async Task<string?> ValidateRecruiterAsync(int? recruiterUserId)
+    {
+        if (recruiterUserId is not int uid) return null;
+        return await db.Users.AnyAsync(u => u.Id == uid && u.IsActive)
+            ? null
+            : "The selected recruiter is not a valid active user.";
     }
 
     /// <summary>Trim to null so empty strings aren't persisted.</summary>
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    /// <summary>Soft-disable when referenced by a candidate; otherwise hard delete. False if not found.</summary>
-    public async Task<bool> DeleteRoleAsync(int id)
+    /// <summary>
+    /// Soft-disable when referenced by candidates (returns the count); otherwise hard delete.
+    /// <c>Found</c> is false when the role doesn't exist.
+    /// </summary>
+    public async Task<(bool Found, bool Deleted, bool Deactivated, int CandidateCount)> DeleteRoleAsync(int id)
     {
         var entity = await db.RoleAppliedOptions.FindAsync(id);
-        if (entity is null) return false;
+        if (entity is null) return (false, false, false, 0);
 
-        var inUse = await db.Candidates.AnyAsync(c => c.RoleAppliedOptionId == id);
-        if (inUse)
+        var candidateCount = await db.Candidates.CountAsync(c => c.RoleAppliedOptionId == id);
+        if (candidateCount > 0)
         {
             entity.IsActive = false;
             entity.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return (true, false, true, candidateCount);
         }
-        else
-        {
-            db.RoleAppliedOptions.Remove(entity);
-        }
+
+        db.RoleAppliedOptions.Remove(entity);
         await db.SaveChangesAsync();
-        return true;
+        return (true, true, false, 0);
     }
 
     // ----- Skill options -----
@@ -160,7 +194,76 @@ public class ConfigurationService(AppDbContext db)
         return true;
     }
 
+    // ----- Interview type options -----
+
+    public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
+        await db.InterviewTypeOptions
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
+            .ToListAsync();
+
+    public async Task<List<InterviewTypeOptionDto>> GetAllInterviewTypesAsync() =>
+        await db.InterviewTypeOptions
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
+            .ToListAsync();
+
+    public async Task<(InterviewTypeOptionDto? Created, bool Conflict)> CreateInterviewTypeAsync(UpsertInterviewTypeOptionDto dto)
+    {
+        var name = dto.Name.Trim();
+        if (await db.InterviewTypeOptions.AnyAsync(t => t.Name == name))
+            return (null, true);
+
+        var entity = new InterviewTypeOption { Name = name, SortOrder = dto.SortOrder, IsActive = dto.IsActive };
+        db.InterviewTypeOptions.Add(entity);
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false);
+    }
+
+    public async Task<(InterviewTypeOptionDto? Updated, bool NotFound, bool Conflict)> UpdateInterviewTypeAsync(int id, UpsertInterviewTypeOptionDto dto)
+    {
+        var entity = await db.InterviewTypeOptions.FindAsync(id);
+        if (entity is null) return (null, true, false);
+
+        var name = dto.Name.Trim();
+        if (await db.InterviewTypeOptions.AnyAsync(t => t.Id != id && t.Name == name))
+            return (null, false, true);
+
+        entity.Name = name;
+        entity.SortOrder = dto.SortOrder;
+        entity.IsActive = dto.IsActive;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false, false);
+    }
+
+    public async Task<bool> DeleteInterviewTypeAsync(int id)
+    {
+        var entity = await db.InterviewTypeOptions.FindAsync(id);
+        if (entity is null) return false;
+
+        var inUse = await db.InterviewTags.AnyAsync(t => t.InterviewTypeOptionId == id);
+        if (inUse)
+        {
+            entity.IsActive = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            db.InterviewTypeOptions.Remove(entity);
+        }
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>Auto-generated title: role name + the posted (created) date.</summary>
+    public static string RoleTitle(string name, DateTime createdAt) => $"{name} — {createdAt:dd MMM yyyy}";
+
     private static RoleAppliedOptionDto ToDto(RoleAppliedOption r) =>
-        new(r.Id, r.Name, r.SortOrder, r.IsActive, r.Location, r.Department, r.Priority, r.PostedDate);
+        new(r.Id, r.Name, r.SortOrder, r.IsActive, r.Location, r.Department, r.Priority,
+            r.CreatedAt, r.EndDate, RoleTitle(r.Name, r.CreatedAt),
+            r.RecruiterUserId, r.RecruiterUser?.Name);
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
+    private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);
 }

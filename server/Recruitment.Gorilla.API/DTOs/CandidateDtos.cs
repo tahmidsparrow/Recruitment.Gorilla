@@ -85,6 +85,9 @@ public record StatusChangeDto(
     // Required (non-empty) when Status == "Interview Scheduled": the users to assign
     // as interviewers. Each must be an existing active user.
     List<int>? InterviewerUserIds = null,
+    // Optional when Status == "Interview Scheduled": interview type tags (Technical, HR, …).
+    // Each must be an active InterviewTypeOption.
+    List<int>? InterviewTypeOptionIds = null,
     // Deprecated: the server now derives the actor from the authenticated user.
     string? ChangedBy = null
 );
@@ -124,7 +127,9 @@ public record CandidateDetailDto(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     List<CVFileDto> CVFiles,
-    List<StatusHistoryDto> StatusHistory
+    List<StatusHistoryDto> StatusHistory,
+    DateTime? RoleEndDate,   // the applied-for job opening's closing date, if any
+    bool RoleClosed          // true when RoleEndDate has passed → edits/status locked
 );
 
 public record CVFileDto(
@@ -145,7 +150,18 @@ public record StatusHistoryDto(
     DateTime ChangedAt,
     string ChangedBy,
     int? InterviewId,
-    List<InterviewInterviewerDto> Interviewers
+    List<InterviewInterviewerDto> Interviewers,
+    List<string> InterviewTags,
+    // Live per-interviewer evaluation summary for an "Interview Completed" entry (empty otherwise).
+    List<EvaluationSummaryDto> EvaluationSummaries
+);
+
+public record EvaluationSummaryDto(
+    string InterviewerName,
+    int? OverallRating,
+    string? Recommendation,
+    string? RecommendationOther,
+    DateTime? SubmittedAt
 );
 
 public record StatusOptionDto(
@@ -160,23 +176,32 @@ public record RoleAppliedOptionDto(
     string Name,
     int SortOrder,
     bool IsActive,
-    string? Location = null,
-    string? Department = null,
-    string? Priority = null,
-    DateTime? PostedDate = null);
+    string? Location,
+    string? Department,
+    string? Priority,
+    DateTime CreatedAt,   // = posted date (read-only)
+    DateTime EndDate,
+    string Title,         // computed: "{Name} — {CreatedAt:dd MMM yyyy}"
+    int? RecruiterUserId,
+    string? RecruiterName);
 
 public record UpsertRoleAppliedOptionDto(
     string Name,
     int SortOrder,
     bool IsActive,
+    DateTime EndDate,
     string? Location = null,
     string? Department = null,
     string? Priority = null,
-    DateTime? PostedDate = null);
+    int? RecruiterUserId = null);
 
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 
 public record UpsertSkillOptionDto(string Name, int SortOrder, bool IsActive);
+
+public record InterviewTypeOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+
+public record UpsertInterviewTypeOptionDto(string Name, int SortOrder, bool IsActive);
 
 public record PagedResult<T>(
     List<T> Items,

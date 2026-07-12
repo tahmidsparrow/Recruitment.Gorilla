@@ -22,9 +22,8 @@ public class ConfigurationController(
     [HttpPost("roles")]
     public async Task<IActionResult> CreateRole([FromBody] UpsertRoleAppliedOptionDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
-
-        var (created, conflict) = await config.CreateRoleAsync(dto);
+        var (created, conflict, error) = await config.CreateRoleAsync(dto);
+        if (error is not null) return BadRequest(error);
         if (conflict) return Conflict("A role with that name already exists.");
 
         logger.LogInformation("Created role option {Id} ('{Name}').", created!.Id, created.Name);
@@ -34,9 +33,8 @@ public class ConfigurationController(
     [HttpPut("roles/{id:int}")]
     public async Task<IActionResult> UpdateRole(int id, [FromBody] UpsertRoleAppliedOptionDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
-
-        var (updated, notFound, conflict) = await config.UpdateRoleAsync(id, dto);
+        var (updated, notFound, conflict, error) = await config.UpdateRoleAsync(id, dto);
+        if (error is not null) return BadRequest(error);
         if (notFound) return NotFound();
         if (conflict) return Conflict("A role with that name already exists.");
 
@@ -44,13 +42,16 @@ public class ConfigurationController(
         return Ok(updated);
     }
 
+    // Only a Super Admin may delete a role (overrides the class-level Admin+ policy).
+    [Authorize(Roles = Roles.SuperAdmin)]
     [HttpDelete("roles/{id:int}")]
     public async Task<IActionResult> DeleteRole(int id)
     {
-        var ok = await config.DeleteRoleAsync(id);
-        if (!ok) return NotFound();
-        logger.LogInformation("Deleted/disabled role option {Id}.", id);
-        return NoContent();
+        var (found, deleted, deactivated, candidateCount) = await config.DeleteRoleAsync(id);
+        if (!found) return NotFound();
+        logger.LogInformation("Role option {Id} {Action} ({Count} candidates).",
+            id, deleted ? "deleted" : "deactivated", candidateCount);
+        return Ok(new { deleted, deactivated, candidateCount });
     }
 
     // ----- Skills -----
@@ -90,6 +91,46 @@ public class ConfigurationController(
         var ok = await config.DeleteSkillAsync(id);
         if (!ok) return NotFound();
         logger.LogInformation("Deleted/disabled skill option {Id}.", id);
+        return NoContent();
+    }
+
+    // ----- Interview types -----
+
+    [HttpGet("interview-types")]
+    public async Task<IActionResult> GetInterviewTypes([FromQuery] bool includeInactive = false) =>
+        Ok(includeInactive ? await config.GetAllInterviewTypesAsync() : await config.GetActiveInterviewTypesAsync());
+
+    [HttpPost("interview-types")]
+    public async Task<IActionResult> CreateInterviewType([FromBody] UpsertInterviewTypeOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (created, conflict) = await config.CreateInterviewTypeAsync(dto);
+        if (conflict) return Conflict("An interview type with that name already exists.");
+
+        logger.LogInformation("Created interview type option {Id} ('{Name}').", created!.Id, created.Name);
+        return Ok(created);
+    }
+
+    [HttpPut("interview-types/{id:int}")]
+    public async Task<IActionResult> UpdateInterviewType(int id, [FromBody] UpsertInterviewTypeOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (updated, notFound, conflict) = await config.UpdateInterviewTypeAsync(id, dto);
+        if (notFound) return NotFound();
+        if (conflict) return Conflict("An interview type with that name already exists.");
+
+        logger.LogInformation("Updated interview type option {Id}.", id);
+        return Ok(updated);
+    }
+
+    [HttpDelete("interview-types/{id:int}")]
+    public async Task<IActionResult> DeleteInterviewType(int id)
+    {
+        var ok = await config.DeleteInterviewTypeAsync(id);
+        if (!ok) return NotFound();
+        logger.LogInformation("Deleted/disabled interview type option {Id}.", id);
         return NoContent();
     }
 }

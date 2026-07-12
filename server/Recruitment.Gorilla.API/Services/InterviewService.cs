@@ -25,6 +25,14 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             .Select(u => new AssignableUserDto(u.Id, u.Name, u.Email))
             .ToListAsync();
 
+    /// <summary>Active interview type tags for the schedule form (any authorized caller).</summary>
+    public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
+        await db.InterviewTypeOptions
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
+            .ToListAsync();
+
     /// <summary>Interviews the user is assigned to (most recent first) with their eval state.</summary>
     public async Task<List<MyInterviewDto>> GetMineAsync(int userId)
     {
@@ -64,6 +72,8 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             .Include(i => i.Interviewers).ThenInclude(ii => ii.User)
             .Include(i => i.Evaluations).ThenInclude(e => e.InterviewerUser)
             .Include(i => i.Evaluations).ThenInclude(e => e.Items)
+            .Include(i => i.StatusHistory)
+            .Include(i => i.Tags).ThenInclude(t => t.InterviewTypeOption)
             .FirstOrDefaultAsync(i => i.Id == id);
 
         if (interview is null) return null;
@@ -84,9 +94,15 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             ? interview.Evaluations.OrderBy(e => e.InterviewerUser.Name).Select(ToDto).ToList()
             : null;
 
+        var tags = interview.Tags
+            .Select(t => t.InterviewTypeOption.Name)
+            .OrderBy(n => n)
+            .ToList();
+
         return new InterviewDetailDto(
             interview.Id, interview.ScheduledAt, candidate, interviewers,
-            isAssigned, myEval is null ? null : ToDto(myEval), allEvals);
+            isAssigned, myEval is null ? null : ToDto(myEval), allEvals,
+            interview.StatusHistory?.Comment, tags);
     }
 
     /// <summary>
@@ -120,6 +136,23 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
                 if (it.Rating is int r && r is < 1 or > 5)
                     return (null, "Ratings must be between 1 and 5.", false, false);
             }
+        }
+
+        // Submit is the final, locking action → require a fully-scored rubric. Drafts stay
+        // unrestricted so interviewers can save partial progress.
+        if (dto.Submit)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Recommendation))
+                return (null, "A final recommendation is required to submit.", false, false);
+            if (dto.OverallRating is null)
+                return (null, "An overall rating is required to submit.", false, false);
+
+            var ratedKeys = (dto.Items ?? [])
+                .Where(it => it.Rating is not null)
+                .Select(it => it.CriterionKey)
+                .ToHashSet();
+            if (!EvaluationCriteria.Keys.All(ratedKeys.Contains))
+                return (null, "Please rate all evaluation criteria before submitting.", false, false);
         }
 
         var eval = interview.Evaluations.FirstOrDefault(e => e.InterviewerUserId == userId);

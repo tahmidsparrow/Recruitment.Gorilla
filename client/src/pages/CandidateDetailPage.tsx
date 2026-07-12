@@ -6,6 +6,7 @@ import {
   addStatus,
   deleteCandidate,
   downloadCvFile,
+  getActiveInterviewTypes,
   getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
@@ -33,7 +34,7 @@ export default function CandidateDetailPage() {
   const candidateId = Number(id);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { canWriteCandidates } = useAuth();
+  const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -70,6 +71,15 @@ export default function CandidateDetailPage() {
         )}
       </div>
 
+      {data.roleClosed && (
+        <Alert variant="warning">
+          <strong>Job opening closed.</strong> This candidate's applied-for role ended
+          {data.roleEndDate ? ` on ${new Date(data.roleEndDate).toLocaleString()}` : ''}. Profile
+          edits and status changes are locked until an Admin extends the role's End Date in
+          Configuration.
+        </Alert>
+      )}
+
       <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Delete candidate</Modal.Title>
@@ -104,7 +114,7 @@ export default function CandidateDetailPage() {
             <Card.Body>
               <ProfileEditor
                 candidate={data}
-                canWrite={canWriteCandidates}
+                canWrite={canWriteCandidates && !data.roleClosed}
                 onSaved={() => {
                   void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
                   void queryClient.invalidateQueries({ queryKey: ['candidates'] });
@@ -120,7 +130,7 @@ export default function CandidateDetailPage() {
           <Card>
             <Card.Header>Status history</Card.Header>
             <Card.Body>
-              {canWriteCandidates && (
+              {canWriteCandidates && !data.roleClosed && (
                 <>
                   <AddStatus
                     candidateId={candidateId}
@@ -131,7 +141,7 @@ export default function CandidateDetailPage() {
                   <hr />
                 </>
               )}
-              <StatusTimeline history={data.statusHistory} />
+              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
             </Card.Body>
           </Card>
         </Col>
@@ -476,6 +486,7 @@ function AddStatus({
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewerIds, setInterviewerIds] = useState<number[]>([]);
+  const [interviewTypeIds, setInterviewTypeIds] = useState<number[]>([]);
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
   const queryClient = useQueryClient();
 
@@ -500,6 +511,12 @@ function AddStatus({
     enabled: requiresInterviewers,
   });
 
+  const { data: interviewTypes = [] } = useQuery({
+    queryKey: ['interview-types', 'active'],
+    queryFn: getActiveInterviewTypes,
+    enabled: requiresInterviewers,
+  });
+
   const clearFE = (field: keyof AddStatusFieldErrors) =>
     setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
 
@@ -512,6 +529,7 @@ function AddStatus({
         submissionUrl: submissionUrl.trim() || null,
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
         interviewerUserIds: requiresInterviewers ? interviewerIds : null,
+        interviewTypeOptionIds: requiresInterviewers ? interviewTypeIds : null,
       }),
     onSuccess: () => {
       setStatus('');
@@ -520,6 +538,7 @@ function AddStatus({
       setSubmissionUrl('');
       setInterviewAt('');
       setInterviewerIds([]);
+      setInterviewTypeIds([]);
       setFieldErrors({});
 
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
@@ -611,6 +630,18 @@ function AddStatus({
         )}
         {requiresInterviewers && (
           <Col md={12}>
+            <Form.Label className="mb-1">Interview types</Form.Label>
+            <SearchableMultiSelect
+              options={interviewTypes.map((t) => ({ id: t.id, name: t.name }))}
+              value={interviewTypeIds}
+              onChange={setInterviewTypeIds}
+              placeholder="Tag this interview (Technical, HR, 1st Level…)"
+            />
+            <Form.Text muted>Optional tags shown on the status history and interview page.</Form.Text>
+          </Col>
+        )}
+        {requiresInterviewers && (
+          <Col md={12}>
             <Form.Label className="mb-1">Interviewers <Req /></Form.Label>
             <SearchableMultiSelect
               options={assignableUsers.map((u) => ({ id: u.id, name: u.name }))}
@@ -625,15 +656,22 @@ function AddStatus({
           </Col>
         )}
         <Col md={12}>
-          {requiresComment && <Form.Label className="mb-1">Comment <Req /></Form.Label>}
+          {requiresComment ? (
+            <Form.Label className="mb-1">Comment <Req /></Form.Label>
+          ) : (
+            requiresInterviewers && <Form.Label className="mb-1">Notes for interviewers (optional)</Form.Label>
+          )}
           <Form.Control
             as="textarea"
             rows={2}
-            placeholder={requiresComment ? '' : 'Comment (optional)'}
+            placeholder={requiresComment || requiresInterviewers ? '' : 'Comment (optional)'}
             value={comment}
             onChange={(e) => { setComment(e.target.value); clearFE('comment'); }}
             isInvalid={!!fieldErrors.comment}
           />
+          {requiresInterviewers && (
+            <Form.Text muted>Shared with the assigned interviewers on the interview page.</Form.Text>
+          )}
           <Form.Control.Feedback type="invalid">{fieldErrors.comment}</Form.Control.Feedback>
         </Col>
       </Row>

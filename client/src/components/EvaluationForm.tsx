@@ -138,6 +138,7 @@ export default function EvaluationForm({
   const { addToast } = useToast();
   const queryClient = useQueryClient();
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const [items, setItems] = useState<ItemMap>(buildItemMap(evaluation?.items ?? []));
   const [generalAssessment, setGeneralAssessment] = useState(evaluation?.generalAssessment ?? '');
@@ -200,11 +201,30 @@ export default function EvaluationForm({
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const ratedCount = ALL_CRITERION_KEYS.filter((k) => items[k]?.rating != null).length;
+  const allRated = ratedCount === ALL_CRITERION_KEYS.length;
   const otherMissing = recommendation === 'Other' && !recommendationOther.trim();
+  const recommendationMissing = !recommendation;
+  const overallMissing = !overallRating;
 
   const onSubmitClick = () => {
+    if (!allRated) {
+      setShowErrors(true);
+      addToast(`Please rate all ${ALL_CRITERION_KEYS.length} evaluation criteria before submitting.`, 'danger');
+      return;
+    }
+    if (recommendationMissing) {
+      setShowErrors(true);
+      addToast('Please select a final recommendation.', 'danger');
+      return;
+    }
     if (otherMissing) {
+      setShowErrors(true);
       addToast('Please specify the recommendation for "Other".', 'danger');
+      return;
+    }
+    if (overallMissing) {
+      setShowErrors(true);
+      addToast('Please select an overall rating.', 'danger');
       return;
     }
     setConfirmSubmit(true);
@@ -215,7 +235,10 @@ export default function EvaluationForm({
       <Card.Body>
         <div className="d-flex justify-content-between align-items-center mb-1">
           <h5 className="mb-0">Interview Evaluation</h5>
-          <span className="text-muted small">Rated {ratedCount} of {ALL_CRITERION_KEYS.length}</span>
+          <span className={`small${showErrors && !allRated ? ' text-danger' : ' text-muted'}`}>
+            Rated {ratedCount} of {ALL_CRITERION_KEYS.length}
+            <span className="text-danger"> *</span>
+          </span>
         </div>
         <div className="eval-progress__bar mb-3" role="progressbar" aria-valuenow={ratedCount} aria-valuemin={0} aria-valuemax={ALL_CRITERION_KEYS.length}>
           <div className="eval-progress__fill" style={{ width: `${(ratedCount / ALL_CRITERION_KEYS.length) * 100}%` }} />
@@ -257,7 +280,11 @@ export default function EvaluationForm({
                               <div className="fw-medium">{c.label}</div>
                               {c.hint && <div className="text-muted small">{c.hint}</div>}
                             </div>
-                            <div className="rating-group" role="group" aria-label={`${c.label} rating`}>
+                            <div
+                              className={`rating-group${showErrors && v?.rating == null ? ' rating-group--invalid' : ''}`}
+                              role="group"
+                              aria-label={`${c.label} rating`}
+                            >
                               {[1, 2, 3, 4, 5].map((n) => (
                                 <button
                                   key={n}
@@ -311,7 +338,9 @@ export default function EvaluationForm({
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label className="mb-1">Final recommendation</Form.Label>
+              <Form.Label className={`mb-1${showErrors && recommendationMissing ? ' text-danger' : ''}`}>
+                Final recommendation<span className="text-danger"> *</span>
+              </Form.Label>
               {RECOMMENDATIONS.map((r) => (
                 <div key={r.value}>
                   <Form.Check
@@ -337,8 +366,14 @@ export default function EvaluationForm({
             </Form.Group>
 
             <Form.Group className="mb-1">
-              <Form.Label className="mb-1 d-block">Overall rating</Form.Label>
-              <div className="rating-group" role="group" aria-label="Overall rating">
+              <Form.Label className={`mb-1 d-block${showErrors && overallMissing ? ' text-danger' : ''}`}>
+                Overall rating<span className="text-danger"> *</span>
+              </Form.Label>
+              <div
+                className={`rating-group${showErrors && overallMissing ? ' rating-group--invalid' : ''}`}
+                role="group"
+                aria-label="Overall rating"
+              >
                 {RATING_SCALE.map((r) => (
                   <button
                     key={r.value}

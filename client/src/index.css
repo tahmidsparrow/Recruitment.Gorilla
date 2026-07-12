@@ -354,10 +354,10 @@ a:hover {
    surface; the [data-bs-theme="dark"] block lightens solids for dark mode. */
 .status--reject { --status-color: #d13438; --status-tint: rgba(209, 52, 56, 0.12); }
 .status--success { --status-color: #107c10; --status-tint: rgba(16, 124, 16, 0.12); }
-.status--interview { --status-color: #0078d4; --status-tint: rgba(0, 120, 212, 0.12); }
+.status--interview { --status-color: #3a7ca5; --status-tint: rgba(58, 124, 165, 0.14); }
 .status--assessment { --status-color: #8764b8; --status-tint: rgba(135, 100, 184, 0.14); }
-.status--muted { --status-color: #605e5c; --status-tint: rgba(96, 94, 92, 0.14); }
-.status--uploaded { --status-color: #038387; --status-tint: rgba(3, 131, 135, 0.13); }
+.status--muted { --status-color: #5f7d80; --status-tint: rgba(95, 125, 128, 0.16); }
+.status--uploaded { --status-color: #468189; --status-tint: rgba(70, 129, 137, 0.14); }
 .status--intake { --status-color: #946300; --status-tint: rgba(193, 156, 0, 0.16); }
 
 .status-dot {
@@ -367,6 +367,8 @@ a:hover {
   border-radius: 50%;
   background: var(--status-color);
   flex: 0 0 auto;
+  /* Soft ring so the solid dot reads distinctly from the tinted status badge. */
+  box-shadow: 0 0 0 2px var(--ms-surface), 0 0 0 5px var(--status-tint);
 }
 .status-badge {
   display: inline-block;
@@ -384,10 +386,10 @@ a:hover {
    Activated later by setting data-bs-theme="dark" on <html>. */
 [data-bs-theme='dark'] .status--reject { --status-color: #f1707a; --status-tint: rgba(241, 112, 122, 0.18); }
 [data-bs-theme='dark'] .status--success { --status-color: #6ccb6c; --status-tint: rgba(108, 203, 108, 0.18); }
-[data-bs-theme='dark'] .status--interview { --status-color: #6cb8f6; --status-tint: rgba(108, 184, 246, 0.18); }
+[data-bs-theme='dark'] .status--interview { --status-color: #7fb3dd; --status-tint: rgba(127, 179, 221, 0.2); }
 [data-bs-theme='dark'] .status--assessment { --status-color: #b8a0e0; --status-tint: rgba(184, 160, 224, 0.2); }
-[data-bs-theme='dark'] .status--muted { --status-color: #b6b4b2; --status-tint: rgba(182, 180, 178, 0.2); }
-[data-bs-theme='dark'] .status--uploaded { --status-color: #4fd0d4; --status-tint: rgba(79, 208, 212, 0.18); }
+[data-bs-theme='dark'] .status--muted { --status-color: #a7c2c4; --status-tint: rgba(167, 194, 196, 0.2); }
+[data-bs-theme='dark'] .status--uploaded { --status-color: #8fc6cc; --status-tint: rgba(143, 198, 204, 0.2); }
 [data-bs-theme='dark'] .status--intake { --status-color: #e6c34d; --status-tint: rgba(230, 195, 77, 0.2); }
 
 /* ===== Dashboard KPI cards ("Stage Performance" style) =====
@@ -468,16 +470,28 @@ a:hover {
   white-space: nowrap;
 }
 .priority--high { color: #d13438; background: rgba(209, 52, 56, 0.12); }
-.priority--medium { color: #0078d4; background: rgba(0, 120, 212, 0.12); }
-.priority--low { color: #605e5c; background: rgba(96, 94, 92, 0.14); }
+.priority--medium { color: #3a7ca5; background: rgba(58, 124, 165, 0.14); }
+.priority--low { color: #5f7d80; background: rgba(95, 125, 128, 0.16); }
 [data-bs-theme='dark'] .priority--high { color: #f1707a; background: rgba(241, 112, 122, 0.18); }
-[data-bs-theme='dark'] .priority--medium { color: #6cb8f6; background: rgba(108, 184, 246, 0.18); }
-[data-bs-theme='dark'] .priority--low { color: #b6b4b2; background: rgba(182, 180, 178, 0.2); }
+[data-bs-theme='dark'] .priority--medium { color: #7fb3dd; background: rgba(127, 179, 221, 0.2); }
+[data-bs-theme='dark'] .priority--low { color: #a7c2c4; background: rgba(167, 194, 196, 0.2); }
 
 /* Active Job Openings table — subtle row hover + muted meta icons */
 .job-openings-table td { vertical-align: middle; }
 .job-openings-table .job-meta-icon { color: var(--ms-text-secondary); flex: 0 0 auto; }
 .job-openings-table .job-id { color: var(--ms-text-secondary); font-variant-numeric: tabular-nums; }
+.job-closing-soon {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1em 0.5em;
+  border-radius: 0.375rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #946300;
+  background: rgba(193, 156, 0, 0.16);
+  white-space: nowrap;
+}
+[data-bs-theme='dark'] .job-closing-soon { color: #e6c34d; background: rgba(230, 195, 77, 0.2); }
 
 /* ===== Notification bell ===== */
 .notification-toggle { width: 34px; height: 31px; padding: 0; }
@@ -514,6 +528,50 @@ a:hover {
 .notification-item:hover { background: var(--ms-neutral-light); }
 .notification-item--unread { background: var(--ms-primary-tint); }
 .notification-item--unread:hover { background: var(--ms-primary-tint-2); }
+
+/* ===== Dashboard hero kicker ===== */
+.dashboard-hero-kicker {
+  background:
+    linear-gradient(135deg, var(--ms-primary-tint), transparent 60%),
+    var(--ms-surface);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 14px;
+  box-shadow: var(--ms-shadow-4);
+  padding: 1.5rem 1.75rem;
+}
+.dashboard-hero-kicker__eyebrow {
+  color: var(--ms-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--bs-border-color);
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+a.hero-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--ms-primary);
+  box-shadow: var(--ms-shadow-4);
+  color: var(--ms-text);
+}
+.hero-chip--accent {
+  background: var(--ms-primary-tint);
+  border-color: var(--ms-primary-tint-2);
+  color: var(--ms-primary-pressed);
+}
 
 /* ===== Interview page ===== */
 @keyframes fade-slide-up {
@@ -572,6 +630,90 @@ a:hover {
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
+}
+
+/* ===== Interview-completed evaluation summary cards (status timeline) ===== */
+.eval-summary {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  background: var(--ms-surface);
+  padding: 0.6rem 0.7rem;
+  border-left: 3px solid var(--ms-primary);
+}
+.eval-summary__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ms-primary);
+  margin-bottom: 0.55rem;
+}
+.eval-summary__count {
+  margin-left: auto;
+  background: var(--ms-primary);
+  color: #fff;
+  border-radius: 999px;
+  min-width: 1.2rem;
+  padding: 0 0.35rem;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.3rem;
+}
+.eval-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.5rem;
+}
+.eval-card {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 10px;
+  background: var(--bs-body-bg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.eval-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--ms-primary);
+  box-shadow: 0 4px 14px rgba(3, 25, 38, 0.08);
+}
+.eval-card__avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ms-primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.eval-card__body { min-width: 0; flex: 1 1 auto; }
+.eval-card__top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: space-between;
+}
+.eval-card__name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eval-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
 }
 
 /* ===== Interview evaluation ===== */
@@ -649,7 +791,13 @@ a:hover {
 .eval-panel__body { padding: 0.25rem 1rem 1rem; }
 
 /* Segmented 1-5 rating pills */
-.rating-group { display: flex; gap: 0.3rem; }
+.rating-group { display: flex; gap: 0.3rem; padding: 2px; border-radius: 10px; }
+/* Flags a required rating group left empty on a failed submit. */
+.rating-group--invalid {
+  box-shadow: 0 0 0 1px var(--bs-danger);
+  background: rgba(var(--bs-danger-rgb), 0.06);
+}
+.rating-group--invalid .rating-btn { border-color: rgba(var(--bs-danger-rgb), 0.5); }
 .rating-btn {
   width: 32px;
   height: 32px;
@@ -721,9 +869,11 @@ a:hover {
   .eval-progress__fill,
   .eval-comment-input,
   .cv-file-item,
-  .btn-cv-download {
+  .btn-cv-download,
+  .hero-chip {
     transition: none;
   }
+  a.hero-chip:hover { transform: none; box-shadow: none; }
   .rating-btn:hover { transform: none; }
   .btn-cv-download:hover { transform: none; box-shadow: none; }
   .btn-cv-download:hover .btn-cv-download__icon { animation: none; }

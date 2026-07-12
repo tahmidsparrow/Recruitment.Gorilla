@@ -25,4 +25,5 @@ public class Interview
 
     public ICollection<InterviewInterviewer> Interviewers { get; set; } = [];
     public ICollection<InterviewEvaluation> Evaluations { get; set; } = [];
+    public ICollection<InterviewTag> Tags { get; set; } = [];
 }

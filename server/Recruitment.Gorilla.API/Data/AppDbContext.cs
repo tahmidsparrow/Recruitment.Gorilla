@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<InterviewInterviewer> InterviewInterviewers => Set<InterviewInterviewer>();
     public DbSet<InterviewEvaluation> InterviewEvaluations => Set<InterviewEvaluation>();
     public DbSet<InterviewEvaluationItem> InterviewEvaluationItems => Set<InterviewEvaluationItem>();
+    public DbSet<InterviewTypeOption> InterviewTypeOptions => Set<InterviewTypeOption>();
+    public DbSet<InterviewTag> InterviewTags => Set<InterviewTag>();
     public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,6 +75,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany(c => c.StatusHistories)
              .HasForeignKey(s => s.CandidateId)
              .OnDelete(DeleteBehavior.Cascade);
+            // "Interview Completed" entries link to the interview they summarize. Independent
+            // of Interview.StatusHistoryId (scheduled entry); both cross-links are SetNull.
+            e.HasOne(s => s.Interview)
+             .WithMany()
+             .HasForeignKey(s => s.InterviewId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<RefreshToken>(e =>
@@ -156,7 +164,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new StatusTransition { Id = 28, FromStatusOptionId = 11, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
                 new StatusTransition { Id = 29, FromStatusOptionId = 4, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
                 // Uploaded -> Call for Interview
-                new StatusTransition { Id = 30, FromStatusOptionId = 13, ToStatusOptionId = 2, SortOrder = 5, IsActive = true }
+                new StatusTransition { Id = 30, FromStatusOptionId = 13, ToStatusOptionId = 2, SortOrder = 5, IsActive = true },
+                // Interview Completed -> Interview Scheduled (re-schedule another round)
+                new StatusTransition { Id = 31, FromStatusOptionId = 8, ToStatusOptionId = 3, SortOrder = 5, IsActive = true }
             );
         });
 
@@ -169,15 +179,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(r => r.Department).HasMaxLength(100);
             e.Property(r => r.Priority).HasMaxLength(20);
             e.HasIndex(r => r.Name).IsUnique();
+            e.HasOne(r => r.RecruiterUser)
+             .WithMany()
+             .HasForeignKey(r => r.RecruiterUserId)
+             .OnDelete(DeleteBehavior.SetNull);
 
             var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            var seededEnd = new DateTime(2027, 12, 31, 0, 0, 0, DateTimeKind.Utc); // open by default
             e.HasData(
-                new RoleAppliedOption { Id = 1, Name = "Backend Engineer", SortOrder = 1, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 2, Name = "Frontend Engineer", SortOrder = 2, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 3, Name = "Full Stack Engineer", SortOrder = 3, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 4, Name = "Machine Learning Engineer", SortOrder = 4, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
-                new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
+                new RoleAppliedOption { Id = 1, Name = "Backend Engineer", SortOrder = 1, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 2, Name = "Frontend Engineer", SortOrder = 2, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 3, Name = "Full Stack Engineer", SortOrder = 3, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 4, Name = "Machine Learning Engineer", SortOrder = 4, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
+                new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded }
             );
         });
 
@@ -199,6 +214,37 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new SkillOption { Id = 7, Name = "AWS", SortOrder = 7, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded },
                 new SkillOption { Id = 8, Name = "Docker", SortOrder = 8, IsActive = true, CreatedAt = seeded, UpdatedAt = seeded }
             );
+        });
+
+        modelBuilder.Entity<InterviewTypeOption>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Name).HasMaxLength(200).IsRequired();
+            e.Property(t => t.IsActive).HasDefaultValue(true);
+            e.HasIndex(t => t.Name).IsUnique();
+
+            var seededTypes = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new InterviewTypeOption { Id = 1, Name = "Technical", SortOrder = 1, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes },
+                new InterviewTypeOption { Id = 2, Name = "HR", SortOrder = 2, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes },
+                new InterviewTypeOption { Id = 3, Name = "Managerial", SortOrder = 3, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes },
+                new InterviewTypeOption { Id = 4, Name = "1st Level", SortOrder = 4, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes },
+                new InterviewTypeOption { Id = 5, Name = "2nd Level", SortOrder = 5, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes },
+                new InterviewTypeOption { Id = 6, Name = "Final Round", SortOrder = 6, IsActive = true, CreatedAt = seededTypes, UpdatedAt = seededTypes }
+            );
+        });
+
+        modelBuilder.Entity<InterviewTag>(e =>
+        {
+            e.HasKey(t => new { t.InterviewId, t.InterviewTypeOptionId });
+            e.HasOne(t => t.Interview)
+             .WithMany(i => i.Tags)
+             .HasForeignKey(t => t.InterviewId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(t => t.InterviewTypeOption)
+             .WithMany(o => o.Tags)
+             .HasForeignKey(t => t.InterviewTypeOptionId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<User>(e =>

@@ -2,7 +2,16 @@
 
 **Status:** Implemented
 **Author:** AI agent
-**Date:** 2026-07-09
+**Date:** 2026-07-09 (revised 2026-07-11)
+
+> **Revision (2026-07-11):** the single `GET /api/dashboard` payload was **split** — KPIs, status
+> breakdown, applications trend (with a `?days=` 7/30/90 toggle), and job openings are now **org-wide,
+> all-roles** endpoints (`/api/dashboard/kpis|status-breakdown|applications-trend|job-openings`);
+> `GET /api/dashboard` keeps only the owner-scoped by-role/top-skills/upcoming/activity remainder.
+> The **pipeline funnel was removed** (redundant with the donut); **upcoming interviews** now come
+> from the `Interviews` table (pending only); Active Job Openings shows the **End date** + a
+> "Closing soon" badge and hides roles past their End date. See
+> `job-openings-and-role-hierarchy.md` and the reference docs.
 
 ## 1. Summary
 A dashboard landing page (`/`) that summarizes the pipeline for the signed-in user: KPI stat cards, a pipeline funnel + status donut, an applications trend, by-role/top-skill breakdowns, upcoming interviews, a recent-activity feed, and an **Active Job Openings** table. Job openings reuse the existing "Roles applied" lookup (each active role is an open position with posting metadata); applicants are derived by role.
@@ -48,7 +57,7 @@ No new tables. Extends `RoleAppliedOption` with nullable `Location` varchar(100)
 - `ConfigurationPage` Roles section gains `jobFields` (Location/Department/Priority/Posted date). Chart/KPI/priority colors are CSS tokens in `index.css` (light + dark). Dependency: **recharts**. See [../frontend.md](../frontend.md).
 
 ## 8. Security & auth
-- Dashboard is `[Authorize]` (all roles) but **owner-scoped**: recruiters see only their own candidates' figures; SuperAdmin/Admin/Viewer see all. Config role writes remain Admin+.
+- Dashboard is `[Authorize]` (all roles) but **owner-scoped**: recruiters see only their own candidates' figures; SuperAdmin/Admin see all. (Roles later revised — see `job-openings-and-role-hierarchy.md`; the former Viewer is now Interviewer.) Config role writes remain Admin+.
 
 ## 9. Acceptance criteria / verification
 - [x] `GET /api/dashboard` returns all sections; KPI total equals `/api/candidates` total; trend has 30 points; breakdown sums to total; interviews are future-only.
