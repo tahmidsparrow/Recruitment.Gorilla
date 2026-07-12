@@ -7,11 +7,11 @@ import {
   deleteCandidate,
   downloadCvFile,
   getActiveInterviewTypes,
+  getActiveRoleOptions,
+  getActiveSkillOptions,
   getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
-  getRoleOptions,
-  getSkillOptions,
   previewCvFile,
   updateCandidate,
 } from '../services/api';
@@ -172,12 +172,12 @@ function ProfileEditor({
   }, [candidate]);
 
   const { data: roleOptions = [] } = useQuery({
-    queryKey: ['config', 'roles'],
-    queryFn: () => getRoleOptions(),
+    queryKey: ['role-options', 'active'],
+    queryFn: getActiveRoleOptions,
   });
   const { data: skillOptions = [] } = useQuery({
-    queryKey: ['config', 'skills'],
-    queryFn: () => getSkillOptions(),
+    queryKey: ['skill-options', 'active'],
+    queryFn: getActiveSkillOptions,
   });
 
   const set = (field: keyof CandidateDetail, value: string) =>

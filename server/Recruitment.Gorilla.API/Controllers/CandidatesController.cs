@@ -12,6 +12,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 public class CandidatesController(
     CandidateService candidateService,
     InterviewService interviewService,
+    ConfigurationService config,
     CurrentUser currentUser,
     ILogger<CandidatesController> logger) : ControllerBase
 {
@@ -110,6 +111,16 @@ public class CandidatesController(
         var roles = await candidateService.GetDistinctRolesAsync();
         return Ok(roles);
     }
+
+    // Active role/skill lookups for the candidate create/edit forms. Exposed here (not on the
+    // Admin-only ConfigurationController) so Recruiters can populate the dropdowns.
+    [Authorize(Roles = Roles.CanWriteCandidate)]
+    [HttpGet("role-options")]
+    public async Task<IActionResult> GetRoleOptions() => Ok(await config.GetActiveRolesAsync());
+
+    [Authorize(Roles = Roles.CanWriteCandidate)]
+    [HttpGet("skill-options")]
+    public async Task<IActionResult> GetSkillOptions() => Ok(await config.GetActiveSkillsAsync());
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpPut("{id}")]

@@ -25,14 +25,6 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             .Select(u => new AssignableUserDto(u.Id, u.Name, u.Email))
             .ToListAsync();
 
-    /// <summary>Active interview type tags for the schedule form (any authorized caller).</summary>
-    public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
-        await db.InterviewTypeOptions
-            .Where(t => t.IsActive)
-            .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
-            .Select(t => new InterviewTypeOptionDto(t.Id, t.Name, t.SortOrder, t.IsActive))
-            .ToListAsync();
-
     /// <summary>Interviews the user is assigned to (most recent first) with their eval state.</summary>
     public async Task<List<MyInterviewDto>> GetMineAsync(int userId)
     {

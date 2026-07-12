@@ -264,6 +264,18 @@ export const deleteCandidate = async (id: number): Promise<void> => {
 };
 
 // ----- Configuration: Role Applied options -----
+// Active role/skill lookups for the candidate create/edit forms — reachable by Recruiters
+// (the /config/* management endpoints are Admin+ only).
+export const getActiveRoleOptions = async (): Promise<RoleAppliedOption[]> => {
+  const { data } = await api.get<RoleAppliedOption[]>('/candidates/role-options');
+  return data;
+};
+
+export const getActiveSkillOptions = async (): Promise<SkillOption[]> => {
+  const { data } = await api.get<SkillOption[]>('/candidates/skill-options');
+  return data;
+};
+
 export const getRoleOptions = async (includeInactive = false): Promise<RoleAppliedOption[]> => {
   const { data } = await api.get<RoleAppliedOption[]>('/config/roles', { params: { includeInactive } });
   return data;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createCandidate, getInitialStatusOptions, getRoleOptions, getSkillOptions } from '../services/api';
+import { createCandidate, getInitialStatusOptions, getActiveRoleOptions, getActiveSkillOptions } from '../services/api';
 import { SearchableSelect, SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
 import type { CVDraft, DuplicateCandidate } from '../types';
@@ -51,13 +51,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   });
 
   const { data: roleOptions = [] } = useQuery({
-    queryKey: ['config', 'roles'],
-    queryFn: () => getRoleOptions(),
+    queryKey: ['role-options', 'active'],
+    queryFn: getActiveRoleOptions,
   });
 
   const { data: skillOptions = [] } = useQuery({
-    queryKey: ['config', 'skills'],
-    queryFn: () => getSkillOptions(),
+    queryKey: ['skill-options', 'active'],
+    queryFn: getActiveSkillOptions,
   });
 
   useEffect(() => {

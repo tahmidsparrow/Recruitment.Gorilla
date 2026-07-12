@@ -18,6 +18,7 @@ Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interv
 - **Recruiter scoping**: `CandidatesController` derives a read/write owner scope from `CurrentUser`. Recruiters only see/edit candidates whose `Candidate.OwnerUserId` is their user id; Admin+ pass `null` (no filter). New candidates a Recruiter creates are stamped with their id as owner. Legacy rows have `OwnerUserId = NULL` → visible to Admin+ only.
 - **Interviewer** (bottom of the hierarchy; the former "Viewer", renamed) can **only** reach the dashboard, their assigned interviews (`/api/interviews/*`, `/api/notifications/*`), and evaluations. Candidate list/detail GETs are gated by `[Authorize(Roles = Roles.CanWriteCandidate)]`, and the UI hides those menu items/routes. They still see a candidate's read-only snapshot + CV **through** an interview they're assigned to.
 - **Job-opening delete is SuperAdmin-only** (`[Authorize(Roles = Roles.SuperAdmin)]` on `DELETE /api/config/roles/{id}`); a role with candidates is soft-disabled and the response reports the count.
+- **Config management is Admin+**, but the candidate create/edit forms need active Role/Skill lookups; those are exposed to **CanWriteCandidate** via `GET /api/candidates/role-options` · `/skill-options` so **Recruiters** aren't blocked by the Admin-only `/config/*` endpoints.
 - **End-date lock**: once a `RoleAppliedOption.EndDate` passes, `CandidateService` blocks profile updates and status changes for that role's candidates (all roles, incl. Admin) until an Admin extends the End Date.
 
 ## Token model

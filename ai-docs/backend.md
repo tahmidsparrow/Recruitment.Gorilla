@@ -102,6 +102,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | POST | `/api/candidates/{id}/status` | required | Append status change |
 | GET | `/api/candidates/{id}/cv/{fileId}` | required | Stream original CV file |
 | GET | `/api/candidates/roles` | required | Distinct applied-role values (role suggestions) |
+| GET | `/api/candidates/role-options` · `/skill-options` | CanWriteCandidate | Active Role/Skill options for the candidate create/edit forms — so **Recruiters** (blocked from the Admin-only `/config/*`) can populate the dropdowns |
 | DELETE | `/api/candidates/{id}` | required | Delete candidate + files |
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |

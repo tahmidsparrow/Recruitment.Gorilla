@@ -11,6 +11,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/interviews")]
 public class InterviewsController(
     InterviewService interviews,
+    ConfigurationService config,
     CurrentUser currentUser,
     ILogger<InterviewsController> logger) : ControllerBase
 {
@@ -24,7 +25,7 @@ public class InterviewsController(
     /// <summary>Active interview type tags for the schedule form (readable by any authorized user).</summary>
     [HttpGet("types")]
     public async Task<IActionResult> GetInterviewTypes() =>
-        Ok(await interviews.GetActiveInterviewTypesAsync());
+        Ok(await config.GetActiveInterviewTypesAsync());
 
     /// <summary>Interviews the current user is assigned to.</summary>
     [HttpGet("mine")]
