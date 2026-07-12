@@ -71,10 +71,15 @@ One row per uploaded file. The physical file is on disk under `Uploads/` as `{GU
 | InterviewAt | datetime | nullable; used for Interview Scheduled |
 | ChangedAt | datetime | |
 | ChangedBy | varchar(200) | required; admin name/email |
+| InterviewId | int? FK → Interview | SetNull; set only on the **Interview Completed** entry to link it to the interview it summarizes (migration `AddInterviewCompletionLinkAndReschedule`) |
 
-The `StatusHistoryDto` returned by the API also carries `InterviewId` + `Interviewers` (name list)
-for the "Interview Scheduled" entry — resolved by matching `Interview.StatusHistoryId` — so the
-timeline can link each interviewer to their interview. Not stored on the row itself.
+The `StatusHistoryDto` returned by the API carries `InterviewId` for both the **Interview
+Scheduled** entry (resolved by matching `Interview.StatusHistoryId`) and the **Interview Completed**
+entry (from the stored `InterviewId` column), so the timeline can link to `/interviews/:id`; the
+scheduled entry additionally carries `Interviewers` (name list). A completed entry surfaces a **live,
+structured** per-interviewer evaluation summary (`StatusHistoryDto.EvaluationSummaries`: name, overall
+rating, recommendation, submitted date), resolved from the linked interview's submitted evaluations —
+rendered as cards on the timeline, not stored on the row.
 
 ### RefreshToken (`RefreshTokens`)
 Server-side store for auth refresh tokens (rotation + revocation). Only the **SHA-256 hash** of the opaque token is stored. See [auth.md](auth.md).
@@ -136,6 +141,9 @@ Lookup table for allowed movement from one status option to another. The UI hide
 | SortOrder | int | next-status dropdown order |
 | IsActive | bool | inactive transitions are hidden/blocked |
 
+Seed includes `Interview Completed → Interview Scheduled` (Id 31, migration
+`AddInterviewCompletionLinkAndReschedule`) so a second interview round can be scheduled.
+
 ### RoleAppliedOption (`RoleAppliedOptions`) & SkillOption (`SkillOptions`)
 Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt`. Inactive values are hidden from candidate forms but kept for history. Both are seeded with starter values.
 
@@ -169,6 +177,9 @@ Created when a candidate moves to **Interview Scheduled** (see `CandidateService
 ### InterviewInterviewer (`InterviewInterviewers`)
 Join assigning users as interviewers. Composite PK `(InterviewId, UserId)`; cascade from Interview, restrict on User. Assignment grants that user read access to the interview + candidate snapshot and the right to submit one evaluation.
 
+### InterviewTypeOption (`InterviewTypeOptions`) & InterviewTag (`InterviewTags`)
+Admin-managed lookup of interview type tags (Technical, HR, Managerial, 1st Level, 2nd Level, Final Round — seeded), managed on the Configuration page like Skills. `InterviewTypeOption`: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt` (migration `AddInterviewTypeOptions`). `InterviewTag` is the many-to-many join between `Interview` and `InterviewTypeOption` (composite PK `(InterviewId, InterviewTypeOptionId)`; cascade from Interview, restrict on the type option) — mirrors `CandidateSkill`. Tags are set on the schedule form and surfaced (by name) in `StatusHistoryDto.InterviewTags` and `InterviewDetailDto.InterviewTags`.
+
 ### InterviewEvaluation (`InterviewEvaluations`)
 One interviewer's evaluation of one interview. Unique index `(InterviewId, InterviewerUserId)`; cascade from Interview, restrict on the interviewer User. **Draft until `IsSubmitted`; then locked** (API rejects further writes).
 
@@ -194,7 +205,7 @@ Per-user in-app notification (e.g. interview assignment). `Id`, `UserId` (FK →
 - **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.
 - **Role/Skill values come from `RoleAppliedOptions`/`SkillOptions`** (configurable). Deleting a config value that's in use **soft-disables** it (IsActive=false) instead of hard-deleting. The legacy free-text `Candidate.AppliedRole`/`Candidate.Skills` columns are retained for back-compat but the UI uses the configured values.
 - **CurrentStatus is denormalized** — whenever you append a `StatusHistory`, update `Candidate.CurrentStatus` and `UpdatedAt` in the same save (see `CandidateService.AddStatusAsync`).
-- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment for Interview Completed/Reject/Discontinued, and required prior statuses for Code Review/Recommended.
+- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment **and ≥1 submitted interviewer evaluation** for Interview Completed, comment for Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).
 - **The dashboard adds no tables.** `GET /api/dashboard` is a read-only aggregation over existing entities (Candidates, StatusHistories, RoleAppliedOptions, CandidateSkills), owner-scoped like the candidate list. See [backend.md](backend.md) / [frontend.md](frontend.md).
