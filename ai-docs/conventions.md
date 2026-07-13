@@ -53,6 +53,7 @@ Use clickable relative markdown links, e.g. `[CandidateService.cs](server/Recrui
 - They are **service-layer integration tests against real MySQL** (a throwaway `RG_Test_*` DB), so they exercise the actual EF Core/Pomelo query translation — no in-memory fake.
 - Pattern: derive a DB test class from `Infrastructure/DbTestBase` (joins the `mysql` collection → one migrated DB per run, a transaction rolled back per test for isolation); build rows with `Infrastructure/TestData` (`AddUser`/`AddRole`/`AddCandidate`/`AddInterview`/`AddSubmittedEvaluation`); assert with plain xUnit `Assert` (no FluentAssertions).
 - Focus new tests on **business rules** (access scoping, status transitions, validation gates), not framework plumbing.
+- **Frontend** tests use **Vitest + Testing Library** (jsdom), run via `npm test` in `client`. Test files sit next to their source as `*.test.ts(x)`; setup is `client/src/test/setup.ts`. Cover **pure logic** (`utils/*`) and **derived behavior** (e.g. `AuthContext` role flags — mock `services/api`, no network); skip snapshots and testing that react-bootstrap/recharts render.
 
 ## Git
 - Commit only when asked; branch off the default branch first if needed.

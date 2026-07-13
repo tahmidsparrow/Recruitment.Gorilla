@@ -89,8 +89,12 @@ covers exactly the high-risk logic: candidate **access scoping** (owned OR assig
 strict-owner delete), **status-transition** rules + required-field gates (incl. Interview-Completed
 **≥1-submitted** and role-lock), the evaluation **submit-gate + submit-lock**, and **recruiter
 assignment** / scoped role lookup / delete rules. See [dev-setup.md](dev-setup.md#4b-run-the-tests).
-**Next:** widen to Dashboard scoping, CV access/streaming, and controller-level auth (e.g. delete =
-Admin-only), then wire `dotnet test` into CI.
+**Frontend Tier 1 also delivered** — `client` Vitest suite (17 tests): pure utils
+(`skillColors`/`statusColors`/`evaluationCriteria`) + `AuthContext` role-derivation flags (API mocked,
+no network). Run with `npm test`.
+**Next:** widen backend to Dashboard scoping, CV access/streaming, and controller-level auth (e.g.
+delete = Admin-only); frontend Tier 2 (form validation components) + a small Playwright E2E smoke;
+then wire `dotnet test` + `npm test` into CI.
 
 ### 11. Recruiter-picker guardrail 🟢 (S)
 Any active user (even an Interviewer) can be assigned as a role's recruiter, which silently grants no

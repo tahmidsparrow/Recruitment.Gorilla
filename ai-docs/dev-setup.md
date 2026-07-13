@@ -68,10 +68,16 @@ Smoke-test through the proxy: `http://localhost:5173/api/...` should behave like
 
 ## 4b. Run the tests
 ```bash
-cd server
-dotnet test                       # runs Recruitment.Gorilla.Tests
+# Backend (service-layer, real MySQL)
+cd server && dotnet test          # runs Recruitment.Gorilla.Tests
+
+# Frontend (Vitest: pure utils + auth derivation)
+cd client && npm test             # vitest run  (npm run test:watch to watch)
 ```
-- **Requires the local MySQL server running** (the tests use real MySQL/Pomelo, not an in-memory fake).
+**Frontend tests** (Vitest + Testing Library, jsdom) cover pure logic (`utils/skillColors`,
+`statusColors`, `evaluationCriteria`) and the `AuthContext` role-derivation flags — no network (the
+API module is mocked). Fast, no MySQL needed. **Backend tests**:
+- **Require the local MySQL server running** (the tests use real MySQL/Pomelo, not an in-memory fake).
 - Each run creates a **throwaway database** `RG_Test_{guid}` on the same server, migrates it (schema +
   seed), runs, then **drops it** — the real `RecruitmentGorilla` database is never touched.
 - The connection comes from the env var **`RG_TEST_MYSQL`** if set, otherwise the API's **user-secrets**
