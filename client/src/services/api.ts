@@ -197,8 +197,10 @@ export const getJobOpenings = async (): Promise<JobOpening[]> => {
 };
 
 // Owner-scoped remainder (by-role / top-skills / upcoming / activity).
-export const getDashboard = async (): Promise<DashboardData> => {
-  const { data } = await api.get<DashboardData>('/dashboard');
+export const getDashboard = async (roleId?: number): Promise<DashboardData> => {
+  const { data } = await api.get<DashboardData>('/dashboard', {
+    params: roleId ? { roleId } : undefined,
+  });
   return data;
 };
 

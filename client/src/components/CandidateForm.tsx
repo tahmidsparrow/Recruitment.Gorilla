@@ -66,6 +66,14 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     }
   }, [initialStatus, statusOptions]);
 
+  // A recruiter assigned to exactly one role gets it auto-selected; with several (or an Admin),
+  // no auto-selection happens.
+  useEffect(() => {
+    if (roleOptions.length === 1 && roleAppliedOptionId === null) {
+      setRoleAppliedOptionId(roleOptions[0].id);
+    }
+  }, [roleOptions, roleAppliedOptionId]);
+
   const clearFE = (field: FieldKey) =>
     setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
 

@@ -77,8 +77,7 @@ export interface RoleAppliedOption {
   createdAt: string;   // = posted date (read-only)
   endDate: string;     // required closing deadline
   title: string;       // computed: "{name} — {posted date}"
-  recruiterUserId?: number | null;
-  recruiterName?: string | null;
+  recruiters: { userId: number; name: string }[];
 }
 
 export interface SkillOption {
@@ -104,7 +103,7 @@ export interface UpsertOptionPayload {
   department?: string | null;
   priority?: string | null;
   endDate?: string | null;   // required for roles
-  recruiterUserId?: number | null;
+  recruiterUserIds?: number[];
 }
 
 export interface DeleteRoleResult {

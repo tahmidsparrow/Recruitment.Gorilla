@@ -64,7 +64,7 @@ export default function CandidateDetailPage() {
           <h2 className="mb-0">{data.fullName}</h2>
           <StatusBadge status={data.currentStatus} />
         </div>
-        {canWriteCandidates && (
+        {isAdminOrAbove && (
           <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
             Delete candidate
           </Button>

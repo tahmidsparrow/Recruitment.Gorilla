@@ -18,7 +18,7 @@ import {
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastStack';
-import { SearchableSelect } from '../components/SearchableSelect';
+import { SearchableMultiSelect } from '../components/SearchableSelect';
 import type { DeleteRoleResult, UpsertOptionPayload } from '../types';
 
 interface Opt {
@@ -32,8 +32,7 @@ interface Opt {
   createdAt?: string;
   endDate?: string;
   title?: string;
-  recruiterUserId?: number | null;
-  recruiterName?: string | null;
+  recruiters?: { userId: number; name: string }[];
 }
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
@@ -119,7 +118,7 @@ function OptionSection({
   const [department, setDepartment] = useState('');
   const [priority, setPriority] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [recruiterUserId, setRecruiterUserId] = useState<number | null>(null);
+  const [recruiterUserIds, setRecruiterUserIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [nameInvalid, setNameInvalid] = useState(false);
   const [endDateInvalid, setEndDateInvalid] = useState(false);
@@ -149,7 +148,7 @@ function OptionSection({
         payload.department = department || null;
         payload.priority = priority || null;
         payload.endDate = endDate ? new Date(endDate).toISOString() : null;
-        payload.recruiterUserId = recruiterUserId;
+        payload.recruiterUserIds = recruiterUserIds;
       }
       return editing ? api.update(editing.id, payload) : api.create(payload);
     },
@@ -187,7 +186,7 @@ function OptionSection({
     setDepartment('');
     setPriority('');
     setEndDate('');
-    setRecruiterUserId(null);
+    setRecruiterUserIds([]);
     setError(null);
     setNameInvalid(false);
     setEndDateInvalid(false);
@@ -203,7 +202,7 @@ function OptionSection({
     setDepartment(o.department ?? '');
     setPriority(o.priority ?? '');
     setEndDate(o.endDate ? toLocalInput(o.endDate) : '');
-    setRecruiterUserId(o.recruiterUserId ?? null);
+    setRecruiterUserIds((o.recruiters ?? []).map((r) => r.userId));
     setError(null);
     setNameInvalid(false);
     setEndDateInvalid(false);
@@ -253,7 +252,7 @@ function OptionSection({
                   {jobFields && <td className="d-none d-lg-table-cell text-muted small">{o.title ?? '—'}</td>}
                   {jobFields && <td className="d-none d-md-table-cell">{o.location ?? '—'}</td>}
                   {jobFields && <td className="d-none d-md-table-cell">{o.department ?? '—'}</td>}
-                  {jobFields && <td className="d-none d-lg-table-cell">{o.recruiterName ?? '—'}</td>}
+                  {jobFields && <td className="d-none d-lg-table-cell">{o.recruiters && o.recruiters.length > 0 ? o.recruiters.map((r) => r.name).join(', ') : '—'}</td>}
                   {jobFields && <td className="d-none d-lg-table-cell">{formatDate(o.createdAt)}</td>}
                   {jobFields && (
                     <td>
@@ -370,13 +369,14 @@ function OptionSection({
                     </Form.Select>
                   </div>
                   <div className="col-sm-6">
-                    <Form.Label>Recruiter</Form.Label>
-                    <SearchableSelect
+                    <Form.Label>Recruiters</Form.Label>
+                    <SearchableMultiSelect
                       options={recruiterOptions}
-                      value={recruiterUserId}
-                      onChange={setRecruiterUserId}
+                      value={recruiterUserIds}
+                      onChange={setRecruiterUserIds}
                       placeholder="Search by name or email…"
                     />
+                    <Form.Text muted>Each assigned recruiter can access all candidates under this role.</Form.Text>
                   </div>
                 </div>
               </>

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Col, ListGroup, Row, Spinner } from 'react-bootstrap';
+import { Card, Col, Form, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import {
+  getActiveRoleOptions,
   getApplicationsTrend,
   getDashboard,
   getDashboardKpis,
@@ -84,8 +85,11 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 }
 
 export default function DashboardPage() {
-  const { canWriteCandidates } = useAuth();
+  const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [trendDays, setTrendDays] = useState<number>(30);
+  // Recruiter-only dashboard role filter ('all' = every accessible candidate).
+  const [roleFilter, setRoleFilter] = useState<number | 'all'>('all');
+  const isRecruiterOnly = canWriteCandidates && !isAdminOrAbove;
 
   // Org-wide figures — every role sees the same numbers.
   const { data: kpis, isLoading: kpisLoading, isError: kpisError } = useQuery({
@@ -105,10 +109,18 @@ export default function DashboardPage() {
     queryFn: getJobOpenings,
   });
 
+  // A recruiter's assigned roles, for their dashboard filter.
+  const { data: assignedRoles = [] } = useQuery({
+    queryKey: ['role-options', 'active'],
+    queryFn: getActiveRoleOptions,
+    enabled: isRecruiterOnly,
+  });
+
   // Owner-scoped, candidate-centric sections — only for roles that manage candidates.
+  const scopedRoleId = isRecruiterOnly && roleFilter !== 'all' ? roleFilter : undefined;
   const { data: scoped } = useQuery({
-    queryKey: ['dashboard', 'scoped'],
-    queryFn: getDashboard,
+    queryKey: ['dashboard', 'scoped', scopedRoleId ?? 'all'],
+    queryFn: () => getDashboard(scopedRoleId),
     enabled: canWriteCandidates,
   });
 
@@ -207,6 +219,22 @@ export default function DashboardPage() {
       {/* Candidate-centric sections — only for candidate-managing roles */}
       {canWriteCandidates && (
         <>
+          {isRecruiterOnly && assignedRoles.length > 0 && (
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <span className="text-muted small">My pipeline:</span>
+              <Form.Select
+                size="sm"
+                style={{ width: 'auto' }}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              >
+                <option value="all">All my roles</option>
+                {assignedRoles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </Form.Select>
+            </div>
+          )}
           <Row className="g-3 mb-4">
             <Col lg={6}>
               <Card className="h-100">
