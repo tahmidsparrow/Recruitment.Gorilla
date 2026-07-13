@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using MySqlConnector;
 using Recruitment.Gorilla.API.Data;
 
 namespace Recruitment.Gorilla.Tests.Infrastructure;
@@ -20,13 +18,11 @@ public sealed class MySqlDatabaseFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        var baseConn = ResolveBaseConnection();
         // Detect the server version against the existing (real) database, which is reachable.
-        var serverVersion = ServerVersion.AutoDetect(baseConn);
+        var serverVersion = ServerVersion.AutoDetect(TestConnection.ResolveBase());
 
-        var builder = new MySqlConnectionStringBuilder(baseConn) { Database = DatabaseName };
         _options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseMySql(builder.ConnectionString, serverVersion)
+            .UseMySql(TestConnection.ForDatabase(DatabaseName), serverVersion)
             .Options;
 
         // Migrate() bootstraps the throwaway database (CREATE DATABASE) then applies the real
@@ -39,25 +35,6 @@ public sealed class MySqlDatabaseFixture : IAsyncLifetime
     {
         await using var ctx = NewContext();
         await ctx.Database.EnsureDeletedAsync();
-    }
-
-    private static string ResolveBaseConnection()
-    {
-        var fromEnv = Environment.GetEnvironmentVariable("RG_TEST_MYSQL");
-        if (!string.IsNullOrWhiteSpace(fromEnv)) return fromEnv;
-
-        // Same UserSecretsId as the API (set in the csproj) → reads the local dev connection string.
-        var config = new ConfigurationBuilder()
-            .AddUserSecrets<MySqlDatabaseFixture>(optional: true)
-            .AddEnvironmentVariables()
-            .Build();
-
-        var conn = config.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrWhiteSpace(conn))
-            throw new InvalidOperationException(
-                "No test DB connection found. Set the RG_TEST_MYSQL env var, or configure the API's " +
-                "user-secrets 'ConnectionStrings:DefaultConnection' (see ai-docs/dev-setup.md).");
-        return conn;
     }
 }
 

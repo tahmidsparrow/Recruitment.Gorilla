@@ -139,3 +139,6 @@ app.Logger.LogInformation("Recruitment.Gorilla API starting in {Environment} env
     app.Environment.EnvironmentName);
 
 app.Run();
+
+// Exposes the implicit top-level Program class to the test project (WebApplicationFactory<Program>).
+public partial class Program;
