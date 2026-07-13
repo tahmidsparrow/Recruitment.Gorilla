@@ -16,7 +16,7 @@ public class ConfigurationService(AppDbContext db)
 
     public async Task<List<RoleAppliedOptionDto>> GetActiveRolesAsync() =>
         (await db.RoleAppliedOptions
-            .Include(r => r.RecruiterUser)
+            .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
             .Where(r => r.IsActive)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
@@ -24,7 +24,16 @@ public class ConfigurationService(AppDbContext db)
 
     public async Task<List<RoleAppliedOptionDto>> GetAllRolesAsync() =>
         (await db.RoleAppliedOptions
-            .Include(r => r.RecruiterUser)
+            .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
+            .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
+            .ToListAsync())
+            .Select(ToDto).ToList();
+
+    /// <summary>Active roles the given user is an assigned recruiter for (for the candidate forms).</summary>
+    public async Task<List<RoleAppliedOptionDto>> GetAssignedRolesAsync(int recruiterUserId) =>
+        (await db.RoleAppliedOptions
+            .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
+            .Where(r => r.IsActive && r.Recruiters.Any(rr => rr.UserId == recruiterUserId))
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
             .Select(ToDto).ToList();
@@ -32,7 +41,7 @@ public class ConfigurationService(AppDbContext db)
     public async Task<(RoleAppliedOptionDto? Created, bool Conflict, string? Error)> CreateRoleAsync(UpsertRoleAppliedOptionDto dto)
     {
         if (ValidateRole(dto) is string error) return (null, false, error);
-        if (await ValidateRecruiterAsync(dto.RecruiterUserId) is string recErr) return (null, false, recErr);
+        if (await ValidateRecruitersAsync(dto.RecruiterUserIds) is string recErr) return (null, false, recErr);
 
         var name = dto.Name.Trim();
         if (await db.RoleAppliedOptions.AnyAsync(r => r.Name == name))
@@ -47,20 +56,22 @@ public class ConfigurationService(AppDbContext db)
             Department = Clean(dto.Department),
             Priority = Clean(dto.Priority),
             EndDate = dto.EndDate,
-            RecruiterUserId = dto.RecruiterUserId,
+            Recruiters = BuildRecruiters(dto.RecruiterUserIds),
         };
         db.RoleAppliedOptions.Add(entity);
         await db.SaveChangesAsync();
-        await db.Entry(entity).Reference(e => e.RecruiterUser).LoadAsync();
+        await LoadRecruitersAsync(entity);
         return (ToDto(entity), false, null);
     }
 
     public async Task<(RoleAppliedOptionDto? Updated, bool NotFound, bool Conflict, string? Error)> UpdateRoleAsync(int id, UpsertRoleAppliedOptionDto dto)
     {
         if (ValidateRole(dto) is string error) return (null, false, false, error);
-        if (await ValidateRecruiterAsync(dto.RecruiterUserId) is string recErr) return (null, false, false, recErr);
+        if (await ValidateRecruitersAsync(dto.RecruiterUserIds) is string recErr) return (null, false, false, recErr);
 
-        var entity = await db.RoleAppliedOptions.FindAsync(id);
+        var entity = await db.RoleAppliedOptions
+            .Include(r => r.Recruiters)
+            .FirstOrDefaultAsync(r => r.Id == id);
         if (entity is null) return (null, true, false, null);
 
         var name = dto.Name.Trim();
@@ -74,12 +85,21 @@ public class ConfigurationService(AppDbContext db)
         entity.Department = Clean(dto.Department);
         entity.Priority = Clean(dto.Priority);
         entity.EndDate = dto.EndDate;
-        entity.RecruiterUserId = dto.RecruiterUserId;
+        // Replace the recruiter assignments with the new selection.
+        entity.Recruiters.Clear();
+        foreach (var uid in (dto.RecruiterUserIds ?? []).Distinct())
+            entity.Recruiters.Add(new RoleRecruiter { UserId = uid });
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        await db.Entry(entity).Reference(e => e.RecruiterUser).LoadAsync();
+        await LoadRecruitersAsync(entity);
         return (ToDto(entity), false, false, null);
     }
+
+    private static List<RoleRecruiter> BuildRecruiters(List<int>? ids) =>
+        (ids ?? []).Distinct().Select(uid => new RoleRecruiter { UserId = uid }).ToList();
+
+    private async Task LoadRecruitersAsync(RoleAppliedOption entity) =>
+        await db.Entry(entity).Collection(e => e.Recruiters).Query().Include(rr => rr.User).LoadAsync();
 
     /// <summary>Validates required fields and the Location/Department option sets. Null when valid.</summary>
     private static string? ValidateRole(UpsertRoleAppliedOptionDto dto)
@@ -95,13 +115,15 @@ public class ConfigurationService(AppDbContext db)
         return null;
     }
 
-    /// <summary>Assigned recruiter (when set) must be an existing active user. Null when valid.</summary>
-    private async Task<string?> ValidateRecruiterAsync(int? recruiterUserId)
+    /// <summary>Every assigned recruiter (when any) must be an existing active user. Null when valid.</summary>
+    private async Task<string?> ValidateRecruitersAsync(List<int>? recruiterUserIds)
     {
-        if (recruiterUserId is not int uid) return null;
-        return await db.Users.AnyAsync(u => u.Id == uid && u.IsActive)
+        if (recruiterUserIds is not { Count: > 0 }) return null;
+        var ids = recruiterUserIds.Distinct().ToList();
+        var validCount = await db.Users.CountAsync(u => ids.Contains(u.Id) && u.IsActive);
+        return validCount == ids.Count
             ? null
-            : "The selected recruiter is not a valid active user.";
+            : "One or more selected recruiters are not valid active users.";
     }
 
     /// <summary>Trim to null so empty strings aren't persisted.</summary>
@@ -263,7 +285,9 @@ public class ConfigurationService(AppDbContext db)
     private static RoleAppliedOptionDto ToDto(RoleAppliedOption r) =>
         new(r.Id, r.Name, r.SortOrder, r.IsActive, r.Location, r.Department, r.Priority,
             r.CreatedAt, r.EndDate, RoleTitle(r.Name, r.CreatedAt),
-            r.RecruiterUserId, r.RecruiterUser?.Name);
+            r.Recruiters
+                .Select(rr => new RecruiterDto(rr.UserId, rr.User.Name))
+                .OrderBy(x => x.Name).ToList());
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
     private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);
 }

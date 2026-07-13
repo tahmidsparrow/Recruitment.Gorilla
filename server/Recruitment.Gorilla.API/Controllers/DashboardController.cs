@@ -35,5 +35,6 @@ public class DashboardController(DashboardService dashboardService, CurrentUser 
     // ---- Owner-scoped remainder (by-role / top-skills / upcoming / activity) ----
 
     [HttpGet]
-    public async Task<IActionResult> Get() => Ok(await dashboardService.GetScopedAsync(ReadOwnerScope));
+    public async Task<IActionResult> Get([FromQuery] int? roleId) =>
+        Ok(await dashboardService.GetScopedAsync(ReadOwnerScope, roleId));
 }

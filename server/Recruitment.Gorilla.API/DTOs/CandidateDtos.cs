@@ -171,6 +171,8 @@ public record StatusOptionDto(
     bool IsInitial
 );
 
+public record RecruiterDto(int UserId, string Name);
+
 public record RoleAppliedOptionDto(
     int Id,
     string Name,
@@ -182,8 +184,7 @@ public record RoleAppliedOptionDto(
     DateTime CreatedAt,   // = posted date (read-only)
     DateTime EndDate,
     string Title,         // computed: "{Name} — {CreatedAt:dd MMM yyyy}"
-    int? RecruiterUserId,
-    string? RecruiterName);
+    List<RecruiterDto> Recruiters);
 
 public record UpsertRoleAppliedOptionDto(
     string Name,
@@ -193,7 +194,7 @@ public record UpsertRoleAppliedOptionDto(
     string? Location = null,
     string? Department = null,
     string? Priority = null,
-    int? RecruiterUserId = null);
+    List<int>? RecruiterUserIds = null);
 
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 

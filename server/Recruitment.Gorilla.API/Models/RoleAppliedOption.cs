@@ -22,9 +22,9 @@ public class RoleAppliedOption
     /// <summary>Required closing deadline; after this, the role's candidates are locked.</summary>
     public DateTime EndDate { get; set; }
 
-    /// <summary>Optional recruiter assigned to this opening (any active user).</summary>
-    public int? RecruiterUserId { get; set; }
-    public User? RecruiterUser { get; set; }
+    /// <summary>Recruiters assigned to this opening (any active users). Each can access every
+    /// candidate under this role. Many-to-many via <see cref="RoleRecruiter"/>.</summary>
+    public ICollection<RoleRecruiter> Recruiters { get; set; } = [];
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // = the posted date
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

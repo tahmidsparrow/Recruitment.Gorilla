@@ -21,9 +21,12 @@ public class CandidatesController(
     private int? ReadOwnerScope =>
         currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin) ? null : currentUser.UserId;
 
-    // For writes, only Admin+ act on any candidate; a Recruiter is limited to their own.
+    // For writes, only Admin+ act on any candidate; a Recruiter is limited to candidates they own
+    // or are the assigned recruiter for (enforced by CandidateService's access predicate).
     private int? WriteOwnerScope =>
         currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin) ? null : currentUser.UserId;
+
+    private bool IsAdmin => currentUser.IsInAnyRole(Roles.SuperAdmin, Roles.Admin);
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet]
@@ -93,7 +96,9 @@ public class CandidatesController(
             : PhysicalFile(file.PhysicalPath, file.ContentType, file.OriginalFileName);
     }
 
-    [Authorize(Roles = Roles.CanWriteCandidate)]
+    // Deleting a candidate (and its CV files) is restricted to Admin+ — Recruiters can't delete,
+    // not even candidates they own.
+    [Authorize(Roles = Roles.AdminOrAbove)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -113,10 +118,14 @@ public class CandidatesController(
     }
 
     // Active role/skill lookups for the candidate create/edit forms. Exposed here (not on the
-    // Admin-only ConfigurationController) so Recruiters can populate the dropdowns.
+    // Admin-only ConfigurationController) so Recruiters can populate the dropdowns. Admin+ get all
+    // active roles; a Recruiter gets only the roles they are the assigned recruiter for.
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("role-options")]
-    public async Task<IActionResult> GetRoleOptions() => Ok(await config.GetActiveRolesAsync());
+    public async Task<IActionResult> GetRoleOptions() =>
+        Ok(IsAdmin
+            ? await config.GetActiveRolesAsync()
+            : await config.GetAssignedRolesAsync(currentUser.UserId ?? 0));
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("skill-options")]

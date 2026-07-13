@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StatusOption> StatusOptions => Set<StatusOption>();
     public DbSet<StatusTransition> StatusTransitions => Set<StatusTransition>();
     public DbSet<RoleAppliedOption> RoleAppliedOptions => Set<RoleAppliedOption>();
+    public DbSet<RoleRecruiter> RoleRecruiters => Set<RoleRecruiter>();
     public DbSet<SkillOption> SkillOptions => Set<SkillOption>();
     public DbSet<CandidateSkill> CandidateSkills => Set<CandidateSkill>();
     public DbSet<User> Users => Set<User>();
@@ -179,10 +180,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(r => r.Department).HasMaxLength(100);
             e.Property(r => r.Priority).HasMaxLength(20);
             e.HasIndex(r => r.Name).IsUnique();
-            e.HasOne(r => r.RecruiterUser)
-             .WithMany()
-             .HasForeignKey(r => r.RecruiterUserId)
-             .OnDelete(DeleteBehavior.SetNull);
 
             var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
             var seededEnd = new DateTime(2027, 12, 31, 0, 0, 0, DateTimeKind.Utc); // open by default
@@ -194,6 +191,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new RoleAppliedOption { Id = 5, Name = "DevOps Engineer", SortOrder = 5, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded },
                 new RoleAppliedOption { Id = 6, Name = "QA Engineer", SortOrder = 6, IsActive = true, EndDate = seededEnd, CreatedAt = seeded, UpdatedAt = seeded }
             );
+        });
+
+        modelBuilder.Entity<RoleRecruiter>(e =>
+        {
+            e.HasKey(rr => new { rr.RoleAppliedOptionId, rr.UserId });
+            e.HasOne(rr => rr.RoleAppliedOption)
+             .WithMany(r => r.Recruiters)
+             .HasForeignKey(rr => rr.RoleAppliedOptionId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(rr => rr.User)
+             .WithMany()
+             .HasForeignKey(rr => rr.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SkillOption>(e =>

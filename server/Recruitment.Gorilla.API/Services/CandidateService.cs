@@ -21,13 +21,22 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
     private const string Reject = "Reject";
     private const string Discontinued = "Discontinued";
 
+    /// <summary>
+    /// Restricts a candidate query to those a non-admin caller may access: candidates they own,
+    /// OR candidates whose applied-for role lists them as an assigned recruiter. A null
+    /// <paramref name="accessUserId"/> means no restriction (Admin+).
+    /// </summary>
+    private static IQueryable<Candidate> ApplyAccess(IQueryable<Candidate> query, int? accessUserId) =>
+        accessUserId is int uid
+            ? query.Where(c => c.OwnerUserId == uid ||
+                               (c.RoleAppliedOption != null &&
+                                c.RoleAppliedOption.Recruiters.Any(rr => rr.UserId == uid)))
+            : query;
+
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
         string? search, string? status, int page, int pageSize, int? ownerUserId = null)
     {
-        var query = db.Candidates.AsQueryable();
-
-        if (ownerUserId is int owner)
-            query = query.Where(c => c.OwnerUserId == owner);
+        var query = ApplyAccess(db.Candidates.AsQueryable(), ownerUserId);
 
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(c =>
@@ -54,7 +63,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
     public async Task<CandidateDetailDto?> GetByIdAsync(int id, int? ownerUserId = null)
     {
-        var c = await db.Candidates
+        var query = db.Candidates
             .Include(x => x.CVFiles)
             .Include(x => x.StatusHistories.OrderByDescending(s => s.ChangedAt))
             .Include(x => x.RoleAppliedOption)
@@ -62,11 +71,11 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             .Include(x => x.Interviews).ThenInclude(i => i.Interviewers).ThenInclude(ii => ii.User)
             .Include(x => x.Interviews).ThenInclude(i => i.Tags).ThenInclude(t => t.InterviewTypeOption)
             .Include(x => x.Interviews).ThenInclude(i => i.Evaluations).ThenInclude(e => e.InterviewerUser)
-            .AsSplitQuery()
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .AsSplitQuery();
+
+        var c = await ApplyAccess(query, ownerUserId).FirstOrDefaultAsync(x => x.Id == id);
 
         if (c is null) return null;
-        if (ownerUserId is int owner && c.OwnerUserId != owner) return null;
 
         return MapToDetail(c);
     }
@@ -375,12 +384,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
     public async Task<CandidateDetailDto?> UpdateAsync(int id, UpdateCandidateDto dto, int? ownerUserId = null)
     {
-        var candidate = await db.Candidates
-            .Include(x => x.CandidateSkills)
+        var candidate = await ApplyAccess(db.Candidates.Include(x => x.CandidateSkills), ownerUserId)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (candidate is null) return null;
-        if (ownerUserId is int owner && candidate.OwnerUserId != owner) return null;
 
         candidate.FullName = dto.FullName;
         candidate.Email = dto.Email;

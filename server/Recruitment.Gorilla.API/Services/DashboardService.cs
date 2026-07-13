@@ -97,12 +97,20 @@ public class DashboardService(AppDbContext db)
 
     // ---- Owner-scoped (candidate-centric) ----
 
-    /// <summary>By-role / top-skills / upcoming interviews / recent activity, scoped to the caller.</summary>
-    public async Task<DashboardDto> GetScopedAsync(int? ownerUserId)
+    /// <summary>
+    /// By-role / top-skills / upcoming interviews / recent activity, scoped to the caller.
+    /// <paramref name="accessUserId"/> null = no restriction (Admin+); otherwise limited to
+    /// candidates the user owns OR is the assigned recruiter for. Optional <paramref name="roleFilterId"/>
+    /// further narrows to a single role.
+    /// </summary>
+    public async Task<DashboardDto> GetScopedAsync(int? accessUserId, int? roleFilterId = null)
     {
-        var candidates = ownerUserId is int owner
-            ? db.Candidates.Where(c => c.OwnerUserId == owner)
-            : db.Candidates;
+        var candidates = db.Candidates.AsQueryable();
+        if (accessUserId is int uid)
+            candidates = candidates.Where(c => c.OwnerUserId == uid ||
+                (c.RoleAppliedOption != null && c.RoleAppliedOption.Recruiters.Any(rr => rr.UserId == uid)));
+        if (roleFilterId is int rid)
+            candidates = candidates.Where(c => c.RoleAppliedOptionId == rid);
 
         // By role (configured option name, falling back to free-text AppliedRole).
         var byRole = (await candidates
@@ -116,7 +124,7 @@ public class DashboardService(AppDbContext db)
 
         // Top skills — group by the scalar FK (translatable on MySQL), resolve names from a lookup.
         var skillCounts = await db.CandidateSkills
-            .Where(cs => ownerUserId == null || cs.Candidate.OwnerUserId == ownerUserId)
+            .Where(cs => candidates.Any(c => c.Id == cs.CandidateId))
             .GroupBy(cs => cs.SkillOptionId)
             .Select(g => new { SkillOptionId = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -133,7 +141,7 @@ public class DashboardService(AppDbContext db)
         var now = DateTime.UtcNow;
         var upcomingInterviews = await db.Interviews
             .Where(i => i.ScheduledAt >= now && i.Candidate.CurrentStatus == "Interview Scheduled")
-            .Where(i => ownerUserId == null || i.Candidate.OwnerUserId == ownerUserId)
+            .Where(i => candidates.Any(c => c.Id == i.CandidateId))
             .OrderBy(i => i.ScheduledAt)
             .Take(10)
             .Select(i => new UpcomingInterviewDto(
@@ -148,7 +156,7 @@ public class DashboardService(AppDbContext db)
 
         // Recent activity (latest status changes).
         var recentActivity = await db.StatusHistories
-            .Where(h => ownerUserId == null || h.Candidate.OwnerUserId == ownerUserId)
+            .Where(h => candidates.Any(c => c.Id == h.CandidateId))
             .OrderByDescending(h => h.ChangedAt)
             .Take(10)
             .Select(h => new ActivityItemDto(
