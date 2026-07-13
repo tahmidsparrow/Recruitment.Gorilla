@@ -4,6 +4,14 @@
 **Author:** AI agent
 **Date:** 2026-07-10
 
+> **Revision (2026-07-13):** the role **Recruiter** field is no longer just metadata — it now grants
+> **candidate access**. It became a **many-to-many** (`RoleRecruiter` join, migration
+> `RoleRecruitersManyToMany`; multi-select in Configuration), and every assigned recruiter can
+> view/edit/change-status/CV **all candidates under that role** (creator-agnostic;
+> `CandidateService.ApplyAccess` = owned OR assigned-role). The candidate form's role dropdown is
+> scoped to a recruiter's assigned roles (auto-selected when one), the dashboard gains a recruiter
+> **role filter** (`/api/dashboard?roleId=`), and **candidate delete is now Admin/SuperAdmin only**.
+
 ## 1. Summary
 Turns the **Roles applied / Job openings** config into a real job-posting manager (renamed/derived
 fields, a required **End Date & time** that locks candidate editing after it passes, dropdown

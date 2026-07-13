@@ -65,7 +65,7 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
   - `GET /api/dashboard/status-breakdown` → `GetStatusBreakdownAsync()` ordered by `StatusOptions.SortOrder`.
   - `GET /api/dashboard/applications-trend?days=` → `GetApplicationsTrendAsync(days)`; `days ∈ {7,30,90}` (else 30); groups `CreatedAt.Date` and **zero-fills** missing days in C#.
   - `GET /api/dashboard/job-openings` → `GetJobOpeningsAsync()` — **open** roles only (`IsActive && EndDate >= now`) projected to `JobOpeningDto` (incl. `EndDate`), applicant counts derived by role.
-  - `GET /api/dashboard` → `GetScopedAsync(ownerUserId)` — the candidate-centric remainder (**by-role, top-skills, upcoming interviews, recent activity**), owner-scoped like `CandidatesController` (`ReadOwnerScope`: null for Admin+, else the caller's id). The frontend only calls this for `canWriteCandidates` roles.
+  - `GET /api/dashboard?roleId=` → `GetScopedAsync(accessUserId, roleFilterId)` — the candidate-centric remainder (**by-role, top-skills, upcoming interviews, recent activity**), scoped with the same access predicate as candidates (null for Admin+, else owned **OR** assigned-role-recruiter); an optional `roleId` narrows to one role. The frontend only calls this for `canWriteCandidates` roles, and offers Recruiters a role filter over their assigned roles + All.
 - **Upcoming interviews** come from the `Interviews` table (`ScheduledAt >= now` **and** candidate still `Interview Scheduled`) — not `StatusHistory.InterviewAt` — so completed/rejected or re-scheduled candidates don't linger or duplicate.
 - **MySQL translation note:** group by a scalar FK (e.g. `cs.SkillOptionId`, `c.RoleAppliedOptionId`) then resolve names/rows from a dictionary — grouping directly by a joined navigation (`cs.SkillOption.Name`) is **not** translatable by Pomelo and throws at runtime.
 
@@ -102,12 +102,13 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | POST | `/api/candidates/{id}/status` | required | Append status change |
 | GET | `/api/candidates/{id}/cv/{fileId}` | required | Stream original CV file |
 | GET | `/api/candidates/roles` | required | Distinct applied-role values (role suggestions) |
-| GET | `/api/candidates/role-options` · `/skill-options` | CanWriteCandidate | Active Role/Skill options for the candidate create/edit forms — so **Recruiters** (blocked from the Admin-only `/config/*`) can populate the dropdowns |
+| GET | `/api/candidates/role-options` · `/skill-options` | CanWriteCandidate | Active Role/Skill options for the candidate forms (Admin-only `/config/*` blocks Recruiters). `role-options` is **scoped**: Admin+ → all active roles; Recruiter → only roles they're an assigned recruiter for (`ConfigurationService.GetAssignedRolesAsync`) |
+| DELETE | `/api/candidates/{id}` | **AdminOrAbove** | Delete candidate + CV files (Recruiters can't delete) |
 | DELETE | `/api/candidates/{id}` | required | Delete candidate + files |
 | GET | `/api/status-options` | required | Active status dropdown options |
 | GET | `/api/status-options/initial` | required | Initial status dropdown options |
 | GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
-| GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (job-opening fields: required **EndDate**, Location/Department from fixed sets, Priority, optional **RecruiterUserId**). Returns computed `Title` + `CreatedAt` (posted date) + `RecruiterName` |
+| GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (job-opening fields: required **EndDate**, Location/Department from fixed sets, Priority, and **`RecruiterUserIds`** — a many-to-many of assigned recruiters). Returns computed `Title` + `CreatedAt` (posted date) + `Recruiters` (name list). Assigned recruiters gain access to the role's candidates (see auth.md) |
 | PUT | `/api/config/roles/{id}` | Admin+ | Update a Role Applied option |
 | DELETE | `/api/config/roles/{id}` | **SuperAdmin** | Soft-disable if it has candidates (returns `{deleted,deactivated,candidateCount}`), else hard-delete |
 | GET/POST | `/api/config/skills` | required | List / create Skill options |

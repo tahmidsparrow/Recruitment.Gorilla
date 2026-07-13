@@ -10,15 +10,17 @@ Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interv
 | Manage users & assign roles (`/api/users`) | ✅ | – | – | – |
 | Configuration: roles/skills (`/api/config/*`) | ✅ | ✅ | – | – |
 | **Delete** a job-opening role | ✅ | – | – | – |
-| View / browse candidates | all | all | **own only** | – |
+| View / browse candidates | all | all | **own OR assigned-role** | – |
 | Create / upload candidate | ✅ | ✅ | ✅ (becomes owner) | – |
-| Edit / change status / delete candidate | ✅ (all) | ✅ (all) | **own only** | – |
+| Edit / change status candidate | ✅ (all) | ✅ (all) | **own OR assigned-role** | – |
+| **Delete** candidate | ✅ | ✅ | – | – |
 | Dashboard + assigned interviews + evaluations | ✅ | ✅ | ✅ | ✅ |
 
-- **Recruiter scoping**: `CandidatesController` derives a read/write owner scope from `CurrentUser`. Recruiters only see/edit candidates whose `Candidate.OwnerUserId` is their user id; Admin+ pass `null` (no filter). New candidates a Recruiter creates are stamped with their id as owner. Legacy rows have `OwnerUserId = NULL` → visible to Admin+ only.
+- **Recruiter scoping** (`CandidateService.ApplyAccess`): a non-admin caller may access a candidate when they **own** it (`OwnerUserId`) **OR** are an assigned **recruiter of that candidate's role** (`RoleAppliedOption.Recruiters`, a many-to-many). This is creator-agnostic — an Admin-created candidate under a recruiter's role is visible to that recruiter, and a role can name **multiple** recruiters (all get access). Admin+ pass `null` (no filter). Applies to list / detail / CV stream / edit / change status.
+- **Delete is Admin/SuperAdmin only** — `DELETE /api/candidates/{id}` is `[Authorize(Roles = Roles.AdminOrAbove)]`; Recruiters can't delete a candidate/CV at all (not even their own). The UI hides the delete button for non-admins.
 - **Interviewer** (bottom of the hierarchy; the former "Viewer", renamed) can **only** reach the dashboard, their assigned interviews (`/api/interviews/*`, `/api/notifications/*`), and evaluations. Candidate list/detail GETs are gated by `[Authorize(Roles = Roles.CanWriteCandidate)]`, and the UI hides those menu items/routes. They still see a candidate's read-only snapshot + CV **through** an interview they're assigned to.
 - **Job-opening delete is SuperAdmin-only** (`[Authorize(Roles = Roles.SuperAdmin)]` on `DELETE /api/config/roles/{id}`); a role with candidates is soft-disabled and the response reports the count.
-- **Config management is Admin+**, but the candidate create/edit forms need active Role/Skill lookups; those are exposed to **CanWriteCandidate** via `GET /api/candidates/role-options` · `/skill-options` so **Recruiters** aren't blocked by the Admin-only `/config/*` endpoints.
+- **Config management is Admin+**, but the candidate create/edit forms need active Role/Skill lookups; those are exposed to **CanWriteCandidate** via `GET /api/candidates/role-options` · `/skill-options` so **Recruiters** aren't blocked by the Admin-only `/config/*` endpoints. `role-options` is **scoped**: Admin+ get all active roles; a Recruiter gets only the roles they're an assigned recruiter for (so the candidate form's "Role applied for" offers only their roles, auto-selected when there's exactly one). A Recruiter with **no** assigned role can't create candidates until an Admin assigns them one. The recruiter dashboard also gets a **role filter** (`GET /api/dashboard?roleId=`) over their assigned roles + All.
 - **End-date lock**: once a `RoleAppliedOption.EndDate` passes, `CandidateService` blocks profile updates and status changes for that role's candidates (all roles, incl. Admin) until an Admin extends the End Date.
 
 ## Token model

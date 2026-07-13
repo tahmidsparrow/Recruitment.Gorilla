@@ -155,7 +155,8 @@ Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`
 | Department | varchar(100) | nullable; one of Engineering / Admin / HR (validated) |
 | Priority | varchar(20) | nullable; High / Medium / Low |
 | EndDate | datetime | **required** closing deadline (migration `RoleOptionEndDate`; existing rows backfilled to `CreatedAt + 30 days`). After it passes, the role's candidates are **locked** from profile edits + status changes until an Admin extends it |
-| RecruiterUserId | int? FK → User | nullable; optional recruiter assigned to the opening (migration `AddRoleRecruiter`; SetNull on user delete) |
+
+Assigned **recruiters** are now a **many-to-many** via **`RoleRecruiter`** (`{ RoleAppliedOptionId, UserId }`, composite PK; cascade from both parents), replacing the old single `RecruiterUserId` FK (migration `RoleRecruitersManyToMany`, which copies existing assignments into the join). Every recruiter assigned to a role can access all candidates under it (see [auth.md](auth.md)).
 
 `CreatedAt` is the (non-editable) **posted date**; the API also returns a computed **`Title`** (`"{Name} — {posted date}"`). Applicants per opening are **derived by role** (candidates whose `RoleAppliedOptionId` matches), not a stored count. There is no separate `JobOpening` table. **Delete is SuperAdmin-only** — a role with assigned candidates is soft-disabled (returns the candidate count) rather than removed.
 
