@@ -14,9 +14,10 @@ These documents let any AI agent (or new contributor) understand the system and 
 | [backend.md](backend.md) | Touch the ASP.NET Core API: structure, EF Core/migrations, CV parsing, storage, logging. |
 | [frontend.md](frontend.md) | Touch the React client: pages, components, data fetching, theme. |
 | [auth.md](auth.md) | Protect an endpoint, call a protected API, or work on login/JWT. |
-| [dev-setup.md](dev-setup.md) | Run the app, configure secrets, run migrations, or expose it on the LAN. |
+| [dev-setup.md](dev-setup.md) | Run the app, configure secrets, run migrations, **run the tests**, or expose it on the LAN. |
 | [feature-playbook.md](feature-playbook.md) | Add a new feature end-to-end (the canonical recipe + checklist). |
 | [spec-template.md](spec-template.md) | Write a spec for a new feature before building it. |
+| [product-improvement-roadmap.md](product-improvement-roadmap.md) | See prioritized ideas for what to build next (ATS gaps, analytics, compliance, eng health). |
 | [specs/](specs/) | See/author feature specs. Includes a worked example. |
 
 ## How a new agent should use these

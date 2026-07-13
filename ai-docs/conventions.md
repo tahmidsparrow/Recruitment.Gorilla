@@ -48,6 +48,12 @@ ASP.NET serializes with camelCase, and it lowercases **runs of leading capitals*
 ## File references in docs/PRs
 Use clickable relative markdown links, e.g. `[CandidateService.cs](server/Recruitment.Gorilla.API/Services/CandidateService.cs)`, not bare backticks.
 
+## Testing
+- Tests live in `server/Recruitment.Gorilla.Tests` (xUnit), run via `dotnet test` — see [dev-setup.md](dev-setup.md#4b-run-the-tests).
+- They are **service-layer integration tests against real MySQL** (a throwaway `RG_Test_*` DB), so they exercise the actual EF Core/Pomelo query translation — no in-memory fake.
+- Pattern: derive a DB test class from `Infrastructure/DbTestBase` (joins the `mysql` collection → one migrated DB per run, a transaction rolled back per test for isolation); build rows with `Infrastructure/TestData` (`AddUser`/`AddRole`/`AddCandidate`/`AddInterview`/`AddSubmittedEvaluation`); assert with plain xUnit `Assert` (no FluentAssertions).
+- Focus new tests on **business rules** (access scoping, status transitions, validation gates), not framework plumbing.
+
 ## Git
 - Commit only when asked; branch off the default branch first if needed.
 - **Never** add Claude/Anthropic or any AI as author/co-author.

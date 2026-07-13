@@ -66,6 +66,21 @@ cd client && npx tsc -b
 ```
 Smoke-test through the proxy: `http://localhost:5173/api/...` should behave like the API (401 without a token, 200 after login).
 
+## 4b. Run the tests
+```bash
+cd server
+dotnet test                       # runs Recruitment.Gorilla.Tests
+```
+- **Requires the local MySQL server running** (the tests use real MySQL/Pomelo, not an in-memory fake).
+- Each run creates a **throwaway database** `RG_Test_{guid}` on the same server, migrates it (schema +
+  seed), runs, then **drops it** — the real `RecruitmentGorilla` database is never touched.
+- The connection comes from the env var **`RG_TEST_MYSQL`** if set, otherwise the API's **user-secrets**
+  `ConnectionStrings:DefaultConnection` (the test project shares the API's `UserSecretsId`); only the
+  database name is swapped. No credential is committed.
+- Isolation/pattern: one migrated DB per run (xUnit collection fixture, classes run sequentially) +
+  a **transaction rolled back per test**, so tests are order-independent. Data builders live in
+  `Recruitment.Gorilla.Tests/Infrastructure/TestData.cs`.
+
 ## 5. LAN access (frontend only)
 Other PCs on the network use the **frontend only**; the backend stays private behind the proxy.
 - Vite is exposed via `server.host: true` in `vite.config.ts` (or `npm run dev -- --host`). It prints a `Network:` URL like `http://<your-ip>:5173`.
