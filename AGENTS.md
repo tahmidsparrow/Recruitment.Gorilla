@@ -11,6 +11,7 @@ This file is the entry point for any AI agent (or new human contributor). Detail
 4. **Keep docs in sync.** If you change code, update the matching file in `ai-docs/`.
 5. **Commits:** do not add Claude/Anthropic (or any AI) as author or co-author. Commit only when asked. Branch off the default branch first if needed.
 6. **Confirm before destructive or outward-facing actions** (deleting data, pushing, exposing services).
+7. **Keep tests green.** Add/adjust tests for new business rules and every `[Authorize]` gate; run `dotnet test` + `npm test` before finishing. Patterns + how-to: [`ai-docs/dev-setup.md`](ai-docs/dev-setup.md) §4b and [`ai-docs/conventions.md`](ai-docs/conventions.md).
 
 ## The flow in one picture
 ```
@@ -43,7 +44,8 @@ cd client && npm install && npm run dev      # http://localhost:5173
 
 # 4. Verify a change
 cd server/Recruitment.Gorilla.API && dotnet build     # stop the running API first (it locks the exe)
-cd client && npx tsc -b
+cd server && dotnet test                              # unit + integration (local MySQL running)
+cd client && npx tsc -b && npm test                   # types + Vitest
 ```
 Default admin login: **admin / admin**.
 
@@ -58,6 +60,8 @@ Default admin login: **admin / admin**.
 | DTOs | `server/Recruitment.Gorilla.API/DTOs/` |
 | Frontend API layer | `client/src/services/api.ts` |
 | Shared TS types | `client/src/types/index.ts` |
+| Backend tests (xUnit) | `server/Recruitment.Gorilla.Tests/` |
+| Frontend tests (Vitest) `*.test.ts(x)` + E2E | `client/src/**`, `client/e2e/` |
 | Pages / components | `client/src/pages/`, `client/src/components/` |
 | Auth (frontend) | `client/src/auth/AuthContext.tsx` |
 | Theme | `client/src/index.css` |
