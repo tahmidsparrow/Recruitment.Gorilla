@@ -41,13 +41,21 @@ Add one typed function per endpoint in `client/src/services/api.ts` using the sh
 - Writes: `useMutation`; invalidate the affected keys on success.
 - Build the page/component in `pages/`/`components/` with react-bootstrap; keep it theme-consistent (no hardcoded colors). Add confirm modals for destructive actions.
 
-### 10. Verify (see below) and update docs
+### 10. Tests
+Add/extend tests for the behavior you changed (patterns in [conventions.md](conventions.md#testing); how to run in [dev-setup.md](dev-setup.md#4b-run-the-tests)):
+- **Service test** (`server/Recruitment.Gorilla.Tests`) for new business rules — access scoping, status transitions, validation gates. Derive from `Infrastructure/DbTestBase` and build rows with `Infrastructure/TestData`.
+- **Controller-auth integration test** (`ControllerAuthorizationTests`, `WebApplicationFactory`) **whenever you add or change an `[Authorize(Roles = …)]` gate** — assert the status code per role (the service tests bypass the attribute).
+- **Frontend test** (Vitest) for pure logic (`utils/*`) or a validation/gating component — render via `test/renderWithProviders` and mock `services/api` (no network).
+
+### 11. Verify (see below) and update docs
 Update any affected file in `ai-docs/` (e.g. add the new endpoint to [backend.md](backend.md), new entity to [data-model.md](data-model.md)).
 
 ## Verification checklist
 - [ ] `dotnet build` (API stopped first) — 0 errors.
 - [ ] Migration applies cleanly (`dotnet ef database update`).
 - [ ] `npx tsc -b` in `client` — 0 errors.
+- [ ] `dotnet test` (in `server`, local MySQL running) — all green.
+- [ ] `npm test` (in `client`, Vitest) — all green.
 - [ ] Manual/HTTP test **through the proxy** (`http://localhost:5173/api/...`): unauthorized → 401; authorized happy path; not-found and validation paths.
 - [ ] UI works end-to-end signed in as admin; lists refresh after writes; destructive actions confirm.
 - [ ] Audit log lines appear in `Logs/recruitment-gorilla.log`.
@@ -55,8 +63,8 @@ Update any affected file in `ai-docs/` (e.g. add the new endpoint to [backend.md
 
 ## Worked trace — "Delete candidate" (already in the codebase)
 A concrete map of the recipe to real files:
-- **Service**: `CandidateService.DeleteAsync(id)` — loads candidate + CVFiles, deletes physical files from `Uploads/`, removes the entity (CVFiles/StatusHistories cascade), returns `bool`.
-- **Controller**: `CandidatesController.Delete` — `DELETE /api/candidates/{id}` → `NoContent()` or `NotFound()`, logs the deletion.
+- **Service**: `CandidateService.DeleteAsync(int id, int? ownerUserId = null)` — loads candidate + CVFiles, deletes physical files from `Uploads/`, removes the entity (CVFiles/StatusHistories cascade), returns `bool` (owner-scoped; `null` = no restriction).
+- **Controller**: `CandidatesController.Delete` — `DELETE /api/candidates/{id}`, gated **`[Authorize(Roles = Roles.AdminOrAbove)]`** (Admin/SuperAdmin only — Recruiters can't delete) → `NoContent()` or `NotFound()`, logs the deletion. Guarded by `ControllerAuthorizationTests`.
 - **API**: `deleteCandidate(id)` in `services/api.ts`.
 - **UI**: confirm modal + `useMutation` on both `CandidateDetailPage` and each `CandidatesPage` row; invalidates `['candidates']`.
 No new entity/migration/DTO were needed — steps 1–4 were skipped, which is fine.
