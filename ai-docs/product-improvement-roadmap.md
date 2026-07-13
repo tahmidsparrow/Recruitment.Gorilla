@@ -89,12 +89,18 @@ covers exactly the high-risk logic: candidate **access scoping** (owned OR assig
 strict-owner delete), **status-transition** rules + required-field gates (incl. Interview-Completed
 **≥1-submitted** and role-lock), the evaluation **submit-gate + submit-lock**, and **recruiter
 assignment** / scoped role lookup / delete rules. See [dev-setup.md](dev-setup.md#4b-run-the-tests).
-**Frontend Tier 1 also delivered** — `client` Vitest suite (17 tests): pure utils
-(`skillColors`/`statusColors`/`evaluationCriteria`) + `AuthContext` role-derivation flags (API mocked,
-no network). Run with `npm test`.
-**Next:** widen backend to Dashboard scoping, CV access/streaming, and controller-level auth (e.g.
-delete = Admin-only); frontend Tier 2 (form validation components) + a small Playwright E2E smoke;
-then wire `dotnet test` + `npm test` into CI.
+**Frontend Tiers 1 & 2 delivered** — `client` Vitest suite (27 tests): pure utils
+(`skillColors`/`statusColors`/`evaluationCriteria`), `AuthContext` role-derivation flags, and
+logic-heavy components — `StatusTimeline` (legacy-comment stripping, eval cards, gated links),
+`EvaluationForm` (submit gate), `CandidateForm` (validation + single-role auto-select). API mocked,
+no network; run with `npm test`.
+**Controller auth (#1), AuthService (#2) & E2E (#7) delivered** — `WebApplicationFactory` integration
+tests assert the `[Authorize]` attributes per role (delete = Admin-only, config = Admin+, SuperAdmin-only
+role delete, Interviewer lockout, default-deny 401); `AuthService`/`PasswordHasher` cover credential
+verify, JWT issuance, refresh rotation/revocation, change-password; a read-only **Playwright** smoke
+(`npm run e2e`) drives login → dashboard → candidates → detail against the live stack. Backend total: 64.
+**Next:** widen backend to Dashboard scoping + CV access/streaming + `AddStatusAsync` side-effects;
+frontend Tier 2 for the remaining pages; then wire `dotnet test` + `npm test` into CI.
 
 ### 11. Recruiter-picker guardrail 🟢 (S)
 Any active user (even an Interviewer) can be assigned as a role's recruiter, which silently grants no

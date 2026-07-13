@@ -74,18 +74,34 @@ cd server && dotnet test          # runs Recruitment.Gorilla.Tests
 # Frontend (Vitest: pure utils + auth derivation)
 cd client && npm test             # vitest run  (npm run test:watch to watch)
 ```
-**Frontend tests** (Vitest + Testing Library, jsdom) cover pure logic (`utils/skillColors`,
-`statusColors`, `evaluationCriteria`) and the `AuthContext` role-derivation flags — no network (the
-API module is mocked). Fast, no MySQL needed. **Backend tests**:
+**Frontend tests** (Vitest + Testing Library, jsdom) cover pure logic (`utils/*`), `AuthContext`
+role-derivation flags, and logic-heavy components (`StatusTimeline`, `EvaluationForm` submit gate,
+`CandidateForm` validation/auto-select) — no network (the API module is mocked via `vi.mock`). Fast,
+no MySQL needed. **Backend tests** = service-layer unit tests + **`WebApplicationFactory` integration
+tests** (real HTTP pipeline + JWT auth, asserting the `[Authorize]` attributes per role) + `AuthService`
+/ `PasswordHasher`:
 - **Require the local MySQL server running** (the tests use real MySQL/Pomelo, not an in-memory fake).
-- Each run creates a **throwaway database** `RG_Test_{guid}` on the same server, migrates it (schema +
-  seed), runs, then **drops it** — the real `RecruitmentGorilla` database is never touched.
+- Each run creates **throwaway databases** (`RG_Test_{guid}` for unit, `RG_ITest_{guid}` for the booted
+  API), migrates them (schema + seed), runs, then **drops** them — the real `RecruitmentGorilla`
+  database is never touched.
 - The connection comes from the env var **`RG_TEST_MYSQL`** if set, otherwise the API's **user-secrets**
   `ConnectionStrings:DefaultConnection` (the test project shares the API's `UserSecretsId`); only the
   database name is swapped. No credential is committed.
 - Isolation/pattern: one migrated DB per run (xUnit collection fixture, classes run sequentially) +
-  a **transaction rolled back per test**, so tests are order-independent. Data builders live in
-  `Recruitment.Gorilla.Tests/Infrastructure/TestData.cs`.
+  a **transaction rolled back per test** (unit) or committed-then-dropped (integration). Data builders
+  live in `Recruitment.Gorilla.Tests/Infrastructure/` (`TestData.cs`, `ApiFixture.cs`).
+
+### E2E smoke (Playwright, read-only)
+```bash
+# 1. Start the dev stack (API :5000 + client :5173) as in §3.
+# 2. One-time browser download:
+cd client && npx playwright install chromium
+# 3. Run the read-only smoke (login → dashboard → candidates → detail):
+E2E_EMAIL='you@example.com' E2E_PASSWORD='…' npm run e2e
+```
+Runs against the **live dev stack** and only **reads** (creates nothing). Credentials come from
+`E2E_EMAIL` / `E2E_PASSWORD` — **no secret is committed**, and the spec **skips** when they're unset.
+Specs live in `client/e2e/`; Vitest ignores them (it only scans `src/`).
 
 ## 5. LAN access (frontend only)
 Other PCs on the network use the **frontend only**; the backend stays private behind the proxy.
