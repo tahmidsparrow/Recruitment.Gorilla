@@ -81,6 +81,9 @@ structured** per-interviewer evaluation summary (`StatusHistoryDto.EvaluationSum
 rating, recommendation, submitted date), resolved from the linked interview's submitted evaluations —
 rendered as cards on the timeline, not stored on the row.
 
+### AuditLog (`AuditLogs`)
+**Append-only** "who changed what, when" (migration `AddAuditLog`; never updated/deleted). Written by `AuditService` at write points across the app. Fields: `Id`, `Timestamp` (UTC), `ActorUserId` (int?, null for anonymous/failed-login), `ActorName` (display name or attempted email), `Action` (dotted verb — `Candidate.Deleted`, `Auth.LoginFailed`, `User.PasswordReset`, `Role.Updated`, …), `EntityType`/`EntityId` (nullable), `Summary` (human one-liner), `Details` (optional JSON — **never** secrets). Indexes on `Timestamp`, `ActorUserId`, `(EntityType, EntityId)`. Queried (Admin+) via `GET /api/audit`. Contains PII (candidate names/emails) so access is Admin+ only.
+
 ### RefreshToken (`RefreshTokens`)
 Server-side store for auth refresh tokens (rotation + revocation). Only the **SHA-256 hash** of the opaque token is stored. See [auth.md](auth.md).
 

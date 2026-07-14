@@ -9,6 +9,7 @@ Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interv
 |---|---|---|---|---|
 | Manage users & assign roles (`/api/users`) | ✅ | – | – | – |
 | Configuration: roles/skills (`/api/config/*`) | ✅ | ✅ | – | – |
+| Audit trail (`/api/audit`, `/audit` page) | ✅ | ✅ | – | – |
 | **Delete** a job-opening role | ✅ | – | – | – |
 | View / browse candidates | all | all | **own OR assigned-role** | – |
 | Create / upload candidate | ✅ | ✅ | ✅ (becomes owner) | – |

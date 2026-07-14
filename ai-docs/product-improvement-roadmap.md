@@ -22,7 +22,7 @@ rough **effort**. This is advisory — turn any item into a `specs/` spec before
 | 5 | Recruiting analytics (time-to-hire, funnel, time-in-stage) | 🔴 | S–M | ✅ StatusHistory timestamps |
 | 6 | Data privacy / compliance (retention, consent, RTBF) | 🔴 | M–L | ❌ not tracked |
 | 7 | Auth hardening (login rate-limit, password policy, seed admin) | 🔴 | S | n/a |
-| 8 | Audit trail (who changed what, when) | 🟡 | M | partial (StatusHistory only) |
+| 8 | Audit trail (who changed what, when) | 🟢 **done** | M | partial (StatusHistory only) |
 | 9 | File handling (cloud storage, AV scan, multi-doc) | 🟡 | M | partial (local disk) |
 | 10 | Automated tests (access scoping, transitions, gates) | 🟢 **started** | M | n/a |
 | 11 | Recruiter-picker guardrail (assign only Recruiter-role users) | 🟢 | S | ✅ |
@@ -73,9 +73,12 @@ Candidate PII + CVs stored with **no consent tracking, retention policy, or true
 - No visible **password policy**.
 - README default is `admin/admin` — force-rotate the seed admin.
 
-### 8. Audit trail 🟡 (M)
-Logging is log4net INFO lines; no **queryable** "who changed what, when." Status changes, evaluations,
-and deletes should be auditable (extend beyond `StatusHistory`, which only covers status).
+### 8. Audit trail 🟢 (done)
+Delivered — an append-only `AuditLog` written by `AuditService` at every write point (auth login/
+failed-login/logout/password-change, candidate CRUD + status, evaluation submit, config CRUD, user
+management), queryable at `GET /api/audit` (Admin+) and via a filterable `/audit` page. Recording is
+best-effort (never breaks the primary op); no secrets stored. **Next:** retention/rotation policy and
+optional field-level diffs.
 
 ### 9. File handling 🟡 (M)
 CVs on **local disk** (`Uploads/`, GUID-named), no virus scanning, and only one CV at create time.

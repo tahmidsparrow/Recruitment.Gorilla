@@ -77,14 +77,18 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
 - `NotificationService` — `GetMineAsync` (+unread count), `MarkReadAsync`, `MarkAllReadAsync`; all scoped to the caller's `UserId`.
 - Both controllers are `[Authorize]` (all roles) and derive the caller from `CurrentUser`. `assignable-users` lives on `InterviewsController` because `UsersController` is class-level SuperAdmin-only.
 
+## Audit trail
+`AuditService` (scoped) writes an append-only `AuditLog` row at each write point (right beside the existing `LogInformation` audit line — logging stays): **Auth** (`Login`, `LoginFailed`, `Logout`, `PasswordChanged`), **Candidate** (`Created`/`Updated`/`Deleted`/`StatusChanged`), **Interview** (`EvaluationSubmitted`), **Config** (`Role`/`Skill`/`InterviewType` `.Created`/`.Updated`/`.Deleted`), **User** (`Created`/`Updated`/`PasswordReset`). `RecordAsync` derives the actor from `CurrentUser`, with an explicit-actor overload for auth events (anonymous request). Recording is **best-effort** — a write failure is logged and swallowed, never breaking the underlying operation. `QueryAsync` (newest-first, filters by actor/entity/action/date + paging) backs `GET /api/audit` (**Admin+**; the log holds PII). Never store secrets/passwords in `Details`.
+
 ## Logging
-log4net (`log4net.config`): console + daily rolling file under `Logs/`. App categories log at INFO; framework noise at WARN. Log audit events on writes.
+log4net (`log4net.config`): console + daily rolling file under `Logs/`. App categories log at INFO; framework noise at WARN. Log audit events on writes (and persist them via `AuditService` — see above).
 
 ## API surface (current)
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/dashboard/kpis` · `/status-breakdown` · `/applications-trend?days=` · `/job-openings` | required (any role) | **Org-wide** figures — every role sees the same numbers |
 | GET | `/api/dashboard` | required | **Owner-scoped** remainder: by-role/top-skill counts, upcoming interviews, recent activity |
+| GET | `/api/audit` | **Admin+** | Audit trail (newest-first), filters `actorUserId,entityType,entityId,action,from,to` + paging |
 | GET | `/api/interviews/assignable-users` | required | Active users assignable as interviewers |
 | GET | `/api/interviews/mine` | required | Interviews the caller is assigned to (+ their eval state) |
 | GET | `/api/interviews/{id}` | required | Interview detail (assigned interviewer or Admin+; 404 otherwise) |
