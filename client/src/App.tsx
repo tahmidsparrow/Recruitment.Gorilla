@@ -19,6 +19,7 @@ import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
 import ConfigurationPage from './pages/ConfigurationPage';
 import UsersPage from './pages/UsersPage';
+import AuditLogPage from './pages/AuditLogPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import InterviewPage from './pages/InterviewPage';
 import ThemeToggle from './components/ThemeToggle';
@@ -75,6 +76,7 @@ function ProtectedLayout() {
               {canWriteCandidates && <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>}
               {canWriteCandidates && <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>}
               {isAdminOrAbove && <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>}
+              {isAdminOrAbove && <Nav.Link as={NavLink} to="/audit">Audit</Nav.Link>}
               {isSuperAdmin && <Nav.Link as={NavLink} to="/users">Users</Nav.Link>}
             </Nav>
             <div className="d-flex align-items-center gap-3">
@@ -136,6 +138,14 @@ export default function App() {
               element={
                 <RequireRole roles={['SuperAdmin', 'Admin']}>
                   <ConfigurationPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/audit"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin']}>
+                  <AuditLogPage />
                 </RequireRole>
               }
             />
