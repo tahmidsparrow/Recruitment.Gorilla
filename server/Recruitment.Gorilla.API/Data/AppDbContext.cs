@@ -24,6 +24,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<InterviewTypeOption> InterviewTypeOptions => Set<InterviewTypeOption>();
     public DbSet<InterviewTag> InterviewTags => Set<InterviewTag>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +83,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(s => s.InterviewId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.Property(a => a.ActorName).HasMaxLength(200).IsRequired();
+            e.Property(a => a.Action).HasMaxLength(80).IsRequired();
+            e.Property(a => a.EntityType).HasMaxLength(50);
+            e.Property(a => a.Summary).HasMaxLength(400);
+            e.Property(a => a.Details).HasMaxLength(1000);
+            e.HasIndex(a => a.Timestamp);
+            e.HasIndex(a => a.ActorUserId);
+            e.HasIndex(a => new { a.EntityType, a.EntityId });
         });
 
         modelBuilder.Entity<RefreshToken>(e =>

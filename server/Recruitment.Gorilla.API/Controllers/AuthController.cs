@@ -9,6 +9,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/auth")]
 public class AuthController(
     AuthService auth,
+    AuditService audit,
     CurrentUser currentUser,
     IWebHostEnvironment env,
     ILogger<AuthController> logger) : ControllerBase
@@ -23,6 +24,8 @@ public class AuthController(
         if (user is null)
         {
             logger.LogWarning("Failed login attempt for '{Email}'.", dto.Email);
+            await audit.RecordAsync("Auth.LoginFailed", actorUserId: null, actorName: dto.Email,
+                summary: $"Failed login for '{dto.Email}'");
             return Unauthorized(new { message = "Invalid email or password." });
         }
 
@@ -30,6 +33,7 @@ public class AuthController(
         SetRefreshCookie(pair.RefreshToken, pair.RefreshExpiresAt);
 
         logger.LogInformation("User '{Email}' logged in.", user.Email);
+        await audit.RecordAsync("Auth.Login", user.Id, user.Name, "User", user.Id, $"'{user.Email}' logged in");
         return Ok(ToResult(pair));
     }
 
@@ -79,6 +83,8 @@ public class AuthController(
             return BadRequest(new { message = "New password must be at least 8 characters." });
 
         var result = await auth.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
+        if (result == AuthService.ChangePasswordResult.Success)
+            await audit.RecordAsync("Auth.PasswordChanged", "User", userId, "Changed own password");
         return result switch
         {
             AuthService.ChangePasswordResult.Success => NoContent(),

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Recruitment.Gorilla.Tests.Infrastructure;
 
 namespace Recruitment.Gorilla.Tests;
@@ -52,6 +53,16 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     public Task Get_config_roles(string role, HttpStatusCode expected) =>
         AssertStatus(role, HttpMethod.Get, "/api/config/roles", expected);
 
+    // ---- Audit trail: Admin+ ----
+
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.Forbidden)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Get_audit(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/audit", expected);
+
     // ---- Shared reads: any authenticated role ----
 
     [Theory]
@@ -72,6 +83,7 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     [InlineData("/api/config/roles")]
     [InlineData("/api/interviews/types")]
     [InlineData("/api/dashboard/kpis")]
+    [InlineData("/api/audit")]
     public async Task Protected_endpoints_reject_anonymous(string url)
     {
         var resp = await fx.SendAsync(HttpMethod.Get, url, token: null);
@@ -105,5 +117,28 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     {
         var id = await fx.NewRoleAsync();
         await AssertStatus("Admin", HttpMethod.Delete, $"/api/config/roles/{id}", HttpStatusCode.Forbidden);
+    }
+
+    // ---- Audit recording is wired: an action produces a queryable row ----
+
+    [Fact]
+    public async Task Deleting_a_candidate_writes_an_audit_row()
+    {
+        var token = await TokenFor("SuperAdmin");
+        var id = await fx.NewCandidateAsync(fx.AdminId);
+
+        var del = await fx.SendAsync(HttpMethod.Delete, $"/api/candidates/{id}", token);
+        Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
+
+        var resp = await fx.SendAsync(HttpMethod.Get,
+            "/api/audit?entityType=Candidate&action=Deleted&pageSize=200", token);
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+
+        using var doc = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        var found = doc.RootElement.GetProperty("items").EnumerateArray().Any(e =>
+            e.GetProperty("action").GetString() == "Candidate.Deleted" &&
+            e.GetProperty("entityId").ValueKind == JsonValueKind.Number &&
+            e.GetProperty("entityId").GetInt32() == id);
+        Assert.True(found, "expected a Candidate.Deleted audit row for the deleted candidate");
     }
 }
