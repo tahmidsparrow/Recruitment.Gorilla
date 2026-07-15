@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
+import {
+  deleteCandidate,
+  getCandidateFilterRoleOptions,
+  getCandidates,
+  getStatusOptions,
+} from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
@@ -14,20 +19,32 @@ export default function CandidatesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [roleId, setRoleId] = useState('');
   const [page, setPage] = useState(1);
   const [toDelete, setToDelete] = useState<CandidateListItem | null>(null);
 
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, page }],
-    queryFn: () => getCandidates({ search, status, page, pageSize: PAGE_SIZE }),
+    queryKey: ['candidates', { search, status, roleId, page }],
+    queryFn: () => getCandidates({
+      search,
+      status,
+      roleId: roleId ? Number(roleId) : undefined,
+      page,
+      pageSize: PAGE_SIZE,
+    }),
     placeholderData: keepPreviousData,
   });
 
   const { data: statusOptions = [] } = useQuery({
     queryKey: ['status-options'],
     queryFn: getStatusOptions,
+  });
+
+  const { data: roleOptions = [] } = useQuery({
+    queryKey: ['candidate-filter-roles'],
+    queryFn: getCandidateFilterRoleOptions,
   });
 
   const deleteMutation = useMutation({
@@ -83,6 +100,22 @@ export default function CandidatesPage() {
           {statusOptions.map((option) => (
             <option key={option.id} value={option.name}>
               {option.name}
+            </option>
+          ))}
+        </Form.Select>
+        <Form.Select
+          aria-label="Filter by role"
+          style={{ maxWidth: 240 }}
+          value={roleId}
+          onChange={(e) => {
+            setPage(1);
+            setRoleId(e.target.value);
+          }}
+        >
+          <option value="">All roles</option>
+          {roleOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}{option.isActive ? '' : ' (inactive)'}
             </option>
           ))}
         </Form.Select>

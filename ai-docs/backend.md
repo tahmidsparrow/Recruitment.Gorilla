@@ -99,7 +99,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | POST | `/api/auth/refresh` | anon (cookie) | Rotate refresh, new access token |
 | POST | `/api/auth/logout` | anon (cookie) | Revoke refresh, clear cookie |
 | POST | `/api/cvupload` | required | Upload CV → extracted draft |
-| GET | `/api/candidates` | required | Paged list (search, status filter) |
+| GET | `/api/candidates` | required | Paged list (`search`, `status`, `roleId` filters). `roleId` filters on the structured `RoleAppliedOptionId`, intersected with the caller's access scope |
 | POST | `/api/candidates` | required | Create (409 on duplicate email unless `allowDuplicate`) |
 | GET | `/api/candidates/{id}` | required | Detail + CV files + status history |
 | PUT | `/api/candidates/{id}` | required | Update profile |
@@ -107,6 +107,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET | `/api/candidates/{id}/cv/{fileId}` | required | Stream original CV file |
 | GET | `/api/candidates/roles` | required | Distinct applied-role values (role suggestions) |
 | GET | `/api/candidates/role-options` · `/skill-options` | CanWriteCandidate | Active Role/Skill options for the candidate forms (Admin-only `/config/*` blocks Recruiters). `role-options` is **scoped**: Admin+ → all active roles; Recruiter → only roles they're an assigned recruiter for (`ConfigurationService.GetAssignedRolesAsync`) |
+| GET | `/api/candidates/role-filter-options` | CanWriteCandidate | Roles for the candidate-list **role filter** — like `role-options` but **includes inactive** roles (so closed openings stay filterable): Admin+ → all roles (`GetAllRolesAsync`); Recruiter → assigned roles incl. inactive (`GetAssignedRolesAsync(uid, includeInactive: true)`) |
 | DELETE | `/api/candidates/{id}` | **AdminOrAbove** | Delete candidate + CV files (Recruiters can't delete) |
 | DELETE | `/api/candidates/{id}` | required | Delete candidate + files |
 | GET | `/api/status-options` | required | Active status dropdown options |

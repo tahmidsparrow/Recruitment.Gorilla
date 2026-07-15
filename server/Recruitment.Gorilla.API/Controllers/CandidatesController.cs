@@ -35,10 +35,11 @@ public class CandidatesController(
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
         [FromQuery] string? status,
+        [FromQuery] int? roleId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var result = await candidateService.GetAllAsync(search, status, page, pageSize, ReadOwnerScope);
+        var result = await candidateService.GetAllAsync(search, status, roleId, page, pageSize, ReadOwnerScope);
         return Ok(result);
     }
 
@@ -134,6 +135,17 @@ public class CandidatesController(
         Ok(IsAdmin
             ? await config.GetActiveRolesAsync()
             : await config.GetAssignedRolesAsync(currentUser.UserId ?? 0));
+
+    // Roles for the candidate-list role filter. Unlike the create/edit form's role-options
+    // (active only), this includes inactive roles so candidates under a closed/deactivated
+    // job opening stay filterable. Scoped: Admin+ get all roles; a Recruiter gets their
+    // assigned roles.
+    [Authorize(Roles = Roles.CanWriteCandidate)]
+    [HttpGet("role-filter-options")]
+    public async Task<IActionResult> GetRoleFilterOptions() =>
+        Ok(IsAdmin
+            ? await config.GetAllRolesAsync()
+            : await config.GetAssignedRolesAsync(currentUser.UserId ?? 0, includeInactive: true));
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("skill-options")]

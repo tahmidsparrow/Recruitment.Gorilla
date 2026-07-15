@@ -34,7 +34,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             : query;
 
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
-        string? search, string? status, int page, int pageSize, int? ownerUserId = null)
+        string? search, string? status, int? roleId, int page, int pageSize, int? ownerUserId = null)
     {
         var query = ApplyAccess(db.Candidates.AsQueryable(), ownerUserId);
 
@@ -45,6 +45,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(c => c.CurrentStatus == status);
+
+        if (roleId is int rid)
+            query = query.Where(c => c.RoleAppliedOptionId == rid);
 
         var total = await query.CountAsync();
         var items = await query

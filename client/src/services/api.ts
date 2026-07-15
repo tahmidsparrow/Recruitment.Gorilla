@@ -207,7 +207,7 @@ export const getDashboard = async (roleId?: number): Promise<DashboardData> => {
 };
 
 export const getCandidates = async (
-  params: { search?: string; status?: string; page?: number; pageSize?: number }
+  params: { search?: string; status?: string; roleId?: number; page?: number; pageSize?: number }
 ): Promise<PagedResult<CandidateListItem>> => {
   const { data } = await api.get<PagedResult<CandidateListItem>>('/candidates', { params });
   return data;
@@ -283,6 +283,14 @@ export const getActiveRoleOptions = async (): Promise<RoleAppliedOption[]> => {
 
 export const getActiveSkillOptions = async (): Promise<SkillOption[]> => {
   const { data } = await api.get<SkillOption[]>('/candidates/skill-options');
+  return data;
+};
+
+// Roles for the candidate-list role filter — includes inactive roles, scoped to the caller
+// (Admin+ get all; a Recruiter gets their assigned roles). Distinct from getActiveRoleOptions,
+// which is active-only for the create/edit form.
+export const getCandidateFilterRoleOptions = async (): Promise<RoleAppliedOption[]> => {
+  const { data } = await api.get<RoleAppliedOption[]>('/candidates/role-filter-options');
   return data;
 };
 

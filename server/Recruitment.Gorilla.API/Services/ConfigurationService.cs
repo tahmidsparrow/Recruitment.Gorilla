@@ -29,11 +29,16 @@ public class ConfigurationService(AppDbContext db)
             .ToListAsync())
             .Select(ToDto).ToList();
 
-    /// <summary>Active roles the given user is an assigned recruiter for (for the candidate forms).</summary>
-    public async Task<List<RoleAppliedOptionDto>> GetAssignedRolesAsync(int recruiterUserId) =>
+    /// <summary>
+    /// Roles the given user is an assigned recruiter for. Active only by default (for the
+    /// candidate forms); pass <paramref name="includeInactive"/> to also return inactive roles
+    /// (for the candidate-list role filter, where closed openings must stay filterable).
+    /// </summary>
+    public async Task<List<RoleAppliedOptionDto>> GetAssignedRolesAsync(
+        int recruiterUserId, bool includeInactive = false) =>
         (await db.RoleAppliedOptions
             .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
-            .Where(r => r.IsActive && r.Recruiters.Any(rr => rr.UserId == recruiterUserId))
+            .Where(r => (includeInactive || r.IsActive) && r.Recruiters.Any(rr => rr.UserId == recruiterUserId))
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
             .Select(ToDto).ToList();
