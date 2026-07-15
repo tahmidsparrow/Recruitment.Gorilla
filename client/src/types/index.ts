@@ -209,6 +209,27 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
+export interface AuditLogEntry {
+  id: number;
+  timestamp: string;
+  actorUserId: number | null;
+  actorName: string;
+  action: string;
+  entityType: string | null;
+  entityId: number | null;
+  summary: string | null;
+  details: string | null;
+}
+
+export interface AuditQuery {
+  entityType?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
 export type Role = 'SuperAdmin' | 'Admin' | 'Recruiter' | 'Interviewer';
 
 export const ALL_ROLES: Role[] = ['SuperAdmin', 'Admin', 'Recruiter', 'Interviewer'];

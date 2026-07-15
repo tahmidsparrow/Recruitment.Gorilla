@@ -1,6 +1,8 @@
 import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
   AssignableUser,
+  AuditLogEntry,
+  AuditQuery,
   CVDraft,
   CandidateDetail,
   ChangePasswordPayload,
@@ -213,6 +215,12 @@ export const getCandidates = async (
 
 export const getCandidate = async (id: number): Promise<CandidateDetail> => {
   const { data } = await api.get<CandidateDetail>(`/candidates/${id}`);
+  return data;
+};
+
+// ----- Audit trail (Admin+) -----
+export const getAuditLog = async (query: AuditQuery): Promise<PagedResult<AuditLogEntry>> => {
+  const { data } = await api.get<PagedResult<AuditLogEntry>>('/audit', { params: query });
   return data;
 };
 

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruitment.Gorilla.API.Auth;
@@ -13,6 +14,7 @@ public class CandidatesController(
     CandidateService candidateService,
     InterviewService interviewService,
     ConfigurationService config,
+    AuditService audit,
     CurrentUser currentUser,
     ILogger<CandidatesController> logger) : ControllerBase
 {
@@ -78,6 +80,8 @@ public class CandidatesController(
 
         logger.LogInformation("Created candidate {Id} ('{Name}') by {ChangedBy}.",
             created!.Id, created.FullName, currentUser.Name);
+        await audit.RecordAsync("Candidate.Created", "Candidate", created.Id,
+            $"Created candidate '{created.FullName}' (#{created.Id})");
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -102,10 +106,14 @@ public class CandidatesController(
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        // Capture the name before deletion so the audit summary is readable.
+        var candidate = await candidateService.GetByIdAsync(id, ReadOwnerScope);
         var deleted = await candidateService.DeleteAsync(id, WriteOwnerScope);
         if (!deleted) return NotFound();
 
         logger.LogInformation("Deleted candidate {Id} and its CV files.", id);
+        await audit.RecordAsync("Candidate.Deleted", "Candidate", id,
+            $"Deleted candidate {(candidate is not null ? $"'{candidate.FullName}' " : "")}(#{id})");
         return NoContent();
     }
 
@@ -150,7 +158,11 @@ public class CandidatesController(
             return BadRequest(lockError);
 
         var updated = await candidateService.UpdateAsync(id, dto, WriteOwnerScope);
-        return updated is null ? NotFound() : Ok(updated);
+        if (updated is null) return NotFound();
+
+        await audit.RecordAsync("Candidate.Updated", "Candidate", id,
+            $"Updated candidate '{updated.FullName}' (#{id})");
+        return Ok(updated);
     }
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
@@ -170,6 +182,9 @@ public class CandidatesController(
 
         logger.LogInformation("Candidate {Id} status changed to '{Status}' by {ChangedBy}.",
             id, dto.Status, currentUser.Name);
+        await audit.RecordAsync("Candidate.StatusChanged", "Candidate", id,
+            $"Status changed to '{dto.Status}' (candidate #{id})",
+            JsonSerializer.Serialize(new { to = dto.Status }));
         return Ok(entry);
     }
 }

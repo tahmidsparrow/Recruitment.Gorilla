@@ -12,6 +12,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 public class InterviewsController(
     InterviewService interviews,
     ConfigurationService config,
+    AuditService audit,
     CurrentUser currentUser,
     ILogger<InterviewsController> logger) : ControllerBase
 {
@@ -55,6 +56,9 @@ public class InterviewsController(
 
         logger.LogInformation("User {UserId} {Action} evaluation for interview {InterviewId}.",
             userId, dto.Submit ? "submitted" : "saved", id);
+        if (dto.Submit)
+            await audit.RecordAsync("Interview.EvaluationSubmitted", "Interview", id,
+                $"Submitted evaluation for interview #{id}");
         return Ok(result);
     }
 }

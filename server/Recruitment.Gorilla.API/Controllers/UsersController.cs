@@ -11,6 +11,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/users")]
 public class UsersController(
     UserService users,
+    AuditService audit,
     CurrentUser currentUser,
     ILogger<UsersController> logger) : ControllerBase
 {
@@ -25,6 +26,8 @@ public class UsersController(
 
         logger.LogInformation("Super Admin {By} created user {Id} ('{Email}').",
             currentUser.UserId, result.User!.Id, result.User.Email);
+        await audit.RecordAsync("User.Created", "User", result.User.Id,
+            $"Created user '{result.User.Email}' (#{result.User.Id})");
         return Ok(result.User);
     }
 
@@ -35,6 +38,7 @@ public class UsersController(
         if (result.Error is not null) return BadRequest(new { message = result.Error });
 
         logger.LogInformation("Super Admin {By} updated user {Id}.", currentUser.UserId, id);
+        await audit.RecordAsync("User.Updated", "User", id, $"Updated user #{id}");
         return Ok(result.User);
     }
 
@@ -45,6 +49,7 @@ public class UsersController(
         if (result.Error is not null) return BadRequest(new { message = result.Error });
 
         logger.LogInformation("Super Admin {By} reset password for user {Id}.", currentUser.UserId, id);
+        await audit.RecordAsync("User.PasswordReset", "User", id, $"Reset password for user #{id}");
         return Ok(result.User);
     }
 }

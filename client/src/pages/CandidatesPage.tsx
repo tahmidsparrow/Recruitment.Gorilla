@@ -10,7 +10,7 @@ import type { CandidateListItem } from '../types';
 const PAGE_SIZE = 20;
 
 export default function CandidatesPage() {
-  const { canWriteCandidates } = useAuth();
+  const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -104,7 +104,8 @@ export default function CandidatesPage() {
                 <th className="d-none d-md-table-cell">Title</th>
                 <th>Status</th>
                 <th className="d-none d-md-table-cell">Added</th>
-                {canWriteCandidates && <th className="text-end">Actions</th>}
+                {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters) — hide it below Admin. */}
+                {isAdminOrAbove && <th className="text-end">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -123,7 +124,7 @@ export default function CandidatesPage() {
                   <td className="d-none d-md-table-cell text-nowrap">
                     {new Date(c.createdAt).toLocaleDateString()}
                   </td>
-                  {canWriteCandidates && (
+                  {isAdminOrAbove && (
                     <td className="text-end">
                       <Button
                         size="sm"
