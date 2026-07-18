@@ -43,6 +43,21 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     public Task Get_role_options(string role, HttpStatusCode expected) =>
         AssertStatus(role, HttpMethod.Get, "/api/candidates/role-options", expected);
 
+    // ---- Candidate evaluation report: Recruiter+ (Interviewer 403); candidate-access-scoped ----
+    // Admin+ reach any candidate (200); a Recruiter is authorized but this admin-owned, no-role
+    // candidate is outside their access scope (404) — proving the scope, not an auth failure.
+
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.NotFound)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public async Task Get_evaluation_report(string role, HttpStatusCode expected)
+    {
+        var id = await fx.NewCandidateAsync(fx.AdminId);
+        await AssertStatus(role, HttpMethod.Get, $"/api/candidates/{id}/evaluation-report", expected);
+    }
+
     // ---- Configuration management: Admin+ ----
 
     [Theory]

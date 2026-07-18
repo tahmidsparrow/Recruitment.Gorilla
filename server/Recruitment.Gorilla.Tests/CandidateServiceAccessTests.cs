@@ -1,4 +1,5 @@
 using Recruitment.Gorilla.API.Auth;
+using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.Tests.Infrastructure;
 
 namespace Recruitment.Gorilla.Tests;
@@ -8,7 +9,7 @@ public class CandidateServiceAccessTests(MySqlDatabaseFixture fixture) : DbTestB
 {
     private async Task<HashSet<int>> AccessibleIds(int? accessUserId)
     {
-        var page = await Candidates().GetAllAsync(null, null, null, 1, 500, accessUserId);
+        var page = await Candidates().GetAllAsync(new CandidateListQuery(PageSize: 500), accessUserId);
         return page.Items.Select(i => i.Id).ToHashSet();
     }
 
@@ -86,7 +87,7 @@ public class CandidateServiceAccessTests(MySqlDatabaseFixture fixture) : DbTestB
         var inB = Data.AddCandidate(ownerUserId: admin.Id, roleId: roleB.Id);
 
         // Admin scope (null), filtered to roleA.
-        var page = await Candidates().GetAllAsync(null, null, roleA.Id, 1, 500, null);
+        var page = await Candidates().GetAllAsync(new CandidateListQuery(RoleId: roleA.Id, PageSize: 500), null);
         var ids = page.Items.Select(i => i.Id).ToHashSet();
 
         Assert.Contains(inA.Id, ids);
@@ -107,10 +108,12 @@ public class CandidateServiceAccessTests(MySqlDatabaseFixture fixture) : DbTestB
         var otherRole = Data.AddRole();
         Data.AddCandidate(ownerUserId: admin.Id, roleId: otherRole.Id);
 
-        var assigned = await Candidates().GetAllAsync(null, null, assignedRole.Id, 1, 500, recruiter.Id);
+        var assigned = await Candidates().GetAllAsync(
+            new CandidateListQuery(RoleId: assignedRole.Id, PageSize: 500), recruiter.Id);
         Assert.Contains(visibleInRole.Id, assigned.Items.Select(i => i.Id));
 
-        var other = await Candidates().GetAllAsync(null, null, otherRole.Id, 1, 500, recruiter.Id);
+        var other = await Candidates().GetAllAsync(
+            new CandidateListQuery(RoleId: otherRole.Id, PageSize: 500), recruiter.Id);
         Assert.Empty(other.Items);
     }
 

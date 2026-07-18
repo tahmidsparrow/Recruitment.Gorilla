@@ -17,8 +17,8 @@ rough **effort**. This is advisory — turn any item into a `specs/` spec before
 |---|---|---|---|---|
 | 1 | Email / transactional communication | 🔴 | M | partial (notifications) |
 | 2 | Real interview scheduling (timezones, calendar invites) | 🔴 | M–L | partial (datetime + interviewers) |
-| 3 | Aggregate interview scorecards + candidate comparison | 🔴 | M | ✅ evaluations captured |
-| 4 | Search & filtering + bulk actions | 🔴 | M | ✅ status history / skills |
+| 3 | Aggregate interview scorecards + candidate comparison | 🟢 **mostly done** | M | ✅ evaluations captured |
+| 4 | Search & filtering + bulk actions | 🟢 **started** | M | ✅ status history / skills |
 | 5 | Recruiting analytics (time-to-hire, funnel, time-in-stage) | 🔴 | S–M | ✅ StatusHistory timestamps |
 | 6 | Data privacy / compliance (retention, consent, RTBF) | 🔴 | M–L | ❌ not tracked |
 | 7 | Auth hardening (login rate-limit, password policy, seed admin) | 🔴 | S | n/a |
@@ -42,14 +42,20 @@ rough **effort**. This is advisory — turn any item into a `specs/` spec before
 - **Missing:** **timezones**, calendar invites (`.ics` / Google / Outlook), availability & conflict checks, candidate-facing reschedule notice.
 - **Why:** nobody outside the app currently knows an interview exists.
 
-### 3. Aggregate scorecards + candidate comparison 🔴 (M)
-- **Now:** rich per-interviewer evaluations (rubric A–D, overall rating, recommendation) + an Interview-Completed summary of each submitted evaluation (`StatusHistoryDto.EvaluationSummaries`).
-- **Missing:** roll-up **across** interviewers (average, agreement/divergence) and **side-by-side** comparison of candidates for the same role.
-- **Why:** this is where hiring decisions are actually made.
+### 3. Aggregate scorecards + candidate comparison 🟢 (mostly done)
+- **Delivered:** the **candidate evaluation report** (`/candidates/:id/evaluations`, Recruiter+) —
+  every interviewer's full rubric side-by-side plus aggregates (average overall, per-criterion
+  averages, recommendation tally), printable. Peer interviewers also see each other's **submitted**
+  evaluations on the interview page once their own is locked.
+- **Remaining:** side-by-side comparison of **different candidates** for the same role.
 
-### 4. Search, filtering & bulk actions 🔴 (M)
-- **Now:** candidate list filters by name/email substring + a single status (`CandidateService.GetAllAsync`).
-- **Add:** filter by **skill**, role, experience range, date, multi-status; full-text over CV content; saved views; bulk actions (bulk status change, bulk assign).
+### 4. Search, filtering & bulk actions 🟢 (started)
+- **Delivered:** candidate-list filters for **role** (incl. inactive openings), **skills** (ANY-of
+  multi-select), **referred-only**; search extended to **phone**; **sortable columns**
+  (name/status/added); filters **URL-synced** (bookmarkable) with a Clear control.
+- **Remaining:** multi-status + date-range filters, experience range (blocked on the free-text
+  experience field), full-text over CV content (needs CV text persisted at upload), saved views,
+  bulk actions (bulk status change respecting per-candidate transition gates, bulk assign).
 
 ## Recruiting analytics 🔴 (S–M)
 

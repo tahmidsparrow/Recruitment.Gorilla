@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deleteCandidate,
+  getActiveSkillOptions,
   getCandidateFilterRoleOptions,
   getCandidates,
   getStatusOptions,
 } from '../services/api';
+import { SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
@@ -16,21 +18,64 @@ const PAGE_SIZE = 20;
 
 export default function CandidatesPage() {
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [roleId, setRoleId] = useState('');
-  const [page, setPage] = useState(1);
+  // Filters/sort/page live in the URL so views are bookmarkable and survive refresh.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('q') ?? '';
+  const status = searchParams.get('status') ?? '';
+  const roleId = searchParams.get('role') ?? '';
+  const skillsCsv = searchParams.get('skills') ?? '';
+  const referred = searchParams.get('referred') === '1';
+  const sort = searchParams.get('sort') ?? '';
+  const dir = searchParams.get('dir') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const skillIds = skillsCsv
+    ? skillsCsv.split(',').map(Number).filter(Number.isFinite)
+    : [];
+
+  const [searchInput, setSearchInput] = useState(search);
+  useEffect(() => setSearchInput(search), [search]); // keep in sync on back/forward
   const [toDelete, setToDelete] = useState<CandidateListItem | null>(null);
+
+  /** Set/delete URL params; filter changes reset paging. */
+  const setParams = (patch: Record<string, string | null>, resetPage = true) =>
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const [k, v] of Object.entries(patch)) {
+        if (v) next.set(k, v);
+        else next.delete(k);
+      }
+      if (resetPage) next.delete('page');
+      return next;
+    }, { replace: true });
+
+  const hasFilters = !!(search || status || roleId || skillsCsv || referred);
+  const clearFilters = () => {
+    setSearchInput('');
+    setParams({ q: null, status: null, role: null, skills: null, referred: null });
+  };
+
+  // Sorting: default is Added (CreatedAt) desc; first click on a column uses its natural
+  // direction (name/status asc, added desc); clicking the active column flips it.
+  const activeSort = sort || 'added';
+  const applySort = (col: string) =>
+    activeSort === col
+      ? setParams({ sort: col, dir: dir !== 'asc' ? 'asc' : 'desc' }, false)
+      : setParams({ sort: col, dir: col === 'added' ? 'desc' : 'asc' }, false);
+  const sortIndicator = (col: string) =>
+    activeSort === col ? (dir === 'asc' ? ' ▲' : ' ▼') : '';
 
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, roleId, page }],
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, sort, dir, page }],
     queryFn: () => getCandidates({
-      search,
-      status,
+      search: search || undefined,
+      status: status || undefined,
       roleId: roleId ? Number(roleId) : undefined,
+      skillIds: skillsCsv || undefined,
+      referred: referred || undefined,
+      sort: sort || undefined,
+      dir: dir || undefined,
       page,
       pageSize: PAGE_SIZE,
     }),
@@ -47,6 +92,11 @@ export default function CandidatesPage() {
     queryFn: getCandidateFilterRoleOptions,
   });
 
+  const { data: skillOptions = [] } = useQuery({
+    queryKey: ['skill-options', 'active'],
+    queryFn: getActiveSkillOptions,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCandidate(id),
     onSuccess: () => {
@@ -57,8 +107,7 @@ export default function CandidatesPage() {
 
   const applySearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
+    setParams({ q: searchInput.trim() || null });
   };
 
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
@@ -74,11 +123,11 @@ export default function CandidatesPage() {
         )}
       </div>
 
-      <div className="d-flex flex-wrap gap-2 mb-3">
+      <div className="d-flex flex-wrap gap-2 mb-3 align-items-start">
         <Form onSubmit={applySearch} className="flex-grow-1" style={{ maxWidth: 420 }}>
           <InputGroup>
             <Form.Control
-              placeholder="Search by name or email"
+              placeholder="Search by name, email or phone"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -91,10 +140,7 @@ export default function CandidatesPage() {
           aria-label="Filter by status"
           style={{ maxWidth: 220 }}
           value={status}
-          onChange={(e) => {
-            setPage(1);
-            setStatus(e.target.value);
-          }}
+          onChange={(e) => setParams({ status: e.target.value || null })}
         >
           <option value="">All statuses</option>
           {statusOptions.map((option) => (
@@ -107,10 +153,7 @@ export default function CandidatesPage() {
           aria-label="Filter by role"
           style={{ maxWidth: 240 }}
           value={roleId}
-          onChange={(e) => {
-            setPage(1);
-            setRoleId(e.target.value);
-          }}
+          onChange={(e) => setParams({ role: e.target.value || null })}
         >
           <option value="">All roles</option>
           {roleOptions.map((option) => (
@@ -119,6 +162,32 @@ export default function CandidatesPage() {
             </option>
           ))}
         </Form.Select>
+        <div style={{ minWidth: 220, maxWidth: 320 }}>
+          <SearchableMultiSelect
+            options={skillOptions}
+            value={skillIds}
+            onChange={(ids) => setParams({ skills: ids.join(',') || null })}
+            placeholder="Filter by skills…"
+          />
+        </div>
+        <Form.Check
+          type="checkbox"
+          id="filter-referred"
+          className="align-self-center"
+          label="Referred only"
+          checked={referred}
+          onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
+        />
+        {hasFilters && (
+          <Button
+            variant="link"
+            size="sm"
+            className="align-self-center text-decoration-none"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -132,11 +201,22 @@ export default function CandidatesPage() {
           <Table hover responsive className="align-middle">
             <thead>
               <tr>
-                <th>Name</th>
+                <th role="button" style={{ cursor: 'pointer' }} onClick={() => applySort('name')}>
+                  Name{sortIndicator('name')}
+                </th>
                 <th className="d-none d-lg-table-cell">Email</th>
                 <th className="d-none d-md-table-cell">Title</th>
-                <th>Status</th>
-                <th className="d-none d-md-table-cell">Added</th>
+                <th role="button" style={{ cursor: 'pointer' }} onClick={() => applySort('status')}>
+                  Status{sortIndicator('status')}
+                </th>
+                <th
+                  className="d-none d-md-table-cell"
+                  role="button"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => applySort('added')}
+                >
+                  Added{sortIndicator('added')}
+                </th>
                 {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters) — hide it below Admin. */}
                 {isAdminOrAbove && <th className="text-end">Actions</th>}
               </tr>
@@ -180,7 +260,7 @@ export default function CandidatesPage() {
                 size="sm"
                 variant="outline-secondary"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setParams({ page: String(page - 1) }, false)}
               >
                 Previous
               </Button>
@@ -191,7 +271,7 @@ export default function CandidatesPage() {
                 size="sm"
                 variant="outline-secondary"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => setParams({ page: String(page + 1) }, false)}
               >
                 Next
               </Button>

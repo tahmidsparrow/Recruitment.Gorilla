@@ -82,9 +82,17 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             .ToList();
 
         var myEval = interview.Evaluations.FirstOrDefault(e => e.InterviewerUserId == userId);
-        var allEvals = isAdmin
-            ? interview.Evaluations.OrderBy(e => e.InterviewerUser.Name).Select(ToDto).ToList()
-            : null;
+        // Admin+ see every evaluation (incl. drafts). A peer interviewer sees the OTHER assigned
+        // interviewers' *submitted* evaluations — but only once they've submitted & locked their
+        // own (so they aren't anchored by a colleague first); never their own, never drafts.
+        List<InterviewEvaluationDto>? allEvals =
+            isAdmin
+                ? interview.Evaluations.OrderBy(e => e.InterviewerUser.Name).Select(ToDto).ToList()
+                : myEval is { IsSubmitted: true }
+                    ? interview.Evaluations
+                        .Where(e => e.InterviewerUserId != userId && e.IsSubmitted)
+                        .OrderBy(e => e.InterviewerUser.Name).Select(ToDto).ToList()
+                    : null;
 
         var tags = interview.Tags
             .Select(t => t.InterviewTypeOption.Name)
@@ -95,6 +103,80 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
             interview.Id, interview.ScheduledAt, candidate, interviewers,
             isAssigned, myEval is null ? null : ToDto(myEval), allEvals,
             interview.StatusHistory?.Comment, tags);
+    }
+
+    /// <summary>
+    /// A candidate's evaluation report: every interviewer's full (submitted) rubric across all the
+    /// candidate's interviews, plus aggregates (average overall, per-criterion averages,
+    /// recommendation tally). Access is candidate-scoped via <paramref name="ownerScope"/>
+    /// (recruiters only see their accessible candidates); returns null when not accessible.
+    /// </summary>
+    public async Task<CandidateEvaluationReportDto?> GetCandidateEvaluationReportAsync(
+        int candidateId, int? ownerScope)
+    {
+        // Reuse the candidate access predicate (owned OR assigned-role; Admin+ = null scope).
+        var candidate = await candidateService.GetByIdAsync(candidateId, ownerScope);
+        if (candidate is null) return null;
+
+        var interviews = await db.Interviews
+            .Where(i => i.CandidateId == candidateId)
+            .Include(i => i.Evaluations).ThenInclude(e => e.InterviewerUser)
+            .Include(i => i.Evaluations).ThenInclude(e => e.Items)
+            .Include(i => i.Tags).ThenInclude(t => t.InterviewTypeOption)
+            .OrderByDescending(i => i.ScheduledAt)
+            .ToListAsync();
+
+        var reportEvals = new List<ReportEvaluationDto>();
+        foreach (var interview in interviews)
+        {
+            var tags = interview.Tags
+                .Select(t => t.InterviewTypeOption.Name)
+                .OrderBy(n => n)
+                .ToList();
+            foreach (var e in interview.Evaluations
+                         .Where(e => e.IsSubmitted)
+                         .OrderBy(e => e.InterviewerUser != null ? e.InterviewerUser.Name : ""))
+            {
+                reportEvals.Add(new ReportEvaluationDto(
+                    interview.Id, interview.ScheduledAt, tags, ToDto(e)));
+            }
+        }
+
+        var overalls = reportEvals
+            .Select(r => r.Evaluation.OverallRating)
+            .Where(o => o is not null)
+            .Select(o => o!.Value)
+            .ToList();
+
+        var recommendationCounts = reportEvals
+            .Where(r => !string.IsNullOrWhiteSpace(r.Evaluation.Recommendation))
+            .GroupBy(r => r.Evaluation.Recommendation!)
+            .Select(g => new RecommendationCountDto(g.Key, g.Count()))
+            .OrderByDescending(x => x.Count).ThenBy(x => x.Recommendation)
+            .ToList();
+
+        var criterionAverages = EvaluationCriteria.Keys
+            .Select(key =>
+            {
+                var ratings = reportEvals
+                    .SelectMany(r => r.Evaluation.Items)
+                    .Where(it => it.CriterionKey == key && it.Rating is not null)
+                    .Select(it => it.Rating!.Value)
+                    .ToList();
+                return new CriterionAverageDto(key, ratings.Count > 0 ? ratings.Average() : 0, ratings.Count);
+            })
+            .Where(c => c.Count > 0)
+            .ToList();
+
+        var summary = new EvaluationReportSummaryDto(
+            reportEvals.Count,
+            overalls.Count > 0 ? overalls.Average() : null,
+            recommendationCounts,
+            criterionAverages);
+
+        return new CandidateEvaluationReportDto(
+            candidate.Id, candidate.FullName, candidate.RoleApplied ?? candidate.AppliedRole,
+            summary, reportEvals);
     }
 
     /// <summary>

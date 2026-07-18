@@ -36,10 +36,27 @@ public class CandidatesController(
         [FromQuery] string? search,
         [FromQuery] string? status,
         [FromQuery] int? roleId,
+        [FromQuery] string? skillIds, // CSV of SkillOption ids (axios-friendly)
+        [FromQuery] bool referred = false,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? dir = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var result = await candidateService.GetAllAsync(search, status, roleId, page, pageSize, ReadOwnerScope);
+        // Tolerant CSV parse: non-numeric fragments are ignored.
+        var parsedSkillIds = (skillIds ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var v) ? (int?)v : null)
+            .Where(v => v is not null)
+            .Select(v => v!.Value)
+            .ToList();
+
+        var query = new CandidateListQuery(
+            search, status, roleId,
+            parsedSkillIds.Count > 0 ? parsedSkillIds : null,
+            referred, sort, dir, page, pageSize);
+
+        var result = await candidateService.GetAllAsync(query, ReadOwnerScope);
         return Ok(result);
     }
 
@@ -129,6 +146,16 @@ public class CandidatesController(
     // Active role/skill lookups for the candidate create/edit forms. Exposed here (not on the
     // Admin-only ConfigurationController) so Recruiters can populate the dropdowns. Admin+ get all
     // active roles; a Recruiter gets only the roles they are the assigned recruiter for.
+    // Candidate evaluation report — every interviewer's full rubric + aggregates across the
+    // candidate's interviews. Recruiter+ only (excludes Interviewers); candidate-access-scoped
+    // (recruiters get 404 for candidates outside their access).
+    [Authorize(Roles = Roles.CanWriteCandidate)]
+    [HttpGet("{id}/evaluation-report")]
+    public async Task<IActionResult> GetEvaluationReport(int id) =>
+        await interviewService.GetCandidateEvaluationReportAsync(id, ReadOwnerScope) is { } report
+            ? Ok(report)
+            : NotFound();
+
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("role-options")]
     public async Task<IActionResult> GetRoleOptions() =>

@@ -103,6 +103,23 @@ public record CandidateListItemDto(
     DateTime CreatedAt
 );
 
+/// <summary>
+/// Filter/sort/paging parameters for the candidate list. Search matches name, email or phone;
+/// SkillIds is ANY-of; Sort is whitelisted to name|status|added (default added), Dir to asc|desc
+/// (default desc). Access scoping is applied separately and always wins.
+/// </summary>
+public record CandidateListQuery(
+    string? Search = null,
+    string? Status = null,
+    int? RoleId = null,
+    List<int>? SkillIds = null,
+    bool ReferredOnly = false,
+    string? Sort = null,
+    string? Dir = null,
+    int Page = 1,
+    int PageSize = 20
+);
+
 public record CandidateDetailDto(
     int Id,
     string FullName,

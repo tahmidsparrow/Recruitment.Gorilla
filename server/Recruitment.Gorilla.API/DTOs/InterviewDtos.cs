@@ -50,6 +50,34 @@ public record UpsertEvaluationDto(
     bool Submit
 );
 
+// ----- Candidate evaluation report (Recruiter+): every interviewer's full rubric + aggregates -----
+
+public record CandidateEvaluationReportDto(
+    int CandidateId,
+    string FullName,
+    string? RoleApplied,
+    EvaluationReportSummaryDto Summary,
+    List<ReportEvaluationDto> Evaluations       // one per submitted evaluation, newest interview first
+);
+
+public record ReportEvaluationDto(
+    int InterviewId,
+    DateTime ScheduledAt,
+    List<string> InterviewTags,
+    InterviewEvaluationDto Evaluation
+);
+
+public record EvaluationReportSummaryDto(
+    int InterviewerCount,
+    double? AverageOverall,
+    List<RecommendationCountDto> RecommendationCounts,
+    List<CriterionAverageDto> CriterionAverages
+);
+
+public record RecommendationCountDto(string Recommendation, int Count);
+
+public record CriterionAverageDto(string CriterionKey, double Average, int Count);
+
 public record NotificationDto(
     int Id,
     string Title,

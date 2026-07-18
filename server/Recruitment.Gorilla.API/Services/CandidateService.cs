@@ -34,26 +34,42 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
             : query;
 
     public async Task<PagedResult<CandidateListItemDto>> GetAllAsync(
-        string? search, string? status, int? roleId, int page, int pageSize, int? ownerUserId = null)
+        CandidateListQuery q, int? ownerUserId = null)
     {
         var query = ApplyAccess(db.Candidates.AsQueryable(), ownerUserId);
 
-        if (!string.IsNullOrWhiteSpace(search))
+        if (!string.IsNullOrWhiteSpace(q.Search))
             query = query.Where(c =>
-                c.FullName.Contains(search) ||
-                c.Email.Contains(search));
+                c.FullName.Contains(q.Search) ||
+                c.Email.Contains(q.Search) ||
+                (c.Phone != null && c.Phone.Contains(q.Search)));
 
-        if (!string.IsNullOrWhiteSpace(status))
-            query = query.Where(c => c.CurrentStatus == status);
+        if (!string.IsNullOrWhiteSpace(q.Status))
+            query = query.Where(c => c.CurrentStatus == q.Status);
 
-        if (roleId is int rid)
+        if (q.RoleId is int rid)
             query = query.Where(c => c.RoleAppliedOptionId == rid);
+
+        // ANY-of: candidates having at least one of the selected skills.
+        if (q.SkillIds is { Count: > 0 })
+            query = query.Where(c => c.CandidateSkills.Any(cs => q.SkillIds.Contains(cs.SkillOptionId)));
+
+        if (q.ReferredOnly)
+            query = query.Where(c => c.IsReferred);
+
+        // Whitelisted sort — unknown values fall back to newest-first.
+        var desc = q.Dir != "asc";
+        query = q.Sort switch
+        {
+            "name" => desc ? query.OrderByDescending(c => c.FullName) : query.OrderBy(c => c.FullName),
+            "status" => desc ? query.OrderByDescending(c => c.CurrentStatus) : query.OrderBy(c => c.CurrentStatus),
+            _ => desc ? query.OrderByDescending(c => c.CreatedAt) : query.OrderBy(c => c.CreatedAt),
+        };
 
         var total = await query.CountAsync();
         var items = await query
-            .OrderByDescending(c => c.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((q.Page - 1) * q.PageSize)
+            .Take(q.PageSize)
             .Select(c => new CandidateListItemDto(
                 c.Id, c.FullName, c.Email, c.Phone,
                 c.CurrentTitle,
@@ -61,7 +77,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
                 c.CurrentStatus, c.CreatedAt))
             .ToListAsync();
 
-        return new PagedResult<CandidateListItemDto>(items, total, page, pageSize);
+        return new PagedResult<CandidateListItemDto>(items, total, q.Page, q.PageSize);
     }
 
     public async Task<CandidateDetailDto?> GetByIdAsync(int id, int? ownerUserId = null)

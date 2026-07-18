@@ -16,6 +16,8 @@ Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interv
 | Edit / change status candidate | ✅ (all) | ✅ (all) | **own OR assigned-role** | – |
 | **Delete** candidate | ✅ | ✅ | – | – |
 | Dashboard + assigned interviews + evaluations | ✅ | ✅ | ✅ | ✅ |
+| Candidate **evaluation report** (`/candidates/:id/evaluations`) | ✅ | ✅ | **own OR assigned-role** | – |
+| See **peers'** evaluations on an interview | all | all | – | **after submitting own (same interview, submitted only)** |
 
 - **Recruiter scoping** (`CandidateService.ApplyAccess`): a non-admin caller may access a candidate when they **own** it (`OwnerUserId`) **OR** are an assigned **recruiter of that candidate's role** (`RoleAppliedOption.Recruiters`, a many-to-many). This is creator-agnostic — an Admin-created candidate under a recruiter's role is visible to that recruiter, and a role can name **multiple** recruiters (all get access). Admin+ pass `null` (no filter). Applies to list / detail / CV stream / edit / change status.
 - **Delete is Admin/SuperAdmin only** — `DELETE /api/candidates/{id}` is `[Authorize(Roles = Roles.AdminOrAbove)]`; Recruiters can't delete a candidate/CV at all (not even their own). The UI hides the delete button for non-admins.

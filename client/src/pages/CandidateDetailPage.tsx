@@ -16,6 +16,7 @@ import {
   updateCandidate,
 } from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
+import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
@@ -24,6 +25,14 @@ import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('');
 
 function Req() {
   return <span className="required-star" aria-hidden="true">*</span>;
@@ -36,6 +45,7 @@ export default function CandidateDetailPage() {
   const navigate = useNavigate();
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidate', candidateId],
@@ -54,21 +64,42 @@ export default function CandidateDetailPage() {
   if (isLoading) return <Spinner animation="border" />;
   if (isError || !data) return <p className="text-danger">Failed to load candidate.</p>;
 
+  const role = data.roleApplied ?? data.appliedRole;
+  const canWrite = canWriteCandidates && !data.roleClosed;
+
   return (
     <div>
       <Link to="/candidates" className="small">
         ← Back to candidates
       </Link>
-      <div className="d-flex justify-content-between align-items-center my-3">
-        <div className="d-flex align-items-center gap-3">
-          <h2 className="mb-0">{data.fullName}</h2>
-          <StatusBadge status={data.currentStatus} />
+
+      <div className="interview-hero mb-3 anim-fade-up mt-2">
+        <div className="d-flex flex-wrap align-items-center gap-3">
+          <div className="profile-avatar">{initials(data.fullName) || '?'}</div>
+          <div className="me-auto">
+            <div className="interview-hero__eyebrow">Candidate</div>
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <h2 className="mb-0">{data.fullName}</h2>
+              <StatusBadge status={data.currentStatus} />
+            </div>
+            {role && <div className="text-muted">{role}</div>}
+          </div>
+          <div className="d-flex flex-wrap gap-2">
+            {canWrite && !editing && (
+              <Button variant="primary" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            )}
+            <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary">
+              Evaluation report
+            </Link>
+            {isAdminOrAbove && (
+              <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+                Delete candidate
+              </Button>
+            )}
+          </div>
         </div>
-        {isAdminOrAbove && (
-          <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
-            Delete candidate
-          </Button>
-        )}
       </div>
 
       {data.roleClosed && (
@@ -107,45 +138,56 @@ export default function CandidateDetailPage() {
         </Modal.Footer>
       </Modal>
 
-      <Row className="g-4">
-        <Col lg={7}>
-          <Card className="mb-4">
-            <Card.Header>Profile</Card.Header>
-            <Card.Body>
-              <ProfileEditor
-                candidate={data}
-                canWrite={canWriteCandidates && !data.roleClosed}
-                onSaved={() => {
-                  void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
-                  void queryClient.invalidateQueries({ queryKey: ['candidates'] });
-                }}
-              />
-            </Card.Body>
-          </Card>
+      {editing ? (
+        // Focused edit mode: profile form only, no status panel.
+        <Row className="g-4">
+          <Col lg={8}>
+            <Card className="mb-4">
+              <Card.Header>Edit profile</Card.Header>
+              <Card.Body>
+                <ProfileEditor
+                  candidate={data}
+                  onSaved={() => {
+                    void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+                    void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+                    setEditing(false);
+                  }}
+                  onCancel={() => setEditing(false)}
+                />
+              </Card.Body>
+            </Card>
 
-          <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
-        </Col>
+            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+          </Col>
+        </Row>
+      ) : (
+        // Read mode: interview-style two-column view.
+        <Row className="g-4">
+          <Col lg={5}>
+            <ReadOnlyCandidateProfile candidate={data} />
+          </Col>
 
-        <Col lg={5}>
-          <Card>
-            <Card.Header>Status history</Card.Header>
-            <Card.Body>
-              {canWriteCandidates && !data.roleClosed && (
-                <>
-                  <AddStatus
-                    candidateId={candidateId}
-                    onAdded={() =>
-                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                    }
-                  />
-                  <hr />
-                </>
-              )}
-              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+          <Col lg={7}>
+            <Card>
+              <Card.Header>Status history</Card.Header>
+              <Card.Body>
+                {canWrite && (
+                  <>
+                    <AddStatus
+                      candidateId={candidateId}
+                      onAdded={() =>
+                        queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
+                      }
+                    />
+                    <hr />
+                  </>
+                )}
+                <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
     </div>
   );
 }
@@ -154,12 +196,12 @@ type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 
 
 function ProfileEditor({
   candidate,
-  canWrite,
   onSaved,
+  onCancel,
 }: {
   candidate: CandidateDetail;
-  canWrite: boolean;
   onSaved: () => void;
+  onCancel: () => void;
 }) {
   const { addToast } = useToast();
   const [form, setForm] = useState(candidate);
@@ -170,6 +212,13 @@ function ProfileEditor({
     setForm(candidate);
     setSkillIds(candidate.skillOptions.map((s) => s.id));
   }, [candidate]);
+
+  const handleCancel = () => {
+    setForm(candidate);
+    setSkillIds(candidate.skillOptions.map((s) => s.id));
+    setFieldErrors({});
+    onCancel();
+  };
 
   const { data: roleOptions = [] } = useQuery({
     queryKey: ['role-options', 'active'],
@@ -235,7 +284,7 @@ function ProfileEditor({
 
   return (
     <Form onSubmit={handleSubmit} noValidate>
-      <fieldset disabled={!canWrite} className="border-0 p-0 m-0">
+      <fieldset className="border-0 p-0 m-0">
       <Row className="g-3">
         <Col md={6}>
           <Form.Label>Full name <Req /></Form.Label>
@@ -381,13 +430,14 @@ function ProfileEditor({
       </Row>
       </fieldset>
 
-      {canWrite && (
-        <div className="mt-3 d-flex align-items-center gap-2">
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saving…' : 'Save changes'}
-          </Button>
-        </div>
-      )}
+      <div className="mt-3 d-flex align-items-center gap-2">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
+        <Button variant="outline-secondary" type="button" disabled={mutation.isPending} onClick={handleCancel}>
+          Cancel
+        </Button>
+      </div>
     </Form>
   );
 }
