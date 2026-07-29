@@ -1,0 +1,6 @@
+bin/
+obj/
+Logs/
+Uploads/*
+!Uploads/.gitkeep
+*.user

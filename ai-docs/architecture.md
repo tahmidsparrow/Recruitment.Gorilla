@@ -63,15 +63,18 @@ MySQL (localhost:3306, database "RecruitmentGorilla")
 
 ### Why the backend is localhost-only
 The API must **not** be reachable directly from other machines. Only the Vite frontend is exposed on the LAN; it proxies `/api` to the backend running on the same host. This means:
-- The browser always calls **same-origin `/api`** (see `client/src/services/api.ts`, `baseURL = '/api'`).
+- The browser always calls **same-origin `/api`** (see `client/src/services/api.ts`, `baseURL` built from `import.meta.env.BASE_URL` + `api`).
 - The backend runs with `--urls http://localhost:5000` (loopback only).
 - Firewall opens **only** port 5173.
 
 Do not change the frontend to call the backend by IP/port, and do not bind the backend to `0.0.0.0`.
+
+The container deployment (`gorilla-platform/deploy`) enforces the same intent at the network layer instead: `ats-api` declares no `ports:` in Compose and sits on the private `gorilla` bridge network, reachable only from the `gateway` container, which is the sole container publishing a host port. The browser still calls same-origin — `/ats/api` — same as above, just routed through the gateway rather than a local Vite proxy.
 
 ## Auth at a glance
 JWT access token (short-lived, in browser memory) + opaque refresh token in an **httpOnly, SameSite=Strict cookie** scoped to `/api/auth`, with server-side rotation and revocation. All data endpoints require auth (default-deny). Full detail in [auth.md](auth.md).
 
 ## Dev vs prod
 - **Dev** (current): HTTP, Vite proxy, refresh cookie `Secure=false`, Swagger enabled, secrets in user-secrets.
-- **Prod** (future): serve the built client behind a real web server / the API; enable HTTPS (the refresh cookie auto-sets `Secure` outside Development); move secrets to environment variables / a vault. See [dev-setup.md](dev-setup.md) and `PROJECT_PLAN.md` roadmap.
+- **Container** (`gorilla-platform/deploy`, current): the built client served by its own nginx behind the gateway under `/ats/`; secrets passed as environment variables (`ConnectionStrings__DefaultConnection`, `Jwt__Key`, `Auth__SeedAdminEmail`, `Auth__PasswordHash` — ASP.NET Core's default config providers read these with no code change); `ASPNETCORE_ENVIRONMENT=Production` so `appsettings.json`'s empty `AllowedOrigins: []` applies (same-origin behind the gateway needs none — see `appsettings.Development.json` for the local-dev values).
+- **Prod** (future): HTTPS at the gateway (the refresh cookie auto-sets `Secure` outside Development); secrets from a real vault rather than plain Compose env vars. See [dev-setup.md](dev-setup.md) and `PROJECT_PLAN.md` roadmap.
