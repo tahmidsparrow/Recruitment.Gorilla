@@ -6,6 +6,8 @@ import type {
   CVDraft,
   CandidateDetail,
   ChangePasswordPayload,
+  EmailSettings,
+  UpsertEmailSettings,
   CreateCandidatePayload,
   CreateUserPayload,
   DashboardData,
@@ -306,6 +308,22 @@ export const updateRoleOption = async (id: number, payload: UpsertOptionPayload)
 
 export const deleteRoleOption = async (id: number): Promise<DeleteRoleResult> => {
   const { data } = await api.delete<DeleteRoleResult>(`/config/roles/${id}`);
+  return data;
+};
+
+// ----- Configuration: Email / SMTP settings (SuperAdmin) -----
+export const getEmailSettings = async (): Promise<EmailSettings> => {
+  const { data } = await api.get<EmailSettings>('/config/email');
+  return data;
+};
+
+export const saveEmailSettings = async (payload: UpsertEmailSettings): Promise<EmailSettings> => {
+  const { data } = await api.put<EmailSettings>('/config/email', payload);
+  return data;
+};
+
+export const sendTestEmail = async (toEmail: string): Promise<{ ok: boolean; error: string | null }> => {
+  const { data } = await api.post<{ ok: boolean; error: string | null }>('/config/email/test', { toEmail });
   return data;
 };
 

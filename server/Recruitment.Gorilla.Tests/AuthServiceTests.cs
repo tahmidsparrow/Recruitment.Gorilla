@@ -21,7 +21,7 @@ public class AuthServiceTests(MySqlDatabaseFixture fixture) : DbTestBase(fixture
                 ["Jwt:Issuer"] = "i",
                 ["Jwt:Audience"] = "a",
             }).Build();
-        return new AuthService(Db, config);
+        return new AuthService(Db, config, TestEmail());
     }
 
     private User SeedUser(string password, string role = "Recruiter", bool active = true)

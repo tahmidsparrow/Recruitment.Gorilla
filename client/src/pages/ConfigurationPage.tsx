@@ -9,9 +9,12 @@ import {
   deleteSkillOption,
   deleteInterviewTypeOption,
   getAssignableUsers,
+  getEmailSettings,
   getRoleOptions,
   getSkillOptions,
   getInterviewTypeOptions,
+  saveEmailSettings,
+  sendTestEmail,
   updateRoleOption,
   updateSkillOption,
   updateInterviewTypeOption,
@@ -82,13 +85,183 @@ const interviewTypesApi: SectionApi = {
 };
 
 export default function ConfigurationPage() {
+  const { isSuperAdmin } = useAuth();
   return (
     <div>
       <h2 className="mb-4">Configuration</h2>
       <OptionSection title="Roles applied / Job openings" noun="role" queryKey="roles" api={rolesApi} jobFields />
       <OptionSection title="Skills" noun="skill" queryKey="skills" api={skillsApi} />
       <OptionSection title="Interview Types" noun="interview type" queryKey="interview-types" api={interviewTypesApi} />
+      {isSuperAdmin && <EmailSettingsCard />}
     </div>
+  );
+}
+
+function EmailSettingsCard() {
+  const { addToast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({ queryKey: ['config', 'email'], queryFn: getEmailSettings });
+
+  const [host, setHost] = useState('');
+  const [port, setPort] = useState(587);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [password, setPassword] = useState('');
+  const [fromAddress, setFromAddress] = useState('');
+  const [fromName, setFromName] = useState('Recruitment Gorilla');
+  const [useStartTls, setUseStartTls] = useState(true);
+  const [enabled, setEnabled] = useState(false);
+  const [testTo, setTestTo] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  // Seed the form from the server once.
+  if (data && !loaded) {
+    setHost(data.host);
+    setPort(data.port);
+    setSmtpUser(data.user ?? '');
+    setFromAddress(data.fromAddress);
+    setFromName(data.fromName);
+    setUseStartTls(data.useStartTls);
+    setEnabled(data.enabled);
+    setTestTo(user?.email ?? '');
+    setLoaded(true);
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      saveEmailSettings({
+        host: host.trim(),
+        port,
+        user: smtpUser.trim() || null,
+        password: password.trim() || null, // blank keeps the stored password
+        fromAddress: fromAddress.trim(),
+        fromName: fromName.trim() || 'Recruitment Gorilla',
+        useStartTls,
+        enabled,
+      }),
+    onSuccess: (fresh) => {
+      queryClient.setQueryData(['config', 'email'], fresh);
+      setPassword('');
+      addToast('Email settings saved.');
+    },
+    onError: () => addToast('Could not save email settings.', 'danger'),
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () => sendTestEmail(testTo.trim()),
+    onSuccess: (res) =>
+      res.ok
+        ? addToast(`Test email sent to ${testTo.trim()}.`)
+        : addToast(`Test failed: ${res.error ?? 'unknown error'}`, 'danger'),
+    onError: () => addToast('Could not send the test email.', 'danger'),
+  });
+
+  return (
+    <Card className="mb-4">
+      <Card.Header className="d-flex justify-content-between align-items-center">
+        <span>Email / SMTP</span>
+        {data && (
+          <Badge bg={data.enabled ? 'success' : 'secondary'}>{data.enabled ? 'Enabled' : 'Disabled'}</Badge>
+        )}
+      </Card.Header>
+      <Card.Body>
+        {isLoading ? (
+          <Spinner animation="border" size="sm" />
+        ) : (
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveMutation.mutate();
+            }}
+          >
+            <p className="text-muted small">
+              Transactional email (interview assignments, account &amp; password notices). Stored
+              securely — the password is encrypted and never shown again. Leave the password blank to
+              keep the current one.
+            </p>
+            <div className="row g-3">
+              <div className="col-md-8">
+                <Form.Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
+              </div>
+              <div className="col-md-4">
+                <Form.Label>Port <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
+              </div>
+              <div className="col-md-6">
+                <Form.Label>Username</Form.Label>
+                <Form.Control value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
+              </div>
+              <div className="col-md-6">
+                <Form.Label>App Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder={data?.passwordSet ? '•••••••• (leave blank to keep)' : 'App password'}
+                />
+                <Form.Text muted>
+                  Gmail/Workspace: a 16-char App Password (not your account password). Other
+                  providers: your SMTP password.
+                </Form.Text>
+              </div>
+              <div className="col-md-6">
+                <Form.Label>From address <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control value={fromAddress} onChange={(e) => setFromAddress(e.target.value)} placeholder="you@example.com" />
+              </div>
+              <div className="col-md-6">
+                <Form.Label>From name</Form.Label>
+                <Form.Control value={fromName} onChange={(e) => setFromName(e.target.value)} />
+              </div>
+            </div>
+            <div className="d-flex flex-wrap gap-4 mt-3">
+              <Form.Check
+                type="checkbox"
+                id="smtp-enabled"
+                label="Enabled (send email; when off, notifications stay in-app only)"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+              />
+              <Form.Check
+                type="checkbox"
+                id="smtp-starttls"
+                label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)."
+                checked={useStartTls}
+                onChange={(e) => setUseStartTls(e.target.checked)}
+              />
+            </div>
+
+            <div className="d-flex align-items-center gap-2 mt-3">
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+
+            <hr />
+            <Form.Label>Send a test email</Form.Label>
+            <div className="d-flex flex-wrap gap-2 align-items-start" style={{ maxWidth: 520 }}>
+              <Form.Control
+                type="email"
+                value={testTo}
+                onChange={(e) => setTestTo(e.target.value)}
+                placeholder="recipient@example.com"
+                style={{ maxWidth: 320 }}
+              />
+              <Button
+                variant="outline-secondary"
+                disabled={testMutation.isPending || !testTo.trim()}
+                onClick={() => testMutation.mutate()}
+              >
+                {testMutation.isPending ? 'Sending…' : 'Send test'}
+              </Button>
+            </div>
+            <Form.Text muted>Save your settings first — the test uses the saved configuration.</Form.Text>
+          </Form>
+        )}
+      </Card.Body>
+    </Card>
   );
 }
 

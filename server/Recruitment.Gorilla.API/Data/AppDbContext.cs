@@ -25,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<InterviewTag> InterviewTags => Set<InterviewTag>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<EmailSetting> EmailSettings => Set<EmailSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +97,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(a => a.Timestamp);
             e.HasIndex(a => a.ActorUserId);
             e.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+
+        modelBuilder.Entity<EmailSetting>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Host).HasMaxLength(200).IsRequired();
+            e.Property(s => s.User).HasMaxLength(200);
+            e.Property(s => s.PasswordEncrypted).HasMaxLength(1000);
+            e.Property(s => s.FromAddress).HasMaxLength(200).IsRequired();
+            e.Property(s => s.FromName).HasMaxLength(200).IsRequired();
         });
 
         modelBuilder.Entity<RefreshToken>(e =>

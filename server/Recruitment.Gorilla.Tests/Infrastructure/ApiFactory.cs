@@ -18,6 +18,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Jwt__Key", "rg-integration-test-signing-key-32bytes-minimum!!");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "rg-test-issuer");
         Environment.SetEnvironmentVariable("Jwt__Audience", "rg-test-audience");
+        Environment.SetEnvironmentVariable("Encryption__Key", "rg-integration-test-encryption-key-32bytes!!");
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
     }
 
