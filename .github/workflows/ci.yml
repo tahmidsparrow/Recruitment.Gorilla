@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:9
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # MySqlDatabaseFixture creates/drops a throwaway database per test run
+      # against this server — the real RecruitmentGorilla DB is never touched.
+      RG_TEST_MYSQL: "server=127.0.0.1;port=3306;database=ignored;user=root;password="
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet restore
+      # Includes ControllerAuthorizationTests.cs — the regression net for the
+      # eventual OIDC/authorization swap (see gorilla-platform identity work).
+      - run: dotnet test --no-restore
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run test
+      - run: npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t recruitment-gorilla-server server
+      - run: docker build -t recruitment-gorilla-client client
+
+  # Playwright e2e needs a live, seeded stack (baseURL http://localhost:5173,
+  # E2E_EMAIL/E2E_PASSWORD credentials — see client/playwright.config.ts) that
+  # isn't available in this workflow yet. Runs manually until the gateway
+  # smoke test (gorilla-platform CI) gives us a stack to point it at.

@@ -5,7 +5,6 @@ obj/
 *.suo
 .vs/
 *.swp
-appsettings.Development.json
 
 # Uploads (CV files stored locally — not tracked in git)
 server/Recruitment.Gorilla.API/Uploads/

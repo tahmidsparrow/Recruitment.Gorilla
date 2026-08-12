@@ -6,7 +6,7 @@ using Recruitment.Gorilla.API.Models;
 
 namespace Recruitment.Gorilla.API.Services;
 
-public class UserService(AppDbContext db)
+public class UserService(AppDbContext db, EmailService emailService)
 {
     public async Task<List<UserListDto>> GetAllAsync() =>
         await db.Users
@@ -50,6 +50,10 @@ public class UserService(AppDbContext db)
 
         db.Users.Add(user);
         await db.SaveChangesAsync();
+
+        var (subject, html) = EmailTemplates.AccountCreated(user.Name);
+        await emailService.SendAsync(user.Email, user.Name, subject, html);
+
         return MutationResult.Ok(ToDto(user));
     }
 
@@ -95,6 +99,10 @@ public class UserService(AppDbContext db)
         user.MustChangePassword = true;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        var (subject, html) = EmailTemplates.PasswordReset(user.Name);
+        await emailService.SendAsync(user.Email, user.Name, subject, html);
+
         return MutationResult.Ok(ToDto(user));
     }
 
