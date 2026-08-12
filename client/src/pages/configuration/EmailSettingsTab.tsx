@@ -1,0 +1,201 @@
+import { useState } from 'react';
+import { Button, Form, Spinner } from 'react-bootstrap';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getEmailSettings, saveEmailSettings, sendTestEmail } from '../../services/api';
+import { useAuth } from '../../auth/AuthContext';
+import { useToast } from '../../components/ToastStack';
+
+/**
+ * SMTP configuration, grouped into Server / Credentials / Sender rather than
+ * one flat run of eight fields. Super Admin only — the caller gates it.
+ */
+export default function EmailSettingsTab() {
+  const { addToast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({ queryKey: ['config', 'email'], queryFn: getEmailSettings });
+
+  const [host, setHost] = useState('');
+  const [port, setPort] = useState(587);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [password, setPassword] = useState('');
+  const [fromAddress, setFromAddress] = useState('');
+  const [fromName, setFromName] = useState('Recruitment Gorilla');
+  const [useStartTls, setUseStartTls] = useState(true);
+  const [enabled, setEnabled] = useState(false);
+  const [testTo, setTestTo] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  // Seed the form from the server once.
+  if (data && !loaded) {
+    setHost(data.host);
+    setPort(data.port);
+    setSmtpUser(data.user ?? '');
+    setFromAddress(data.fromAddress);
+    setFromName(data.fromName);
+    setUseStartTls(data.useStartTls);
+    setEnabled(data.enabled);
+    setTestTo(user?.email ?? '');
+    setLoaded(true);
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      saveEmailSettings({
+        host: host.trim(),
+        port,
+        user: smtpUser.trim() || null,
+        password: password.trim() || null, // blank keeps the stored password
+        fromAddress: fromAddress.trim(),
+        fromName: fromName.trim() || 'Recruitment Gorilla',
+        useStartTls,
+        enabled,
+      }),
+    onSuccess: (fresh) => {
+      queryClient.setQueryData(['config', 'email'], fresh);
+      setPassword('');
+      addToast('Email settings saved.');
+    },
+    onError: () => addToast('Could not save email settings.', 'danger'),
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () => sendTestEmail(testTo.trim()),
+    onSuccess: (res) =>
+      res.ok
+        ? addToast(`Test email sent to ${testTo.trim()}.`)
+        : addToast(`Test failed: ${res.error ?? 'unknown error'}`, 'danger'),
+    onError: () => addToast('Could not send the test email.', 'danger'),
+  });
+
+  if (isLoading) return <Spinner animation="border" size="sm" />;
+
+  return (
+    <>
+      <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+        <p className="mb-0" style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', maxWidth: 620 }}>
+          Transactional email — interview assignments, account and password notices. The password is
+          encrypted at rest and never returned; leave it blank to keep the current one.
+        </p>
+        <span className={`badge-pill ${enabled ? 'badge-success' : 'badge-neutral'}`}>
+          {enabled ? 'Enabled' : 'Disabled'}
+        </span>
+      </div>
+
+      <div className="pulse-card">
+        <Form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveMutation.mutate();
+          }}
+        >
+          <div className="form-section">
+            <div className="form-section__title">Server</div>
+            <div className="row g-3">
+              <div className="col-12 col-sm-8">
+                <Form.Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
+              </div>
+              <div className="col-12 col-sm-4">
+                <Form.Label>Port <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
+              </div>
+              <div className="col-12">
+                <Form.Check
+                  type="checkbox"
+                  id="smtp-starttls"
+                  label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)."
+                  checked={useStartTls}
+                  onChange={(e) => setUseStartTls(e.target.checked)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <div className="form-section__title">Credentials</div>
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <Form.Label>Username</Form.Label>
+                <Form.Control value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
+              </div>
+              <div className="col-12 col-md-6">
+                <Form.Label>App password</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder={data?.passwordSet ? '•••••••• (leave blank to keep)' : 'App password'}
+                />
+                <Form.Text muted>
+                  Gmail/Workspace: a 16-character App Password, not your account password. Other
+                  providers: your SMTP password.
+                </Form.Text>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <div className="form-section__title">Sender</div>
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <Form.Label>From address <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control
+                  value={fromAddress}
+                  onChange={(e) => setFromAddress(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <Form.Label>From name</Form.Label>
+                <Form.Control value={fromName} onChange={(e) => setFromName(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <Form.Check
+              type="checkbox"
+              id="smtp-enabled"
+              label="Enabled — actually send email. When off, notifications stay in-app only."
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+            />
+            <div className="mt-3">
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? 'Saving…' : 'Save settings'}
+              </Button>
+            </div>
+          </div>
+        </Form>
+      </div>
+
+      <div className="pulse-card">
+        <div className="metric-label mb-2">Send a test email</div>
+        <p className="mb-3" style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>
+          Uses the saved configuration, so save any changes first.
+        </p>
+        <div className="d-flex flex-wrap gap-2 align-items-start">
+          <Form.Control
+            type="email"
+            value={testTo}
+            onChange={(e) => setTestTo(e.target.value)}
+            placeholder="recipient@example.com"
+            aria-label="Test email recipient"
+            className="flex-grow-1"
+            style={{ minWidth: 200, maxWidth: 320 }}
+          />
+          <Button
+            variant="outline-secondary"
+            disabled={testMutation.isPending || !testTo.trim()}
+            onClick={() => testMutation.mutate()}
+          >
+            {testMutation.isPending ? 'Sending…' : 'Send test'}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}

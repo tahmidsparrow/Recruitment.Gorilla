@@ -930,11 +930,26 @@ a.user-card__name:hover {
   white-space: nowrap;
 }
 
-/* ---------- Underline tabs ---------- */
+/* ---------- Underline tabs ----------
+   Scrolls rather than wraps: a wrapped strip changes height as tabs move
+   between rows, which shifts the content under it on every resize. */
 .admin-tabs {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+.admin-tabs button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+@media (min-width: 768px) {
+  .admin-tabs button { min-height: 38px; }
 }
 .admin-tabs button {
   background: transparent;
@@ -954,6 +969,274 @@ a.user-card__name:hover {
   background: transparent;
   color: var(--primary);
   border-bottom-color: var(--primary);
+}
+
+/* ---------- Job opening cards ----------
+   A job opening has a title, department, location, priority, recruiters, a
+   deadline and a status — that is a profile, not a table row. Ported from
+   Prism's .ws-card. Mobile first: one column, widening upward, so nothing is
+   ever hidden the way the old table's five d-none columns were. */
+.job-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .job-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+@media (min-width: 1200px) {
+  .job-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.job-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: border-color 0.15s ease;
+}
+.job-card:hover {
+  border-color: var(--primary);
+}
+/* A closed or deactivated opening is still listed, but recedes. */
+.job-card--dim {
+  background: var(--surface-muted);
+}
+.job-card--dim .job-card__name {
+  color: var(--text-soft);
+}
+
+.job-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.job-card__body {
+  flex: 1;
+  margin-bottom: 14px;
+}
+.job-card__name {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--text);
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+.job-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.job-card__id {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.job-card__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.job-card__meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 4px;
+}
+.job-card__meta-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.job-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Overlapping initials, so a long recruiter list stays one line. */
+.avatar-stack {
+  display: flex;
+  align-items: center;
+}
+.avatar-stack > * {
+  margin-right: -6px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.job-card--dim .avatar-stack > * {
+  box-shadow: 0 0 0 2px var(--surface-muted);
+}
+.avatar-stack > *:last-child {
+  margin-right: 0;
+}
+.avatar--sm {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+.avatar--more {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+/* ---------- Editable option chips ----------
+   Skills and interview types are name lists, so they read as tags rather than
+   as four-column tables. Colours come from utils/skillColors so a skill looks
+   the same here as it does on a candidate profile. */
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.option-chip--inactive {
+  opacity: 0.5;
+}
+.option-chip__name {
+  padding: 6px 4px 6px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  min-height: 34px;
+}
+.option-chip__name:hover {
+  text-decoration: underline;
+}
+.option-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  min-height: 34px;
+  padding: 0 8px 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+}
+.option-chip__remove:hover {
+  opacity: 1;
+}
+
+/* The add field sits in the flow of the chips so adding feels like typing the
+   next tag, not like opening a form. */
+.chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.chip-add:focus-within {
+  border-color: var(--primary);
+  border-style: solid;
+}
+.chip-add input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  min-height: 34px;
+  width: 11ch;
+}
+.chip-add input::placeholder {
+  color: var(--muted);
+}
+
+/* ---------- Grouped form sections ---------- */
+.form-section + .form-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.form-section__title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 12px;
+}
+
+/* ---------- Modals: sheet on phones, dialog from sm up ----------
+   A centred dialog on a 360px viewport wastes the edges and leaves the actions
+   out of thumb reach. The base is therefore a full-height sheet with a pinned
+   footer, and the min-width block restores Bootstrap's centred dialog. */
+.modal-dialog {
+  margin: 0;
+  max-width: none;
+  min-height: 100dvh;
+}
+.modal-content {
+  min-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+.modal-body {
+  overflow-y: auto;
+}
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+}
+.modal-footer .btn {
+  flex: 1;
+}
+
+@media (min-width: 576px) {
+  .modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 500px;
+    min-height: calc(100% - 3.5rem);
+  }
+  .modal-content {
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .modal-footer {
+    position: static;
+  }
+  .modal-footer .btn {
+    flex: 0 0 auto;
+  }
+}
+/* The job-opening form needs more room than Bootstrap's 500px default. */
+@media (min-width: 768px) {
+  .modal-dialog.modal-lg { max-width: 720px; }
 }
 
 /* ---------- Motion ---------- */

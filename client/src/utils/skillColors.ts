@@ -16,3 +16,14 @@ export const skillColorIndex = (name: string): number => {
 
 /** CSS class carrying the badge color tokens, e.g. "skill-badge skill-badge--3". */
 export const skillColorClass = (name: string): string => `skill-badge skill-badge--${skillColorIndex(name)}`;
+
+/**
+ * Just the colour modifier, e.g. "skill-badge--3", with no `.skill-badge` base.
+ *
+ * For callers that supply their own layout: `.skill-badge` sets
+ * `display: inline-block`, which silently overrides a flex container built on
+ * top of it (the config chips need `display: inline-flex` to sit the name and
+ * the remove button side by side). The `--N` classes carry only background,
+ * colour and border-colour, so they compose with any layout.
+ */
+export const skillColorModifier = (name: string): string => `skill-badge--${skillColorIndex(name)}`;
