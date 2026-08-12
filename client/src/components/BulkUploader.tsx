@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Alert, ProgressBar, Spinner } from 'react-bootstrap';
+import { UploadCloud } from 'lucide-react';
 import { uploadCV } from '../services/api';
 import type { CVDraft } from '../types';
 
@@ -55,11 +56,11 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
   return (
     <div>
+      {/* Reuses .empty-state's dashed treatment so "nothing here yet" and
+          "drop something here" read as the same kind of surface. */}
       <div
         {...getRootProps()}
-        className={`border border-2 border-dashed rounded p-5 text-center ${
-          isDragActive ? 'border-primary bg-body-tertiary' : 'border-secondary-subtle'
-        }`}
+        className={`empty-state dropzone${isDragActive ? ' dropzone--active' : ''}`}
         style={{ cursor: busy ? 'default' : 'pointer' }}
       >
         <input {...getInputProps()} />
@@ -75,8 +76,14 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
           </div>
         ) : (
           <div>
-            <div className="fs-5 mb-1">Drag &amp; drop CVs here, or click to browse</div>
-            <div className="text-muted small">PDF or Word (.docx), up to 10&nbsp;MB each</div>
+            <UploadCloud
+              size={28}
+              strokeWidth={1.5}
+              aria-hidden="true"
+              style={{ color: 'var(--muted)', marginBottom: 8 }}
+            />
+            <div className="empty-state-title">Drag &amp; drop CVs here, or click to browse</div>
+            <div className="empty-state-description">PDF or Word (.docx), up to 10&nbsp;MB each</div>
           </div>
         )}
       </div>

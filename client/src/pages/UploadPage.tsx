@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Alert, Badge, Card } from 'react-bootstrap';
 import { useQueryClient } from '@tanstack/react-query';
 import BulkUploader from '../components/BulkUploader';
 import CandidateForm from '../components/CandidateForm';
@@ -31,29 +30,27 @@ export default function UploadPage() {
       <BulkUploader onDraftsParsed={handleParsed} />
 
       {queue.length > 0 && (
-        <div className="d-flex align-items-center justify-content-between mt-4 mb-2">
-          <h4 className="mb-0">Review queue</h4>
-          <Badge bg="secondary">{queue.length} remaining</Badge>
+        <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <div className="metric-label">Review queue</div>
+          <span className="badge-pill badge-neutral">{queue.length} remaining</span>
         </div>
       )}
 
       {current && (
-        <Card className="mt-2">
-          <Card.Body>
-            <CandidateForm
-              key={current.storedFileName}
-              draft={current}
-              onSaved={() => advance(true)}
-              onCancel={() => advance(false)}
-            />
-          </Card.Body>
-        </Card>
+        <div className="pulse-card">
+          <CandidateForm
+            key={current.storedFileName}
+            draft={current}
+            onSaved={() => advance(true)}
+            onCancel={() => advance(false)}
+          />
+        </div>
       )}
 
       {queue.length === 0 && savedCount > 0 && (
-        <Alert variant="success" className="mt-4">
-          Saved {savedCount} candidate(s). Drop more CVs above to continue.
-        </Alert>
+        <div className="alert-success-soft">
+          Saved {savedCount} candidate{savedCount === 1 ? '' : 's'}. Drop more CVs above to continue.
+        </div>
       )}
     </div>
   );

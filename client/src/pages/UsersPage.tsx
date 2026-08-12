@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Form, Modal, Spinner, Table } from 'react-bootstrap';
+import { Badge, Button, Form, Modal, Spinner, Table } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import {
@@ -9,6 +9,7 @@ import {
   updateUser,
 } from '../services/api';
 import { useToast } from '../components/ToastStack';
+import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
 
@@ -165,14 +166,17 @@ export default function UsersPage() {
       {/* No <h2> — the topbar owns the page title. */}
       <PageHeader actions={<Button onClick={openAdd}>Add user</Button>} />
 
-      <Card>
-        <Card.Body>
-          {isLoading ? (
-            <Spinner animation="border" size="sm" />
-          ) : users.length === 0 ? (
-            <p className="text-muted mb-0">No users yet.</p>
-          ) : (
-            <Table hover responsive className="align-middle mb-0">
+      {isLoading ? (
+        <Spinner animation="border" size="sm" />
+      ) : users.length === 0 ? (
+        <EmptyState
+          title="No users yet"
+          description="Add an account to give someone access."
+          action={<Button onClick={openAdd}>Add user</Button>}
+        />
+      ) : (
+        <div className="table-wrap">
+            <Table hover className="table-cards align-middle">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -180,23 +184,21 @@ export default function UsersPage() {
                   <th>Roles</th>
                   <th style={{ width: 110 }}>Status</th>
                   <th style={{ width: 180 }}>Last login</th>
-                  <th className="text-end" style={{ width: 260 }}>Actions</th>
+                  <th className="col-right" style={{ width: 260 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id}>
-                    <td>
+                    <td data-label="Name">
                       {u.name}
                       {u.mustChangePassword && (
-                        <Badge bg="warning" text="dark" className="ms-2">
-                          Pending password
-                        </Badge>
+                        <span className="badge-pill badge-warning ms-2">Pending password</span>
                       )}
                     </td>
-                    <td>{u.email}</td>
-                    <td>
-                      <div className="d-flex flex-wrap gap-1">
+                    <td data-label="Email" className="text-break">{u.email}</td>
+                    <td data-label="Roles">
+                      <div className="d-flex flex-wrap gap-1 justify-content-end justify-content-md-start">
                         {u.roles.map((r) => (
                           <Badge key={r} bg={roleVariant[r]}>
                             {r}
@@ -204,17 +206,17 @@ export default function UsersPage() {
                         ))}
                       </div>
                     </td>
-                    <td>
-                      <Badge bg={u.isActive ? 'success' : 'secondary'}>
+                    <td data-label="Status">
+                      <span className={`badge-pill ${u.isActive ? 'badge-success' : 'badge-neutral'}`}>
                         {u.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                      </span>
                     </td>
-                    <td>{formatDate(u.lastLoginAt)}</td>
-                    <td className="text-end">
-                      <Button size="sm" variant="outline-secondary" className="me-2" onClick={() => openEdit(u)}>
+                    <td data-label="Last login">{formatDate(u.lastLoginAt)}</td>
+                    <td className="col-actions">
+                      <Button size="sm" variant="outline-secondary" onClick={() => openEdit(u)}>
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline-secondary" className="me-2" onClick={() => openReset(u)}>
+                      <Button size="sm" variant="outline-secondary" onClick={() => openReset(u)}>
                         Reset password
                       </Button>
                       <Button
@@ -230,9 +232,8 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </Table>
-          )}
-        </Card.Body>
-      </Card>
+        </div>
+      )}
 
       {/* Create / edit modal */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
