@@ -54,8 +54,7 @@ export default function AuditLogPage() {
 
   return (
     <div>
-      <h2 className="mb-4">Audit trail</h2>
-
+      {/* No <h2> — the topbar owns the page title. */}
       <Card className="mb-3">
         <Card.Body>
           <Form onSubmit={applyFilters}>

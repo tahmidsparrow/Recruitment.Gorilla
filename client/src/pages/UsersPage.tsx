@@ -9,6 +9,7 @@ import {
   updateUser,
 } from '../services/api';
 import { useToast } from '../components/ToastStack';
+import PageHeader from '../components/ui/PageHeader';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
 
 const roleVariant: Record<Role, string> = {
@@ -161,10 +162,8 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Users</h2>
-        <Button onClick={openAdd}>Add user</Button>
-      </div>
+      {/* No <h2> — the topbar owns the page title. */}
+      <PageHeader actions={<Button onClick={openAdd}>Add user</Button>} />
 
       <Card>
         <Card.Body>

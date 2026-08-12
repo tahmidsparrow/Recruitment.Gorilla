@@ -27,8 +27,7 @@ export default function UploadPage() {
 
   return (
     <div>
-      <h2 className="mb-4">Upload CVs</h2>
-
+      {/* No <h2> — the topbar owns the page title. */}
       <BulkUploader onDraftsParsed={handleParsed} />
 
       {queue.length > 0 && (

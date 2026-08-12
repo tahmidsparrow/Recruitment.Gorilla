@@ -6,14 +6,7 @@ import { getInterview } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
 import { skillColorClass } from '../utils/skillColors';
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
+import { initials } from '../utils/initials';
 
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

@@ -4,6 +4,7 @@ import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bo
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
+import PageHeader from '../components/ui/PageHeader';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 
@@ -48,14 +49,16 @@ export default function CandidatesPage() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Candidates</h2>
-        {canWriteCandidates && (
-          <Link to="/upload" className="btn btn-primary">
-            Upload CVs
-          </Link>
-        )}
-      </div>
+      {/* No <h2> — the topbar owns the page title. */}
+      <PageHeader
+        actions={
+          canWriteCandidates && (
+            <Link to="/upload" className="btn btn-primary">
+              Upload CVs
+            </Link>
+          )
+        }
+      />
 
       <div className="d-flex flex-wrap gap-2 mb-3">
         <Form onSubmit={applySearch} className="flex-grow-1" style={{ maxWidth: 420 }}>

@@ -1,0 +1,197 @@
+/* ==========================================================================
+   Design tokens — the single source of visual truth.
+
+   Structure and token names are ported from the Ajentica Prism/Pulse dashboard
+   (D:\DevArina\Ajentica Client Dashboard\Prism\frontend\styles\tokens.css) so
+   the two products read as one system. Prism derives its own palette from
+   GorillaHR, which is where this app's Coastal teal (#468189) also comes from —
+   so the hues already agree; what is being adopted here is Prism's token
+   *vocabulary*, scales and geometry.
+
+   Two deliberate departures from Prism:
+
+   1. No HSL theme engine. Prism computes every colour from --theme-hue /
+      --theme-sat so a client can be re-branded at runtime. This app has one
+      brand, so the values are literal. If per-client branding is ever needed,
+      this is the one file that changes.
+
+   2. Dark mode hangs off [data-bs-theme='dark'], not Prism's [data-mode].
+      Bootstrap 5.3 and react-bootstrap read data-bs-theme, the no-flash script
+      in index.html already sets it, and theme/ThemeContext.tsx already drives
+      it. A second attribute would fork the theming.
+
+   THE RULE: components reference tokens, never literal colours.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Structural neutrals ---- */
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --surface-muted: #f4f8f8;
+  --border: #e4eae9;
+  --border-strong: #d3dedd;
+  --text: #031926;
+  --text-soft: #31575c;
+  --muted: #6b8589;
+  --muted-light: #93a9ac;
+
+  /* ---- Brand accent — Coastal teal ----
+     --primary is tuned for use as TEXT against --bg / --surface (#468189 clears
+     4.41:1 on white). --primary-dark is the solid-fill shade, always carrying
+     --on-accent on top; it is mode-invariant because that is a two-colour
+     contrast check independent of the surrounding page. */
+  --primary: #468189;
+  --primary-dark: #37676e;
+  --primary-tint: #dcebe8;
+  --primary-tint-hover: #c7dfda;
+  --focus-ring: rgba(70, 129, 137, 0.22);
+  --secondary: #031926;
+  --on-accent: #ffffff;
+
+  /* ---- Semantic status colours ----
+     Deliberately not derived from the brand hue: "healthy" must mean the same
+     thing regardless of branding. Distinct from the --status-* pipeline tokens
+     in index.css, which colour candidate workflow states, not health. */
+  --success: #03c95a;
+  --success-tint: #e8faf0;
+  --success-text: #03934a;
+
+  --danger: #e70d0d;
+  --danger-tint: #fae7e7;
+
+  --warning: #ffc107;
+  --warning-tint: #fff9e9;
+  --warning-text: #b7791f;
+  --warning-text-strong: #8a6100;
+  --warning-border: #f4e2b4;
+
+  --info: #1b84ff;
+  --info-tint: #ebf4ff;
+  --info-text-strong: #17568f;
+  --info-border: #c9e0fb;
+
+  /* ---- Depth ---- */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.12);
+  --backdrop-bg: rgba(0, 0, 0, 0.55);
+
+  /* ---- Geometry ---- */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --space-page: 24px;
+  --topbar-height: 64px;
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 64px;
+
+  /* ---- Typography ----
+     Figtree is self-hosted via @fontsource-variable/figtree, imported in
+     main.tsx. Prism loads the same family through next/font. */
+  --font-body: "Figtree Variable", "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-body);
+  --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* ---- Legacy aliases ----
+     The --ms-* names predate this file and are referenced throughout
+     index.css and ~18 components. Aliasing rather than deleting means the
+     token port is not also a sweeping find-and-replace; call sites can move to
+     the new names as pages are migrated. */
+  --ms-primary: var(--primary);
+  --ms-primary-hover: #3b7379;
+  --ms-primary-pressed: var(--primary-dark);
+  --ms-primary-tint: var(--primary-tint);
+  --ms-primary-tint-2: var(--primary-tint-hover);
+  --ms-bg: var(--bg);
+  --ms-surface: var(--surface);
+  --ms-neutral-light: var(--surface-muted);
+  --ms-neutral: var(--border);
+  --ms-border: var(--border);
+  --ms-text: var(--text);
+  --ms-text-secondary: var(--text-soft);
+  --ms-shadow-4: var(--shadow-sm);
+  --ms-shadow-8: var(--shadow-md);
+}
+
+/* ==========================================================================
+   Dark mode.
+
+   The structural neutrals are near-neutral on purpose. The palette this
+   replaced was a saturated teal-navy (#071a23 is ~69% saturation), and a dark
+   theme built on a strongly saturated ground reads as loud however dim it is —
+   the colour competes with the content for attention. Prism solves this by
+   driving its dark neutrals at effectively 0.2% saturation. Here they sit at
+   8–14% on the coastal hue: enough that the surfaces still feel like this
+   product rather than generic grey, low enough to recede.
+
+   Text is 88% lightness rather than 94% for the same reason. 94% on an 8%
+   ground is ~15:1, well past what AA asks for and into the range where long
+   reading sessions feel glary; 88% still clears AA comfortably at 12.2:1 on
+   --surface.
+
+   Every pairing below was checked against WCAG AA (4.5:1 body, 3:1 large/UI);
+   the tightest is --muted on --surface-muted (table headers) at 4.73:1.
+   ========================================================================== */
+[data-bs-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #121617;
+  --surface: #1d2325;
+  --surface-muted: #272f32;
+  --border: #323b3e;
+  --border-strong: #455054;
+  --text: #dde2e3;
+  --text-soft: #b1bbbe;
+  --muted: #8e9a9f;
+  --muted-light: #6c7a7f;
+
+  /* #468189 falls to ~3.5:1 as text on these backgrounds — below AA — so the
+     accent brightens (7.7:1 on --surface). --primary-dark does not: it is only
+     ever a solid fill under white text, a two-colour check that holds in
+     either mode at 6.3:1. */
+  --primary: #7dbfca;
+  --primary-dark: #37676e;
+  --primary-tint: rgba(125, 191, 202, 0.14);
+  --primary-tint-hover: rgba(125, 191, 202, 0.22);
+  --focus-ring: rgba(125, 191, 202, 0.32);
+  --secondary: #dde2e3;
+  --on-accent: #ffffff;
+
+  --success: #37d489;
+  --success-tint: #123326;
+  --success-text: #37d489;
+
+  --danger: #ff6b5e;
+  --danger-tint: #3a1512;
+
+  --warning: #f0b429;
+  --warning-tint: #33260a;
+  --warning-text: #f0b429;
+  --warning-text-strong: #ffcc4d;
+  --warning-border: #5c431a;
+
+  --info: #5eb0ff;
+  --info-tint: #0e2a4a;
+  --info-text-strong: #8fcaff;
+  --info-border: #1c4569;
+
+  /* A soft grey shadow reads as nothing against a dark surface; depth here
+     comes from a darker, more opaque one. */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --backdrop-bg: rgba(0, 0, 0, 0.7);
+
+  --ms-primary-hover: #96cdd6;
+}

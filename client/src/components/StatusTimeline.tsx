@@ -1,15 +1,8 @@
 import { Link } from 'react-router-dom';
 import { StatusBadge, StatusDot } from './StatusBadge';
 import { skillColorClass } from '../utils/skillColors';
+import { initials } from '../utils/initials';
 import type { EvaluationSummary, StatusHistoryEntry } from '../types';
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
 
 interface Props {
   history: StatusHistoryEntry[];

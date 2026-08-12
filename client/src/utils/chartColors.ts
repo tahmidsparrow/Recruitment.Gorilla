@@ -7,10 +7,22 @@
 
 import { getStatusTone, type StatusTone } from './statusColors';
 
+/**
+ * Reads a design token off :root, resolved for the active theme. Recharts needs
+ * concrete values — it renders to SVG attributes, not CSS — so tokens have to be
+ * computed rather than passed through as var(). Reading them here keeps
+ * styles/tokens.css the only place the colours are written down.
+ */
+function token(name: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 /** Brand single-hue used for single-series magnitude charts (role, skills, trend). */
 export const ACCENT: Record<'light' | 'dark', string> = {
   light: '#468189', // Coastal primary teal
-  dark: '#8fc6cc',
+  dark: '#7bc0c7',
 };
 
 /**
@@ -52,19 +64,18 @@ export interface ChartChrome {
   tooltipText: string;
 }
 
-export const chartChrome = (theme: 'light' | 'dark'): ChartChrome =>
-  theme === 'dark'
-    ? {
-        axis: '#a7c2c4',
-        grid: 'rgba(255, 255, 255, 0.08)',
-        tooltipBg: '#0e2833',
-        tooltipBorder: '#244854',
-        tooltipText: '#e9f1f0',
-      }
-    : {
-        axis: '#31575c',
-        grid: 'rgba(3, 25, 38, 0.08)',
-        tooltipBg: '#ffffff',
-        tooltipBorder: '#dbe4e3',
-        tooltipText: '#031926',
-      };
+/**
+ * `theme` is not read directly — the tokens already resolve per theme via
+ * [data-bs-theme] — but it stays in the signature so callers keep passing it and
+ * React recomputes the chrome when the theme flips.
+ */
+export const chartChrome = (theme: 'light' | 'dark'): ChartChrome => {
+  const dark = theme === 'dark';
+  return {
+    axis: token('--muted', dark ? '#7f9a9e' : '#6b8589'),
+    grid: token('--border', dark ? '#1f4451' : '#e4eae9'),
+    tooltipBg: token('--surface', dark ? '#0e2833' : '#ffffff'),
+    tooltipBorder: token('--border', dark ? '#1f4451' : '#e4eae9'),
+    tooltipText: token('--text', dark ? '#e9f1f0' : '#031926'),
+  };
+};

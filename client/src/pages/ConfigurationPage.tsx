@@ -88,7 +88,7 @@ export default function ConfigurationPage() {
   const { isSuperAdmin } = useAuth();
   return (
     <div>
-      <h2 className="mb-4">Configuration</h2>
+      {/* No <h2> — the topbar owns the page title. */}
       <OptionSection title="Roles applied / Job openings" noun="role" queryKey="roles" api={rolesApi} jobFields />
       <OptionSection title="Skills" noun="skill" queryKey="skills" api={skillsApi} />
       <OptionSection title="Interview Types" noun="interview type" queryKey="interview-types" api={interviewTypesApi} />

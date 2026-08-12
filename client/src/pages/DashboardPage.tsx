@@ -176,9 +176,9 @@ export default function DashboardPage() {
         <Col lg={5}>
           <Card className="h-100">
             <Card.Body>
-              <Card.Title as="h6" className="text-muted mb-3">
+              <div className="metric-label mb-3">
                 Status breakdown
-              </Card.Title>
+              </div>
               <StatusDonutChart data={statusBreakdown} />
             </Card.Body>
           </Card>
@@ -187,9 +187,9 @@ export default function DashboardPage() {
           <Card className="h-100">
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <Card.Title as="h6" className="text-muted mb-0">
+                <div className="metric-label">
                   Applications — last {trendDays} days
-                </Card.Title>
+                </div>
                 <div className="btn-group btn-group-sm" role="group" aria-label="Trend range">
                   {TREND_RANGES.map((d) => (
                     <button
@@ -239,9 +239,9 @@ export default function DashboardPage() {
             <Col lg={6}>
               <Card className="h-100">
                 <Card.Body>
-                  <Card.Title as="h6" className="text-muted mb-3">
+                  <div className="metric-label mb-3">
                     Candidates by role
-                  </Card.Title>
+                  </div>
                   <CountBarChart data={scoped?.byRole ?? []} emptyLabel="No roles recorded yet." />
                 </Card.Body>
               </Card>
@@ -249,9 +249,9 @@ export default function DashboardPage() {
             <Col lg={6}>
               <Card className="h-100">
                 <Card.Body>
-                  <Card.Title as="h6" className="text-muted mb-3">
+                  <div className="metric-label mb-3">
                     Top skills
-                  </Card.Title>
+                  </div>
                   <CountBarChart data={scoped?.topSkills ?? []} emptyLabel="No skills recorded yet." />
                 </Card.Body>
               </Card>
@@ -262,9 +262,9 @@ export default function DashboardPage() {
             <Col lg={6}>
               <Card className="h-100">
                 <Card.Body>
-                  <Card.Title as="h6" className="text-muted mb-3">
+                  <div className="metric-label mb-3">
                     Upcoming interviews
-                  </Card.Title>
+                  </div>
                   {(scoped?.upcomingInterviews ?? []).length === 0 ? (
                     <p className="text-muted mb-0">No interviews scheduled.</p>
                   ) : (
@@ -280,9 +280,9 @@ export default function DashboardPage() {
             <Col lg={6}>
               <Card className="h-100">
                 <Card.Body>
-                  <Card.Title as="h6" className="text-muted mb-3">
+                  <div className="metric-label mb-3">
                     Recent activity
-                  </Card.Title>
+                  </div>
                   {(scoped?.recentActivity ?? []).length === 0 ? (
                     <p className="text-muted mb-0">No recent activity.</p>
                   ) : (
