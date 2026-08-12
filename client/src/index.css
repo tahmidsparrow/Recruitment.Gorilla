@@ -1120,6 +1120,192 @@ a.user-card__name:hover {
   border-bottom-color: var(--primary);
 }
 
+/* ---------- Job opening rows ----------
+   Full-width rows rather than a grid of cards: identity on the left, status and
+   the numbers in fixed columns on the right, so the eye can scan straight down
+   each column instead of hunting around a card.
+
+   Mobile first: the base is a stacked block and the lg block turns it into the
+   row. The breakpoint is 992px, not 768 — five columns of content need the
+   width, and a tablet gets the stacked version. */
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+.job-row:hover {
+  border-color: var(--primary);
+}
+/* Closed or deactivated openings stay listed but recede. */
+.job-row--dim {
+  background: var(--surface-muted);
+}
+.job-row--dim .job-row__name {
+  color: var(--text-soft);
+}
+
+.job-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.job-row__name {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.job-row__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+/* Department as coloured uppercase text. Two classes deep so it wins over the
+   .skill-badge--N background it borrows its hue from. */
+.job-row .dept-tag {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.job-row__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.job-row__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.job-row__gauge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.job-row__gauge-value {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.job-row__closes {
+  min-width: 190px;
+}
+.job-row__meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 3px;
+}
+.job-row__closes-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text);
+}
+.job-row__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.job-row__bar {
+  flex: 1 1 auto;
+  height: 6px;
+  min-width: 80px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.job-row--dim .job-row__bar {
+  background: var(--surface);
+}
+.job-row__bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bar-fill, var(--primary));
+}
+.job-row__pct {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.job-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.job-row__chevron {
+  color: var(--muted-light);
+  flex-shrink: 0;
+}
+.job-row:hover .job-row__chevron {
+  color: var(--primary);
+}
+
+@media (min-width: 992px) {
+  .job-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+  }
+  .job-row__metrics {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 28px;
+  }
+  .job-row__status {
+    width: 150px;
+    flex-shrink: 0;
+  }
+  .job-row__closes {
+    width: 210px;
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-row { transition: none; }
+}
+
 /* ---------- Job opening cards ----------
    A job opening has a title, department, location, priority, recruiters, a
    deadline and a status — that is a profile, not a table row. Ported from

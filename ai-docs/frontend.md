@@ -226,11 +226,19 @@ Each CV file has **Preview** + **Download**. Preview calls `previewCvFile` (auth
 Four tabs rather than four stacked cards, with the active tab in the query
 string (`?tab=skills`) via `useTabs`. Email is Super Admin only and its tab is
 absent, not disabled, for everyone else.
-- **Job openings** — a responsive card grid, not a table. Status comes from
-  `utils/jobStatus.ts`, which collapses `isActive` and `endDate` into one
-  lifecycle value (inactive → closed → closing-soon → open). Rendering those two
-  as independent facts is what previously let a row show "Active" and "Closed"
-  at once; keep them collapsed.
+- **Job openings** — full-width rows (`.job-row`), not a table: identity on the
+  left, then status + a days-left figure, then the closing date with a progress
+  bar through the posting window, then delete and a chevron. The row itself is
+  the edit affordance; the delete button stops propagation. Stacked in the base,
+  becoming a row at `≥992` (five columns of content need the width, so a tablet
+  gets the stacked version).
+  `utils/jobStatus.ts` supplies all three derived values: `jobStatus()` collapses
+  `isActive` and `endDate` into one lifecycle value (inactive → closed →
+  closing-soon → open — rendering those two as independent facts is what
+  previously let a row show "Active" and "Closed" at once, so keep them
+  collapsed), plus `daysUntil()` and `elapsedPercent()`. `elapsedPercent`
+  returns `null` when it can't be computed and the bar is then **omitted** —
+  an unknown must not render as a real answer of 0%.
 - **Skills / Interview types** — one `OptionChipsTab` used twice; coloured pills
   with an inline remove and an add field in the flow of the chips.
 - **Email** — grouped into Server / Credentials / Sender fieldsets.

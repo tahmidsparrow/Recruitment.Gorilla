@@ -44,3 +44,42 @@ export const JOB_STATUS_BADGE: Record<JobStatus, { className: string; label: str
   closed: { className: 'badge-pill badge-danger', label: 'Closed' },
   inactive: { className: 'badge-pill badge-neutral', label: 'Inactive' },
 };
+
+/**
+ * Whole days from now until the deadline. Negative once it has passed, null
+ * when there is no deadline.
+ *
+ * Counted in whole days rather than by 24-hour blocks: a deadline at 09:00
+ * tomorrow is "1 day left" whether you ask at 08:00 or at 23:00 today, which is
+ * how people read a date.
+ */
+export function daysUntil(endDate?: string | null, now: number = Date.now()): number | null {
+  if (!endDate) return null;
+  const end = new Date(endDate).getTime();
+  if (Number.isNaN(end)) return null;
+  const startOfDay = (t: number) => {
+    const d = new Date(t);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  };
+  return Math.round((startOfDay(end) - startOfDay(now)) / 86_400_000);
+}
+
+/**
+ * How far through its posting window an opening is, 0–100.
+ *
+ * Drives the progress bar. Returns null when it can't be computed — no dates,
+ * or an end date at or before the posted date — rather than guessing, so the
+ * bar is omitted instead of showing a fabricated 0%.
+ */
+export function elapsedPercent(
+  createdAt?: string | null,
+  endDate?: string | null,
+  now: number = Date.now(),
+): number | null {
+  if (!createdAt || !endDate) return null;
+  const start = new Date(createdAt).getTime();
+  const end = new Date(endDate).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return null;
+  const pct = ((now - start) / (end - start)) * 100;
+  return Math.max(0, Math.min(100, Math.round(pct)));
+}

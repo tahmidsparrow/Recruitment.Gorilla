@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button, Form, Modal, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Search, Trash2 } from 'lucide-react';
+import { ChevronRight, Search, Trash2 } from 'lucide-react';
 import {
   createRoleOption,
   deleteRoleOption,
@@ -13,17 +13,20 @@ import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
 import { SearchableMultiSelect } from '../../components/SearchableSelect';
 import PageHeader from '../../components/ui/PageHeader';
-import { initials } from '../../utils/initials';
-import { JOB_STATUS_BADGE, jobStatus, type JobStatus } from '../../utils/jobStatus';
+import { skillColorModifier } from '../../utils/skillColors';
+import {
+  JOB_STATUS_BADGE,
+  daysUntil,
+  elapsedPercent,
+  jobStatus,
+  type JobStatus,
+} from '../../utils/jobStatus';
 import type { UpsertOptionPayload } from '../../types';
 import type { Opt } from './types';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const LOCATIONS = ['Remote', 'Office', 'Hybrid', 'Contractual'];
 const DEPARTMENTS = ['Engineering', 'Admin', 'HR'];
-
-/** How many recruiter avatars to show before collapsing the rest into "+N". */
-const AVATARS_SHOWN = 3;
 
 const STATUS_FILTERS: { id: 'all' | JobStatus; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -207,9 +210,9 @@ export default function JobOpeningsTab() {
           </div>
         </div>
       ) : (
-        <div className="job-grid">
+        <div className="job-list">
           {visible.map((o) => (
-            <JobCard
+            <JobRow
               key={o.id}
               job={o}
               canDelete={isSuperAdmin}
@@ -339,7 +342,32 @@ export default function JobOpeningsTab() {
   );
 }
 
-function JobCard({
+/** The bar tracks time, so it takes the colour of the status it is tracking. */
+const BAR_FILL: Record<JobStatus, string> = {
+  open: 'var(--primary)',
+  'closing-soon': 'var(--warning)',
+  closed: 'var(--danger)',
+  inactive: 'var(--muted-light)',
+};
+
+/** "Days left" for the numeric slot: a bare number needs a word to be a fact. */
+function daysLeftLabel(status: JobStatus, days: number | null): { label: string; value: string } {
+  if (status === 'inactive') return { label: 'Status', value: 'Off' };
+  if (days === null) return { label: 'Closes', value: 'No date' };
+  if (days < 0) return { label: 'Closed', value: `${Math.abs(days)}d ago` };
+  if (days === 0) return { label: 'Closes', value: 'Today' };
+  return { label: 'Days left', value: String(days) };
+}
+
+/**
+ * One opening as a full-width row: identity, status, a days-left figure, and
+ * progress through the posting window.
+ *
+ * The whole row opens the edit dialog, so it is a <button>; the delete control
+ * inside it stops propagation rather than nesting an interactive element in
+ * another one.
+ */
+function JobRow({
   job,
   canDelete,
   onEdit,
@@ -353,63 +381,95 @@ function JobCard({
   const status = jobStatus(job);
   const badge = JOB_STATUS_BADGE[status];
   const recruiters = job.recruiters ?? [];
-  const shown = recruiters.slice(0, AVATARS_SHOWN);
-  const overflow = recruiters.length - shown.length;
   const prio = priorityClass(job.priority);
+  const days = daysUntil(job.endDate);
+  const gauge = daysLeftLabel(status, days);
+  const pct = elapsedPercent(job.createdAt, job.endDate);
+  const dim = status === 'closed' || status === 'inactive';
 
   return (
-    <article className={`job-card${status === 'closed' || status === 'inactive' ? ' job-card--dim' : ''}`}>
-      <div className="job-card__header">
-        <span className="cat-chip">{job.department ?? 'Unassigned'}</span>
-        <span className={badge.className}>{badge.label}</span>
-      </div>
-
-      <div className="job-card__body">
-        <div className="job-card__name">{job.name}</div>
-        <div className="job-card__sub">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onEdit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit();
+        }
+      }}
+      aria-label={`Edit ${job.name}`}
+      className={`job-row${dim ? ' job-row--dim' : ''}`}
+    >
+      <div className="job-row__main">
+        <div className="job-row__name">{job.name}</div>
+        <div className="job-row__meta">
+          <span className={`dept-tag ${skillColorModifier(job.department ?? 'Unassigned')}`}>
+            {job.department ?? 'Unassigned'}
+          </span>
+          <span aria-hidden="true">·</span>
           <span className="job-card__id">{jobId(job.id)}</span>
           <span aria-hidden="true">·</span>
           <span>{job.location ?? 'Location not set'}</span>
+          <span aria-hidden="true">·</span>
+          <span title={recruiters.map((r) => r.name).join(', ') || undefined}>
+            {recruiters.length === 0
+              ? 'No recruiters'
+              : `${recruiters.length} recruiter${recruiters.length === 1 ? '' : 's'}`}
+          </span>
           {prio && <span className={`priority-badge ${prio}`}>{job.priority}</span>}
         </div>
       </div>
 
-      <div className="job-card__footer">
-        <div>
-          <span className="job-card__meta-label">Recruiters</span>
-          {recruiters.length === 0 ? (
-            <span className="table-muted">Unassigned</span>
-          ) : (
-            <span className="avatar-stack" title={recruiters.map((r) => r.name).join(', ')}>
-              {shown.map((r) => (
-                <span key={r.userId} className="avatar avatar--sm" aria-hidden="true">
-                  {initials(r.name) || '?'}
-                </span>
-              ))}
-              {overflow > 0 && (
-                <span className="avatar avatar--sm avatar--more" aria-hidden="true">+{overflow}</span>
-              )}
-              <span className="visually-hidden">{recruiters.map((r) => r.name).join(', ')}</span>
-            </span>
-          )}
+      <div className="job-row__metrics">
+        <div className="job-row__status">
+          <span className={badge.className}>{badge.label}</span>
+          <span className="job-row__gauge">
+            {gauge.label}
+            <span className="job-row__gauge-value">{gauge.value}</span>
+          </span>
         </div>
 
-        <div>
-          <span className="job-card__meta-label">{status === 'closed' ? 'Closed' : 'Closes'}</span>
-          <span className="job-card__meta-value">{formatDate(job.endDate)}</span>
-        </div>
-
-        <div className="job-card__actions">
-          <Button size="sm" variant="outline-secondary" onClick={onEdit} title="Edit" aria-label={`Edit ${job.name}`}>
-            <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
-          </Button>
-          {canDelete && (
-            <Button size="sm" variant="outline-danger" onClick={onDelete} title="Delete" aria-label={`Delete ${job.name}`}>
-              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-            </Button>
+        <div className="job-row__closes">
+          <span className="job-row__meta-label">{status === 'closed' ? 'Closed' : 'Closes'}</span>
+          <span className="job-row__closes-value">{formatDate(job.endDate)}</span>
+          {/* Omitted rather than drawn empty when the window can't be computed —
+              "unknown" and "0%" must not look the same. */}
+          {pct !== null && (
+            <div className="job-row__bar-row">
+              <span
+                className="job-row__bar"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Posting window elapsed"
+              >
+                <i style={{ width: `${pct}%`, ['--bar-fill' as string]: BAR_FILL[status] }} />
+              </span>
+              <span className="job-row__pct">{pct}%</span>
+            </div>
           )}
         </div>
       </div>
-    </article>
+
+      <div className="job-row__actions">
+        {canDelete && (
+          <Button
+            size="sm"
+            variant="outline-danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            title="Delete"
+            aria-label={`Delete ${job.name}`}
+          >
+            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+          </Button>
+        )}
+        <ChevronRight size={18} strokeWidth={1.75} aria-hidden="true" className="job-row__chevron" />
+      </div>
+    </div>
   );
 }
