@@ -1,9 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
+import { Button, Form, InputGroup, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
+import Pagination from '../components/ui/Pagination';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 
@@ -44,26 +49,28 @@ export default function CandidatesPage() {
     setSearch(searchInput.trim());
   };
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
-
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Candidates</h2>
-        {canWriteCandidates && (
-          <Link to="/upload" className="btn btn-primary">
-            Upload CVs
-          </Link>
-        )}
-      </div>
+      {/* No <h2> — the topbar owns the page title. */}
+      <PageHeader
+        actions={
+          canWriteCandidates && (
+            <Link to="/upload" className="btn btn-primary">
+              Upload CVs
+            </Link>
+          )
+        }
+      />
 
-      <div className="d-flex flex-wrap gap-2 mb-3">
-        <Form onSubmit={applySearch} className="flex-grow-1" style={{ maxWidth: 420 }}>
+      <div className="data-toolbar">
+        <Form onSubmit={applySearch} className="flex-grow-1" style={{ minWidth: 200, maxWidth: 420 }}>
           <InputGroup>
             <Form.Control
+              type="search"
               placeholder="Search by name or email"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Search candidates"
             />
             <Button type="submit" variant="outline-secondary">
               Search
@@ -72,7 +79,7 @@ export default function CandidatesPage() {
         </Form>
         <Form.Select
           aria-label="Filter by status"
-          style={{ maxWidth: 220 }}
+          style={{ minWidth: 160, maxWidth: 220 }}
           value={status}
           onChange={(e) => {
             setPage(1);
@@ -91,108 +98,92 @@ export default function CandidatesPage() {
       {isLoading ? (
         <Spinner animation="border" />
       ) : isError ? (
-        <p className="text-danger">Failed to load candidates.</p>
+        <EmptyState
+          title="Couldn't load candidates"
+          description="The request failed. Refresh to try again."
+        />
       ) : !data || data.items.length === 0 ? (
-        <p className="text-muted">No candidates found.</p>
+        <EmptyState
+          title={search || status ? 'No candidates match these filters' : 'No candidates yet'}
+          description={
+            search || status
+              ? 'Try a different status or clear the search.'
+              : 'Upload some CVs to get started.'
+          }
+        />
       ) : (
         <>
-          <Table hover responsive className="align-middle">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th className="d-none d-lg-table-cell">Email</th>
-                <th className="d-none d-md-table-cell">Title</th>
-                <th>Status</th>
-                <th className="d-none d-md-table-cell">Added</th>
-                {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters) — hide it below Admin. */}
-                {isAdminOrAbove && <th className="text-end">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link to={`/candidates/${c.id}`}>{c.fullName}</Link>
-                    {/* Email is hidden as its own column on small screens — show it here instead */}
-                    <div className="text-muted small d-lg-none text-break">{c.email}</div>
-                  </td>
-                  <td className="d-none d-lg-table-cell text-break">{c.email}</td>
-                  <td className="d-none d-md-table-cell">{c.currentTitle ?? '—'}</td>
-                  <td>
-                    <StatusBadge status={c.currentStatus} />
-                  </td>
-                  <td className="d-none d-md-table-cell text-nowrap">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </td>
-                  {isAdminOrAbove && (
-                    <td className="text-end">
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => setToDelete(c)}
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  )}
+          {/* .table-cards reflows each row into a labelled card below md, so no
+              column is hidden on small screens — see index.css. */}
+          <div className="table-wrap">
+            <Table hover className="table-cards align-middle">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Added</th>
+                  {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
+                  {isAdminOrAbove && <th className="col-right">Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-
-          <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
-            <span className="text-muted small">{data.totalCount} candidate(s)</span>
-            <div className="d-flex align-items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline-secondary"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <span className="small">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                size="sm"
-                variant="outline-secondary"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
+              </thead>
+              <tbody>
+                {data.items.map((c) => (
+                  <tr key={c.id}>
+                    <td data-label="Name">
+                      <Link to={`/candidates/${c.id}`} className="table-link">
+                        {c.fullName}
+                      </Link>
+                    </td>
+                    <td data-label="Email" className="text-break">{c.email}</td>
+                    <td data-label="Title">{c.currentTitle ?? '—'}</td>
+                    <td data-label="Status">
+                      <StatusBadge status={c.currentStatus} />
+                    </td>
+                    <td data-label="Added" className="text-nowrap">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </td>
+                    {isAdminOrAbove && (
+                      <td className="col-actions">
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() => setToDelete(c)}
+                          aria-label={`Delete ${c.fullName}`}
+                        >
+                          <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+                          <span className="ms-1">Delete</span>
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </div>
+
+          <Pagination
+            page={page}
+            pageSize={data.pageSize}
+            totalCount={data.totalCount}
+            onPageChange={setPage}
+            noun="candidate"
+          />
         </>
       )}
 
-      <Modal show={toDelete !== null} onHide={() => setToDelete(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete candidate</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s)
-          and full status history? This cannot be undone.
-          {deleteMutation.isError && (
-            <Alert variant="danger" className="mt-3 mb-0">
-              Delete failed. Please try again.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setToDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}
-          >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={toDelete !== null}
+        title="Delete candidate"
+        pending={deleteMutation.isPending}
+        error={deleteMutation.isError ? 'Delete failed. Please try again.' : undefined}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => toDelete && deleteMutation.mutate(toDelete.id)}
+      >
+        Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s) and
+        full status history? This cannot be undone.
+      </ConfirmModal>
     </div>
   );
 }

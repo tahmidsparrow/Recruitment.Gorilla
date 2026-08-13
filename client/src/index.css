@@ -1,83 +1,93 @@
 /* ============================================================
-   Coastal theme (shared with GorillaHR)
-   Teal (#468189) + deep-navy ink + cool neutrals + Segoe UI.
-   The whole UI derives from the --ms-* brand/neutral tokens below,
-   mapped onto Bootstrap's --bs-* variables.
+   Application styles.
+
+   Colours, scales and geometry come from ./styles/tokens.css — the Prism
+   (Ajentica Pulse) token layer. Nothing below should introduce a literal
+   colour; reference a token instead.
+
+   This file has three parts:
+     1. Bootstrap bridge — maps the tokens onto --bs-* so every existing
+        react-bootstrap component inherits the design with no JSX change.
+     2. Prism semantic layer — .pulse-card, .table-wrap, .badge-*, .field,
+        .empty-state and friends, ported from Prism's globals.css. Pages
+        migrate onto these.
+     3. App-specific components — status/KPI/evaluation/profile styling that
+        predates the port and has no Prism equivalent.
+   ============================================================ */
+@import './styles/tokens.css';
+
+/* ============================================================
+   1. Bootstrap bridge
    ============================================================ */
 :root {
-  /* Brand — Coastal teal */
-  --ms-primary: #468189;
-  --ms-primary-hover: #3b7379;
-  --ms-primary-pressed: #37676e;
-  --ms-primary-tint: #dcebe8;
-  --ms-primary-tint-2: #c7dfda;
-
-  /* Neutrals (coastal cool) */
-  --ms-bg: #f8f9fa;
-  --ms-surface: #ffffff;
-  --ms-neutral-light: #f4f8f8;
-  --ms-neutral: #eaf1f0;
-  --ms-border: #dbe4e3;
-  --ms-text: #031926;
-  --ms-text-secondary: #31575c;
-
-  /* Depth */
-  --ms-shadow-4: 0 1.6px 3.6px rgba(3, 25, 38, 0.08), 0 0.3px 0.9px rgba(3, 25, 38, 0.06);
-  --ms-shadow-8: 0 3.2px 7.2px rgba(3, 25, 38, 0.1), 0 0.6px 1.8px rgba(3, 25, 38, 0.07);
-
-  /* Map onto Bootstrap's CSS variables */
-  --bs-primary: var(--ms-primary);
+  --bs-primary: var(--primary);
   --bs-primary-rgb: 70, 129, 137;
-  --bs-primary-text-emphasis: var(--ms-primary-pressed);
-  --bs-primary-bg-subtle: var(--ms-primary-tint);
-  --bs-primary-border-subtle: var(--ms-primary-tint-2);
-  --bs-link-color: var(--ms-primary);
+  --bs-primary-text-emphasis: var(--primary-dark);
+  --bs-primary-bg-subtle: var(--primary-tint);
+  --bs-primary-border-subtle: var(--primary-tint-hover);
+  --bs-link-color: var(--primary);
   --bs-link-color-rgb: 70, 129, 137;
-  --bs-link-hover-color: var(--ms-primary-hover);
-  --bs-body-bg: var(--ms-bg);
-  --bs-body-color: var(--ms-text);
-  --bs-border-color: var(--ms-border);
-  --bs-body-font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system,
-    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", sans-serif;
+  --bs-link-hover-color: var(--primary-dark);
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-secondary-color: var(--muted);
+  --bs-body-font-family: var(--font-body);
+  /* Prism's 14px base. Set here rather than on <html> so Bootstrap's rem-based
+     spacing scale keeps its 16px root and only type shrinks. */
+  --bs-body-font-size: 0.875rem;
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
 }
 
-/* ===== Dark theme tokens =====
-   The :root --bs-* mappings reference --ms-*, so flipping the --ms-* neutrals
-   here cascades to every component (navbar, cards, tables, forms, modals,
-   login, searchable menus, badges). Activated by data-bs-theme="dark" on <html>. */
 [data-bs-theme='dark'] {
-  /* Coastal, adjusted for dark: brighter teal on a deep teal-navy ground */
-  --ms-primary: #5aa0a8;
-  --ms-primary-hover: #6bb0b7;
-  --ms-primary-pressed: #8fc6cc;
-  --ms-primary-tint: rgba(70, 129, 137, 0.24);
-  --ms-primary-tint-2: rgba(70, 129, 137, 0.4);
+  --bs-primary-rgb: 123, 192, 199;
+  --bs-primary-text-emphasis: var(--primary);
+  --bs-link-color: var(--primary);
+  --bs-link-color-rgb: 123, 192, 199;
+  --bs-link-hover-color: #a3d5da;
+}
 
-  --ms-bg: #071a23;
-  --ms-surface: #0e2833;
-  --ms-neutral-light: #143440;
-  --ms-neutral: #1a3d4a;
-  --ms-border: #244854;
-  --ms-text: #e9f1f0;
-  --ms-text-secondary: #a7c2c4;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-  --ms-shadow-4: 0 1.6px 3.6px rgba(0, 0, 0, 0.4), 0 0.3px 0.9px rgba(0, 0, 0, 0.3);
-  --ms-shadow-8: 0 3.2px 7.2px rgba(0, 0, 0, 0.5), 0 0.6px 1.8px rgba(0, 0, 0, 0.35);
-
-  /* Bootstrap emphasis/link tokens that aren't auto-derived from --ms-* */
-  --bs-primary-rgb: 90, 160, 168;
-  --bs-primary-text-emphasis: var(--ms-primary-pressed);
-  --bs-link-color: var(--ms-primary-pressed);
-  --bs-link-color-rgb: 143, 198, 204;
-  --bs-link-hover-color: #a9d4d9;
+/* Thin, token-coloured scrollbars — one of Prism's quieter signatures. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  background-clip: content-box;
 }
 
 body {
   margin: 0;
-  background-color: var(--ms-bg);
-  color: var(--ms-text);
-  font-family: var(--bs-body-font-family);
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
 }
 
 #root {
@@ -85,9 +95,13 @@ body {
 }
 
 h1, h2, h3, h4, h5 {
-  font-weight: 600;
-  color: var(--ms-text);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--secondary);
 }
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
 
 a {
   text-decoration: none;
@@ -96,177 +110,1524 @@ a:hover {
   text-decoration: underline;
 }
 
-/* ===== App bar ===== */
-.app-navbar {
-  background: var(--ms-surface);
-  border-bottom: 1px solid var(--ms-border);
-  box-shadow: var(--ms-shadow-4);
-  padding: 0.35rem 0;
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
-.app-navbar .navbar-brand {
+
+/* ============================================================
+   App shell — collapsible sidebar + sticky topbar.
+   Ported from Prism's .sidebar / .nav-item / .topbar blocks.
+   ============================================================ */
+
+.app-layout {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* ---------- Sidebar ----------
+   Mobile first: the base rules below describe the PHONE — an off-canvas drawer
+   that slides over the content. The `min-width: 768px` block near the bottom of
+   this section is what turns it into the in-flow, collapsible rail. Read the
+   base as "what a small screen gets", never as "the desktop case with
+   exceptions". */
+.app-sidebar {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 1040;
+  width: min(280px, 85vw);
+  flex-basis: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    width 240ms ease,
+    flex-basis 240ms ease,
+    opacity 240ms ease,
+    transform 240ms ease,
+    border-color 240ms ease;
+}
+/* A drawer has nothing to collapse to — the icon rail is a desktop idea. */
+.app-sidebar--collapsed {
+  width: min(280px, 85vw);
+}
+.app-sidebar--hidden {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-sidebar__head {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
-  font-size: 1.05rem;
-  color: var(--ms-text);
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 12px 10px;
 }
-.app-navbar .navbar-brand:hover {
+.app-sidebar--collapsed .app-sidebar__head {
+  justify-content: center;
+}
+.app-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--secondary);
+}
+.app-sidebar__brand:hover {
   text-decoration: none;
 }
+.app-sidebar__brand-name {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-/* Brand logo */
 .app-logo-img {
-  height: 38px;
+  height: 32px;
   width: auto;
   display: block;
+  flex-shrink: 0;
 }
 
-.app-navbar .nav-link {
-  color: var(--ms-text-secondary);
-  font-weight: 600;
-  padding: 0.5rem 0.95rem;
+/* The collapsed logo doubles as the expand trigger: the mark fades out on
+   hover and an arrow fades in behind it. */
+.app-sidebar__expand {
   position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
 }
-.app-navbar .nav-link:hover {
-  color: var(--ms-text);
+.app-sidebar__expand .app-logo-img {
+  height: 28px;
+  transition: opacity 150ms ease;
 }
-.app-navbar .nav-link.active {
-  color: var(--ms-primary);
+.app-sidebar__expand:hover .app-logo-img {
+  opacity: 0;
 }
-.app-navbar .nav-link.active::after {
-  content: "";
+.app-sidebar__expand-icon {
   position: absolute;
-  left: 0.95rem;
-  right: 0.95rem;
-  bottom: 0;
-  height: 2px;
-  background: var(--ms-primary);
-  border-radius: 2px;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.app-sidebar__expand:hover .app-sidebar__expand-icon {
+  opacity: 1;
 }
 
-/* ===== Buttons (Bootstrap 5.3 component vars) ===== */
-.btn {
-  border-radius: 4px;
+/* 44px is the base because that is the touch target a finger needs; the
+   min-width:768px block at the end of this section tightens the pointer-driven
+   sizes back to Prism's compact scale. */
+.app-sidebar__icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.app-sidebar__icon-btn:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.app-sidebar__nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 10px;
+}
+.app-sidebar__foot {
+  flex-shrink: 0;
+  padding: 6px 10px 12px;
+}
+.app-sidebar__divider {
+  height: 1px;
+  width: 90%;
+  margin: 8px auto;
+  background: var(--border);
+}
+
+/* ---------- Nav items ---------- */
+.nav-item-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 10px;
+  margin: 2px 0;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
   font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.nav-item-link:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+  text-decoration: none;
+}
+.nav-item-link.active {
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+.app-sidebar--collapsed .nav-item-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+.nav-item-link > svg {
+  flex-shrink: 0;
+}
+
+/* ---------- User account card ---------- */
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  transition: background-color 150ms ease;
+}
+.user-card:hover {
+  background: var(--surface);
+}
+.app-sidebar--collapsed .user-card {
+  justify-content: center;
+  padding: 6px;
+  border-color: transparent;
+  background: transparent;
+}
+.user-card__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.user-card__avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--primary-dark);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+.user-card__presence {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--success);
+  box-shadow: 0 0 0 2px var(--surface-muted);
+}
+.user-card__details {
+  flex: 1;
+  min-width: 0;
+}
+.user-card__name {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+a.user-card__name:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+.user-card__email {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-card__logout {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.user-card__logout:hover {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+/* ---------- Main column + topbar ---------- */
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  min-height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.app-topbar__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.app-topbar__title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.app-topbar__icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.app-topbar__title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text);
+}
+.app-topbar__description {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.app-topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Scrim behind the mobile drawer. Desktop has no drawer, so it has no scrim. */
+.app-sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1030;
+  border: 0;
+  padding: 0;
+  background: var(--backdrop-bg);
+}
+
+/* ---------- md and up: the drawer becomes an in-flow rail ---------- */
+@media (min-width: 768px) {
+  .app-sidebar {
+    position: sticky;
+    inset-block: auto;
+    top: 0;
+    height: 100dvh;
+    width: var(--sidebar-width);
+    flex: 0 0 var(--sidebar-width);
+    z-index: auto;
+  }
+  .app-sidebar--collapsed {
+    width: var(--sidebar-width-collapsed);
+    flex-basis: var(--sidebar-width-collapsed);
+  }
+  /* Here "hidden" means gone entirely rather than slid off-screen. */
+  .app-sidebar--hidden {
+    width: 0;
+    flex-basis: 0;
+    transform: translateX(-12px);
+    border-right-color: transparent;
+  }
+  .app-sidebar-scrim {
+    display: none;
+  }
+  .app-topbar {
+    padding-inline: var(--space-page);
+  }
+  /* Pointer input doesn't need finger-sized targets — tighten to Prism's scale. */
+  .app-sidebar__icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .user-card__logout {
+    width: 28px;
+    height: 28px;
+  }
+  .nav-item-link {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .nav-item-link,
+  .user-card,
+  .user-card__logout,
+  .app-sidebar__icon-btn,
+  .app-sidebar__expand .app-logo-img,
+  .app-sidebar__expand-icon {
+    transition: none;
+  }
+}
+
+/* ===== Buttons (Bootstrap 5.3 component vars) =====
+   Prism's .primary-button / .secondary-button geometry: 38px tall, --radius-md,
+   semibold. Primary fills with --primary-dark (not --primary) because it carries
+   white text — the darker shade is the one validated for that in both modes. */
+.btn {
+  --bs-btn-border-radius: var(--radius-md);
+  --bs-btn-font-size: var(--text-md);
+  min-height: 38px;
+  font-weight: 600;
+}
+.btn-sm {
+  --bs-btn-border-radius: var(--radius-sm);
+  --bs-btn-font-size: var(--text-sm);
+  min-height: 32px;
 }
 .btn-primary {
-  --bs-btn-bg: var(--ms-primary);
-  --bs-btn-border-color: var(--ms-primary);
-  --bs-btn-hover-bg: var(--ms-primary-hover);
-  --bs-btn-hover-border-color: var(--ms-primary-hover);
-  --bs-btn-active-bg: var(--ms-primary-pressed);
-  --bs-btn-active-border-color: var(--ms-primary-pressed);
-  --bs-btn-disabled-bg: var(--ms-primary);
-  --bs-btn-disabled-border-color: var(--ms-primary);
+  --bs-btn-bg: var(--primary-dark);
+  --bs-btn-border-color: var(--primary-dark);
+  --bs-btn-color: var(--on-accent);
+  --bs-btn-hover-bg: var(--primary);
+  --bs-btn-hover-border-color: var(--primary);
+  --bs-btn-hover-color: var(--on-accent);
+  --bs-btn-active-bg: var(--primary-dark);
+  --bs-btn-active-border-color: var(--primary-dark);
+  --bs-btn-disabled-bg: var(--primary-dark);
+  --bs-btn-disabled-border-color: var(--primary-dark);
 }
 .btn-outline-primary {
-  --bs-btn-color: var(--ms-primary);
-  --bs-btn-border-color: var(--ms-primary);
-  --bs-btn-hover-bg: var(--ms-primary);
-  --bs-btn-hover-border-color: var(--ms-primary);
-  --bs-btn-active-bg: var(--ms-primary-pressed);
-  --bs-btn-active-border-color: var(--ms-primary-pressed);
+  --bs-btn-color: var(--primary);
+  --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary-dark);
+  --bs-btn-hover-border-color: var(--primary-dark);
+  --bs-btn-hover-color: var(--on-accent);
+  --bs-btn-active-bg: var(--primary-dark);
+  --bs-btn-active-border-color: var(--primary-dark);
 }
 .btn-outline-secondary {
-  --bs-btn-color: var(--ms-text-secondary);
-  --bs-btn-border-color: var(--ms-border);
-  --bs-btn-hover-bg: var(--ms-neutral-light);
-  --bs-btn-hover-color: var(--ms-text);
-  --bs-btn-hover-border-color: var(--ms-border);
-  --bs-btn-active-bg: var(--ms-neutral);
-  --bs-btn-active-color: var(--ms-text);
-  --bs-btn-active-border-color: var(--ms-border);
+  --bs-btn-color: var(--text-soft);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-bg: var(--surface);
+  --bs-btn-hover-bg: var(--surface-muted);
+  --bs-btn-hover-color: var(--text);
+  --bs-btn-hover-border-color: var(--border-strong);
+  --bs-btn-active-bg: var(--surface-muted);
+  --bs-btn-active-color: var(--text);
+  --bs-btn-active-border-color: var(--border-strong);
 }
 
-/* ===== Cards ===== */
+/* ===== Cards =====
+   Prism's .pulse-card geometry: flat, border-led, no shadow. The hover accent
+   is opt-in via .card-interactive so static cards don't react to the pointer. */
 .card {
-  border: 1px solid var(--ms-border);
-  border-radius: 8px;
-  box-shadow: var(--ms-shadow-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+  transition: border-color 0.15s ease;
+}
+.card-interactive {
+  cursor: pointer;
+}
+.card-interactive:hover {
+  border-color: var(--primary);
 }
 .card-header {
-  background: var(--ms-surface);
-  border-bottom: 1px solid var(--ms-neutral);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   font-weight: 600;
-  color: var(--ms-text);
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  color: var(--text);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  padding: 0.85rem 1rem;
 }
 
-/* ===== Tables ===== */
+/* ===== Tables =====
+   Uppercase, muted, small-caps headers on --surface-muted — Prism's strongest
+   table signature. See also .table-wrap in the semantic layer below. */
 .table {
-  --bs-table-hover-bg: var(--ms-neutral-light);
+  --bs-table-hover-bg: var(--surface-muted);
+  --bs-table-bg: var(--surface);
+  font-size: var(--text-md);
+  margin-bottom: 0;
 }
 .table > thead th {
-  background: var(--ms-neutral-light);
-  color: var(--ms-text-secondary);
+  background: var(--surface-muted);
+  color: var(--muted);
   font-weight: 600;
-  border-bottom: 1px solid var(--ms-border);
-  padding-top: 0.7rem;
-  padding-bottom: 0.7rem;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+}
+.table > tbody td {
+  padding: 10px 12px;
+  border-bottom-color: var(--border);
 }
 
 /* ===== Forms ===== */
 .form-control,
 .form-select {
-  border-radius: 4px;
-  border-color: var(--ms-border);
+  padding: 9px 11px;
+  border-radius: var(--radius-md);
+  border-color: var(--border-strong);
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: var(--text-md);
 }
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--ms-primary);
-  box-shadow: 0 0 0 1px var(--ms-primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.form-control-sm,
+.form-select-sm {
+  padding: 6px 9px;
+  font-size: var(--text-sm);
 }
 .form-label {
   font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--ms-text-secondary);
-  margin-bottom: 0.25rem;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+  margin-bottom: 0.35rem;
 }
 .required-star {
-  color: var(--bs-danger);
+  color: var(--danger);
   margin-left: 0.15em;
 }
 .form-control.is-invalid:focus,
 .form-select.is-invalid:focus {
-  box-shadow: 0 0 0 1px var(--bs-danger);
+  box-shadow: 0 0 0 3px rgba(var(--bs-danger-rgb), 0.18);
 }
 
 /* ===== Status badge (candidates list) ===== */
 .badge.bg-info {
-  background-color: var(--ms-primary-tint) !important;
-  color: var(--ms-primary-pressed) !important;
+  background-color: var(--primary-tint) !important;
+  color: var(--primary) !important;
   font-weight: 600;
 }
 
 /* ===== Modal ===== */
 .modal-content {
-  border: none;
-  border-radius: 8px;
-  box-shadow: var(--ms-shadow-8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+.modal-header,
+.modal-footer {
+  border-color: var(--border);
+}
+.modal-backdrop.show {
+  opacity: 1;
+  background: var(--backdrop-bg);
 }
 
-/* ===== Login ===== */
-.login-shell {
-  min-height: 100vh;
+/* ============================================================
+   2. Prism semantic layer
+
+   Ported from Prism's styles/globals.css. Pages migrate onto these classes
+   instead of stacking Bootstrap utilities; each one is the same shape and
+   naming as its Prism counterpart so the two products stay comparable.
+   ============================================================ */
+
+/* ---------- Page container ----------
+   `width: 100%` and `margin-inline` rather than a bare `margin: auto`: this is
+   a flex item of .app-main (a column flex container), and per CSS Flexbox §9.6
+   an item with auto cross-axis margins is *not* stretched. A plain
+   `margin: auto` therefore collapsed the page to fit-content — the width of
+   whatever the widest row happened to be — and centred it, leaving dead space
+   either side. The vertical half of that shorthand also centred the page in
+   the column. Prism's .content can use `margin: auto` because its parent is a
+   plain block, not a flex container. */
+.rg-content {
+  width: 100%;
+  max-width: 1536px;
+  margin-inline: auto;
+  /* Mobile first: the tightest padding is the base, and it loosens upward. */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 576px) {
+  .rg-content { padding: 16px; gap: 16px; }
+}
+@media (min-width: 768px) {
+  .rg-content { padding: var(--space-page); }
+}
+
+/* ---------- Page header ---------- */
+.page-eyebrow {
+  display: block;
+  color: var(--primary);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-header h1,
+.page-header h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  color: var(--secondary);
+}
+.page-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  max-width: 760px;
+}
+.page-header__actions {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Cards ---------- */
+.pulse-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: none;
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+.pulse-card-interactive {
+  cursor: pointer;
+}
+.pulse-card-interactive:hover {
+  border-color: var(--primary);
+}
+
+/* ---------- Metric card ---------- */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+.metric-label {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.metric-value {
+  margin-top: 4px;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+.metric-value small {
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--muted);
+}
+.metric-detail {
+  margin-top: 8px;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+}
+
+/* ---------- Tables ---------- */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.table-wrap > .table {
+  border: none;
+  margin-bottom: 0;
+}
+.table-wrap > .table > tbody > tr:last-child > td {
+  border-bottom: none;
+}
+/* A cell value that navigates. The underline is the affordance — the global
+   `a` rule strips it, which would leave a link reading as ordinary text. */
+.table-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.table-link:hover {
+  color: var(--primary-dark);
+  text-decoration-thickness: 2px;
+}
+.table-clickable tbody tr {
+  cursor: pointer;
+}
+.table-muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.col-right {
+  text-align: right;
+}
+.col-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+/* ---------- Tables that become cards on small screens ----------
+   Add `.table-cards` to a table and `data-label` to each <td>. The base rules
+   stack every row into a card with its column name as the label; the
+   min-width:768px block restores real table layout.
+
+   This reflows one DOM rather than rendering a table and a card list side by
+   side behind d-none. Duplicated markup would mean duplicated links, and a
+   selector like `a[href^="/candidates/"]` would then be able to resolve to the
+   hidden copy. It also means a column can never be silently dropped on mobile
+   the way `d-none d-md-table-cell` does — every cell is still shown, labelled. */
+.table-cards,
+.table-cards tbody,
+.table-cards tr,
+.table-cards td {
+  display: block;
+}
+.table-cards thead {
+  display: none;
+}
+.table-cards tr {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.table-cards td {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border: 0;
+  text-align: right;
+}
+.table-cards td::before {
+  content: attr(data-label);
+  flex: 0 0 auto;
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+/* The first cell is the record's identity, so it reads as a heading rather
+   than as another labelled field. */
+.table-cards td:first-child {
+  display: block;
+  text-align: left;
+  font-size: var(--text-md);
+  font-weight: 600;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.table-cards td:first-child::before {
+  content: none;
+}
+/* Actions go full width at the foot of the card, where a thumb can reach. */
+.table-cards td.col-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.table-cards td.col-actions::before {
+  content: none;
+}
+/* A card is its own container, so the wrapper must not add a second border. */
+.table-wrap:has(> .table-cards) {
+  border: 0;
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .table-cards { display: table; }
+  .table-cards thead { display: table-header-group; }
+  .table-cards tbody { display: table-row-group; }
+  .table-cards tr {
+    display: table-row;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+  .table-cards td,
+  .table-cards td:first-child,
+  .table-cards td.col-actions {
+    display: table-cell;
+    text-align: left;
+    font-size: inherit;
+    font-weight: inherit;
+    padding: 10px 12px;
+    margin: 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-cards td.col-actions { text-align: right; }
+  .table-cards td::before { content: none; }
+  .table-wrap:has(> .table-cards) {
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+}
+
+/* ---------- Badges ----------
+   Status is never conveyed by colour alone; each carries a leading glyph. */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+.badge-pill::before {
+  font-size: 9px;
+}
+.badge-success { background: var(--success-tint); color: var(--success-text); }
+.badge-success::before { content: "\25CF"; }
+.badge-warning { background: var(--warning-tint); color: var(--warning-text); }
+.badge-warning::before { content: "\25B2"; }
+.badge-info { background: var(--info-tint); color: var(--info); }
+.badge-info::before { content: "\25C6"; }
+.badge-danger { background: var(--danger-tint); color: var(--danger); }
+.badge-danger::before { content: "\25A0"; }
+.badge-neutral { background: var(--surface-muted); color: var(--text-soft); }
+.badge-neutral::before { content: "\25CB"; }
+
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Avatars ---------- */
+.who-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  background: var(--primary-tint);
+  color: var(--primary);
+}
+.who-name {
+  font-weight: 600;
+}
+
+/* ---------- States ---------- */
+.empty-state {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  text-align: center;
+  background: var(--surface-muted);
+}
+.empty-state-title {
+  color: var(--text);
+  font-weight: 700;
+}
+.empty-state-description {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* Soft status notices. Suffixed -soft so they don't collide with Bootstrap's
+   own .alert-success / .alert-warning, which are still used elsewhere. */
+.alert-success-soft,
+.alert-warning-soft,
+.alert-info-soft {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+.alert-success-soft {
+  background: var(--success-tint);
+  color: var(--success-text);
+  border: 1px solid var(--success-tint);
+}
+.alert-warning-soft {
+  background: var(--warning-tint);
+  color: var(--warning-text-strong);
+  border: 1px solid var(--warning-border);
+}
+.alert-info-soft {
+  background: var(--info-tint);
+  color: var(--info-text-strong);
+  border: 1px solid var(--info-border);
+}
+
+/* The CV drop zone is an .empty-state that accepts a drop. */
+.dropzone {
+  padding: 32px 22px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.dropzone--active {
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--primary-tint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dropzone { transition: none; }
+}
+
+/* ---------- Toolbars ---------- */
+.data-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.result-count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+/* ---------- Underline tabs ----------
+   Scrolls rather than wraps: a wrapped strip changes height as tabs move
+   between rows, which shifts the content under it on every resize. */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+.admin-tabs button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+@media (min-width: 768px) {
+  .admin-tabs button { min-height: 38px; }
+}
+.admin-tabs button {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 4px 16px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-soft);
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.admin-tabs button:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.admin-tabs button.active {
+  background: transparent;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ---------- Job opening rows ----------
+   Full-width rows rather than a grid of cards: identity on the left, status and
+   the numbers in fixed columns on the right, so the eye can scan straight down
+   each column instead of hunting around a card.
+
+   Mobile first: the base is a stacked block and the lg block turns it into the
+   row. The breakpoint is 992px, not 768 — five columns of content need the
+   width, and a tablet gets the stacked version. */
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: inherit;
+  transition: border-color 0.15s ease;
+}
+.job-row:hover {
+  border-color: var(--primary);
+}
+/* Closed or deactivated openings stay listed but recede. */
+.job-row--dim {
+  background: var(--surface-muted);
+}
+.job-row--dim .job-row__name {
+  color: var(--text-soft);
+}
+
+.job-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.job-row__name {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.job-row__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+/* Department as coloured uppercase text. Two classes deep so it wins over the
+   .skill-badge--N background it borrows its hue from. */
+.job-row .dept-tag {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.job-row__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.job-row__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.job-row__gauge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.job-row__gauge-value {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.job-row__closes {
+  min-width: 190px;
+}
+.job-row__meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 3px;
+}
+.job-row__closes-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text);
+}
+.job-row__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.job-row__bar {
+  flex: 1 1 auto;
+  height: 6px;
+  min-width: 80px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.job-row--dim .job-row__bar {
+  background: var(--surface);
+}
+.job-row__bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bar-fill, var(--primary));
+}
+.job-row__pct {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.job-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.job-row__chevron {
+  color: var(--muted-light);
+  flex-shrink: 0;
+}
+.job-row:hover .job-row__chevron {
+  color: var(--primary);
+}
+
+@media (min-width: 992px) {
+  .job-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+  }
+  .job-row__metrics {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 28px;
+  }
+  .job-row__status {
+    width: 150px;
+    flex-shrink: 0;
+  }
+  .job-row__closes {
+    width: 210px;
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-row { transition: none; }
+}
+
+/* ---------- Job opening cards ----------
+   A job opening has a title, department, location, priority, recruiters, a
+   deadline and a status — that is a profile, not a table row. Ported from
+   Prism's .ws-card. Mobile first: one column, widening upward, so nothing is
+   ever hidden the way the old table's five d-none columns were. */
+.job-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .job-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+@media (min-width: 1200px) {
+  .job-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.job-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: border-color 0.15s ease;
+}
+.job-card:hover {
+  border-color: var(--primary);
+}
+/* A closed or deactivated opening is still listed, but recedes. */
+.job-card--dim {
+  background: var(--surface-muted);
+}
+.job-card--dim .job-card__name {
+  color: var(--text-soft);
+}
+
+.job-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.job-card__body {
+  flex: 1;
+  margin-bottom: 14px;
+}
+.job-card__name {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.25;
+  color: var(--text);
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+.job-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.job-card__id {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.job-card__footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.job-card__meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 4px;
+}
+.job-card__meta-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.job-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Overlapping initials, so a long recruiter list stays one line. */
+.avatar-stack {
+  display: flex;
+  align-items: center;
+}
+.avatar-stack > * {
+  margin-right: -6px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.job-card--dim .avatar-stack > * {
+  box-shadow: 0 0 0 2px var(--surface-muted);
+}
+.avatar-stack > *:last-child {
+  margin-right: 0;
+}
+.avatar--sm {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+.avatar--more {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+/* ---------- Editable option chips ----------
+   Skills and interview types are name lists, so they read as tags rather than
+   as four-column tables. Colours come from utils/skillColors so a skill looks
+   the same here as it does on a candidate profile. */
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.option-chip--inactive {
+  opacity: 0.5;
+}
+.option-chip__name {
+  padding: 6px 4px 6px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  min-height: 34px;
+}
+.option-chip__name:hover {
+  text-decoration: underline;
+}
+.option-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  min-height: 34px;
+  padding: 0 8px 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+}
+.option-chip__remove:hover {
+  opacity: 1;
+}
+
+/* The add field sits in the flow of the chips so adding feels like typing the
+   next tag, not like opening a form. */
+.chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.chip-add:focus-within {
+  border-color: var(--primary);
+  border-style: solid;
+}
+.chip-add input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  min-height: 34px;
+  width: 11ch;
+}
+.chip-add input::placeholder {
+  color: var(--muted);
+}
+
+/* ---------- Grouped form sections ---------- */
+.form-section + .form-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.form-section__title {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: 12px;
+}
+
+/* ---------- Modals: sheet on phones, dialog from sm up ----------
+   A centred dialog on a 360px viewport wastes the edges and leaves the actions
+   out of thumb reach. The base is therefore a full-height sheet with a pinned
+   footer, and the min-width block restores Bootstrap's centred dialog. */
+.modal-dialog {
+  margin: 0;
+  max-width: none;
+  min-height: 100dvh;
+}
+.modal-content {
+  min-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+.modal-body {
+  overflow-y: auto;
+}
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+}
+.modal-footer .btn {
+  flex: 1;
+}
+
+@media (min-width: 576px) {
+  .modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 500px;
+    min-height: calc(100% - 3.5rem);
+  }
+  .modal-content {
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .modal-footer {
+    position: static;
+  }
+  .modal-footer .btn {
+    flex: 0 0 auto;
+  }
+}
+/* The job-opening form needs more room than Bootstrap's 500px default. */
+@media (min-width: 768px) {
+  .modal-dialog.modal-lg { max-width: 720px; }
+}
+
+/* ---------- Motion ---------- */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes anim-spin {
+  to { transform: rotate(360deg); }
+}
+.anim-spin {
+  animation: anim-spin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1;
+  }
+  /* The spinner keeps turning — it communicates that work is in flight, which
+     a static icon cannot. Reduced-motion asks for less decoration, not for
+     status indicators to stop working. */
+  .card,
+  .pulse-card,
+  .admin-tabs button {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   3. App-specific components
+   ============================================================ */
+
+/* ===== Login ===== */
+/* Prism's .login-content / .login-card: a plain card centred on the page
+   background. The radial gradients and drop shadow that used to sit here were
+   the loudest thing in the product; Prism's login is deliberately quiet. */
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
   padding: 1.5rem;
-  background:
-    radial-gradient(1200px 600px at 100% 0%, var(--ms-primary-tint) 0%, transparent 55%),
-    radial-gradient(1000px 500px at 0% 100%, #eef5f4 0%, transparent 55%),
-    var(--ms-bg);
+  background: var(--bg);
 }
 .login-card {
-  width: 100%;
-  max-width: 400px;
-  background: var(--ms-surface);
-  border: 1px solid var(--ms-border);
-  border-radius: 10px;
-  box-shadow: var(--ms-shadow-8);
-  padding: 2.25rem 2rem;
+  width: min(100%, 420px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: none;
+  padding: 2rem;
 }
 .login-logo {
   display: block;
@@ -275,24 +1636,17 @@ a:hover {
   margin: 0 auto 1.5rem;
 }
 .login-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--secondary);
   margin-bottom: 0.15rem;
   text-align: center;
 }
 .login-subtitle {
-  color: var(--ms-text-secondary);
-  font-size: 0.9rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
   text-align: center;
   margin-bottom: 1.5rem;
-}
-
-/* Dark mode: subtle dark-blue glow instead of the light radial accents. */
-[data-bs-theme='dark'] .login-shell {
-  background:
-    radial-gradient(1200px 600px at 100% 0%, rgba(70, 129, 137, 0.2) 0%, transparent 55%),
-    radial-gradient(1000px 500px at 0% 100%, rgba(70, 129, 137, 0.12) 0%, transparent 55%),
-    var(--ms-bg);
 }
 
 /* Dark mode: keep the (dark-inked) brand logo legible on a small light chip. */
@@ -319,10 +1673,12 @@ a:hover {
   margin-top: 2px;
   max-height: 240px;
   overflow-y: auto;
-  background: var(--ms-surface);
-  border: 1px solid var(--ms-border);
-  border-radius: 6px;
-  box-shadow: var(--ms-shadow-8);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  /* Kept: a dropdown floats above the page, so it needs the depth cue that
+     flat in-page surfaces deliberately dropped. */
+  box-shadow: var(--shadow-md);
 }
 .searchable-item {
   display: block;
@@ -396,41 +1752,42 @@ a:hover {
    Each tone sets --kpi-accent (solid; icon chip + progress fill) and --kpi-tint
    (translucent; hover background). Hover recolors the whole card to its accent so
    the hovered card identifies itself. */
-.kpi--orange { --kpi-accent: #ff6b35; --kpi-tint: rgba(255, 107, 53, 0.10); }
+/* --kpi-ink is what sits *on* the accent chip. White works on the light-mode
+   accents but drops to ~2.3:1 on the brighter dark-mode ones — under the 3:1
+   WCAG asks of a graphical object — so dark mode inks the icon instead of
+   filling it. Orange is a touch darker than the original #ff6b35, which was
+   the one light accent white failed on (2.84:1). */
+.kpi--orange { --kpi-accent: #e35a1f; --kpi-tint: rgba(227, 90, 31, 0.10); }
 .kpi--teal   { --kpi-accent: #3d8e8e; --kpi-tint: rgba(61, 142, 142, 0.10); }
 .kpi--green  { --kpi-accent: #22a06b; --kpi-tint: rgba(34, 160, 107, 0.10); }
 .kpi--red    { --kpi-accent: #d13438; --kpi-tint: rgba(209, 52, 56, 0.10); }
 .kpi--blue   { --kpi-accent: #2196f3; --kpi-tint: rgba(33, 150, 243, 0.10); }
 .kpi--purple { --kpi-accent: #8764b8; --kpi-tint: rgba(135, 100, 184, 0.10); }
 
+/* Flat like Prism's .metric-card: the hover is a border and a whisper of tint,
+   not a lift. The translateY + drop shadow this replaces were the loudest
+   interaction in the product. */
 .kpi-card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease,
-    background-color 0.18s ease, border-color 0.18s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .kpi-card:hover {
   background-color: var(--kpi-tint);
   border-color: var(--kpi-accent);
-  transform: translateY(-3px);
-  box-shadow: var(--ms-shadow-8);
 }
 
 .kpi-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
   background: var(--kpi-accent);
-  color: #fff;
+  color: var(--kpi-ink, #fff);
   flex: 0 0 auto;
-  transition: transform 0.18s ease;
-}
-.kpi-card:hover .kpi-card__icon {
-  transform: scale(1.08);
 }
 
 .kpi-card__bar {
   height: 5px;
   border-radius: 999px;
-  background: var(--ms-neutral);
+  background: var(--surface-muted);
   overflow: hidden;
 }
 .kpi-card__bar-fill {
@@ -440,7 +1797,9 @@ a:hover {
   transition: width 0.5s ease;
 }
 
-/* Dark theme — lighter accents + stronger tints for contrast on dark surfaces. */
+/* Dark theme — lighter accents + stronger tints for contrast on dark surfaces.
+   The chip's icon flips to dark ink here (6.4–8.2:1 across the six accents). */
+[data-bs-theme='dark'] .kpi-card { --kpi-ink: #121617; }
 [data-bs-theme='dark'] .kpi--orange { --kpi-accent: #ff8659; --kpi-tint: rgba(255, 134, 89, 0.16); }
 [data-bs-theme='dark'] .kpi--teal   { --kpi-accent: #5fb3b3; --kpi-tint: rgba(95, 179, 179, 0.16); }
 [data-bs-theme='dark'] .kpi--green  { --kpi-accent: #4cc38a; --kpi-tint: rgba(76, 195, 138, 0.16); }
@@ -450,12 +1809,8 @@ a:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .kpi-card,
-  .kpi-card__icon,
   .kpi-card__bar-fill {
     transition: none;
-  }
-  .kpi-card:hover {
-    transform: none;
   }
 }
 
@@ -529,48 +1884,55 @@ a:hover {
 .notification-item--unread { background: var(--ms-primary-tint); }
 .notification-item--unread:hover { background: var(--ms-primary-tint-2); }
 
-/* ===== Dashboard hero kicker ===== */
+/* ===== Dashboard hero kicker =====
+   Flat, like every other surface now: the gradient wash and shadow are gone,
+   and the greeting sits on a plain card. The topbar already says "Dashboard",
+   so this only carries the greeting and the pending-task chips. */
 .dashboard-hero-kicker {
-  background:
-    linear-gradient(135deg, var(--ms-primary-tint), transparent 60%),
-    var(--ms-surface);
-  border: 1px solid var(--bs-border-color);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: var(--ms-shadow-4);
-  padding: 1.5rem 1.75rem;
+  box-shadow: none;
+  padding: 1.25rem 1.5rem;
 }
 .dashboard-hero-kicker__eyebrow {
-  color: var(--ms-primary);
-  font-size: 0.72rem;
+  color: var(--primary);
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 0.25rem;
+}
+.dashboard-hero-kicker h2 {
+  font-size: var(--text-xl);
 }
 .hero-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
+  padding: 0.35rem 0.8rem;
   border-radius: 999px;
-  border: 1px solid var(--bs-border-color);
-  background: var(--ms-surface);
-  color: var(--ms-text);
-  font-size: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-sm);
   font-weight: 500;
   text-decoration: none;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 a.hero-chip:hover {
-  transform: translateY(-2px);
-  border-color: var(--ms-primary);
-  box-shadow: var(--ms-shadow-4);
-  color: var(--ms-text);
+  border-color: var(--primary);
+  background: var(--surface-muted);
+  color: var(--text);
+  text-decoration: none;
 }
 .hero-chip--accent {
-  background: var(--ms-primary-tint);
-  border-color: var(--ms-primary-tint-2);
-  color: var(--ms-primary-pressed);
+  background: var(--primary-tint);
+  border-color: var(--primary-tint-hover);
+  color: var(--primary);
+}
+a.hero-chip--accent:hover {
+  color: var(--primary);
 }
 
 /* ===== Interview page ===== */
@@ -583,17 +1945,15 @@ a.hero-chip:hover {
 }
 
 .interview-hero {
-  background:
-    linear-gradient(135deg, var(--ms-primary-tint), transparent 65%),
-    var(--ms-surface);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 12px;
-  box-shadow: var(--ms-shadow-4);
-  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+  padding: 1.25rem;
 }
 .interview-hero__eyebrow {
-  color: var(--ms-primary);
-  font-size: 0.72rem;
+  color: var(--primary);
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -609,7 +1969,7 @@ a.hero-chip:hover {
   font-size: 0.85rem;
   font-weight: 600;
 }
-.interview-chip--soon { background: var(--ms-primary); color: #fff; }
+.interview-chip--soon { background: var(--primary-dark); color: var(--on-accent); }
 .interviewer-pill {
   display: inline-flex;
   align-items: center;
@@ -626,8 +1986,12 @@ a.hero-chip:hover {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--ms-primary);
-  color: #fff;
+  /* --primary-dark, not --primary: this is a solid fill carrying white text,
+     and --primary brightens in dark mode to stay legible *as text*, which
+     leaves white on top of it at ~2.2:1. --primary-dark is mode-invariant and
+     clears 6.3:1 under --on-accent in both. */
+  background: var(--primary-dark);
+  color: var(--on-accent);
   font-size: 0.62rem;
   font-weight: 700;
 }
@@ -653,8 +2017,12 @@ a.hero-chip:hover {
 }
 .eval-summary__count {
   margin-left: auto;
-  background: var(--ms-primary);
-  color: #fff;
+  /* --primary-dark, not --primary: this is a solid fill carrying white text,
+     and --primary brightens in dark mode to stay legible *as text*, which
+     leaves white on top of it at ~2.2:1. --primary-dark is mode-invariant and
+     clears 6.3:1 under --on-accent in both. */
+  background: var(--primary-dark);
+  color: var(--on-accent);
   border-radius: 999px;
   min-width: 1.2rem;
   padding: 0 0.35rem;
@@ -675,12 +2043,10 @@ a.hero-chip:hover {
   border: 1px solid var(--bs-border-color);
   border-radius: 10px;
   background: var(--bs-body-bg);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 .eval-card:hover {
-  transform: translateY(-1px);
-  border-color: var(--ms-primary);
-  box-shadow: 0 4px 14px rgba(3, 25, 38, 0.08);
+  border-color: var(--primary);
 }
 .eval-card__avatar {
   width: 34px;
@@ -689,8 +2055,12 @@ a.hero-chip:hover {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--ms-primary);
-  color: #fff;
+  /* --primary-dark, not --primary: this is a solid fill carrying white text,
+     and --primary brightens in dark mode to stay legible *as text*, which
+     leaves white on top of it at ~2.2:1. --primary-dark is mode-invariant and
+     clears 6.3:1 under --on-accent in both. */
+  background: var(--primary-dark);
+  color: var(--on-accent);
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -726,21 +2096,23 @@ a.hero-chip:hover {
 .eval-panel--b { --eval-accent: #2196f3; --eval-tint: rgba(33, 150, 243, 0.1); }
 .eval-panel--c { --eval-accent: #8764b8; --eval-tint: rgba(135, 100, 184, 0.1); }
 .eval-panel--d { --eval-accent: #22a06b; --eval-tint: rgba(34, 160, 107, 0.1); }
+[data-bs-theme='dark'] .eval-panel,
+[data-bs-theme='dark'] .rating-group { --eval-ink: #121617; }
 [data-bs-theme='dark'] .eval-panel--a { --eval-accent: #5fb3b3; --eval-tint: rgba(95, 179, 179, 0.14); }
 [data-bs-theme='dark'] .eval-panel--b { --eval-accent: #64b5f6; --eval-tint: rgba(100, 181, 246, 0.14); }
 [data-bs-theme='dark'] .eval-panel--c { --eval-accent: #b8a0e0; --eval-tint: rgba(184, 160, 224, 0.14); }
 [data-bs-theme='dark'] .eval-panel--d { --eval-accent: #4cc38a; --eval-tint: rgba(76, 195, 138, 0.14); }
 
 .eval-panel {
-  border: 1px solid var(--bs-border-color);
-  border-left: 4px solid var(--eval-accent, var(--ms-primary));
-  border-radius: 10px;
-  background: var(--ms-surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--eval-accent, var(--primary));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   overflow: hidden;
-  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: border-color 0.15s ease;
 }
 .eval-panel + .eval-panel { margin-top: 0.75rem; }
-.eval-panel:hover { box-shadow: var(--ms-shadow-4); }
+.eval-panel:hover { border-color: var(--border-strong); }
 
 .eval-panel__header {
   display: flex;
@@ -762,8 +2134,10 @@ a.hero-chip:hover {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  background: var(--eval-accent, var(--ms-primary));
-  color: #fff;
+  background: var(--eval-accent, var(--primary-dark));
+  /* Same rule as .kpi-card__icon: the dark-mode section accents are bright
+     pastels, so the glyph inks dark rather than filling white. */
+  color: var(--eval-ink, #fff);
 }
 .eval-panel__title { font-weight: 600; line-height: 1.2; }
 .eval-panel__hint { color: var(--ms-text-secondary); font-size: 0.78rem; }
@@ -823,11 +2197,11 @@ a.hero-chip:hover {
   outline-offset: 1px;
 }
 .rating-btn--selected {
-  background: var(--eval-accent, var(--ms-primary));
-  border-color: var(--eval-accent, var(--ms-primary));
-  color: #fff;
+  background: var(--eval-accent, var(--primary-dark));
+  border-color: var(--eval-accent, var(--primary-dark));
+  color: var(--eval-ink, #fff);
 }
-.rating-btn--selected:hover { color: #fff; }
+.rating-btn--selected:hover { color: var(--eval-ink, #fff); }
 
 /* Read-only rating dots */
 .rating-dots { display: inline-flex; gap: 3px; align-items: center; }
@@ -849,7 +2223,7 @@ a.hero-chip:hover {
 .eval-progress__fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--ms-primary);
+  background: var(--primary);
   transition: width 0.5s ease;
 }
 
@@ -883,8 +2257,8 @@ a.hero-chip:hover {
 .profile-card { overflow: hidden; }
 .profile-header {
   padding: 1.15rem 1.25rem;
-  background: linear-gradient(135deg, var(--ms-primary-tint), transparent);
-  border-bottom: 1px solid var(--bs-border-color);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
 }
 .profile-avatar {
   flex-shrink: 0;
@@ -895,9 +2269,9 @@ a.hero-chip:hover {
   place-items: center;
   font-weight: 600;
   font-size: 1.1rem;
-  color: #fff;
-  background: var(--ms-primary);
-  box-shadow: var(--ms-shadow-4);
+  color: var(--on-accent);
+  background: var(--primary-dark);
+  box-shadow: none;
 }
 .profile-title { font-weight: 600; font-size: 1.02rem; color: var(--ms-text); }
 .profile-field-label {
@@ -956,7 +2330,7 @@ a.hero-chip:hover {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .cv-file-item + .cv-file-item { margin-top: 0.5rem; }
-.cv-file-item:hover { border-color: var(--ms-primary); box-shadow: var(--ms-shadow-4); }
+.cv-file-item:hover { border-color: var(--primary); }
 .cv-file-item__icon {
   flex: 0 0 auto;
   width: 34px;
@@ -984,12 +2358,11 @@ a.hero-chip:hover {
   background: #ffd43b;
   color: #533f03;
   font-weight: 600;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn-cv-download:hover {
   background: #fcc419;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(230, 184, 0, 0.4);
+  border-color: #d9a400;
   color: #533f03;
 }
 .btn-cv-download:hover .btn-cv-download__icon { animation: cv-download-bounce 0.6s ease infinite; }

@@ -1,15 +1,5 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  NavLink,
-  Link,
-  Navigate,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom';
-import { Button, Container, Navbar, Nav, Spinner } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Spinner } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
@@ -22,22 +12,15 @@ import UsersPage from './pages/UsersPage';
 import AuditLogPage from './pages/AuditLogPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import InterviewPage from './pages/InterviewPage';
-import ThemeToggle from './components/ThemeToggle';
-import NotificationBell from './components/NotificationBell';
+import AppShell from './components/shell/AppShell';
 
+/**
+ * Auth gate for everything behind the login page. The chrome itself lives in
+ * AppShell; this only decides whether the user gets to see it.
+ */
 function ProtectedLayout() {
-  const {
-    isAuthenticated,
-    loading,
-    user,
-    logout,
-    mustChangePassword,
-    isAdminOrAbove,
-    isSuperAdmin,
-    canWriteCandidates,
-  } = useAuth();
+  const { isAuthenticated, loading, mustChangePassword } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -57,47 +40,7 @@ function ProtectedLayout() {
     return <Navigate to="/change-password" replace />;
   }
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
-
-  return (
-    <>
-      <Navbar expand="lg" sticky="top" className="app-navbar mb-4">
-        <Container>
-          <Navbar.Brand as={Link} to="/">
-            <img src="/logo.png" alt="Requirement Gorilla" className="app-logo-img" />
-          </Navbar.Brand>
-          <Navbar.Toggle />
-          <Navbar.Collapse>
-            <Nav className="me-auto">
-              <Nav.Link as={NavLink} to="/" end>Dashboard</Nav.Link>
-              {canWriteCandidates && <Nav.Link as={NavLink} to="/upload">Upload CVs</Nav.Link>}
-              {canWriteCandidates && <Nav.Link as={NavLink} to="/candidates">Candidates</Nav.Link>}
-              {isAdminOrAbove && <Nav.Link as={NavLink} to="/configuration">Configuration</Nav.Link>}
-              {isAdminOrAbove && <Nav.Link as={NavLink} to="/audit">Audit</Nav.Link>}
-              {isSuperAdmin && <Nav.Link as={NavLink} to="/users">Users</Nav.Link>}
-            </Nav>
-            <div className="d-flex align-items-center gap-3">
-              <NotificationBell />
-              <ThemeToggle />
-              <Nav.Link as={NavLink} to="/change-password" className="navbar-user p-0">
-                {user?.name}
-              </Nav.Link>
-              <Button size="sm" variant="outline-secondary" onClick={handleLogout}>
-                Sign out
-              </Button>
-            </div>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-
-      <Container>
-        <Outlet />
-      </Container>
-    </>
-  );
+  return <AppShell />;
 }
 
 export default function App() {

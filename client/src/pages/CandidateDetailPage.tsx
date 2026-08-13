@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, Trash2 } from 'lucide-react';
 import {
   addStatus,
   deleteCandidate,
@@ -19,6 +20,8 @@ import StatusTimeline from '../components/StatusTimeline';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../auth/AuthContext';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
@@ -52,66 +55,69 @@ export default function CandidateDetailPage() {
   });
 
   if (isLoading) return <Spinner animation="border" />;
-  if (isError || !data) return <p className="text-danger">Failed to load candidate.</p>;
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Couldn't load this candidate"
+        description="The record may have been deleted, or the request failed."
+        action={
+          <Link to="/candidates" className="btn btn-outline-secondary">
+            Back to candidates
+          </Link>
+        }
+      />
+    );
+  }
 
   return (
-    <div>
-      <Link to="/candidates" className="small">
-        ← Back to candidates
+    <div className="d-flex flex-column gap-3">
+      {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
+      <Link to="/candidates" className="d-inline-flex align-items-center gap-1" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', alignSelf: 'flex-start' }}>
+        <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
+        Back to candidates
       </Link>
-      <div className="d-flex justify-content-between align-items-center my-3">
-        <div className="d-flex align-items-center gap-3">
-          <h2 className="mb-0">{data.fullName}</h2>
+
+      <div className="page-header">
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <h2>{data.fullName}</h2>
           <StatusBadge status={data.currentStatus} />
         </div>
         {isAdminOrAbove && (
-          <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
-            Delete candidate
-          </Button>
+          <div className="page-header__actions">
+            <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1">Delete candidate</span>
+            </Button>
+          </div>
         )}
       </div>
 
       {data.roleClosed && (
-        <Alert variant="warning">
+        <div className="alert-warning-soft">
           <strong>Job opening closed.</strong> This candidate's applied-for role ended
           {data.roleEndDate ? ` on ${new Date(data.roleEndDate).toLocaleString()}` : ''}. Profile
           edits and status changes are locked until an Admin extends the role's End Date in
           Configuration.
-        </Alert>
+        </div>
       )}
 
-      <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete candidate</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Permanently delete <strong>{data.fullName}</strong>, along with their CV file(s) and
-          full status history? This cannot be undone.
-          {deleteMutation.isError && (
-            <Alert variant="danger" className="mt-3 mb-0">
-              Delete failed. Please try again.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate()}
-          >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={confirmDelete}
+        title="Delete candidate"
+        pending={deleteMutation.isPending}
+        error={deleteMutation.isError ? 'Delete failed. Please try again.' : undefined}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => deleteMutation.mutate()}
+      >
+        Permanently delete <strong>{data.fullName}</strong>, along with their CV file(s) and full
+        status history? This cannot be undone.
+      </ConfirmModal>
 
-      <Row className="g-4">
-        <Col lg={7}>
-          <Card className="mb-4">
-            <Card.Header>Profile</Card.Header>
-            <Card.Body>
+      <Row className="g-3">
+        <Col xs={12} lg={7}>
+          <div className="d-flex flex-column gap-3">
+            <div className="pulse-card">
+              <div className="metric-label mb-3">Profile</div>
               <ProfileEditor
                 candidate={data}
                 canWrite={canWriteCandidates && !data.roleClosed}
@@ -120,30 +126,28 @@ export default function CandidateDetailPage() {
                   void queryClient.invalidateQueries({ queryKey: ['candidates'] });
                 }}
               />
-            </Card.Body>
-          </Card>
+            </div>
 
-          <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+          </div>
         </Col>
 
-        <Col lg={5}>
-          <Card>
-            <Card.Header>Status history</Card.Header>
-            <Card.Body>
-              {canWriteCandidates && !data.roleClosed && (
-                <>
-                  <AddStatus
-                    candidateId={candidateId}
-                    onAdded={() =>
-                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                    }
-                  />
-                  <hr />
-                </>
-              )}
-              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-            </Card.Body>
-          </Card>
+        <Col xs={12} lg={5}>
+          <div className="pulse-card">
+            <div className="metric-label mb-3">Status history</div>
+            {canWriteCandidates && !data.roleClosed && (
+              <>
+                <AddStatus
+                  candidateId={candidateId}
+                  onAdded={() =>
+                    queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
+                  }
+                />
+                <hr />
+              </>
+            )}
+            <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
+          </div>
         </Col>
       </Row>
     </div>

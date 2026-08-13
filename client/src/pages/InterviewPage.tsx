@@ -1,19 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
-import { Accordion, Alert, Col, Row, Spinner } from 'react-bootstrap';
+import { Accordion, Col, Row, Spinner } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { getInterview } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
 import { skillColorClass } from '../utils/skillColors';
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
+import EmptyState from '../components/ui/EmptyState';
+import { initials } from '../utils/initials';
 
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -49,12 +43,19 @@ export default function InterviewPage() {
   if (error || !data) {
     const notFound = isAxiosError(error) && error.response?.status === 404;
     return (
-      <Alert variant={notFound ? 'warning' : 'danger'}>
-        {notFound
-          ? "This interview isn't available to you."
-          : 'Failed to load the interview.'}{' '}
-        <Link to="/">Back to dashboard</Link>
-      </Alert>
+      <EmptyState
+        title={notFound ? "This interview isn't available to you" : 'Failed to load the interview'}
+        description={
+          notFound
+            ? 'You see an interview only when you are one of its assigned interviewers, or an Admin.'
+            : 'The request failed. Refresh to try again.'
+        }
+        action={
+          <Link to="/" className="btn btn-outline-secondary">
+            Back to dashboard
+          </Link>
+        }
+      />
     );
   }
 
@@ -100,20 +101,22 @@ export default function InterviewPage() {
       </div>
 
       <Row className="g-3">
-        <Col lg={5} className="anim-fade-up" style={{ animationDelay: '60ms' }}>
+        <Col xs={12} lg={5} className="anim-fade-up" style={{ animationDelay: '60ms' }}>
           {data.notes && (
-            <Alert variant="info" className="interview-notes mb-3">
+            <div className="alert-info-soft interview-notes mb-3">
               <div className="fw-semibold mb-1">Notes from the recruiter</div>
               <div style={{ whiteSpace: 'pre-line' }}>{data.notes}</div>
-            </Alert>
+            </div>
           )}
           <ReadOnlyCandidateProfile candidate={data.candidate} />
         </Col>
-        <Col lg={7} className="anim-fade-up" style={{ animationDelay: '120ms' }}>
+        <Col xs={12} lg={7} className="anim-fade-up" style={{ animationDelay: '120ms' }}>
           {data.canEvaluate ? (
             <EvaluationForm interviewId={interviewId} evaluation={data.myEvaluation} />
           ) : (
-            <Alert variant="info">You are viewing this interview but are not an assigned interviewer.</Alert>
+            <div className="alert-info-soft">
+              You are viewing this interview but are not an assigned interviewer.
+            </div>
           )}
 
           {data.allEvaluations && otherEvaluations.length > 0 && (
@@ -125,7 +128,7 @@ export default function InterviewPage() {
                     <div key={e.id} className="mb-4">
                       <div className="d-flex justify-content-between align-items-center mb-2">
                         <strong>{e.interviewerName}</strong>
-                        <span className={`badge ${e.isSubmitted ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}>
+                        <span className={`badge-pill ${e.isSubmitted ? 'badge-success' : 'badge-neutral'}`}>
                           {e.isSubmitted ? 'Submitted' : 'Draft'}
                         </span>
                       </div>
