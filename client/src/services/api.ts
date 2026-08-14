@@ -7,6 +7,8 @@ import type {
   CandidateDetail,
   CandidateEvaluationReport,
   ChangePasswordPayload,
+  EmailSettings,
+  UpsertEmailSettings,
   CreateCandidatePayload,
   CreateUserPayload,
   DashboardData,
@@ -38,9 +40,11 @@ import type {
   UserListItem,
 } from '../types';
 
-// Same-origin path. In dev the Vite server proxies /api to the backend on the
-// host machine, so the backend itself is never exposed to the network.
-const baseURL = '/api';
+// Same-origin path, built from import.meta.env.BASE_URL ("/" locally, where the
+// Vite proxy below forwards /api to the backend; "/ats/" in the container build,
+// where the gateway routes /ats/api/* to this app's own backend). Yields '/api'
+// or '/ats/api' — no trailing slash, matching every call site's leading-slash form.
+const baseURL = `${import.meta.env.BASE_URL}api`;
 // withCredentials so the httpOnly refresh-token cookie rides along on /auth/* calls.
 const api = axios.create({ baseURL, withCredentials: true });
 
@@ -96,8 +100,9 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${result.token}`;
         return api(original);
       }
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login');
+      const loginPath = `${import.meta.env.BASE_URL}login`;
+      if (window.location.pathname !== loginPath) {
+        window.location.assign(loginPath);
       }
     }
     return Promise.reject(err);
@@ -328,6 +333,22 @@ export const updateRoleOption = async (id: number, payload: UpsertOptionPayload)
 
 export const deleteRoleOption = async (id: number): Promise<DeleteRoleResult> => {
   const { data } = await api.delete<DeleteRoleResult>(`/config/roles/${id}`);
+  return data;
+};
+
+// ----- Configuration: Email / SMTP settings (SuperAdmin) -----
+export const getEmailSettings = async (): Promise<EmailSettings> => {
+  const { data } = await api.get<EmailSettings>('/config/email');
+  return data;
+};
+
+export const saveEmailSettings = async (payload: UpsertEmailSettings): Promise<EmailSettings> => {
+  const { data } = await api.put<EmailSettings>('/config/email', payload);
+  return data;
+};
+
+export const sendTestEmail = async (toEmail: string): Promise<{ ok: boolean; error: string | null }> => {
+  const { data } = await api.post<{ ok: boolean; error: string | null }>('/config/email/test', { toEmail });
   return data;
 };
 

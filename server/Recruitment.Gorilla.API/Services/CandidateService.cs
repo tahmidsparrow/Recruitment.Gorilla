@@ -6,7 +6,7 @@ using Recruitment.Gorilla.API.Models;
 
 namespace Recruitment.Gorilla.API.Services;
 
-public class CandidateService(AppDbContext db, IWebHostEnvironment env)
+public class CandidateService(AppDbContext db, IWebHostEnvironment env, NotificationService notificationService, IConfiguration config)
 {
     private static readonly Regex EmailRegex =
         new(@"^[\w.+-]+@[\w-]+\.[a-z]{2,}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -499,17 +499,18 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env)
 
         if (interview is not null)
         {
+            var interviewUrl = $"{config["App:ClientBaseUrl"]?.TrimEnd('/')}/interviews/{interview.Id}";
             foreach (var uid in dto.InterviewerUserIds!.Distinct())
             {
-                db.Notifications.Add(new Notification
-                {
-                    UserId = uid,
-                    Title = "Interview assigned",
-                    Message = $"You have been assigned to interview {candidate.FullName}.",
-                    LinkUrl = $"/interviews/{interview.Id}",
-                });
+                var interviewer = await db.Users.FindAsync(uid);
+                var (emailSubject, emailHtml) = EmailTemplates.InterviewAssigned(
+                    interviewer?.Name ?? "there", candidate.FullName, candidate.AppliedRole,
+                    interview.ScheduledAt, interviewUrl);
+
+                await notificationService.NotifyAsync(
+                    uid, "Interview assigned", $"You have been assigned to interview {candidate.FullName}.",
+                    $"/interviews/{interview.Id}", emailSubject, emailHtml);
             }
-            await db.SaveChangesAsync();
         }
 
         var interviewers = interview is null

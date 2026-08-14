@@ -6,7 +6,7 @@ This file is the entry point for any AI agent (or new human contributor). Detail
 
 ## Golden rules
 1. **Follow the existing patterns.** This codebase has a consistent flow; match it rather than introducing new styles or libraries. The layered flow and conventions are in [`ai-docs/conventions.md`](ai-docs/conventions.md) and [`ai-docs/feature-playbook.md`](ai-docs/feature-playbook.md).
-2. **Never expose the backend to the network.** Only the frontend (Vite, port 5173) is reachable on the LAN; it proxies `/api` to the backend on `localhost:5000`. Keep it that way. See [`ai-docs/architecture.md`](ai-docs/architecture.md).
+2. **Never expose the backend to the network.** In local dev, only the frontend (Vite, port 5173) is reachable on the LAN; it proxies `/api` to the backend on `localhost:5000`. Under the container deployment (`gorilla-platform/deploy`), the equivalent rule is: application containers declare no `ports:` and are reachable only on the `gorilla` bridge network — only the gateway container publishes a host port. Keep whichever form applies to how you're running it. See [`ai-docs/architecture.md`](ai-docs/architecture.md).
 3. **No secrets in source.** The DB connection string, `Jwt:Key`, and `Auth:PasswordHash` live in **.NET user secrets**, never in `appsettings.json` or commits. See [`ai-docs/dev-setup.md`](ai-docs/dev-setup.md).
 4. **Keep docs in sync.** If you change code, update the matching file in `ai-docs/`.
 5. **Commits:** do not add Claude/Anthropic (or any AI) as author or co-author. Commit only when asked. Branch off the default branch first if needed.
@@ -18,13 +18,13 @@ This file is the entry point for any AI agent (or new human contributor). Detail
 Browser (5173)  ──/api──►  Vite dev proxy  ──►  ASP.NET Core API (localhost:5000)  ──►  MySQL
   React 19/TS                                    Controller → Service → AppDbContext (EF Core)
   TanStack Query                                 JWT auth (access token + httpOnly refresh cookie)
-  react-bootstrap (Fluent theme)
+  react-bootstrap (Prism design system)
 ```
 Adding a feature almost always follows: **Entity → AppDbContext → migration → DTO → Service → Controller (`[Authorize]`) → `api.ts` → `types` → Query/Mutation → page/component → verify.** Full recipe: [`ai-docs/feature-playbook.md`](ai-docs/feature-playbook.md).
 
 ## Tech stack (pinned)
 - **Backend:** ASP.NET Core Web API on **.NET 10**, EF Core **9.0.0** + Pomelo MySQL **9.0.0**, JWT bearer auth, log4net, Swagger.
-- **Frontend:** React **19** + TypeScript + **Vite**, TanStack Query v5, Axios, react-bootstrap 2 + Bootstrap 5 (Microsoft Fluent theme), react-router-dom 7, react-dropzone.
+- **Frontend:** React **19** + TypeScript + **Vite**, TanStack Query v5, Axios, react-bootstrap 2 + Bootstrap 5 (**Prism design system**, see [`ai-docs/frontend.md`](ai-docs/frontend.md)), react-router-dom 7, react-dropzone, lucide-react.
 - **DB:** MySQL 8+. **Files:** stored on local disk under `server/Recruitment.Gorilla.API/Uploads/`.
 
 ## Quickstart

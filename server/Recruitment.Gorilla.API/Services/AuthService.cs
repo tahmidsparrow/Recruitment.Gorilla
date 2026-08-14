@@ -17,7 +17,7 @@ public record TokenPair(
     DateTime RefreshExpiresAt,
     User User);
 
-public class AuthService(AppDbContext db, IConfiguration config)
+public class AuthService(AppDbContext db, IConfiguration config, EmailService emailService)
 {
     private int AccessTokenMinutes => config.GetValue("Jwt:AccessTokenMinutes", 15);
     private int RefreshTokenDays => config.GetValue("Jwt:RefreshTokenDays", 7);
@@ -171,6 +171,10 @@ public class AuthService(AppDbContext db, IConfiguration config)
         user.MustChangePassword = false;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        var (subject, html) = EmailTemplates.PasswordChanged(user.Name);
+        await emailService.SendAsync(user.Email, user.Name, subject, html);
+
         return ChangePasswordResult.Success;
     }
 

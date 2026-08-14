@@ -19,7 +19,28 @@ dotnet user-secrets set "Jwt:Key" "<random base64 key>"
 
 # Admin password hash (default login admin/admin)
 dotnet user-secrets set "Auth:PasswordHash" "<pbkdf2 hash>"
+
+# Encryption root key — REQUIRED (app fails to start without it). Encrypts secrets stored at
+# rest (the in-app SMTP password). Must be STABLE across restarts/containers, else stored
+# ciphertext becomes undecryptable. 32+ random chars.
+dotnet user-secrets set "Encryption:Key" "<random base64 key>"
+
+# Outbound email — OPTIONAL fallback. SMTP is normally configured in-app (Configuration →
+# Email / SMTP, SuperAdmin) and stored encrypted in the DB. These user-secrets/config values
+# are only used as a fallback when no DB row exists (or it's disabled). If neither is set,
+# EmailService logs a warning and skips sending (never breaks the underlying operation).
+dotnet user-secrets set "Smtp:User" "notifications@yourdomain.com"
+dotnet user-secrets set "Smtp:Password" "<16-char app password>"
+dotnet user-secrets set "Smtp:FromAddress" "notifications@yourdomain.com"
 ```
+**SMTP is configured in-app** by a SuperAdmin at **Configuration → Email / SMTP** (host, port,
+username, password, from-address, STARTTLS, enabled) with a **Send test email** button; the password
+is encrypted at rest (`SecretProtector`, AES-GCM keyed by `Encryption:Key`) and never returned to the
+client. The `Smtp:*` config/`appsettings` values (`Smtp:Host`/`Smtp:Port`/`Smtp:FromName` default to
+`smtp.gmail.com`/`587`/`Recruitment Gorilla`) are a **fallback** only. Gmail/Workspace app passwords
+require 2-Step Verification; `App:ClientBaseUrl` (default `http://localhost:5173`) builds absolute
+links in emails — set it to your real frontend origin in other environments. In Docker, provide
+`Encryption__Key` (and any fallback `Smtp__*`) as environment variables.
 
 ### Generate a JWT key + password hash (PowerShell)
 ```powershell

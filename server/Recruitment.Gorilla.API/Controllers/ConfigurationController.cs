@@ -11,9 +11,50 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/config")]
 public class ConfigurationController(
     ConfigurationService config,
+    EmailSettingsService emailSettings,
+    EmailService emailService,
+    CurrentUser currentUser,
     AuditService audit,
     ILogger<ConfigurationController> logger) : ControllerBase
 {
+    // ----- Email / SMTP settings (SuperAdmin only — sensitive credentials) -----
+
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [HttpGet("email")]
+    public async Task<IActionResult> GetEmailSettings() => Ok(await emailSettings.GetAsync());
+
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [HttpPut("email")]
+    public async Task<IActionResult> SaveEmailSettings([FromBody] UpsertEmailSettingsDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Host)) return BadRequest("SMTP host is required.");
+        if (string.IsNullOrWhiteSpace(dto.FromAddress)) return BadRequest("From address is required.");
+        if (dto.Port is < 1 or > 65535) return BadRequest("Port must be between 1 and 65535.");
+
+        await emailSettings.SaveAsync(dto, currentUser.UserId);
+        logger.LogInformation("SMTP settings updated by user {UserId}.", currentUser.UserId);
+        return Ok(await emailSettings.GetAsync());
+    }
+
+    [Authorize(Roles = Roles.SuperAdmin)]
+    [HttpPost("email/test")]
+    public async Task<IActionResult> SendTestEmail([FromBody] TestEmailRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.ToEmail)) return BadRequest("A recipient email is required.");
+        try
+        {
+            await emailService.SendTestAsync(dto.ToEmail.Trim(), dto.ToEmail.Trim(),
+                "Recruitment Gorilla — SMTP test",
+                "<p>✅ This is a test email from Recruitment Gorilla. Your SMTP settings are working.</p>");
+            return Ok(new TestEmailResultDto(true, null));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Test email to {ToEmail} failed.", dto.ToEmail);
+            return Ok(new TestEmailResultDto(false, ex.Message));
+        }
+    }
+
     // ----- Role Applied -----
 
     [HttpGet("roles")]

@@ -46,12 +46,27 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<InterviewService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<ISmtpTransport, MailKitSmtpTransport>();
+builder.Services.AddSingleton<SecretProtector>();
+builder.Services.AddScoped<IEmailSettingsResolver, EmailSettingsResolver>();
+builder.Services.AddScoped<EmailSettingsService>();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddSingleton<IAuthorizationHandler, PasswordChangedHandler>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it via user secrets.");
 if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
     throw new InvalidOperationException("Jwt:Key must be at least 32 bytes (256 bits) for HS256.");
+
+// Root key for encrypting secrets stored at rest (the in-app SMTP password). Must be stable across
+// restarts/containers, else stored ciphertext becomes undecryptable.
+var encryptionKey = builder.Configuration["Encryption:Key"]
+    ?? throw new InvalidOperationException(
+        "Encryption:Key is not configured. Set it via user secrets " +
+        "(dotnet user-secrets set \"Encryption:Key\" \"<32+ char random string>\") or environment variables.");
+if (Encoding.UTF8.GetByteCount(encryptionKey) < 16)
+    throw new InvalidOperationException("Encryption:Key must be at least 16 characters.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

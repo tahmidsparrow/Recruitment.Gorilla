@@ -460,3 +460,27 @@ export interface NotificationList {
   items: AppNotification[];
   unreadCount: number;
 }
+
+// ----- Email / SMTP settings (SuperAdmin) -----
+export interface EmailSettings {
+  host: string;
+  port: number;
+  user: string | null;
+  fromAddress: string;
+  fromName: string;
+  useStartTls: boolean;
+  enabled: boolean;
+  passwordSet: boolean;
+  updatedAt: string | null;
+}
+
+export interface UpsertEmailSettings {
+  host: string;
+  port: number;
+  user: string | null;
+  password: string | null; // write-only; blank keeps the stored password
+  fromAddress: string;
+  fromName: string;
+  useStartTls: boolean;
+  enabled: boolean;
+}

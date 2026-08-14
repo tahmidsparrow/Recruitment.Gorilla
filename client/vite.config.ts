@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Local `npm run dev`/`preview` stay unprefixed ("/") since they bypass the
+  // gateway and talk to the backend directly via the proxy below. The Docker
+  // build sets VITE_BASE=/ats/ so the built bundle works behind the gateway,
+  // which serves this app under that prefix (see gorilla-platform/deploy).
+  base: process.env.VITE_BASE ?? '/',
   test: {
     environment: 'jsdom',
     globals: true,

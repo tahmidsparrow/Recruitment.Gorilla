@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Bell, CalendarClock, CheckCircle2, ClipboardCheck, Users } from 'lucide-react';
 import { getMyInterviews, getNotifications } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -45,28 +46,41 @@ export default function DashboardHero({ inProcessCount = 0 }: { inProcessCount?:
   const nothingPending = pending.length === 0 && unread === 0 && inProcessCount === 0 && !next;
 
   return (
-    <div className="dashboard-hero-kicker anim-fade-up mb-4">
+    <div className="dashboard-hero-kicker animate-fade-in-up">
       <div className="dashboard-hero-kicker__eyebrow">{today}</div>
-      <h2 className="mb-1">{greeting()}, {user?.name ?? 'there'} 👋</h2>
-      <p className="text-muted mb-3">Here's what needs your attention.</p>
+      <h2 className="mb-1">{greeting()}, {user?.name ?? 'there'}</h2>
+      <p className="mb-3" style={{ color: 'var(--muted)' }}>Here's what needs your attention.</p>
       <div className="d-flex flex-wrap gap-2">
         {pending.length > 0 && (
           <TaskChip to={`/interviews/${pending[0].id}`} tone="accent">
-            📝 {pending.length} evaluation{pending.length > 1 ? 's' : ''} to complete
+            <ClipboardCheck size={14} strokeWidth={1.75} aria-hidden="true" />
+            {pending.length} evaluation{pending.length > 1 ? 's' : ''} to complete
           </TaskChip>
         )}
         {next && (
           <TaskChip to={`/interviews/${next.id}`}>
-            📅 Next interview: {nextTime}
+            <CalendarClock size={14} strokeWidth={1.75} aria-hidden="true" />
+            Next interview: {nextTime}
           </TaskChip>
         )}
         {unread > 0 && (
-          <TaskChip>🔔 {unread} unread notification{unread > 1 ? 's' : ''}</TaskChip>
+          <TaskChip>
+            <Bell size={14} strokeWidth={1.75} aria-hidden="true" />
+            {unread} unread notification{unread > 1 ? 's' : ''}
+          </TaskChip>
         )}
         {inProcessCount > 0 && (
-          <TaskChip to="/candidates">👥 {inProcessCount} candidate{inProcessCount > 1 ? 's' : ''} in process</TaskChip>
+          <TaskChip to="/candidates">
+            <Users size={14} strokeWidth={1.75} aria-hidden="true" />
+            {inProcessCount} candidate{inProcessCount > 1 ? 's' : ''} in process
+          </TaskChip>
         )}
-        {nothingPending && <span className="text-muted">You're all caught up. 🎉</span>}
+        {nothingPending && (
+          <span className="d-inline-flex align-items-center gap-2" style={{ color: 'var(--muted)' }}>
+            <CheckCircle2 size={14} strokeWidth={1.75} aria-hidden="true" />
+            You're all caught up.
+          </span>
+        )}
       </div>
     </div>
   );

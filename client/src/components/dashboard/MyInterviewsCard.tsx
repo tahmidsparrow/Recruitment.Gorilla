@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { getMyInterviews } from '../../services/api';
 import type { EvaluationState } from '../../types';
 
+// Prism's glyph-carrying pill badges — status is never colour-alone.
 const stateBadge: Record<EvaluationState, { cls: string; label: string }> = {
-  None: { cls: 'bg-secondary-subtle text-secondary', label: 'Pending' },
-  Draft: { cls: 'bg-warning-subtle text-warning-emphasis', label: 'Draft' },
-  Submitted: { cls: 'bg-success-subtle text-success', label: 'Submitted' },
+  None: { cls: 'badge-pill badge-neutral', label: 'Pending' },
+  Draft: { cls: 'badge-pill badge-warning', label: 'Draft' },
+  Submitted: { cls: 'badge-pill badge-success', label: 'Submitted' },
 };
 
 const isSoon = (iso: string) => {
@@ -22,9 +23,14 @@ export default function MyInterviewsCard() {
   return (
     <Card className="h-100">
       <Card.Body>
-        <Card.Title as="h6" className="text-muted mb-3">My interviews</Card.Title>
+        <div className="metric-label mb-3">My interviews</div>
         {data.length === 0 ? (
-          <p className="text-muted mb-0">You have no assigned interviews.</p>
+          <div className="empty-state">
+            <div className="empty-state-title">No assigned interviews</div>
+            <div className="empty-state-description">
+              Interviews you're scheduled for will appear here.
+            </div>
+          </div>
         ) : (
           <ListGroup variant="flush">
             {data.map((i) => {
@@ -43,7 +49,7 @@ export default function MyInterviewsCard() {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
                       })}
                     </div>
-                    <span className={`badge ${badge.cls} mt-1`}>{badge.label}</span>
+                    <span className={`${badge.cls} mt-1`}>{badge.label}</span>
                   </div>
                 </ListGroup.Item>
               );

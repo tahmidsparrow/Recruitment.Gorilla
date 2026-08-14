@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using MimeKit;
 using Recruitment.Gorilla.API.Data;
 using Recruitment.Gorilla.API.Services;
 
@@ -29,9 +33,20 @@ public abstract class DbTestBase : IDisposable
     protected TestData Data { get; }
 
     // Service factories bound to the transactional context.
-    protected CandidateService Candidates() => new(Db, new TestWebHostEnvironment());
+    protected CandidateService Candidates() => new(Db, new TestWebHostEnvironment(), Notifications(), TestConfig());
     protected ConfigurationService Config() => new(Db);
     protected InterviewService Interviews() => new(Db, Candidates());
+    protected NotificationService Notifications() => new(Db, TestEmail());
+
+    /// <summary>An EmailService whose transport is a no-op — never hits the network, never throws.</summary>
+    protected static EmailService TestEmail(ISmtpTransport? transport = null) => new(
+        new FixedEmailSettingsResolver(new SmtpOptions { Host = "smtp.test.local", FromAddress = "test@test.local" }),
+        transport ?? new NoOpSmtpTransport(),
+        NullLogger<EmailService>.Instance);
+
+    protected static IConfiguration TestConfig() => new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?> { ["App:ClientBaseUrl"] = "http://localhost:5173" })
+        .Build();
 
     public void Dispose()
     {
@@ -40,6 +55,18 @@ public abstract class DbTestBase : IDisposable
         Db.Dispose();
         GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>Discards every message — used wherever a test needs an EmailService but doesn't assert on sends.</summary>
+internal sealed class NoOpSmtpTransport : ISmtpTransport
+{
+    public Task SendAsync(MimeMessage message, SmtpOptions options, CancellationToken ct = default) => Task.CompletedTask;
+}
+
+/// <summary>Returns fixed SMTP options — lets tests build an EmailService without a DB-backed resolver.</summary>
+internal sealed class FixedEmailSettingsResolver(SmtpOptions options) : IEmailSettingsResolver
+{
+    public Task<SmtpOptions> ResolveAsync() => Task.FromResult(options);
 }
 
 /// <summary>Minimal IWebHostEnvironment for CandidateService (only ContentRootPath is used, for CV file paths).</summary>

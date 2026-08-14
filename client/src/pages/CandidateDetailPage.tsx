@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, FileText, Pencil, Trash2 } from 'lucide-react';
 import {
   addStatus,
   deleteCandidate,
@@ -20,19 +21,16 @@ import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../auth/AuthContext';
+// The role-filter branch added a local copy of this; develop had already
+// extracted the same function to utils, so use the shared one.
+import { initials } from '../utils/initials';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('');
 
 function Req() {
   return <span className="required-star" aria-hidden="true">*</span>;
@@ -62,89 +60,93 @@ export default function CandidateDetailPage() {
   });
 
   if (isLoading) return <Spinner animation="border" />;
-  if (isError || !data) return <p className="text-danger">Failed to load candidate.</p>;
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Couldn't load this candidate"
+        description="The record may have been deleted, or the request failed."
+        action={
+          <Link to="/candidates" className="btn btn-outline-secondary">
+            Back to candidates
+          </Link>
+        }
+      />
+    );
+  }
 
   const role = data.roleApplied ?? data.appliedRole;
   const canWrite = canWriteCandidates && !data.roleClosed;
 
   return (
-    <div>
-      <Link to="/candidates" className="small">
-        ← Back to candidates
+    <div className="d-flex flex-column gap-3">
+      {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
+      <Link to="/candidates" className="d-inline-flex align-items-center gap-1" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', alignSelf: 'flex-start' }}>
+        <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
+        Back to candidates
       </Link>
 
-      <div className="interview-hero mb-3 anim-fade-up mt-2">
-        <div className="d-flex flex-wrap align-items-center gap-3">
-          <div className="profile-avatar">{initials(data.fullName) || '?'}</div>
-          <div className="me-auto">
-            <div className="interview-hero__eyebrow">Candidate</div>
-            <div className="d-flex align-items-center gap-2 flex-wrap">
-              <h2 className="mb-0">{data.fullName}</h2>
+      {/* Prism's flat page header, carrying the actions the role-filter branch
+          added (explicit Edit, evaluation report) rather than its gradient hero. */}
+      <div className="page-header">
+        <div className="who-cell">
+          <span className="avatar" aria-hidden="true">{initials(data.fullName) || '?'}</span>
+          <div>
+            <h2>{data.fullName}</h2>
+            <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
               <StatusBadge status={data.currentStatus} />
+              {role && <span style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>{role}</span>}
             </div>
-            {role && <div className="text-muted">{role}</div>}
           </div>
-          <div className="d-flex flex-wrap gap-2">
-            {canWrite && !editing && (
-              <Button variant="primary" onClick={() => setEditing(true)}>
-                Edit
-              </Button>
-            )}
-            <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary">
-              Evaluation report
-            </Link>
-            {isAdminOrAbove && (
-              <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
-                Delete candidate
-              </Button>
-            )}
-          </div>
+        </div>
+        <div className="page-header__actions">
+          {canWrite && !editing && (
+            <Button onClick={() => setEditing(true)}>
+              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1">Edit</span>
+            </Button>
+          )}
+          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary">
+            <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
+            <span className="ms-1">Evaluation report</span>
+          </Link>
+          {isAdminOrAbove && (
+            <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1">Delete candidate</span>
+            </Button>
+          )}
         </div>
       </div>
 
       {data.roleClosed && (
-        <Alert variant="warning">
+        <div className="alert-warning-soft">
           <strong>Job opening closed.</strong> This candidate's applied-for role ended
           {data.roleEndDate ? ` on ${new Date(data.roleEndDate).toLocaleString()}` : ''}. Profile
           edits and status changes are locked until an Admin extends the role's End Date in
           Configuration.
-        </Alert>
+        </div>
       )}
 
-      <Modal show={confirmDelete} onHide={() => setConfirmDelete(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete candidate</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Permanently delete <strong>{data.fullName}</strong>, along with their CV file(s) and
-          full status history? This cannot be undone.
-          {deleteMutation.isError && (
-            <Alert variant="danger" className="mt-3 mb-0">
-              Delete failed. Please try again.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate()}
-          >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={confirmDelete}
+        title="Delete candidate"
+        pending={deleteMutation.isPending}
+        error={deleteMutation.isError ? 'Delete failed. Please try again.' : undefined}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => deleteMutation.mutate()}
+      >
+        Permanently delete <strong>{data.fullName}</strong>, along with their CV file(s) and full
+        status history? This cannot be undone.
+      </ConfirmModal>
 
+      {/* The read/edit split comes from the role-filter branch — the form is no
+          longer permanently open — rendered on Prism's flat cards. */}
       {editing ? (
-        // Focused edit mode: profile form only, no status panel.
-        <Row className="g-4">
-          <Col lg={8}>
-            <Card className="mb-4">
-              <Card.Header>Edit profile</Card.Header>
-              <Card.Body>
+        <Row className="g-3">
+          <Col xs={12} lg={8}>
+            <div className="d-flex flex-column gap-3">
+              <div className="pulse-card">
+                <div className="metric-label mb-3">Edit profile</div>
                 <ProfileEditor
                   candidate={data}
                   onSaved={() => {
@@ -154,37 +156,37 @@ export default function CandidateDetailPage() {
                   }}
                   onCancel={() => setEditing(false)}
                 />
-              </Card.Body>
-            </Card>
+              </div>
 
-            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+            </div>
           </Col>
         </Row>
       ) : (
-        // Read mode: interview-style two-column view.
-        <Row className="g-4">
-          <Col lg={5}>
-            <ReadOnlyCandidateProfile candidate={data} />
+        <Row className="g-3">
+          <Col xs={12} lg={5}>
+            <div className="d-flex flex-column gap-3">
+              <ReadOnlyCandidateProfile candidate={data} />
+              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+            </div>
           </Col>
 
-          <Col lg={7}>
-            <Card>
-              <Card.Header>Status history</Card.Header>
-              <Card.Body>
-                {canWrite && (
-                  <>
-                    <AddStatus
-                      candidateId={candidateId}
-                      onAdded={() =>
-                        queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                      }
-                    />
-                    <hr />
-                  </>
-                )}
-                <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-              </Card.Body>
-            </Card>
+          <Col xs={12} lg={7}>
+            <div className="pulse-card">
+              <div className="metric-label mb-3">Status history</div>
+              {canWrite && (
+                <>
+                  <AddStatus
+                    candidateId={candidateId}
+                    onAdded={() =>
+                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
+                    }
+                  />
+                  <hr />
+                </>
+              )}
+              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
+            </div>
           </Col>
         </Row>
       )}

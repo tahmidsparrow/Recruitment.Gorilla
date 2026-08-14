@@ -1,38 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Card, Table } from 'react-bootstrap';
+import { Calendar, MapPin, User, type LucideProps } from 'lucide-react';
 import type { JobOpening } from '../../types';
 
-const svg = {
-  width: 15,
-  height: 15,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 2,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
+const iconProps: LucideProps = {
+  size: 15,
+  strokeWidth: 1.75,
   'aria-hidden': true,
   className: 'job-meta-icon',
 };
 
-const CalendarIcon = () => (
-  <svg {...svg}>
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <path d="M16 2v4M8 2v4M3 10h18" />
-  </svg>
-);
-const PinIcon = () => (
-  <svg {...svg}>
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-);
-const PersonIcon = () => (
-  <svg {...svg}>
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
+const CalendarIcon = () => <Calendar {...iconProps} />;
+const PinIcon = () => <MapPin {...iconProps} />;
+const PersonIcon = () => <User {...iconProps} />;
 
 const jobId = (id: number) => `JOB-${String(id).padStart(3, '0')}`;
 
@@ -57,20 +37,23 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
     <Card>
       <Card.Body>
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <Card.Title as="h6" className="mb-0">
-            Active Job Openings
-          </Card.Title>
+          <div className="metric-label">Active job openings</div>
           <Link to="/configuration" className="btn btn-sm btn-outline-secondary">
             View All
           </Link>
         </div>
 
         {data.length === 0 ? (
-          <p className="text-muted mb-0">No active job openings.</p>
+          <div className="empty-state">
+            <div className="empty-state-title">No active job openings</div>
+            <div className="empty-state-description">
+              Openings you add in Configuration show up here until their end date passes.
+            </div>
+          </div>
         ) : (
           <Table hover responsive className="job-openings-table align-middle mb-0">
             <thead>
-              <tr className="text-muted small text-uppercase">
+              <tr>
                 <th>Job ID</th>
                 <th>Posted</th>
                 <th>Job Title</th>

@@ -58,6 +58,25 @@ public class ControllerAuthorizationTests(ApiFixture fx)
         await AssertStatus(role, HttpMethod.Get, $"/api/candidates/{id}/evaluation-report", expected);
     }
 
+    // ---- Email / SMTP settings: SuperAdmin only ----
+
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.Forbidden)]
+    [InlineData("Recruiter", HttpStatusCode.Forbidden)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Get_email_settings(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/config/email", expected);
+
+    [Fact]
+    public async Task Email_settings_write_is_super_admin_only()
+    {
+        await AssertStatus("Admin", HttpMethod.Put, "/api/config/email", HttpStatusCode.Forbidden);
+        await AssertStatus("Interviewer", HttpMethod.Post, "/api/config/email/test", HttpStatusCode.Forbidden);
+        var anon = await fx.SendAsync(HttpMethod.Get, "/api/config/email", token: null);
+        Assert.Equal(HttpStatusCode.Unauthorized, anon.StatusCode);
+    }
+
     // ---- Configuration management: Admin+ ----
 
     [Theory]

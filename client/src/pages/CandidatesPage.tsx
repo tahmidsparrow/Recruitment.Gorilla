@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Alert, Button, Form, InputGroup, Modal, Spinner, Table } from 'react-bootstrap';
+import { Button, Form, InputGroup, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Trash2 } from 'lucide-react';
 import {
   deleteCandidate,
   getActiveSkillOptions,
@@ -11,13 +12,38 @@ import {
 } from '../services/api';
 import { SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
+import ConfirmModal from '../components/ui/ConfirmModal';
+import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
+import Pagination from '../components/ui/Pagination';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
 
+/** Sortable columns and the direction each one naturally opens in. */
+const SORTS = {
+  name: { label: 'Name', natural: 'asc' },
+  status: { label: 'Status', natural: 'asc' },
+  added: { label: 'Added', natural: 'desc' },
+} as const;
+type SortKey = keyof typeof SORTS;
+
+/**
+ * The `<thead>` is hidden below md (see .table-cards), which would take the
+ * sortable headers with it. This select is the small-screen equivalent.
+ */
+const MOBILE_SORTS: { value: string; label: string }[] = [
+  { value: 'added:desc', label: 'Newest first' },
+  { value: 'added:asc', label: 'Oldest first' },
+  { value: 'name:asc', label: 'Name A–Z' },
+  { value: 'name:desc', label: 'Name Z–A' },
+  { value: 'status:asc', label: 'Status A–Z' },
+];
+
 export default function CandidatesPage() {
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
+
   // Filters/sort/page live in the URL so views are bookmarkable and survive refresh.
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('q') ?? '';
@@ -28,25 +54,26 @@ export default function CandidatesPage() {
   const sort = searchParams.get('sort') ?? '';
   const dir = searchParams.get('dir') ?? '';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
-  const skillIds = skillsCsv
-    ? skillsCsv.split(',').map(Number).filter(Number.isFinite)
-    : [];
+  const skillIds = skillsCsv ? skillsCsv.split(',').map(Number).filter(Number.isFinite) : [];
 
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]); // keep in sync on back/forward
   const [toDelete, setToDelete] = useState<CandidateListItem | null>(null);
 
-  /** Set/delete URL params; filter changes reset paging. */
+  /** Set/delete URL params; filter changes reset paging, sort changes don't. */
   const setParams = (patch: Record<string, string | null>, resetPage = true) =>
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      for (const [k, v] of Object.entries(patch)) {
-        if (v) next.set(k, v);
-        else next.delete(k);
-      }
-      if (resetPage) next.delete('page');
-      return next;
-    }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v) next.set(k, v);
+          else next.delete(k);
+        }
+        if (resetPage) next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
 
   const hasFilters = !!(search || status || roleId || skillsCsv || referred);
   const clearFilters = () => {
@@ -54,31 +81,31 @@ export default function CandidatesPage() {
     setParams({ q: null, status: null, role: null, skills: null, referred: null });
   };
 
-  // Sorting: default is Added (CreatedAt) desc; first click on a column uses its natural
-  // direction (name/status asc, added desc); clicking the active column flips it.
-  const activeSort = sort || 'added';
-  const applySort = (col: string) =>
+  // Default is Added desc. A first click on a column uses its natural direction;
+  // clicking the already-active column flips it.
+  const activeSort: SortKey = (sort in SORTS ? sort : 'added') as SortKey;
+  const activeDir = dir === 'asc' ? 'asc' : dir === 'desc' ? 'desc' : SORTS[activeSort].natural;
+  const applySort = (col: SortKey) =>
     activeSort === col
-      ? setParams({ sort: col, dir: dir !== 'asc' ? 'asc' : 'desc' }, false)
-      : setParams({ sort: col, dir: col === 'added' ? 'desc' : 'asc' }, false);
-  const sortIndicator = (col: string) =>
-    activeSort === col ? (dir === 'asc' ? ' ▲' : ' ▼') : '';
+      ? setParams({ sort: col, dir: activeDir === 'asc' ? 'desc' : 'asc' }, false)
+      : setParams({ sort: col, dir: SORTS[col].natural }, false);
 
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, sort, dir, page }],
-    queryFn: () => getCandidates({
-      search: search || undefined,
-      status: status || undefined,
-      roleId: roleId ? Number(roleId) : undefined,
-      skillIds: skillsCsv || undefined,
-      referred: referred || undefined,
-      sort: sort || undefined,
-      dir: dir || undefined,
-      page,
-      pageSize: PAGE_SIZE,
-    }),
+    queryFn: () =>
+      getCandidates({
+        search: search || undefined,
+        status: status || undefined,
+        roleId: roleId ? Number(roleId) : undefined,
+        skillIds: skillsCsv || undefined,
+        referred: referred || undefined,
+        sort: sort || undefined,
+        dir: dir || undefined,
+        page,
+        pageSize: PAGE_SIZE,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -87,6 +114,7 @@ export default function CandidatesPage() {
     queryFn: getStatusOptions,
   });
 
+  // Includes inactive roles, so candidates under a closed opening stay filterable.
   const { data: roleOptions = [] } = useQuery({
     queryKey: ['candidate-filter-roles'],
     queryFn: getCandidateFilterRoleOptions,
@@ -110,35 +138,50 @@ export default function CandidatesPage() {
     setParams({ q: searchInput.trim() || null });
   };
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / data.pageSize)) : 1;
+  /** A sortable column header. A button, so it's reachable by keyboard. */
+  const SortHeader = ({ col }: { col: SortKey }) => {
+    const active = activeSort === col;
+    const Icon = !active ? ChevronsUpDown : activeDir === 'asc' ? ArrowUp : ArrowDown;
+    return (
+      <button type="button" className="th-sort" onClick={() => applySort(col)} aria-label={`Sort by ${SORTS[col].label}`}>
+        {SORTS[col].label}
+        <Icon size={12} strokeWidth={2} aria-hidden="true" className={active ? undefined : 'th-sort__idle'} />
+      </button>
+    );
+  };
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Candidates</h2>
-        {canWriteCandidates && (
-          <Link to="/upload" className="btn btn-primary">
-            Upload CVs
-          </Link>
-        )}
-      </div>
+      {/* No <h2> — the topbar owns the page title. */}
+      <PageHeader
+        actions={
+          canWriteCandidates && (
+            <Link to="/upload" className="btn btn-primary">
+              Upload CVs
+            </Link>
+          )
+        }
+      />
 
-      <div className="d-flex flex-wrap gap-2 mb-3 align-items-start">
-        <Form onSubmit={applySearch} className="flex-grow-1" style={{ maxWidth: 420 }}>
+      <div className="data-toolbar">
+        <Form onSubmit={applySearch} className="flex-grow-1" style={{ minWidth: 200, maxWidth: 380 }}>
           <InputGroup>
             <Form.Control
+              type="search"
               placeholder="Search by name, email or phone"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Search candidates"
             />
             <Button type="submit" variant="outline-secondary">
               Search
             </Button>
           </InputGroup>
         </Form>
+
         <Form.Select
           aria-label="Filter by status"
-          style={{ maxWidth: 220 }}
+          style={{ minWidth: 150, maxWidth: 210 }}
           value={status}
           onChange={(e) => setParams({ status: e.target.value || null })}
         >
@@ -149,20 +192,23 @@ export default function CandidatesPage() {
             </option>
           ))}
         </Form.Select>
+
         <Form.Select
           aria-label="Filter by role"
-          style={{ maxWidth: 240 }}
+          style={{ minWidth: 150, maxWidth: 230 }}
           value={roleId}
           onChange={(e) => setParams({ role: e.target.value || null })}
         >
           <option value="">All roles</option>
           {roleOptions.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.name}{option.isActive ? '' : ' (inactive)'}
+              {option.name}
+              {option.isActive ? '' : ' (inactive)'}
             </option>
           ))}
         </Form.Select>
-        <div style={{ minWidth: 220, maxWidth: 320 }}>
+
+        <div style={{ flex: '1 1 200px', minWidth: 180, maxWidth: 300 }}>
           <SearchableMultiSelect
             options={skillOptions}
             value={skillIds}
@@ -170,21 +216,35 @@ export default function CandidatesPage() {
             placeholder="Filter by skills…"
           />
         </div>
+
         <Form.Check
           type="checkbox"
           id="filter-referred"
-          className="align-self-center"
           label="Referred only"
           checked={referred}
           onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
         />
+
+        {/* Small screens hide the table header, and the sortable columns with it. */}
+        <Form.Select
+          className="d-md-none"
+          aria-label="Sort candidates"
+          style={{ minWidth: 150, maxWidth: 210 }}
+          value={`${activeSort}:${activeDir}`}
+          onChange={(e) => {
+            const [col, d] = e.target.value.split(':');
+            setParams({ sort: col, dir: d }, false);
+          }}
+        >
+          {MOBILE_SORTS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </Form.Select>
+
         {hasFilters && (
-          <Button
-            variant="link"
-            size="sm"
-            className="align-self-center text-decoration-none"
-            onClick={clearFilters}
-          >
+          <Button variant="link" size="sm" className="text-decoration-none" onClick={clearFilters}>
             Clear filters
           </Button>
         )}
@@ -193,119 +253,99 @@ export default function CandidatesPage() {
       {isLoading ? (
         <Spinner animation="border" />
       ) : isError ? (
-        <p className="text-danger">Failed to load candidates.</p>
+        <EmptyState
+          title="Couldn't load candidates"
+          description="The request failed. Refresh to try again."
+        />
       ) : !data || data.items.length === 0 ? (
-        <p className="text-muted">No candidates found.</p>
+        <EmptyState
+          title={hasFilters ? 'No candidates match these filters' : 'No candidates yet'}
+          description={
+            hasFilters
+              ? 'Try widening the filters, or clear them to see everyone.'
+              : 'Upload some CVs to get started.'
+          }
+          action={
+            hasFilters ? (
+              <Button variant="outline-secondary" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <>
-          <Table hover responsive className="align-middle">
-            <thead>
-              <tr>
-                <th role="button" style={{ cursor: 'pointer' }} onClick={() => applySort('name')}>
-                  Name{sortIndicator('name')}
-                </th>
-                <th className="d-none d-lg-table-cell">Email</th>
-                <th className="d-none d-md-table-cell">Title</th>
-                <th role="button" style={{ cursor: 'pointer' }} onClick={() => applySort('status')}>
-                  Status{sortIndicator('status')}
-                </th>
-                <th
-                  className="d-none d-md-table-cell"
-                  role="button"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => applySort('added')}
-                >
-                  Added{sortIndicator('added')}
-                </th>
-                {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters) — hide it below Admin. */}
-                {isAdminOrAbove && <th className="text-end">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link to={`/candidates/${c.id}`}>{c.fullName}</Link>
-                    {/* Email is hidden as its own column on small screens — show it here instead */}
-                    <div className="text-muted small d-lg-none text-break">{c.email}</div>
-                  </td>
-                  <td className="d-none d-lg-table-cell text-break">{c.email}</td>
-                  <td className="d-none d-md-table-cell">{c.currentTitle ?? '—'}</td>
-                  <td>
-                    <StatusBadge status={c.currentStatus} />
-                  </td>
-                  <td className="d-none d-md-table-cell text-nowrap">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </td>
-                  {isAdminOrAbove && (
-                    <td className="text-end">
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => setToDelete(c)}
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  )}
+          {/* .table-cards reflows each row into a labelled card below md, so no
+              column is hidden on small screens — see index.css. */}
+          <div className="table-wrap">
+            <Table hover className="table-cards align-middle">
+              <thead>
+                <tr>
+                  <th><SortHeader col="name" /></th>
+                  <th>Email</th>
+                  <th>Title</th>
+                  <th><SortHeader col="status" /></th>
+                  <th><SortHeader col="added" /></th>
+                  {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
+                  {isAdminOrAbove && <th className="col-right">Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </Table>
-
-          <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center">
-            <span className="text-muted small">{data.totalCount} candidate(s)</span>
-            <div className="d-flex align-items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline-secondary"
-                disabled={page <= 1}
-                onClick={() => setParams({ page: String(page - 1) }, false)}
-              >
-                Previous
-              </Button>
-              <span className="small">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                size="sm"
-                variant="outline-secondary"
-                disabled={page >= totalPages}
-                onClick={() => setParams({ page: String(page + 1) }, false)}
-              >
-                Next
-              </Button>
-            </div>
+              </thead>
+              <tbody>
+                {data.items.map((c) => (
+                  <tr key={c.id}>
+                    <td data-label="Name">
+                      <Link to={`/candidates/${c.id}`} className="table-link">
+                        {c.fullName}
+                      </Link>
+                    </td>
+                    <td data-label="Email" className="text-break">{c.email}</td>
+                    <td data-label="Title">{c.currentTitle ?? '—'}</td>
+                    <td data-label="Status">
+                      <StatusBadge status={c.currentStatus} />
+                    </td>
+                    <td data-label="Added" className="text-nowrap">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </td>
+                    {isAdminOrAbove && (
+                      <td className="col-actions">
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() => setToDelete(c)}
+                          aria-label={`Delete ${c.fullName}`}
+                        >
+                          <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+                          <span className="ms-1">Delete</span>
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </div>
+
+          <Pagination
+            page={page}
+            pageSize={data.pageSize}
+            totalCount={data.totalCount}
+            onPageChange={(p) => setParams({ page: p > 1 ? String(p) : null }, false)}
+            noun="candidate"
+          />
         </>
       )}
 
-      <Modal show={toDelete !== null} onHide={() => setToDelete(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete candidate</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s)
-          and full status history? This cannot be undone.
-          {deleteMutation.isError && (
-            <Alert variant="danger" className="mt-3 mb-0">
-              Delete failed. Please try again.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setToDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={deleteMutation.isPending}
-            onClick={() => toDelete && deleteMutation.mutate(toDelete.id)}
-          >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ConfirmModal
+        show={toDelete !== null}
+        title="Delete candidate"
+        pending={deleteMutation.isPending}
+        error={deleteMutation.isError ? 'Delete failed. Please try again.' : undefined}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => toDelete && deleteMutation.mutate(toDelete.id)}
+      >
+        Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s) and
+        full status history? This cannot be undone.
+      </ConfirmModal>
     </div>
   );
 }
