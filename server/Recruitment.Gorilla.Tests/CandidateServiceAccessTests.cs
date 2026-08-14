@@ -1,4 +1,5 @@
 using Recruitment.Gorilla.API.Auth;
+using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.Tests.Infrastructure;
 
 namespace Recruitment.Gorilla.Tests;
@@ -8,7 +9,7 @@ public class CandidateServiceAccessTests(MySqlDatabaseFixture fixture) : DbTestB
 {
     private async Task<HashSet<int>> AccessibleIds(int? accessUserId)
     {
-        var page = await Candidates().GetAllAsync(null, null, 1, 500, accessUserId);
+        var page = await Candidates().GetAllAsync(new CandidateListQuery(PageSize: 500), accessUserId);
         return page.Items.Select(i => i.Id).ToHashSet();
     }
 
@@ -73,6 +74,47 @@ public class CandidateServiceAccessTests(MySqlDatabaseFixture fixture) : DbTestB
 
         Assert.NotNull(await Candidates().GetByIdAsync(candidate.Id, r1.Id));
         Assert.NotNull(await Candidates().GetByIdAsync(candidate.Id, r2.Id));
+    }
+
+    [Fact]
+    public async Task Role_filter_returns_only_that_roles_candidates_within_access_scope()
+    {
+        var admin = Data.AddUser(Roles.Admin);
+        var roleA = Data.AddRole();
+        var roleB = Data.AddRole();
+        var inA = Data.AddCandidate(ownerUserId: admin.Id, roleId: roleA.Id);
+        var alsoInA = Data.AddCandidate(ownerUserId: admin.Id, roleId: roleA.Id);
+        var inB = Data.AddCandidate(ownerUserId: admin.Id, roleId: roleB.Id);
+
+        // Admin scope (null), filtered to roleA.
+        var page = await Candidates().GetAllAsync(new CandidateListQuery(RoleId: roleA.Id, PageSize: 500), null);
+        var ids = page.Items.Select(i => i.Id).ToHashSet();
+
+        Assert.Contains(inA.Id, ids);
+        Assert.Contains(alsoInA.Id, ids);
+        Assert.DoesNotContain(inB.Id, ids);
+    }
+
+    [Fact]
+    public async Task Role_filter_is_intersected_with_recruiter_access_scope()
+    {
+        var admin = Data.AddUser(Roles.Admin);
+        var recruiter = Data.AddUser(Roles.Recruiter);
+        var assignedRole = Data.AddRole(recruiterUserIds: recruiter.Id);
+
+        var visibleInRole = Data.AddCandidate(ownerUserId: admin.Id, roleId: assignedRole.Id);
+
+        // Filtering by a role the recruiter is NOT assigned to yields nothing (access wins).
+        var otherRole = Data.AddRole();
+        Data.AddCandidate(ownerUserId: admin.Id, roleId: otherRole.Id);
+
+        var assigned = await Candidates().GetAllAsync(
+            new CandidateListQuery(RoleId: assignedRole.Id, PageSize: 500), recruiter.Id);
+        Assert.Contains(visibleInRole.Id, assigned.Items.Select(i => i.Id));
+
+        var other = await Candidates().GetAllAsync(
+            new CandidateListQuery(RoleId: otherRole.Id, PageSize: 500), recruiter.Id);
+        Assert.Empty(other.Items);
     }
 
     [Fact]

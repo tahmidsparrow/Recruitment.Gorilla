@@ -807,6 +807,29 @@ a.user-card__name:hover {
 .table-wrap > .table > tbody > tr:last-child > td {
   border-bottom: none;
 }
+/* Sortable column header. A real button so it is keyboard-reachable, styled to
+   sit invisibly inside the <th> rather than looking like a control. */
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.th-sort:hover {
+  color: var(--text);
+}
+/* The idle chevron is a hint that the column *can* sort, so it stays quiet
+   until the column is the active one. */
+.th-sort__idle {
+  opacity: 0.35;
+}
+
 /* A cell value that navigates. The underline is the affordance — the global
    `a` rule strips it, which would leave a link reading as ordinary text. */
 .table-link {

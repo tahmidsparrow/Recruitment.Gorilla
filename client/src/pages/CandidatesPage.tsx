@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Form, InputGroup, Spinner, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
-import { deleteCandidate, getCandidates, getStatusOptions } from '../services/api';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Trash2 } from 'lucide-react';
+import {
+  deleteCandidate,
+  getActiveSkillOptions,
+  getCandidateFilterRoleOptions,
+  getCandidates,
+  getStatusOptions,
+} from '../services/api';
+import { SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
@@ -14,25 +21,108 @@ import type { CandidateListItem } from '../types';
 
 const PAGE_SIZE = 20;
 
+/** Sortable columns and the direction each one naturally opens in. */
+const SORTS = {
+  name: { label: 'Name', natural: 'asc' },
+  status: { label: 'Status', natural: 'asc' },
+  added: { label: 'Added', natural: 'desc' },
+} as const;
+type SortKey = keyof typeof SORTS;
+
+/**
+ * The `<thead>` is hidden below md (see .table-cards), which would take the
+ * sortable headers with it. This select is the small-screen equivalent.
+ */
+const MOBILE_SORTS: { value: string; label: string }[] = [
+  { value: 'added:desc', label: 'Newest first' },
+  { value: 'added:asc', label: 'Oldest first' },
+  { value: 'name:asc', label: 'Name A–Z' },
+  { value: 'name:desc', label: 'Name Z–A' },
+  { value: 'status:asc', label: 'Status A–Z' },
+];
+
 export default function CandidatesPage() {
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
+
+  // Filters/sort/page live in the URL so views are bookmarkable and survive refresh.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('q') ?? '';
+  const status = searchParams.get('status') ?? '';
+  const roleId = searchParams.get('role') ?? '';
+  const skillsCsv = searchParams.get('skills') ?? '';
+  const referred = searchParams.get('referred') === '1';
+  const sort = searchParams.get('sort') ?? '';
+  const dir = searchParams.get('dir') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const skillIds = skillsCsv ? skillsCsv.split(',').map(Number).filter(Number.isFinite) : [];
+
+  const [searchInput, setSearchInput] = useState(search);
+  useEffect(() => setSearchInput(search), [search]); // keep in sync on back/forward
   const [toDelete, setToDelete] = useState<CandidateListItem | null>(null);
+
+  /** Set/delete URL params; filter changes reset paging, sort changes don't. */
+  const setParams = (patch: Record<string, string | null>, resetPage = true) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v) next.set(k, v);
+          else next.delete(k);
+        }
+        if (resetPage) next.delete('page');
+        return next;
+      },
+      { replace: true },
+    );
+
+  const hasFilters = !!(search || status || roleId || skillsCsv || referred);
+  const clearFilters = () => {
+    setSearchInput('');
+    setParams({ q: null, status: null, role: null, skills: null, referred: null });
+  };
+
+  // Default is Added desc. A first click on a column uses its natural direction;
+  // clicking the already-active column flips it.
+  const activeSort: SortKey = (sort in SORTS ? sort : 'added') as SortKey;
+  const activeDir = dir === 'asc' ? 'asc' : dir === 'desc' ? 'desc' : SORTS[activeSort].natural;
+  const applySort = (col: SortKey) =>
+    activeSort === col
+      ? setParams({ sort: col, dir: activeDir === 'asc' ? 'desc' : 'asc' }, false)
+      : setParams({ sort: col, dir: SORTS[col].natural }, false);
 
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, page }],
-    queryFn: () => getCandidates({ search, status, page, pageSize: PAGE_SIZE }),
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, sort, dir, page }],
+    queryFn: () =>
+      getCandidates({
+        search: search || undefined,
+        status: status || undefined,
+        roleId: roleId ? Number(roleId) : undefined,
+        skillIds: skillsCsv || undefined,
+        referred: referred || undefined,
+        sort: sort || undefined,
+        dir: dir || undefined,
+        page,
+        pageSize: PAGE_SIZE,
+      }),
     placeholderData: keepPreviousData,
   });
 
   const { data: statusOptions = [] } = useQuery({
     queryKey: ['status-options'],
     queryFn: getStatusOptions,
+  });
+
+  // Includes inactive roles, so candidates under a closed opening stay filterable.
+  const { data: roleOptions = [] } = useQuery({
+    queryKey: ['candidate-filter-roles'],
+    queryFn: getCandidateFilterRoleOptions,
+  });
+
+  const { data: skillOptions = [] } = useQuery({
+    queryKey: ['skill-options', 'active'],
+    queryFn: getActiveSkillOptions,
   });
 
   const deleteMutation = useMutation({
@@ -45,8 +135,19 @@ export default function CandidatesPage() {
 
   const applySearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
+    setParams({ q: searchInput.trim() || null });
+  };
+
+  /** A sortable column header. A button, so it's reachable by keyboard. */
+  const SortHeader = ({ col }: { col: SortKey }) => {
+    const active = activeSort === col;
+    const Icon = !active ? ChevronsUpDown : activeDir === 'asc' ? ArrowUp : ArrowDown;
+    return (
+      <button type="button" className="th-sort" onClick={() => applySort(col)} aria-label={`Sort by ${SORTS[col].label}`}>
+        {SORTS[col].label}
+        <Icon size={12} strokeWidth={2} aria-hidden="true" className={active ? undefined : 'th-sort__idle'} />
+      </button>
+    );
   };
 
   return (
@@ -63,11 +164,11 @@ export default function CandidatesPage() {
       />
 
       <div className="data-toolbar">
-        <Form onSubmit={applySearch} className="flex-grow-1" style={{ minWidth: 200, maxWidth: 420 }}>
+        <Form onSubmit={applySearch} className="flex-grow-1" style={{ minWidth: 200, maxWidth: 380 }}>
           <InputGroup>
             <Form.Control
               type="search"
-              placeholder="Search by name or email"
+              placeholder="Search by name, email or phone"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               aria-label="Search candidates"
@@ -77,14 +178,12 @@ export default function CandidatesPage() {
             </Button>
           </InputGroup>
         </Form>
+
         <Form.Select
           aria-label="Filter by status"
-          style={{ minWidth: 160, maxWidth: 220 }}
+          style={{ minWidth: 150, maxWidth: 210 }}
           value={status}
-          onChange={(e) => {
-            setPage(1);
-            setStatus(e.target.value);
-          }}
+          onChange={(e) => setParams({ status: e.target.value || null })}
         >
           <option value="">All statuses</option>
           {statusOptions.map((option) => (
@@ -93,6 +192,62 @@ export default function CandidatesPage() {
             </option>
           ))}
         </Form.Select>
+
+        <Form.Select
+          aria-label="Filter by role"
+          style={{ minWidth: 150, maxWidth: 230 }}
+          value={roleId}
+          onChange={(e) => setParams({ role: e.target.value || null })}
+        >
+          <option value="">All roles</option>
+          {roleOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+              {option.isActive ? '' : ' (inactive)'}
+            </option>
+          ))}
+        </Form.Select>
+
+        <div style={{ flex: '1 1 200px', minWidth: 180, maxWidth: 300 }}>
+          <SearchableMultiSelect
+            options={skillOptions}
+            value={skillIds}
+            onChange={(ids) => setParams({ skills: ids.join(',') || null })}
+            placeholder="Filter by skills…"
+          />
+        </div>
+
+        <Form.Check
+          type="checkbox"
+          id="filter-referred"
+          label="Referred only"
+          checked={referred}
+          onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
+        />
+
+        {/* Small screens hide the table header, and the sortable columns with it. */}
+        <Form.Select
+          className="d-md-none"
+          aria-label="Sort candidates"
+          style={{ minWidth: 150, maxWidth: 210 }}
+          value={`${activeSort}:${activeDir}`}
+          onChange={(e) => {
+            const [col, d] = e.target.value.split(':');
+            setParams({ sort: col, dir: d }, false);
+          }}
+        >
+          {MOBILE_SORTS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </Form.Select>
+
+        {hasFilters && (
+          <Button variant="link" size="sm" className="text-decoration-none" onClick={clearFilters}>
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -104,11 +259,18 @@ export default function CandidatesPage() {
         />
       ) : !data || data.items.length === 0 ? (
         <EmptyState
-          title={search || status ? 'No candidates match these filters' : 'No candidates yet'}
+          title={hasFilters ? 'No candidates match these filters' : 'No candidates yet'}
           description={
-            search || status
-              ? 'Try a different status or clear the search.'
+            hasFilters
+              ? 'Try widening the filters, or clear them to see everyone.'
               : 'Upload some CVs to get started.'
+          }
+          action={
+            hasFilters ? (
+              <Button variant="outline-secondary" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -119,11 +281,11 @@ export default function CandidatesPage() {
             <Table hover className="table-cards align-middle">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th><SortHeader col="name" /></th>
                   <th>Email</th>
                   <th>Title</th>
-                  <th>Status</th>
-                  <th>Added</th>
+                  <th><SortHeader col="status" /></th>
+                  <th><SortHeader col="added" /></th>
                   {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
                   {isAdminOrAbove && <th className="col-right">Actions</th>}
                 </tr>
@@ -167,7 +329,7 @@ export default function CandidatesPage() {
             page={page}
             pageSize={data.pageSize}
             totalCount={data.totalCount}
-            onPageChange={setPage}
+            onPageChange={(p) => setParams({ page: p > 1 ? String(p) : null }, false)}
             noun="candidate"
           />
         </>

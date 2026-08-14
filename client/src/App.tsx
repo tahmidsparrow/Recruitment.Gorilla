@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
+import CandidateEvaluationReportPage from './pages/CandidateEvaluationReportPage';
 import ConfigurationPage from './pages/ConfigurationPage';
 import UsersPage from './pages/UsersPage';
 import AuditLogPage from './pages/AuditLogPage';
@@ -72,6 +73,14 @@ export default function App() {
               element={
                 <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
                   <CandidateDetailPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/candidates/:id/evaluations"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <CandidateEvaluationReportPage />
                 </RequireRole>
               }
             />

@@ -5,6 +5,7 @@ import type {
   AuditQuery,
   CVDraft,
   CandidateDetail,
+  CandidateEvaluationReport,
   ChangePasswordPayload,
   EmailSettings,
   UpsertEmailSettings,
@@ -212,7 +213,17 @@ export const getDashboard = async (roleId?: number): Promise<DashboardData> => {
 };
 
 export const getCandidates = async (
-  params: { search?: string; status?: string; page?: number; pageSize?: number }
+  params: {
+    search?: string;
+    status?: string;
+    roleId?: number;
+    skillIds?: string; // CSV of skill-option ids
+    referred?: boolean;
+    sort?: string; // name | status | added
+    dir?: string; // asc | desc
+    page?: number;
+    pageSize?: number;
+  }
 ): Promise<PagedResult<CandidateListItem>> => {
   const { data } = await api.get<PagedResult<CandidateListItem>>('/candidates', { params });
   return data;
@@ -220,6 +231,12 @@ export const getCandidates = async (
 
 export const getCandidate = async (id: number): Promise<CandidateDetail> => {
   const { data } = await api.get<CandidateDetail>(`/candidates/${id}`);
+  return data;
+};
+
+// Candidate evaluation report — all interviewers' full rubrics + aggregates (Recruiter+).
+export const getCandidateEvaluationReport = async (id: number): Promise<CandidateEvaluationReport> => {
+  const { data } = await api.get<CandidateEvaluationReport>(`/candidates/${id}/evaluation-report`);
   return data;
 };
 
@@ -288,6 +305,14 @@ export const getActiveRoleOptions = async (): Promise<RoleAppliedOption[]> => {
 
 export const getActiveSkillOptions = async (): Promise<SkillOption[]> => {
   const { data } = await api.get<SkillOption[]>('/candidates/skill-options');
+  return data;
+};
+
+// Roles for the candidate-list role filter — includes inactive roles, scoped to the caller
+// (Admin+ get all; a Recruiter gets their assigned roles). Distinct from getActiveRoleOptions,
+// which is active-only for the create/edit form.
+export const getCandidateFilterRoleOptions = async (): Promise<RoleAppliedOption[]> => {
+  const { data } = await api.get<RoleAppliedOption[]>('/candidates/role-filter-options');
   return data;
 };
 

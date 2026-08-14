@@ -404,6 +404,40 @@ export interface InterviewDetail {
   interviewTags: string[];
 }
 
+// ----- Candidate evaluation report (Recruiter+) -----
+export interface RecommendationCount {
+  recommendation: string;
+  count: number;
+}
+
+export interface CriterionAverage {
+  criterionKey: string;
+  average: number;
+  count: number;
+}
+
+export interface EvaluationReportSummary {
+  interviewerCount: number;
+  averageOverall: number | null;
+  recommendationCounts: RecommendationCount[];
+  criterionAverages: CriterionAverage[];
+}
+
+export interface ReportEvaluation {
+  interviewId: number;
+  scheduledAt: string;
+  interviewTags: string[];
+  evaluation: InterviewEvaluation;
+}
+
+export interface CandidateEvaluationReport {
+  candidateId: number;
+  fullName: string;
+  roleApplied: string | null;
+  summary: EvaluationReportSummary;
+  evaluations: ReportEvaluation[];
+}
+
 export interface UpsertEvaluationPayload {
   generalAssessment: string | null;
   recommendation: string | null;
