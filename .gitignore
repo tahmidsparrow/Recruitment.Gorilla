@@ -19,6 +19,11 @@ dist/
 .env
 .env.local
 
+# Local test/demo account credentials. Kept out of git on purpose; the tracked
+# `client/e2e/.env.e2e.example` documents the format with placeholders only.
+.env.e2e
+*.env.e2e
+
 # Misc
 .DS_Store
 Thumbs.db
