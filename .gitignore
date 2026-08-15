@@ -19,6 +19,9 @@ dist/
 .env
 .env.local
 
+# Local E2E credentials (see client/e2e/.env.e2e.example for the shape)
+client/e2e/.env.e2e
+
 # Misc
 .DS_Store
 Thumbs.db
