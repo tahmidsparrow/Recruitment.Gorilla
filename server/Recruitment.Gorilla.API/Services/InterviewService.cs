@@ -94,7 +94,7 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
         return new InterviewDetailDto(
             interview.Id, interview.ScheduledAt, candidate, interviewers,
             isAssigned, myEval is null ? null : ToDto(myEval), allEvals,
-            interview.StatusHistory?.Comment, tags);
+            interview.StatusHistory?.Comment, tags, interview.DurationMinutes);
     }
 
     /// <summary>

@@ -476,6 +476,8 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
 
 type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt' | 'interviewers', string>>;
 
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+
 function AddStatus({
   candidateId,
   onAdded,
@@ -489,6 +491,7 @@ function AddStatus({
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState(60);
   const [interviewerIds, setInterviewerIds] = useState<number[]>([]);
   const [interviewTypeIds, setInterviewTypeIds] = useState<number[]>([]);
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
@@ -534,6 +537,7 @@ function AddStatus({
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
         interviewerUserIds: requiresInterviewers ? interviewerIds : null,
         interviewTypeOptionIds: requiresInterviewers ? interviewTypeIds : null,
+        interviewDurationMinutes: requiresInterviewAt ? durationMinutes : null,
       }),
     onSuccess: () => {
       setStatus('');
@@ -541,6 +545,7 @@ function AddStatus({
       setTaskDetails('');
       setSubmissionUrl('');
       setInterviewAt('');
+      setDurationMinutes(60);
       setInterviewerIds([]);
       setInterviewTypeIds([]);
       setFieldErrors({});
@@ -630,6 +635,21 @@ function AddStatus({
               isInvalid={!!fieldErrors.interviewAt}
             />
             <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
+          </Col>
+        )}
+        {requiresInterviewAt && (
+          <Col md={12}>
+            <Form.Label className="mb-1">Duration</Form.Label>
+            <Form.Select
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              aria-label="Interview duration"
+            >
+              {DURATION_OPTIONS.map((m) => (
+                <option key={m} value={m}>{m} minutes</option>
+              ))}
+            </Form.Select>
+            <Form.Text muted>Sets the end time on the calendar invite sent to interviewers.</Form.Text>
           </Col>
         )}
         {requiresInterviewers && (

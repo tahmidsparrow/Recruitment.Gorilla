@@ -27,6 +27,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<EmailSetting> EmailSettings => Set<EmailSetting>();
 
+    /// <summary>
+    /// Marks every DateTime coming out of MySQL as UTC — see <see cref="UtcDateTimeConverter"/>.
+    /// Note this makes EF unable to translate member access (e.g. <c>.Date</c>) on a DateTime column
+    /// into SQL; group or project such values in memory instead.
+    /// </summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        builder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        builder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Candidate>(e =>
@@ -319,6 +330,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Interview>(e =>
         {
             e.HasKey(i => i.Id);
+            // Existing rows predate calendar invites — backfill them to the standard hour.
+            e.Property(i => i.DurationMinutes).HasDefaultValue(60);
             e.HasOne(i => i.Candidate)
              .WithMany(c => c.Interviews)
              .HasForeignKey(i => i.CandidateId)

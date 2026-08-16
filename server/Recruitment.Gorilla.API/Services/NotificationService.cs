@@ -18,7 +18,7 @@ public class NotificationService(AppDbContext db, EmailService emailService)
     /// </summary>
     public async Task NotifyAsync(
         int userId, string title, string message, string? linkUrl,
-        string? emailSubject = null, string? emailHtmlBody = null)
+        string? emailSubject = null, string? emailHtmlBody = null, CalendarAttachment? calendar = null)
     {
         db.Notifications.Add(new Notification { UserId = userId, Title = title, Message = message, LinkUrl = linkUrl });
         await db.SaveChangesAsync();
@@ -27,7 +27,7 @@ public class NotificationService(AppDbContext db, EmailService emailService)
 
         var user = await db.Users.FindAsync(userId);
         if (user is not null && !string.IsNullOrWhiteSpace(user.Email))
-            await emailService.SendAsync(user.Email, user.Name, emailSubject, emailHtmlBody);
+            await emailService.SendAsync(user.Email, user.Name, emailSubject, emailHtmlBody, calendar);
     }
 
     public async Task<NotificationListDto> GetMineAsync(int userId, int take = 15)

@@ -89,7 +89,10 @@ public record StatusChangeDto(
     // Each must be an active InterviewTypeOption.
     List<int>? InterviewTypeOptionIds = null,
     // Deprecated: the server now derives the actor from the authenticated user.
-    string? ChangedBy = null
+    string? ChangedBy = null,
+    // Optional when Status == "Interview Scheduled": how long the interview runs. Drives the end
+    // time on the calendar invite. Appended last so existing positional construction is unaffected.
+    int? InterviewDurationMinutes = null
 );
 
 public record CandidateListItemDto(

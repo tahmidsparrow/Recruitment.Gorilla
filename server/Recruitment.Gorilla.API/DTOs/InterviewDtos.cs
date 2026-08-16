@@ -38,7 +38,8 @@ public record InterviewDetailDto(
     InterviewEvaluationDto? MyEvaluation,      // the caller's evaluation, if any
     List<InterviewEvaluationDto>? AllEvaluations, // Admin+ only; null otherwise
     string? Notes,                             // recruiter's note = the scheduled entry's comment
-    List<string> InterviewTags                 // interview type tags (Technical, HR, …)
+    List<string> InterviewTags,                // interview type tags (Technical, HR, …)
+    int DurationMinutes                        // drives the calendar invite's end time
 );
 
 public record UpsertEvaluationDto(

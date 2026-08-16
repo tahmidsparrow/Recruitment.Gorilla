@@ -71,4 +71,37 @@ public class EmailServiceTests
 
         Assert.Null(transport.Sent);
     }
+
+    [Fact]
+    public async Task SendAsync_without_a_calendar_stays_a_plain_html_body()
+    {
+        var transport = new RecordingTransport();
+        await Email(transport).SendAsync("a@b.com", "A", "Subject", "<p>x</p>");
+
+        // Regression guard: the multipart branch must not affect ordinary transactional mail.
+        Assert.IsType<TextPart>(transport.Sent!.Body);
+    }
+
+    [Fact]
+    public async Task SendAsync_attaches_the_calendar_invite_as_text_calendar()
+    {
+        var transport = new RecordingTransport();
+        var invite = new InterviewInviteDetails(
+            7, "Jane Doe", "Backend Engineer",
+            new DateTime(2026, 8, 20, 8, 30, 0, DateTimeKind.Utc), 45,
+            "http://localhost:5173/interviews/7");
+
+        await Email(transport).SendAsync(
+            "a@b.com", "A", "Interview assigned", "<p>x</p>", CalendarInvite.Build(invite));
+
+        var multipart = Assert.IsType<Multipart>(transport.Sent!.Body);
+        var calendarPart = multipart.OfType<TextPart>()
+            .Single(p => p.ContentType.MediaSubtype == "calendar");
+
+        // The method parameter is what makes clients offer "add to calendar" rather than a download.
+        Assert.Equal("PUBLISH", calendarPart.ContentType.Parameters["method"]);
+        Assert.Equal("interview.ics", calendarPart.ContentDisposition?.FileName);
+        Assert.Contains("DTSTART:20260820T083000Z", calendarPart.Text);
+        Assert.Contains("DTEND:20260820T091500Z", calendarPart.Text);
+    }
 }

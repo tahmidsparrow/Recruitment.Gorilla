@@ -463,6 +463,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 CandidateId = id,
                 StatusHistory = entry,
                 ScheduledAt = dto.InterviewAt.Value,
+                DurationMinutes = NormalizeDuration(dto.InterviewDurationMinutes),
                 CreatedByUserId = currentUserId,
                 Interviewers = dto.InterviewerUserIds
                     .Distinct()
@@ -481,16 +482,21 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         if (interview is not null)
         {
             var interviewUrl = $"{config["App:ClientBaseUrl"]?.TrimEnd('/')}/interviews/{interview.Id}";
+            var invite = new InterviewInviteDetails(
+                interview.Id, candidate.FullName, candidate.AppliedRole,
+                interview.ScheduledAt, interview.DurationMinutes, interviewUrl);
+            var calendar = CalendarInvite.Build(invite);
+
             foreach (var uid in dto.InterviewerUserIds!.Distinct())
             {
                 var interviewer = await db.Users.FindAsync(uid);
                 var (emailSubject, emailHtml) = EmailTemplates.InterviewAssigned(
                     interviewer?.Name ?? "there", candidate.FullName, candidate.AppliedRole,
-                    interview.ScheduledAt, interviewUrl);
+                    interview.ScheduledAt, interviewUrl, invite);
 
                 await notificationService.NotifyAsync(
                     uid, "Interview assigned", $"You have been assigned to interview {candidate.FullName}.",
-                    $"/interviews/{interview.Id}", emailSubject, emailHtml);
+                    $"/interviews/{interview.Id}", emailSubject, emailHtml, calendar);
             }
         }
 
@@ -588,6 +594,13 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
             interviewTags,
             evaluationSummaries);
     }
+
+    /// <summary>
+    /// Clamped so a bad or missing value can't produce a nonsensical calendar event (a zero-length
+    /// or all-day block). Defaults to the standard hour.
+    /// </summary>
+    private static int NormalizeDuration(int? minutes) =>
+        minutes is int m && m > 0 ? Math.Clamp(m, 5, 480) : 60;
 
     private static bool RequiresComment(string status) =>
         status is Reject or Discontinued;

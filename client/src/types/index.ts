@@ -122,6 +122,8 @@ export interface StatusChangePayload {
   interviewerUserIds?: number[] | null;
   // Optional when status === 'Interview Scheduled': interview type tag ids.
   interviewTypeOptionIds?: number[] | null;
+  // Optional when status === 'Interview Scheduled': sets the calendar invite's end time.
+  interviewDurationMinutes?: number | null;
 }
 
 export interface CandidateListItem {
@@ -402,6 +404,7 @@ export interface InterviewDetail {
   allEvaluations: InterviewEvaluation[] | null;
   notes: string | null;
   interviewTags: string[];
+  durationMinutes: number;
 }
 
 export interface UpsertEvaluationPayload {

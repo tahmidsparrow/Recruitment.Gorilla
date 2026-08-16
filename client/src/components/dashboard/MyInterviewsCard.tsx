@@ -47,6 +47,7 @@ export default function MyInterviewsCard() {
                     <div className={`small ${isSoon(i.scheduledAt) ? 'text-danger fw-semibold' : ''}`}>
                       {new Date(i.scheduledAt).toLocaleString(undefined, {
                         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                        timeZoneName: 'short',
                       })}
                     </div>
                     <span className={`${badge.cls} mt-1`}>{badge.label}</span>

@@ -40,7 +40,9 @@ export default function DashboardHero({ inProcessCount = 0 }: { inProcessCount?:
   const unread = notifications?.unreadCount ?? 0;
 
   const nextTime = next
-    ? new Date(next.scheduledAt).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+    ? new Date(next.scheduledAt).toLocaleString(undefined, {
+        weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+      })
     : null;
 
   const nothingPending = pending.length === 0 && unread === 0 && inProcessCount === 0 && !next;
