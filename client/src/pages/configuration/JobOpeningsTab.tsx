@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { Button, Form, Modal, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, Search, Trash2 } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import {
   createRoleOption,
   deleteRoleOption,
-  getAssignableUsers,
+  getRecruiterOptions,
   getRoleOptions,
   updateRoleOption,
 } from '../../services/api';
@@ -80,9 +81,19 @@ export default function JobOpeningsTab() {
     queryFn: () => getRoleOptions(true),
   });
 
-  const { data: users = [] } = useQuery({ queryKey: ['assignable-users'], queryFn: getAssignableUsers });
-  // Label carries name + email so the searchable select matches on either.
-  const recruiterOptions = users.map((u) => ({ id: u.id, name: `${u.name} (${u.email})` }));
+  const { data: users = [] } = useQuery({ queryKey: ['recruiter-options'], queryFn: getRecruiterOptions });
+
+  const recruiterOptions = useMemo(() => {
+    // Label carries name + email so the searchable select matches on either.
+    const eligible = users.map((u) => ({ id: u.id, name: `${u.name} (${u.email})` }));
+    // Openings saved before this list was restricted may still hold users who can't write
+    // candidates. Keep them in the options so they render as chips and can be removed —
+    // otherwise they'd be invisible here yet still submitted, and the save would fail.
+    const legacy = (editing?.recruiters ?? [])
+      .filter((r) => !users.some((u) => u.id === r.userId))
+      .map((r) => ({ id: r.userId, name: `${r.name} — no candidate access` }));
+    return [...eligible, ...legacy];
+  }, [users, editing]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['config'] });
 
@@ -107,7 +118,12 @@ export default function JobOpeningsTab() {
       addToast(editing ? 'Job opening updated.' : 'Job opening added.');
       setShowModal(false);
     },
-    onError: () => setError('Could not save the job opening. The name may already exist.'),
+    // A 400 carries the server's reason as a plain string (e.g. an ineligible recruiter) — show it
+    // rather than the generic guess, which would otherwise hide why the save was rejected.
+    onError: (err) => {
+      const body = isAxiosError(err) && err.response?.status === 400 ? err.response.data : null;
+      setError(typeof body === 'string' && body ? body : 'Could not save the job opening. The name may already exist.');
+    },
   });
 
   const removeMutation = useMutation({
@@ -297,7 +313,10 @@ export default function JobOpeningsTab() {
                   onChange={setRecruiterUserIds}
                   placeholder="Search by name or email…"
                 />
-                <Form.Text muted>Each assigned recruiter can access every candidate under this role.</Form.Text>
+                <Form.Text muted>
+                  Each assigned recruiter can access every candidate under this role. Only users with
+                  the Recruiter role or higher are listed — an Interviewer would gain no access.
+                </Form.Text>
               </div>
               <div className="col-12">
                 <Form.Check

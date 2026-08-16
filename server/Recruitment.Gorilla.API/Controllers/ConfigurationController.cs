@@ -57,6 +57,14 @@ public class ConfigurationController(
 
     // ----- Role Applied -----
 
+    /// <summary>
+    /// Active users eligible to be a job opening's recruiter. Distinct from
+    /// <c>/api/interviews/assignable-users</c> (every active user), which answers the interviewer
+    /// question — assigning a recruiter only grants candidate access to Recruiter-and-above.
+    /// </summary>
+    [HttpGet("recruiter-options")]
+    public async Task<IActionResult> GetRecruiterOptions() => Ok(await config.GetRecruiterOptionsAsync());
+
     [HttpGet("roles")]
     public async Task<IActionResult> GetRoles([FromQuery] bool includeInactive = false) =>
         Ok(includeInactive ? await config.GetAllRolesAsync() : await config.GetActiveRolesAsync());

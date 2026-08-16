@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.Data;
 using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.API.Models;
@@ -115,15 +116,45 @@ public class ConfigurationService(AppDbContext db)
         return null;
     }
 
-    /// <summary>Every assigned recruiter (when any) must be an existing active user. Null when valid.</summary>
+    /// <summary>
+    /// Every assigned recruiter (when any) must be an existing active user that can actually write
+    /// candidates. Assigning an Interviewer would save fine but grant nothing, since
+    /// <c>CandidatesController</c> is gated on <see cref="Roles.CanWriteCandidate"/> — so reject it
+    /// here rather than let the assignment silently do nothing. Null when valid.
+    /// </summary>
     private async Task<string?> ValidateRecruitersAsync(List<int>? recruiterUserIds)
     {
         if (recruiterUserIds is not { Count: > 0 }) return null;
         var ids = recruiterUserIds.Distinct().ToList();
-        var validCount = await db.Users.CountAsync(u => ids.Contains(u.Id) && u.IsActive);
-        return validCount == ids.Count
+
+        var users = await db.Users
+            .Where(u => ids.Contains(u.Id) && u.IsActive)
+            .Select(u => new { u.Name, Roles = u.Roles.Select(ur => ur.Role).ToList() })
+            .ToListAsync();
+
+        if (users.Count != ids.Count)
+            return "One or more selected recruiters are not valid active users.";
+
+        var ineligible = users
+            .Where(u => !u.Roles.Any(Roles.CanWriteCandidateRoles.Contains))
+            .Select(u => u.Name)
+            .ToList();
+
+        return ineligible.Count == 0
             ? null
-            : "One or more selected recruiters are not valid active users.";
+            : $"These users need the Recruiter role or higher to be assigned as a recruiter: {string.Join(", ", ineligible)}.";
+    }
+
+    /// <summary>Active users eligible to be a job opening's recruiter (Recruiter role or higher).</summary>
+    public async Task<List<AssignableUserDto>> GetRecruiterOptionsAsync()
+    {
+        // Bound to a local so EF parameterizes the list instead of trying to evaluate the static field.
+        var eligibleRoles = Roles.CanWriteCandidateRoles;
+        return await db.Users
+            .Where(u => u.IsActive && u.Roles.Any(ur => eligibleRoles.Contains(ur.Role)))
+            .OrderBy(u => u.Name)
+            .Select(u => new AssignableUserDto(u.Id, u.Name, u.Email))
+            .ToListAsync();
     }
 
     /// <summary>Trim to null so empty strings aren't persisted.</summary>

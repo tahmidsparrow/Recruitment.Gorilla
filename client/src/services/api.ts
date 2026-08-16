@@ -296,6 +296,13 @@ export const getRoleOptions = async (includeInactive = false): Promise<RoleAppli
   return data;
 };
 
+/** Users who may be assigned as a job opening's recruiter (Recruiter role or higher) — a
+ *  narrower list than getAssignableUsers, which answers the interviewer question. */
+export const getRecruiterOptions = async (): Promise<AssignableUser[]> => {
+  const { data } = await api.get<AssignableUser[]>('/config/recruiter-options');
+  return data;
+};
+
 export const createRoleOption = async (payload: UpsertOptionPayload): Promise<RoleAppliedOption> => {
   const { data } = await api.post<RoleAppliedOption>('/config/roles', payload);
   return data;

@@ -72,6 +72,14 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     public Task Get_config_roles(string role, HttpStatusCode expected) =>
         AssertStatus(role, HttpMethod.Get, "/api/config/roles", expected);
 
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.Forbidden)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Get_recruiter_options(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/config/recruiter-options", expected);
+
     // ---- Audit trail: Admin+ ----
 
     [Theory]

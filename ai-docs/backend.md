@@ -115,6 +115,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET | `/api/status-options/next/{candidateId}` | required | Allowed next statuses for a candidate |
 | GET/POST | `/api/config/roles` | Admin+ | List (active, or `?includeInactive=true`) / create Role Applied options (job-opening fields: required **EndDate**, Location/Department from fixed sets, Priority, and **`RecruiterUserIds`** — a many-to-many of assigned recruiters). Returns computed `Title` + `CreatedAt` (posted date) + `Recruiters` (name list). Assigned recruiters gain access to the role's candidates (see auth.md) |
 | PUT | `/api/config/roles/{id}` | Admin+ | Update a Role Applied option |
+| GET | `/api/config/recruiter-options` | Admin+ | Active users assignable as a role's **recruiter** — Recruiter role or higher. Narrower than `/api/interviews/assignable-users` (every active user): a recruiter assignment only grants candidate access to roles in `Roles.CanWriteCandidate`, so create/update **reject** an ineligible user rather than save an assignment that grants nothing |
 | DELETE | `/api/config/roles/{id}` | **SuperAdmin** | Soft-disable if it has candidates (returns `{deleted,deactivated,candidateCount}`), else hard-delete |
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |

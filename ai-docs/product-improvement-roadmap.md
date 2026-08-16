@@ -25,7 +25,7 @@ rough **effort**. This is advisory — turn any item into a `specs/` spec before
 | 8 | Audit trail (who changed what, when) | 🟢 **done** | M | partial (StatusHistory only) |
 | 9 | File handling (cloud storage, AV scan, multi-doc) | 🟡 | M | partial (local disk) |
 | 10 | Automated tests (access scoping, transitions, gates) | 🟢 **started** | M | n/a |
-| 11 | Recruiter-picker guardrail (assign only Recruiter-role users) | 🟢 | S | ✅ |
+| 11 | Recruiter-picker guardrail (assign only Recruiter-role users) | 🟢 **done** | S | ✅ |
 | 12 | Offer stage (offer letters, approvals) | 🟡 | M | ❌ pipeline ends at Recommended |
 | 13 | Candidate source tracking | 🟡 | S | ❌ no source field |
 | 14 | Public job board / application intake | 🟢 | L | partial (roles = openings) |
@@ -105,10 +105,12 @@ verify, JWT issuance, refresh rotation/revocation, change-password; a read-only 
 **Next:** widen backend to Dashboard scoping + CV access/streaming + `AddStatusAsync` side-effects;
 frontend Tier 2 for the remaining pages; then wire `dotnet test` + `npm test` into CI.
 
-### 11. Recruiter-picker guardrail 🟢 (S)
-Any active user (even an Interviewer) can be assigned as a role's recruiter, which silently grants no
-access (the `CanWriteCandidate` gate blocks non-Recruiters). Restrict the Configuration recruiter
-picker to users holding the **Recruiter** role (or higher) to remove the footgun.
+### 11. Recruiter-picker guardrail 🟢 (done)
+Delivered — the Configuration recruiter picker now reads `GET /api/config/recruiter-options` (active
+users holding **Recruiter** or higher) instead of the interviewer list, and `ConfigurationService`
+rejects an ineligible assignment server-side with the offending names, so the silent no-op is gone.
+Openings that already name an ineligible user keep them visible (flagged "no candidate access") so
+they can be removed rather than silently resubmitted.
 
 ## Pipeline completeness
 
@@ -132,7 +134,7 @@ no public posting or candidate self-application intake or source attribution.
 4. **Compliance (#6) + auth hardening (#7)** — before real applicant data scales.
 5. Then scorecards/comparison (#3), search/bulk (#4), offer stage (#12).
 
-Quick wins to slot in anytime: **#7 (auth hardening)**, **#11 (recruiter-picker guardrail)**, **#13 (source field)**.
+Quick wins to slot in anytime: **#7 (auth hardening)**, **#13 (source field)**.
 
 ## Baseline — what already exists (so this doc stays honest)
 Candidate CV upload + parse; configurable status pipeline with a transitions table; roles/job-openings

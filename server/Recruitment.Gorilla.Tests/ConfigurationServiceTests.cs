@@ -39,6 +39,50 @@ public class ConfigurationServiceTests(MySqlDatabaseFixture fixture) : DbTestBas
     }
 
     [Fact]
+    public async Task CreateRole_rejects_a_recruiter_that_cannot_write_candidates()
+    {
+        // An Interviewer saves fine but gains nothing (CandidatesController excludes the role),
+        // so the assignment must be rejected rather than silently do nothing.
+        var interviewer = Data.AddUser(Roles.Interviewer, name: "Ivy Interviewer");
+
+        var (created, _, error) = await Config().CreateRoleAsync(RoleDto($"R-{Guid.NewGuid():N}", interviewer.Id));
+
+        Assert.Null(created);
+        Assert.Contains("Recruiter role or higher", error);
+        Assert.Contains("Ivy Interviewer", error);
+    }
+
+    [Theory]
+    [InlineData(Roles.SuperAdmin)]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Recruiter)]
+    public async Task CreateRole_accepts_every_role_that_can_write_candidates(string role)
+    {
+        var user = Data.AddUser(role);
+
+        var (created, _, error) = await Config().CreateRoleAsync(RoleDto($"R-{Guid.NewGuid():N}", user.Id));
+
+        Assert.Null(error);
+        Assert.Equal([user.Id], created!.Recruiters.Select(x => x.UserId));
+    }
+
+    [Fact]
+    public async Task GetRecruiterOptions_lists_only_active_candidate_writers()
+    {
+        var recruiter = Data.AddUser(Roles.Recruiter);
+        var admin = Data.AddUser(Roles.Admin);
+        var interviewer = Data.AddUser(Roles.Interviewer);
+        var inactive = Data.AddUser(Roles.Recruiter, active: false);
+
+        var ids = (await Config().GetRecruiterOptionsAsync()).Select(u => u.Id).ToHashSet();
+
+        Assert.Contains(recruiter.Id, ids);
+        Assert.Contains(admin.Id, ids);
+        Assert.DoesNotContain(interviewer.Id, ids);
+        Assert.DoesNotContain(inactive.Id, ids);
+    }
+
+    [Fact]
     public async Task UpdateRole_replaces_the_recruiter_set()
     {
         var r1 = Data.AddUser(Roles.Recruiter);
