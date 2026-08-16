@@ -80,6 +80,23 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     public Task Get_recruiter_options(string role, HttpStatusCode expected) =>
         AssertStatus(role, HttpMethod.Get, "/api/config/recruiter-options", expected);
 
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.Forbidden)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Get_config_sources(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/config/sources", expected);
+
+    // The candidate-facing read is wider than /config/*: Recruiters need it to fill the form.
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.OK)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Get_source_options(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/candidates/source-options", expected);
+
     // ---- Audit trail: Admin+ ----
 
     [Theory]
@@ -108,6 +125,8 @@ public class ControllerAuthorizationTests(ApiFixture fx)
     [Theory]
     [InlineData("/api/candidates")]
     [InlineData("/api/config/roles")]
+    [InlineData("/api/config/sources")]
+    [InlineData("/api/candidates/source-options")]
     [InlineData("/api/interviews/types")]
     [InlineData("/api/dashboard/kpis")]
     [InlineData("/api/audit")]

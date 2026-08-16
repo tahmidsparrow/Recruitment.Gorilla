@@ -27,7 +27,7 @@ rough **effort**. This is advisory — turn any item into a `specs/` spec before
 | 10 | Automated tests (access scoping, transitions, gates) | 🟢 **started** | M | n/a |
 | 11 | Recruiter-picker guardrail (assign only Recruiter-role users) | 🟢 **done** | S | ✅ |
 | 12 | Offer stage (offer letters, approvals) | 🟡 | M | ❌ pipeline ends at Recommended |
-| 13 | Candidate source tracking | 🟡 | S | ❌ no source field |
+| 13 | Candidate source tracking | 🟡 **done** | S | ✅ |
 | 14 | Public job board / application intake | 🟢 | L | partial (roles = openings) |
 
 ## Highest-impact product gaps
@@ -117,10 +117,12 @@ they can be removed rather than silently resubmitted.
 ### 12. Offer stage 🟡 (M)
 Pipeline ends at **Recommended**. No offer stage, offer letter generation, or approval workflow.
 
-### 13. Candidate source tracking 🟡 (S)
-No **source** field on candidates → source effectiveness analytics (part of #5) is impossible. Add a
-source field (referral / job board / agency / direct) + surface in reporting. (Referral capture
-already exists via `IsReferred` + reference fields — generalize it.)
+### 13. Candidate source tracking 🟡 (done)
+Delivered — an admin-configurable `CandidateSourceOption` lookup (Configuration → Candidate sources)
+plus `Candidate.SourceOptionId` and a free-text `SourceDetail` for the specific agency/campaign/board.
+Captured on the create and edit forms, shown on the profile, and carried on the list projection.
+**Next:** surface it in reporting (the source-effectiveness half of #5), and decide whether to fold
+the older `IsReferred` + reference fields into the "Employee referral" source — both exist today.
 
 ### 14. Public job board / application intake 🟢 (L)
 Roles double as job openings (`RoleAppliedOption` with End Date / location / department), but there's
@@ -134,7 +136,7 @@ no public posting or candidate self-application intake or source attribution.
 4. **Compliance (#6) + auth hardening (#7)** — before real applicant data scales.
 5. Then scorecards/comparison (#3), search/bulk (#4), offer stage (#12).
 
-Quick wins to slot in anytime: **#7 (auth hardening)**, **#13 (source field)**.
+Quick wins to slot in anytime: **#7 (auth hardening)**.
 
 ## Baseline — what already exists (so this doc stays honest)
 Candidate CV upload + parse; configurable status pipeline with a transitions table; roles/job-openings

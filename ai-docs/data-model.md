@@ -147,8 +147,10 @@ Lookup table for allowed movement from one status option to another. The UI hide
 Seed includes `Interview Completed → Interview Scheduled` (Id 31, migration
 `AddInterviewCompletionLinkAndReschedule`) so a second interview round can be scheduled.
 
-### RoleAppliedOption (`RoleAppliedOptions`) & SkillOption (`SkillOptions`)
-Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt`. Inactive values are hidden from candidate forms but kept for history. Both are seeded with starter values.
+### RoleAppliedOption (`RoleAppliedOptions`), SkillOption (`SkillOptions`) & CandidateSourceOption (`CandidateSourceOptions`)
+Admin-managed lookups (via the Configuration page / `/api/config/*`). Each: `Id`, `Name` (unique, ≤200), `SortOrder`, `IsActive`, `CreatedAt`, `UpdatedAt`. Inactive values are hidden from candidate forms but kept for history. All are seeded with starter values.
+
+**`CandidateSourceOption`** records where a candidate came from (migration `AddCandidateSource`), seeded with employee referral, job board, LinkedIn, agency, careers page, direct sourcing, internal applicant, university/event and other. `Candidate.SourceOptionId` is a nullable `Restrict` FK plus a free-text `SourceDetail` (≤300) for the specific agency, campaign or board. Both are optional, and rows predating the feature keep `NULL` — so source reporting should treat "unset" as its own bucket rather than assume completeness. Note the older `Candidate.IsReferred` + reference fields overlap with the "Employee referral" source; both are kept for now rather than forcing a data migration.
 
 **`RoleAppliedOption` doubles as a job opening.** An active role *is* an open position, and it carries optional posting metadata surfaced in the dashboard's "Active Job Openings" table (migration `AddJobOpeningFieldsToRoleAppliedOption`):
 

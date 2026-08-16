@@ -55,7 +55,8 @@ public class CandidatesController(
     public async Task<IActionResult> Create([FromBody] CreateCandidateDto dto)
     {
         var candidateError = await candidateService.ValidateCandidateAsync(
-            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience);
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience,
+            dto.SourceOptionId);
         if (candidateError is not null)
             return BadRequest(candidateError);
 
@@ -140,11 +141,16 @@ public class CandidatesController(
     public async Task<IActionResult> GetSkillOptions() => Ok(await config.GetActiveSkillsAsync());
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
+    [HttpGet("source-options")]
+    public async Task<IActionResult> GetSourceOptions() => Ok(await config.GetActiveSourcesAsync());
+
+    [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCandidateDto dto)
     {
         var candidateError = await candidateService.ValidateCandidateAsync(
-            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience);
+            dto.FullName, dto.Email, dto.RoleAppliedOptionId, dto.SkillOptionIds, dto.RelevantExperience,
+            dto.SourceOptionId);
         if (candidateError is not null)
             return BadRequest(candidateError);
 

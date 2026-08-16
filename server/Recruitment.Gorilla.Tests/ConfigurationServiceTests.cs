@@ -152,6 +152,64 @@ public class ConfigurationServiceTests(MySqlDatabaseFixture fixture) : DbTestBas
     }
 
     [Fact]
+    public async Task CreateSource_conflicts_on_a_duplicate_name()
+    {
+        var name = $"Src-{Guid.NewGuid():N}";
+        var (created, conflict) = await Config().CreateSourceAsync(new UpsertCandidateSourceOptionDto(name, 1, true));
+        Assert.NotNull(created);
+        Assert.False(conflict);
+
+        var (dupe, dupeConflict) = await Config().CreateSourceAsync(new UpsertCandidateSourceOptionDto(name, 2, true));
+        Assert.Null(dupe);
+        Assert.True(dupeConflict);
+    }
+
+    [Fact]
+    public async Task GetActiveSources_excludes_inactive_options()
+    {
+        var (created, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 50, false));
+
+        var active = await Config().GetActiveSourcesAsync();
+        var all = await Config().GetAllSourcesAsync();
+
+        Assert.DoesNotContain(created!.Id, active.Select(s => s.Id));
+        Assert.Contains(created.Id, all.Select(s => s.Id));
+    }
+
+    [Fact]
+    public async Task DeleteSource_softdisables_when_a_candidate_uses_it_else_hard_deletes()
+    {
+        // In use → deactivate, and report the count so the UI can explain why.
+        var (used, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 51, true));
+        var candidate = Data.AddCandidate();
+        candidate.SourceOptionId = used!.Id;
+        await Db.SaveChangesAsync();
+
+        var inUse = await Config().DeleteSourceAsync(used.Id);
+        Assert.True(inUse.Found);
+        Assert.False(inUse.Deleted);
+        Assert.True(inUse.Deactivated);
+        Assert.Equal(1, inUse.CandidateCount);
+        Assert.False((await Db.CandidateSourceOptions.FindAsync(used.Id))!.IsActive);
+
+        // Unused → hard delete.
+        var (free, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 52, true));
+        var unused = await Config().DeleteSourceAsync(free!.Id);
+        Assert.True(unused.Deleted);
+        Assert.Null(await Db.CandidateSourceOptions.FindAsync(free.Id));
+    }
+
+    [Fact]
+    public async Task DeleteSource_reports_not_found_for_an_unknown_id()
+    {
+        var result = await Config().DeleteSourceAsync(999999);
+        Assert.False(result.Found);
+    }
+
+    [Fact]
     public async Task DeleteInterviewType_hard_deletes_when_unused()
     {
         var (type, _) = await Config().CreateInterviewTypeAsync(new UpsertInterviewTypeOptionDto($"T-{Guid.NewGuid():N}", 1, true));

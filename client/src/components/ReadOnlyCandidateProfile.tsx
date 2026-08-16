@@ -111,6 +111,12 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
           <Tile label="Email" value={candidate.email} />
           <Tile label="Phone" value={candidate.phone} />
           <Tile label="Relevant Experience" value={candidate.relevantExperience} />
+          <Tile
+            label="Source"
+            value={candidate.source
+              ? candidate.sourceDetail ? `${candidate.source} — ${candidate.sourceDetail}` : candidate.source
+              : null}
+          />
         </div>
 
         {candidate.skillOptions.length > 0 && (

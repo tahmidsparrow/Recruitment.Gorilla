@@ -38,6 +38,8 @@ export interface CreateCandidatePayload {
   initialStatus: string;
   initialStatusComment: string | null;
   allowDuplicate?: boolean;
+  sourceOptionId: number | null;
+  sourceDetail: string | null;
 }
 
 export interface DuplicateCandidate {
@@ -63,6 +65,15 @@ export interface UpdateCandidatePayload {
   referenceEmployeeId: string | null;
   roleAppliedOptionId: number | null;
   skillOptionIds: number[];
+  sourceOptionId: number | null;
+  sourceDetail: string | null;
+}
+
+export interface CandidateSourceOption {
+  id: number;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 export interface RoleAppliedOption {
@@ -135,6 +146,7 @@ export interface CandidateListItem {
   appliedRole: string | null;
   currentStatus: string;
   createdAt: string;
+  source: string | null;
 }
 
 export interface CVFileInfo {
@@ -202,6 +214,9 @@ export interface CandidateDetail {
   statusHistory: StatusHistoryEntry[];
   roleEndDate: string | null;
   roleClosed: boolean;
+  sourceOptionId: number | null;
+  source: string | null;
+  sourceDetail: string | null;
 }
 
 export interface PagedResult<T> {

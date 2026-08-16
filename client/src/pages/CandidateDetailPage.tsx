@@ -10,6 +10,7 @@ import {
   getActiveInterviewTypes,
   getActiveRoleOptions,
   getActiveSkillOptions,
+  getActiveSourceOptions,
   getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
@@ -183,6 +184,10 @@ function ProfileEditor({
     queryKey: ['skill-options', 'active'],
     queryFn: getActiveSkillOptions,
   });
+  const { data: sourceOptions = [] } = useQuery({
+    queryKey: ['source-options', 'active'],
+    queryFn: getActiveSourceOptions,
+  });
 
   const set = (field: keyof CandidateDetail, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -205,6 +210,8 @@ function ProfileEditor({
         portfolioUrl: form.portfolioUrl || null,
         appliedRole: null,
         roleAppliedOptionId: form.roleAppliedOptionId,
+        sourceOptionId: form.sourceOptionId,
+        sourceDetail: form.sourceDetail || null,
         skillOptionIds: skillIds,
         isReferred: form.isReferred,
         referenceName: form.isReferred ? form.referenceName || null : null,
@@ -313,6 +320,23 @@ function ProfileEditor({
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source</Form.Label>
+          <SearchableSelect
+            options={sourceOptions}
+            value={form.sourceOptionId}
+            onChange={(sourceOptionId) => setForm((f) => ({ ...f, sourceOptionId }))}
+            placeholder="Where did this candidate come from?"
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source detail</Form.Label>
+          <Form.Control
+            value={form.sourceDetail ?? ''}
+            onChange={(e) => set('sourceDetail', e.target.value)}
+            placeholder="Agency, campaign or board name"
+          />
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>

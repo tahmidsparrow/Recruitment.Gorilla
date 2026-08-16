@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RoleAppliedOption> RoleAppliedOptions => Set<RoleAppliedOption>();
     public DbSet<RoleRecruiter> RoleRecruiters => Set<RoleRecruiter>();
     public DbSet<SkillOption> SkillOptions => Set<SkillOption>();
+    public DbSet<CandidateSourceOption> CandidateSourceOptions => Set<CandidateSourceOption>();
     public DbSet<CandidateSkill> CandidateSkills => Set<CandidateSkill>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
@@ -56,9 +57,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.ReferenceEmail).HasMaxLength(200);
             e.Property(c => c.ReferenceEmployeeId).HasMaxLength(100);
             e.Property(c => c.CurrentStatus).HasMaxLength(100).IsRequired();
+            e.Property(c => c.SourceDetail).HasMaxLength(300);
             e.HasOne(c => c.RoleAppliedOption)
              .WithMany()
              .HasForeignKey(c => c.RoleAppliedOptionId)
+             .OnDelete(DeleteBehavior.Restrict);
+            // Restrict, like the role FK: a source in use is soft-disabled rather than deleted.
+            e.HasOne(c => c.SourceOption)
+             .WithMany(s => s.Candidates)
+             .HasForeignKey(c => c.SourceOptionId)
              .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(c => c.OwnerUser)
              .WithMany()
@@ -240,6 +247,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(rr => rr.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateSourceOption>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).HasMaxLength(200).IsRequired();
+            e.Property(s => s.IsActive).HasDefaultValue(true);
+            e.HasIndex(s => s.Name).IsUnique();
+
+            var seededSources = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new CandidateSourceOption { Id = 1, Name = "Employee referral", SortOrder = 1, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 2, Name = "Job board", SortOrder = 2, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 3, Name = "LinkedIn", SortOrder = 3, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 4, Name = "Recruitment agency", SortOrder = 4, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 5, Name = "Careers page", SortOrder = 5, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 6, Name = "Direct sourcing", SortOrder = 6, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 7, Name = "Internal applicant", SortOrder = 7, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 8, Name = "University or event", SortOrder = 8, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources },
+                new CandidateSourceOption { Id = 9, Name = "Other", SortOrder = 9, IsActive = true, CreatedAt = seededSources, UpdatedAt = seededSources }
+            );
         });
 
         modelBuilder.Entity<SkillOption>(e =>

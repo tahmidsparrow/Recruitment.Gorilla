@@ -119,6 +119,9 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | DELETE | `/api/config/roles/{id}` | **SuperAdmin** | Soft-disable if it has candidates (returns `{deleted,deactivated,candidateCount}`), else hard-delete |
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
+| GET/POST | `/api/config/sources` | Admin+ | List (`?includeInactive=true`) / create candidate **source** options (referral, job board, agency, …) |
+| PUT/DELETE | `/api/config/sources/{id}` | Admin+ | Update / delete a source. Delete returns `{deleted,deactivated,candidateCount}` — soft-disables when candidates reference it, since `Candidate.SourceOptionId` is a `Restrict` FK |
+| GET | `/api/candidates/source-options` | CanWriteCandidate | Active sources for the candidate create/edit forms (Recruiters can't reach `/config/*`) |
 | GET/PUT | `/api/config/email` | **SuperAdmin** | Read / save the in-app **SMTP settings** (`EmailSettingsService`). GET returns everything **except** the password + a `passwordSet` flag; PUT's `password` is write-only (blank keeps the stored one). Audited as `Config.EmailUpdated` (never logs the secret) |
 | POST | `/api/config/email/test` | **SuperAdmin** | Send a test email to `{ toEmail }` using the saved settings → `{ ok, error? }` |
 

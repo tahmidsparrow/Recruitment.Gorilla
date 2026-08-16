@@ -5,6 +5,7 @@ import type {
   AuditQuery,
   CVDraft,
   CandidateDetail,
+  CandidateSourceOption,
   ChangePasswordPayload,
   EmailSettings,
   UpsertEmailSettings,
@@ -291,6 +292,12 @@ export const getActiveSkillOptions = async (): Promise<SkillOption[]> => {
   return data;
 };
 
+/** Active candidate sources for the candidate forms — reachable by Recruiters, unlike /config/*. */
+export const getActiveSourceOptions = async (): Promise<CandidateSourceOption[]> => {
+  const { data } = await api.get<CandidateSourceOption[]>('/candidates/source-options');
+  return data;
+};
+
 export const getRoleOptions = async (includeInactive = false): Promise<RoleAppliedOption[]> => {
   const { data } = await api.get<RoleAppliedOption[]>('/config/roles', { params: { includeInactive } });
   return data;
@@ -352,6 +359,28 @@ export const updateSkillOption = async (id: number, payload: UpsertOptionPayload
 
 export const deleteSkillOption = async (id: number): Promise<void> => {
   await api.delete(`/config/skills/${id}`);
+};
+
+// ----- Configuration: Candidate source options -----
+export const getSourceOptions = async (includeInactive = false): Promise<CandidateSourceOption[]> => {
+  const { data } = await api.get<CandidateSourceOption[]>('/config/sources', { params: { includeInactive } });
+  return data;
+};
+
+export const createSourceOption = async (payload: UpsertOptionPayload): Promise<CandidateSourceOption> => {
+  const { data } = await api.post<CandidateSourceOption>('/config/sources', payload);
+  return data;
+};
+
+export const updateSourceOption = async (id: number, payload: UpsertOptionPayload): Promise<CandidateSourceOption> => {
+  const { data } = await api.put<CandidateSourceOption>(`/config/sources/${id}`, payload);
+  return data;
+};
+
+/** Returns the delete outcome (like roles, not skills) so the UI can report a soft-disable. */
+export const deleteSourceOption = async (id: number): Promise<DeleteRoleResult> => {
+  const { data } = await api.delete<DeleteRoleResult>(`/config/sources/${id}`);
+  return data;
 };
 
 // ----- Configuration: Interview type options -----

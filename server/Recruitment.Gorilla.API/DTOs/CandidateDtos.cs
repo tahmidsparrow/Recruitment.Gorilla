@@ -42,7 +42,10 @@ public record CreateCandidateDto(
     // Deprecated: the server now derives the actor from the authenticated user.
     // Kept nullable for back-compat so omitting it doesn't fail model validation.
     string? ChangedBy = null,
-    bool AllowDuplicate = false
+    bool AllowDuplicate = false,
+    // Where the candidate came from. Optional — appended so existing positional callers are unaffected.
+    int? SourceOptionId = null,
+    string? SourceDetail = null
 );
 
 public record DuplicateCandidateDto(
@@ -73,7 +76,9 @@ public record UpdateCandidateDto(
     string? ReferenceEmail,
     string? ReferenceEmployeeId,
     int? RoleAppliedOptionId,
-    List<int>? SkillOptionIds
+    List<int>? SkillOptionIds,
+    int? SourceOptionId = null,
+    string? SourceDetail = null
 );
 
 public record StatusChangeDto(
@@ -103,7 +108,8 @@ public record CandidateListItemDto(
     string? CurrentTitle,
     string? AppliedRole,
     string CurrentStatus,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string? Source = null
 );
 
 public record CandidateDetailDto(
@@ -132,7 +138,10 @@ public record CandidateDetailDto(
     List<CVFileDto> CVFiles,
     List<StatusHistoryDto> StatusHistory,
     DateTime? RoleEndDate,   // the applied-for job opening's closing date, if any
-    bool RoleClosed          // true when RoleEndDate has passed → edits/status locked
+    bool RoleClosed,         // true when RoleEndDate has passed → edits/status locked
+    int? SourceOptionId = null,
+    string? Source = null,   // the source option's name, for display
+    string? SourceDetail = null
 );
 
 public record CVFileDto(
@@ -198,6 +207,10 @@ public record UpsertRoleAppliedOptionDto(
     string? Department = null,
     string? Priority = null,
     List<int>? RecruiterUserIds = null);
+
+public record CandidateSourceOptionDto(int Id, string Name, int SortOrder, bool IsActive);
+
+public record UpsertCandidateSourceOptionDto(string Name, int SortOrder, bool IsActive);
 
 public record SkillOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 

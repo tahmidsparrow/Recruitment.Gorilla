@@ -247,6 +247,75 @@ public class ConfigurationService(AppDbContext db)
         return true;
     }
 
+    // ----- Candidate source options -----
+
+    public async Task<List<CandidateSourceOptionDto>> GetActiveSourcesAsync() =>
+        await db.CandidateSourceOptions
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name)
+            .Select(s => new CandidateSourceOptionDto(s.Id, s.Name, s.SortOrder, s.IsActive))
+            .ToListAsync();
+
+    public async Task<List<CandidateSourceOptionDto>> GetAllSourcesAsync() =>
+        await db.CandidateSourceOptions
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name)
+            .Select(s => new CandidateSourceOptionDto(s.Id, s.Name, s.SortOrder, s.IsActive))
+            .ToListAsync();
+
+    public async Task<(CandidateSourceOptionDto? Created, bool Conflict)> CreateSourceAsync(UpsertCandidateSourceOptionDto dto)
+    {
+        var name = dto.Name.Trim();
+        if (await db.CandidateSourceOptions.AnyAsync(s => s.Name == name))
+            return (null, true);
+
+        var entity = new CandidateSourceOption { Name = name, SortOrder = dto.SortOrder, IsActive = dto.IsActive };
+        db.CandidateSourceOptions.Add(entity);
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false);
+    }
+
+    public async Task<(CandidateSourceOptionDto? Updated, bool NotFound, bool Conflict)> UpdateSourceAsync(
+        int id, UpsertCandidateSourceOptionDto dto)
+    {
+        var entity = await db.CandidateSourceOptions.FindAsync(id);
+        if (entity is null) return (null, true, false);
+
+        var name = dto.Name.Trim();
+        if (await db.CandidateSourceOptions.AnyAsync(s => s.Id != id && s.Name == name))
+            return (null, false, true);
+
+        entity.Name = name;
+        entity.SortOrder = dto.SortOrder;
+        entity.IsActive = dto.IsActive;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false, false);
+    }
+
+    /// <summary>
+    /// Soft-disable when candidates reference it (returns the count); otherwise hard delete.
+    /// Shaped like <see cref="DeleteRoleAsync"/> rather than the simpler skill delete, because a
+    /// source is a single-valued FK on Candidate — the count is what the UI reports back.
+    /// </summary>
+    public async Task<(bool Found, bool Deleted, bool Deactivated, int CandidateCount)> DeleteSourceAsync(int id)
+    {
+        var entity = await db.CandidateSourceOptions.FindAsync(id);
+        if (entity is null) return (false, false, false, 0);
+
+        var candidateCount = await db.Candidates.CountAsync(c => c.SourceOptionId == id);
+        if (candidateCount > 0)
+        {
+            entity.IsActive = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return (true, false, true, candidateCount);
+        }
+
+        db.CandidateSourceOptions.Remove(entity);
+        await db.SaveChangesAsync();
+        return (true, true, false, 0);
+    }
+
     // ----- Interview type options -----
 
     public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
@@ -320,5 +389,6 @@ public class ConfigurationService(AppDbContext db)
                 .Select(rr => new RecruiterDto(rr.UserId, rr.User.Name))
                 .OrderBy(x => x.Name).ToList());
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
+    private static CandidateSourceOptionDto ToDto(CandidateSourceOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
     private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);
 }

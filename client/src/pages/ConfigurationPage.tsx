@@ -1,12 +1,16 @@
 import {
   createInterviewTypeOption,
   createSkillOption,
+  createSourceOption,
   deleteInterviewTypeOption,
   deleteSkillOption,
+  deleteSourceOption,
   getInterviewTypeOptions,
   getSkillOptions,
+  getSourceOptions,
   updateInterviewTypeOption,
   updateSkillOption,
+  updateSourceOption,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import Tabs, { TabPanel, type TabDef } from '../components/ui/Tabs';
@@ -29,8 +33,15 @@ const interviewTypesApi: OptionApi = {
   remove: deleteInterviewTypeOption,
 };
 
+const sourcesApi: OptionApi = {
+  list: getSourceOptions,
+  create: createSourceOption,
+  update: updateSourceOption,
+  remove: deleteSourceOption,
+};
+
 /**
- * Configuration is four unrelated jobs, so it is four tabs rather than four
+ * Configuration is several unrelated jobs, so it is a tab each rather than
  * stacked cards on one long scroll. The active tab lives in the query string,
  * so a refresh keeps your place and a section can be linked to.
  *
@@ -43,6 +54,7 @@ export default function ConfigurationPage() {
   const tabs: TabDef[] = [
     { id: 'jobs', label: 'Job openings' },
     { id: 'skills', label: 'Skills' },
+    { id: 'sources', label: 'Candidate sources' },
     { id: 'interview-types', label: 'Interview types' },
     ...(isSuperAdmin ? [{ id: 'email', label: 'Email' }] : []),
   ];
@@ -67,6 +79,18 @@ export default function ConfigurationPage() {
             api={skillsApi}
             addPlaceholder="Add a skill…"
             description="Skills candidates can be tagged with. These appear in the candidate form's skills picker and as coloured badges on profiles."
+          />
+        </TabPanel>
+      )}
+
+      {active === 'sources' && (
+        <TabPanel id="sources">
+          <OptionChipsTab
+            noun="source"
+            queryKey="sources"
+            api={sourcesApi}
+            addPlaceholder="Add a source…"
+            description="Where candidates come from — referral, job board, agency and so on. Recorded on each candidate so you can compare which channels actually produce hires."
           />
         </TabPanel>
       )}
