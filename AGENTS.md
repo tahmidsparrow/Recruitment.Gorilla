@@ -33,6 +33,7 @@ Adding a feature almost always follows: **Entity → AppDbContext → migration 
 cd server/Recruitment.Gorilla.API
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=RecruitmentGorilla;User=root;Password=<yours>;"
 dotnet user-secrets set "Jwt:Key" "<random 32+ byte base64>"
+dotnet user-secrets set "Encryption:Key" "<32+ char random string>"
 dotnet user-secrets set "Auth:PasswordHash" "<pbkdf2 hash>"   # default login is admin/admin
 
 # 2. Database
@@ -47,7 +48,7 @@ cd server/Recruitment.Gorilla.API && dotnet build     # stop the running API fir
 cd server && dotnet test                              # unit + integration (local MySQL running)
 cd client && npx tsc -b && npm test                   # types + Vitest
 ```
-Default admin login: **admin / admin**.
+Default admin login: **admin@recruitmentgorilla.com / admin**.
 
 ## Where things are
 | Area | Path |
