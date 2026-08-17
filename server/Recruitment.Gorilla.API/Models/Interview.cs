@@ -17,6 +17,9 @@ public class Interview
 
     public DateTime ScheduledAt { get; set; }
 
+    /// <summary>How long the interview runs. Calendar invites need an end time, not just a start.</summary>
+    public int DurationMinutes { get; set; } = 60;
+
     /// <summary>The user who scheduled the interview (SetNull on user delete).</summary>
     public int? CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }

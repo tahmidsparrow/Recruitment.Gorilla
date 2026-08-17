@@ -66,8 +66,10 @@ export default function InterviewPage() {
     );
   }
 
+  // timeZoneName: interviews can span timezones, so the zone is shown rather than implied.
   const scheduled = new Date(data.scheduledAt).toLocaleString(undefined, {
     weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZoneName: 'short',
   });
   const relative = relativeLabel(data.scheduledAt);
   const role = data.candidate.roleApplied ?? data.candidate.appliedRole;
@@ -109,7 +111,7 @@ export default function InterviewPage() {
               hero's height on what is usually one avatar pill. */}
           <div className="interview-hero__aside">
             <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
-              <CalendarIcon /> {scheduled} · {relative.label}
+              <CalendarIcon /> {scheduled} · {data.durationMinutes} min · {relative.label}
             </span>
             <div className="interview-hero__people">
               {/* Inline, not a row of its own — the pills are meaningless

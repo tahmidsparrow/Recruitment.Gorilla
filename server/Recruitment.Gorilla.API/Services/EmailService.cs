@@ -49,11 +49,12 @@ public class MailKitSmtpTransport : ISmtpTransport
 public class EmailService(IEmailSettingsResolver settings, ISmtpTransport transport, ILogger<EmailService> logger)
 {
     /// <summary>Best-effort send — a failure is logged and swallowed, never bubbling up.</summary>
-    public async Task SendAsync(string toEmail, string toName, string subject, string htmlBody)
+    public async Task SendAsync(
+        string toEmail, string toName, string subject, string htmlBody, CalendarAttachment? calendar = null)
     {
         try
         {
-            await SendCoreAsync(toEmail, toName, subject, htmlBody);
+            await SendCoreAsync(toEmail, toName, subject, htmlBody, calendar);
         }
         catch (Exception ex)
         {
@@ -69,7 +70,8 @@ public class EmailService(IEmailSettingsResolver settings, ISmtpTransport transp
     public Task SendTestAsync(string toEmail, string toName, string subject, string htmlBody) =>
         SendCoreAsync(toEmail, toName, subject, htmlBody);
 
-    private async Task SendCoreAsync(string toEmail, string toName, string subject, string htmlBody)
+    private async Task SendCoreAsync(
+        string toEmail, string toName, string subject, string htmlBody, CalendarAttachment? calendar = null)
     {
         if (string.IsNullOrWhiteSpace(toEmail))
             throw new InvalidOperationException("No recipient email address.");
@@ -82,7 +84,35 @@ public class EmailService(IEmailSettingsResolver settings, ISmtpTransport transp
         message.From.Add(new MailboxAddress(options.FromName, options.FromAddress));
         message.To.Add(new MailboxAddress(toName, toEmail));
         message.Subject = subject;
-        message.Body = new TextPart("html") { Text = htmlBody };
+
+        if (calendar is null)
+        {
+            message.Body = new TextPart("html") { Text = htmlBody };
+        }
+        else
+        {
+            // text/calendar with a METHOD parameter is what makes mail clients show "Add to calendar"
+            // natively; the same content is attached as a file so clients that ignore the part still
+            // give the recipient something openable.
+            var calendarPart = new TextPart("calendar")
+            {
+                ContentTransferEncoding = ContentEncoding.Base64,
+                Text = calendar.Content,
+            };
+            // Assigning Text already sets charset; adding it again throws on the duplicate.
+            calendarPart.ContentType.Parameters["method"] = calendar.Method;
+            calendarPart.ContentType.Name = calendar.FileName;
+            calendarPart.ContentDisposition = new ContentDisposition(ContentDisposition.Attachment)
+            {
+                FileName = calendar.FileName,
+            };
+
+            message.Body = new Multipart("mixed")
+            {
+                new TextPart("html") { Text = htmlBody },
+                calendarPart,
+            };
+        }
 
         await transport.SendAsync(message, options);
     }

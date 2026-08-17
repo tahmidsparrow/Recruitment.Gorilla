@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.Data;
 using Recruitment.Gorilla.API.DTOs;
 using Recruitment.Gorilla.API.Models;
@@ -120,15 +121,45 @@ public class ConfigurationService(AppDbContext db)
         return null;
     }
 
-    /// <summary>Every assigned recruiter (when any) must be an existing active user. Null when valid.</summary>
+    /// <summary>
+    /// Every assigned recruiter (when any) must be an existing active user that can actually write
+    /// candidates. Assigning an Interviewer would save fine but grant nothing, since
+    /// <c>CandidatesController</c> is gated on <see cref="Roles.CanWriteCandidate"/> — so reject it
+    /// here rather than let the assignment silently do nothing. Null when valid.
+    /// </summary>
     private async Task<string?> ValidateRecruitersAsync(List<int>? recruiterUserIds)
     {
         if (recruiterUserIds is not { Count: > 0 }) return null;
         var ids = recruiterUserIds.Distinct().ToList();
-        var validCount = await db.Users.CountAsync(u => ids.Contains(u.Id) && u.IsActive);
-        return validCount == ids.Count
+
+        var users = await db.Users
+            .Where(u => ids.Contains(u.Id) && u.IsActive)
+            .Select(u => new { u.Name, Roles = u.Roles.Select(ur => ur.Role).ToList() })
+            .ToListAsync();
+
+        if (users.Count != ids.Count)
+            return "One or more selected recruiters are not valid active users.";
+
+        var ineligible = users
+            .Where(u => !u.Roles.Any(Roles.CanWriteCandidateRoles.Contains))
+            .Select(u => u.Name)
+            .ToList();
+
+        return ineligible.Count == 0
             ? null
-            : "One or more selected recruiters are not valid active users.";
+            : $"These users need the Recruiter role or higher to be assigned as a recruiter: {string.Join(", ", ineligible)}.";
+    }
+
+    /// <summary>Active users eligible to be a job opening's recruiter (Recruiter role or higher).</summary>
+    public async Task<List<AssignableUserDto>> GetRecruiterOptionsAsync()
+    {
+        // Bound to a local so EF parameterizes the list instead of trying to evaluate the static field.
+        var eligibleRoles = Roles.CanWriteCandidateRoles;
+        return await db.Users
+            .Where(u => u.IsActive && u.Roles.Any(ur => eligibleRoles.Contains(ur.Role)))
+            .OrderBy(u => u.Name)
+            .Select(u => new AssignableUserDto(u.Id, u.Name, u.Email))
+            .ToListAsync();
     }
 
     /// <summary>Trim to null so empty strings aren't persisted.</summary>
@@ -221,6 +252,75 @@ public class ConfigurationService(AppDbContext db)
         return true;
     }
 
+    // ----- Candidate source options -----
+
+    public async Task<List<CandidateSourceOptionDto>> GetActiveSourcesAsync() =>
+        await db.CandidateSourceOptions
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name)
+            .Select(s => new CandidateSourceOptionDto(s.Id, s.Name, s.SortOrder, s.IsActive))
+            .ToListAsync();
+
+    public async Task<List<CandidateSourceOptionDto>> GetAllSourcesAsync() =>
+        await db.CandidateSourceOptions
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name)
+            .Select(s => new CandidateSourceOptionDto(s.Id, s.Name, s.SortOrder, s.IsActive))
+            .ToListAsync();
+
+    public async Task<(CandidateSourceOptionDto? Created, bool Conflict)> CreateSourceAsync(UpsertCandidateSourceOptionDto dto)
+    {
+        var name = dto.Name.Trim();
+        if (await db.CandidateSourceOptions.AnyAsync(s => s.Name == name))
+            return (null, true);
+
+        var entity = new CandidateSourceOption { Name = name, SortOrder = dto.SortOrder, IsActive = dto.IsActive };
+        db.CandidateSourceOptions.Add(entity);
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false);
+    }
+
+    public async Task<(CandidateSourceOptionDto? Updated, bool NotFound, bool Conflict)> UpdateSourceAsync(
+        int id, UpsertCandidateSourceOptionDto dto)
+    {
+        var entity = await db.CandidateSourceOptions.FindAsync(id);
+        if (entity is null) return (null, true, false);
+
+        var name = dto.Name.Trim();
+        if (await db.CandidateSourceOptions.AnyAsync(s => s.Id != id && s.Name == name))
+            return (null, false, true);
+
+        entity.Name = name;
+        entity.SortOrder = dto.SortOrder;
+        entity.IsActive = dto.IsActive;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return (ToDto(entity), false, false);
+    }
+
+    /// <summary>
+    /// Soft-disable when candidates reference it (returns the count); otherwise hard delete.
+    /// Shaped like <see cref="DeleteRoleAsync"/> rather than the simpler skill delete, because a
+    /// source is a single-valued FK on Candidate — the count is what the UI reports back.
+    /// </summary>
+    public async Task<(bool Found, bool Deleted, bool Deactivated, int CandidateCount)> DeleteSourceAsync(int id)
+    {
+        var entity = await db.CandidateSourceOptions.FindAsync(id);
+        if (entity is null) return (false, false, false, 0);
+
+        var candidateCount = await db.Candidates.CountAsync(c => c.SourceOptionId == id);
+        if (candidateCount > 0)
+        {
+            entity.IsActive = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return (true, false, true, candidateCount);
+        }
+
+        db.CandidateSourceOptions.Remove(entity);
+        await db.SaveChangesAsync();
+        return (true, true, false, 0);
+    }
+
     // ----- Interview type options -----
 
     public async Task<List<InterviewTypeOptionDto>> GetActiveInterviewTypesAsync() =>
@@ -294,5 +394,6 @@ public class ConfigurationService(AppDbContext db)
                 .Select(rr => new RecruiterDto(rr.UserId, rr.User.Name))
                 .OrderBy(x => x.Name).ToList());
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
+    private static CandidateSourceOptionDto ToDto(CandidateSourceOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
     private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);
 }

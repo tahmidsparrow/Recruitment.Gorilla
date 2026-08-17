@@ -9,12 +9,14 @@ vi.mock('../services/api', () => ({
   getInitialStatusOptions: vi.fn(),
   getActiveRoleOptions: vi.fn(),
   getActiveSkillOptions: vi.fn(),
+  getActiveSourceOptions: vi.fn(),
   createCandidate: vi.fn(),
 }));
 import {
   getInitialStatusOptions,
   getActiveRoleOptions,
   getActiveSkillOptions,
+  getActiveSourceOptions,
   createCandidate,
 } from '../services/api';
 
@@ -37,6 +39,25 @@ describe('CandidateForm', () => {
     vi.mocked(getInitialStatusOptions).mockResolvedValue([]);
     vi.mocked(getActiveSkillOptions).mockResolvedValue([]);
     vi.mocked(getActiveRoleOptions).mockResolvedValue([]);
+    vi.mocked(getActiveSourceOptions).mockResolvedValue([]);
+  });
+
+  it('offers the configured sources and keeps source optional', async () => {
+    const user = userEvent.setup();
+    vi.mocked(getActiveSourceOptions).mockResolvedValue([
+      { id: 3, name: 'LinkedIn', sortOrder: 3, isActive: true },
+    ]);
+    renderWithProviders(<CandidateForm draft={draft} onSaved={() => {}} onCancel={() => {}} />);
+
+    const sourceInput = screen.getByPlaceholderText(/Where did this candidate come from/i);
+    await user.click(sourceInput);
+    await user.click(await screen.findByText('LinkedIn'));
+    await waitFor(() => expect(sourceInput).toHaveValue('LinkedIn'));
+
+    // Source is deliberately optional — submitting must not raise an error for it.
+    await user.click(screen.getByRole('button', { name: /Save candidate/i }));
+    expect(await screen.findByText('Full name is required.')).toBeInTheDocument();
+    expect(screen.queryByText(/source is required/i)).not.toBeInTheDocument();
   });
 
   it('shows validation errors and does not submit when required fields are empty', async () => {

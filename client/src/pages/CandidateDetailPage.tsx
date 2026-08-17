@@ -10,6 +10,7 @@ import {
   getActiveInterviewTypes,
   getActiveRoleOptions,
   getActiveSkillOptions,
+  getActiveSourceOptions,
   getAssignableUsers,
   getCandidate,
   getNextStatusOptions,
@@ -258,6 +259,10 @@ function ProfileEditor({
     queryKey: ['skill-options', 'active'],
     queryFn: getActiveSkillOptions,
   });
+  const { data: sourceOptions = [] } = useQuery({
+    queryKey: ['source-options', 'active'],
+    queryFn: getActiveSourceOptions,
+  });
 
   const set = (field: keyof CandidateDetail, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -280,6 +285,8 @@ function ProfileEditor({
         portfolioUrl: form.portfolioUrl || null,
         appliedRole: null,
         roleAppliedOptionId: form.roleAppliedOptionId,
+        sourceOptionId: form.sourceOptionId,
+        sourceDetail: form.sourceDetail || null,
         skillOptionIds: skillIds,
         isReferred: form.isReferred,
         referenceName: form.isReferred ? form.referenceName || null : null,
@@ -388,6 +395,23 @@ function ProfileEditor({
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source</Form.Label>
+          <SearchableSelect
+            options={sourceOptions}
+            value={form.sourceOptionId}
+            onChange={(sourceOptionId) => setForm((f) => ({ ...f, sourceOptionId }))}
+            placeholder="Where did this candidate come from?"
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source detail</Form.Label>
+          <Form.Control
+            value={form.sourceDetail ?? ''}
+            onChange={(e) => set('sourceDetail', e.target.value)}
+            placeholder="Agency, campaign or board name"
+          />
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
@@ -564,6 +588,8 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
 
 type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt' | 'interviewers', string>>;
 
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+
 /**
  * The "move this candidate along" dialog.
  *
@@ -590,6 +616,7 @@ function AddStatusModal({
   const [taskDetails, setTaskDetails] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState(60);
   const [interviewerIds, setInterviewerIds] = useState<number[]>([]);
   const [interviewTypeIds, setInterviewTypeIds] = useState<number[]>([]);
   const [fieldErrors, setFieldErrors] = useState<AddStatusFieldErrors>({});
@@ -631,6 +658,8 @@ function AddStatusModal({
     setTaskDetails('');
     setSubmissionUrl('');
     setInterviewAt('');
+    // Back to the default duration, not 0 — this is a fresh form, not a blank one.
+    setDurationMinutes(60);
     setInterviewerIds([]);
     setInterviewTypeIds([]);
     setFieldErrors({});
@@ -653,6 +682,7 @@ function AddStatusModal({
         interviewAt: interviewAt ? new Date(interviewAt).toISOString() : null,
         interviewerUserIds: requiresInterviewers ? interviewerIds : null,
         interviewTypeOptionIds: requiresInterviewers ? interviewTypeIds : null,
+        interviewDurationMinutes: requiresInterviewAt ? durationMinutes : null,
       }),
     onSuccess: () => {
       resetForm();
@@ -750,6 +780,21 @@ function AddStatusModal({
               isInvalid={!!fieldErrors.interviewAt}
             />
             <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
+          </Col>
+        )}
+        {requiresInterviewAt && (
+          <Col md={12}>
+            <Form.Label className="mb-1">Duration</Form.Label>
+            <Form.Select
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              aria-label="Interview duration"
+            >
+              {DURATION_OPTIONS.map((m) => (
+                <option key={m} value={m}>{m} minutes</option>
+              ))}
+            </Form.Select>
+            <Form.Text muted>Sets the end time on the calendar invite sent to interviewers.</Form.Text>
           </Col>
         )}
         {requiresInterviewers && (

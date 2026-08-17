@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260816064045_AddInterviewDuration")]
+    partial class AddInterviewDuration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,13 +193,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Property<string>("Skills")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("SourceDetail")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<int?>("SourceOptionId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Summary")
                         .HasColumnType("longtext");
 
@@ -208,8 +204,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("OwnerUserId");
 
                     b.HasIndex("RoleAppliedOptionId");
-
-                    b.HasIndex("SourceOptionId");
 
                     b.ToTable("Candidates");
                 });
@@ -227,124 +221,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("SkillOptionId");
 
                     b.ToTable("CandidateSkills");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSourceOption", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("CandidateSourceOptions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Employee referral",
-                            SortOrder = 1,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Job board",
-                            SortOrder = 2,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "LinkedIn",
-                            SortOrder = 3,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Recruitment agency",
-                            SortOrder = 4,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Careers page",
-                            SortOrder = 5,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Direct sourcing",
-                            SortOrder = 6,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Internal applicant",
-                            SortOrder = 7,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "University or event",
-                            SortOrder = 8,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Other",
-                            SortOrder = 9,
-                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.EmailSetting", b =>
@@ -1547,16 +1423,9 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasForeignKey("RoleAppliedOptionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Recruitment.Gorilla.API.Models.CandidateSourceOption", "SourceOption")
-                        .WithMany("Candidates")
-                        .HasForeignKey("SourceOptionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("OwnerUser");
 
                     b.Navigation("RoleAppliedOption");
-
-                    b.Navigation("SourceOption");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSkill", b =>
@@ -1758,11 +1627,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("Interviews");
 
                     b.Navigation("StatusHistories");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSourceOption", b =>
-                {
-                    b.Navigation("Candidates");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Interview", b =>

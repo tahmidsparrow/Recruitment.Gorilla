@@ -22,4 +22,11 @@ public static class Roles
 
     /// <summary>Create/edit/delete candidates and change their status (everyone except Interviewer).</summary>
     public const string CanWriteCandidate = $"{SuperAdmin},{Admin},{Recruiter}";
+
+    /// <summary>
+    /// The same roles as <see cref="CanWriteCandidate"/> as a collection, for LINQ/DB checks.
+    /// Not a <c>string[]</c>: on an array, <c>Contains</c> binds to the <c>ReadOnlySpan</c> overload,
+    /// which EF cannot translate into a SQL <c>IN</c>.
+    /// </summary>
+    public static readonly IReadOnlyList<string> CanWriteCandidateRoles = [SuperAdmin, Admin, Recruiter];
 }

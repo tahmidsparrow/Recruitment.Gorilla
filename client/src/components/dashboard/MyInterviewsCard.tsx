@@ -60,9 +60,12 @@ export default function MyInterviewsCard() {
                   <div className="list-row__meta">{i.role ?? '—'}</div>
                 </div>
                 <div className="list-row__aside">
+                  {/* timeZoneName from develop's UTC work: the API returns UTC,
+                      so the zone has to be shown or the time is ambiguous. */}
                   <div className={`list-row__meta${isSoon(i.scheduledAt) ? ' list-row__meta--urgent' : ''}`}>
                     {new Date(i.scheduledAt).toLocaleString(undefined, {
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      timeZoneName: 'short',
                     })}
                   </div>
                   <span className={badge.cls}>{badge.label}</span>
