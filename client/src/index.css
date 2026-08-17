@@ -85,7 +85,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--text-md);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   font-optical-sizing: auto;
 }
@@ -94,15 +94,49 @@ body {
   min-height: 100vh;
 }
 
-h1, h2, h3, h4, h5 {
+/* ---------- Type hierarchy ----------
+   Four levels, and each one is used for one thing:
+
+     h1  the topbar's page title (chrome — pages never render their own)
+     h2  a page's subject when the subject is content: a candidate's name
+     h3  a section heading inside a page ("Status history", "Top skills")
+     h4  a heading inside a section
+
+   Sizes step by a consistent ratio and each carries its own line-height, so a
+   heading never inherits body copy's 1.5 and sits loose. Margins are zeroed
+   here and owned by the layout (the stack, the card) rather than by the tag —
+   two headings should never space differently because of where they landed. */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
   color: var(--secondary);
 }
 h1 { font-size: var(--text-2xl); }
 h2 { font-size: var(--text-xl); }
 h3 { font-size: var(--text-lg); }
+h4 { font-size: var(--text-md); }
+h5, h6 { font-size: var(--text-sm); }
 
+p {
+  margin-block: 0;
+  line-height: var(--leading-relaxed);
+}
+
+/* Links.
+   The default is underline-on-hover, which is right for a link sitting inside
+   a sentence — "Open existing candidate", "View full evaluations →" — where
+   nothing else marks it as a link.
+
+   It is wrong for a link that is a *component*: a button, a table cell, a
+   chip, a nav item, a card title. Those carry their own affordance (a border,
+   a fill, colour, weight) and an underline on top of it reads as noise. Every
+   such class therefore sets `text-decoration: none` on `:hover` explicitly —
+   see a.btn below, plus .table-link, .profile-link, .hero-chip, .nav-item-link,
+   .list-row__title, .back-link, .menu-item. Add the override when you
+   add a component link; don't remove this default, or prose links lose their
+   only cue. */
 a {
   text-decoration: none;
 }
@@ -110,11 +144,58 @@ a:hover {
   text-decoration: underline;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+/* A router <Link> wearing .btn is a button, and must not behave like prose.
+   Bootstrap's own `.btn { text-decoration: none }` is specificity (0,1,0) and
+   loses to the `a:hover` rule above at (0,1,1), so every link-as-button in the
+   app — "Evaluation report", "Upload CVs", "View all", the Back buttons, the
+   empty-state actions — underlined on hover. This is the single rule that
+   settles all of them; don't paper over it with `text-decoration-none`
+   utilities at the call sites. */
+a.btn:hover,
+a.btn:focus {
+  text-decoration: none;
+}
+
+/* ---------- Focus ----------
+   One indicator for everything focusable, applied on :focus-visible so a mouse
+   click doesn't paint a ring but a Tab does.
+
+   The previous rule was a 3px 22%-alpha teal glow. That reads as a soft halo
+   rather than an outline and, being mostly transparent, takes the contrast of
+   whatever it sits on — which fails WCAG 2.2's 3:1 focus-appearance
+   requirement over the muted surfaces. A solid --primary outline clears it in
+   both themes, and the box-shadow behind it keeps the ring separated from a
+   dark control border. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--primary);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* Skip link — the keyboard route past the sidebar to the page body. Visually
+   hidden until focused, which is the one case it needs to exist. */
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: calc(var(--z-toast) + 1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--primary-dark);
+  color: var(--on-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  transform: translateY(-200%);
+  transition: transform 150ms ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+  color: var(--on-accent);
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skip-link { transition: none; }
 }
 
 /* ============================================================
@@ -193,12 +274,6 @@ input:focus-visible {
   text-overflow: ellipsis;
 }
 
-.app-logo-img {
-  height: 32px;
-  width: auto;
-  display: block;
-  flex-shrink: 0;
-}
 
 /* The collapsed logo doubles as the expand trigger: the mark fades out on
    hover and an arrow fades in behind it. */
@@ -213,11 +288,10 @@ input:focus-visible {
   border-radius: var(--radius-md);
   background: transparent;
 }
-.app-sidebar__expand .app-logo-img {
-  height: 28px;
+.app-sidebar__expand .brand {
   transition: opacity 150ms ease;
 }
-.app-sidebar__expand:hover .app-logo-img {
+.app-sidebar__expand:hover .brand {
   opacity: 0;
 }
 .app-sidebar__expand-icon {
@@ -262,16 +336,6 @@ input:focus-visible {
   overflow-y: auto;
   padding: 6px 10px;
 }
-.app-sidebar__foot {
-  flex-shrink: 0;
-  padding: 6px 10px 12px;
-}
-.app-sidebar__divider {
-  height: 1px;
-  width: 90%;
-  margin: 8px auto;
-  background: var(--border);
-}
 
 /* ---------- Nav items ---------- */
 .nav-item-link {
@@ -308,97 +372,188 @@ input:focus-visible {
   flex-shrink: 0;
 }
 
-/* ---------- User account card ---------- */
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-muted);
-  transition: background-color 150ms ease;
-}
-.user-card:hover {
-  background: var(--surface);
-}
-.app-sidebar--collapsed .user-card {
-  justify-content: center;
-  padding: 6px;
-  border-color: transparent;
-  background: transparent;
-}
-.user-card__avatar-wrap {
-  position: relative;
+/* ---------- Topbar controls ----------
+   The theme picker, the notification bell and the account avatar. These used
+   to be split between the topbar and a sidebar footer; they are one cluster
+   now, so they share one size and one shape.
+
+   The sidebar's .user-card / .user-card__* and .app-sidebar__foot rules that
+   lived here are gone with it — see UserMenu. */
+.topbar-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
   flex-shrink: 0;
 }
-.user-card__avatar {
+/* react-bootstrap's Dropdown.Toggle paints a caret; these are icon buttons. */
+.topbar-btn::after {
+  display: none;
+}
+
+/* ---------- Account avatar ---------- */
+.user-menu__trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  line-height: 0;
+}
+.user-menu__trigger::after {
+  display: none;
+}
+.user-menu__avatar {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9999px;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  /* --primary-dark, not --primary: a solid fill under white text. --primary
+     brightens in dark mode to stay legible *as text*, which leaves white on
+     top of it at ~2.2:1. */
   background: var(--primary-dark);
   color: var(--on-accent);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.5px;
   user-select: none;
+  border: 2px solid transparent;
+  transition: border-color 150ms ease;
 }
-.user-card__presence {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  background: var(--success);
-  box-shadow: 0 0 0 2px var(--surface-muted);
+.user-menu__trigger:hover .user-menu__avatar,
+.user-menu__trigger[aria-expanded='true'] .user-menu__avatar {
+  border-color: var(--primary);
 }
-.user-card__details {
-  flex: 1;
-  min-width: 0;
-}
-.user-card__name {
-  display: block;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-a.user-card__name:hover {
-  color: var(--primary);
-  text-decoration: none;
-}
-.user-card__email {
-  display: block;
-  font-size: 11px;
-  color: var(--muted);
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-card__logout {
-  display: grid;
-  place-items: center;
+.user-menu__avatar--lg {
   width: 40px;
   height: 40px;
-  flex-shrink: 0;
-  padding: 0;
+  font-size: var(--text-sm);
+  border: 0;
+}
+/* No presence dot on the avatar. This is a single-user session indicator, not
+   a roster — "you are online" is not information you need about yourself, and
+   a green dot is the app's success colour spent on nothing. */
+
+/* ---------- Dropdown menu panels ----------
+   One shape for every menu the topbar opens, so the theme picker and the
+   account menu are visibly the same kind of object. */
+.menu-panel {
+  min-width: 200px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+.menu-panel--wide {
+  min-width: 260px;
+}
+.menu-panel__label {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--muted-light);
+}
+.menu-panel__divider {
+  height: 1px;
+  margin: var(--space-2) 0;
+  background: var(--border);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--space-2);
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--muted);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-align: left;
   transition: background-color 150ms ease, color 150ms ease;
 }
-.user-card__logout:hover {
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--surface-muted);
+  color: var(--text);
+  text-decoration: none;
+}
+.menu-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.menu-item--active {
+  color: var(--primary);
+}
+.menu-item__check {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.menu-item--danger {
+  color: var(--danger);
+}
+.menu-item--danger:hover,
+.menu-item--danger:focus-visible {
   background: var(--danger-tint);
   color: var(--danger);
+}
+.menu-item:disabled {
+  opacity: 0.6;
+}
+
+/* The identity block at the head of the account menu. */
+.menu-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+.menu-identity__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.menu-identity__name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  line-height: var(--leading-snug);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu-identity__email {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-snug);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu-identity__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) var(--space-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-item,
+  .user-menu__avatar {
+    transition: none;
+  }
 }
 
 /* ---------- Main column + topbar ---------- */
@@ -452,7 +607,7 @@ a.user-card__name:hover {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* Scrim behind the mobile drawer. Desktop has no drawer, so it has no scrim. */
@@ -490,6 +645,9 @@ a.user-card__name:hover {
   .app-sidebar-scrim {
     display: none;
   }
+  /* Same gutter as .rg-content, so the page title sits directly above the
+     page's left edge. This was a max() that compensated for .rg-content being
+     capped and centred; with the cap gone the two are simply the same value. */
   .app-topbar {
     padding-inline: var(--space-page);
   }
@@ -497,10 +655,6 @@ a.user-card__name:hover {
   .app-sidebar__icon-btn {
     width: 30px;
     height: 30px;
-  }
-  .user-card__logout {
-    width: 28px;
-    height: 28px;
   }
   .nav-item-link {
     min-height: 40px;
@@ -510,10 +664,8 @@ a.user-card__name:hover {
 @media (prefers-reduced-motion: reduce) {
   .app-sidebar,
   .nav-item-link,
-  .user-card,
-  .user-card__logout,
   .app-sidebar__icon-btn,
-  .app-sidebar__expand .app-logo-img,
+  .app-sidebar__expand .brand,
   .app-sidebar__expand-icon {
     transition: none;
   }
@@ -573,7 +725,7 @@ a.user-card__name:hover {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   box-shadow: none;
   transition: border-color 0.15s ease;
 }
@@ -583,14 +735,46 @@ a.user-card__name:hover {
 .card-interactive:hover {
   border-color: var(--primary);
 }
+/* Matched to .pulse-card__head: a <Card><Card.Header> and a
+   <div class="pulse-card"><div class="pulse-card__head"> are the same object,
+   so their title sits at the same inset either way. */
 .card-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
   color: var(--text);
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
-  padding: 0.85rem 1rem;
+  border-top-left-radius: var(--radius-card);
+  border-top-right-radius: var(--radius-card);
+  padding: var(--card-pad-tight) var(--card-pad);
+}
+.card-body {
+  padding: var(--card-pad);
+}
+.card-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: var(--card-pad-tight) var(--card-pad);
+  border-bottom-left-radius: var(--radius-card);
+  border-bottom-right-radius: var(--radius-card);
+}
+/* A flush list inside a card body must reach the card's edges, or its row
+   separators stop short of the border and read as ragged. */
+.card-body > .list-group-flush {
+  margin-inline: calc(-1 * var(--card-pad));
+}
+.card-body > .list-group-flush > .list-group-item {
+  padding-inline: var(--card-pad);
+  background: transparent;
+  border-color: var(--border);
+}
+.card-body > .list-group-flush > .list-group-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.card-body > .list-group-flush > .list-group-item:first-child {
+  padding-top: 0;
 }
 
 /* ===== Tables =====
@@ -605,16 +789,44 @@ a.user-card__name:hover {
 .table > thead th {
   background: var(--surface-muted);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   font-size: var(--text-xs);
+  line-height: var(--leading-snug);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border-bottom: 1px solid var(--border);
-  padding: 10px 12px;
+  /* 12px block padding, not 10px: a 12px uppercase header in a 10px cell reads
+     as cramped against the 44px rows beneath it. */
+  padding: var(--space-3);
+  white-space: nowrap;
 }
 .table > tbody td {
-  padding: 10px 12px;
+  padding: var(--space-3);
+  line-height: var(--leading-snug);
   border-bottom-color: var(--border);
+  vertical-align: middle;
+}
+/* Row height is left to the cells' own padding (12px block + a 1.35 line box
+   ≈ 44px). It must NOT be set on the <tr>: `.table-cards` makes each row a
+   `display: block` card on small screens, where a fixed `height` stops being a
+   table-row minimum and becomes a hard 44px box — which clipped every labelled
+   cell below the first inside `.table-wrap`'s overflow, leaving a user's
+   e-mail, roles and actions invisible on a phone.
+
+   The actions column is the row's trailing edge. `.row-actions` inside it
+   spaces the buttons — a gap on a flex wrapper rather than a margin on the
+   cell's children, because the cell itself is `display: table-cell` on desktop
+   and `display: flex` in card mode, so it can't own the gap in both. */
+.table td.col-actions,
+.table th.col-actions {
+  text-align: right;
+}
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 /* ===== Forms ===== */
@@ -647,6 +859,48 @@ a.user-card__name:hover {
   color: var(--danger);
   margin-left: 0.15em;
 }
+
+/* ---------- Password field ----------
+   The reveal button sits inside the input's right edge. The input's padding is
+   widened to match, so a long value scrolls behind the button rather than
+   under it. */
+.password-field {
+  position: relative;
+}
+.password-field .form-control {
+  padding-right: 42px;
+}
+.password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.password-field__toggle:hover {
+  color: var(--text);
+  background: var(--surface-muted);
+}
+.password-field__toggle[aria-pressed='true'] {
+  color: var(--primary);
+}
+/* Bootstrap paints its own validation glyph on the input's right edge, which
+   would sit underneath the button. Move it inboard when both are present. */
+.password-field .form-control.is-invalid {
+  background-position: right 42px center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .password-field__toggle { transition: none; }
+}
 .form-control.is-invalid:focus,
 .form-select.is-invalid:focus {
   box-shadow: 0 0 0 3px rgba(var(--bs-danger-rgb), 0.18);
@@ -659,7 +913,9 @@ a.user-card__name:hover {
   font-weight: 600;
 }
 
-/* ===== Modal ===== */
+/* ===== Modal =====
+   Internal spacing matched to the card scale, so a dialog and a card are the
+   same object at two sizes. */
 .modal-content {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -669,6 +925,23 @@ a.user-card__name:hover {
 .modal-header,
 .modal-footer {
   border-color: var(--border);
+  padding: var(--card-pad-tight) var(--card-pad);
+}
+.modal-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+.modal-body {
+  padding: var(--card-pad);
+}
+.modal-footer {
+  gap: var(--space-2);
+}
+/* Bootstrap gives every footer child a 0.25rem margin, which fights the gap
+   and leaves the buttons a hair off the padding edge. */
+.modal-footer > * {
+  margin: 0;
 }
 .modal-backdrop.show {
   opacity: 1;
@@ -692,66 +965,302 @@ a.user-card__name:hover {
    either side. The vertical half of that shorthand also centred the page in
    the column. Prism's .content can use `margin: auto` because its parent is a
    plain block, not a flex container. */
+/* The page gutter is --space-page on all four sides.
+
+   No max-width, deliberately. The page used to be capped at 1536px and centred,
+   which meant that past that width the centring added its own margin on top of
+   the padding: at 1920 the side gutters measured 92px against a 24px top, so
+   the page read as inset left and right but not above. Prose is capped where
+   prose actually is (.page-header p, .section-description, .narrow-column,
+   .detail-edit-column), which is the right place for it — a page-wide cap also
+   squeezed tables and dashboards that had every reason to use the width. */
 .rg-content {
   width: 100%;
-  max-width: 1536px;
-  margin-inline: auto;
-  /* Mobile first: the tightest padding is the base, and it loosens upward. */
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  /* Mobile first: the tightest padding is the base, and it loosens upward.
+     --space-page is redeclared here rather than overridden per-rule so that
+     anything else keying off the page gutter (the topbar) tracks it. */
+  --space-page: var(--space-3);
+  --stack-gap: var(--space-4);
+  padding: var(--space-page);
 }
 @media (min-width: 576px) {
-  .rg-content { padding: 16px; gap: 16px; }
+  .rg-content { --space-page: var(--space-4); --stack-gap: var(--space-5); }
 }
 @media (min-width: 768px) {
-  .rg-content { padding: var(--space-page); }
+  .rg-content { --space-page: var(--space-6); --stack-gap: var(--space-6); }
 }
 
-/* ---------- Page header ---------- */
+/* ---------- The page stack ----------
+   THE spacing rule for the app: a page is a vertical stack of sections, and
+   the gap between them is --stack-gap. Nothing inside a page sets its own
+   bottom margin to separate itself from what follows.
+
+   This exists because the gap used to live on .rg-content itself, which made
+   it a no-op: every page returns a single wrapper element, so .rg-content had
+   exactly one flex child and there was nothing for the gap to fall between.
+   The result was a page header sitting flush against its filter bar, the
+   filter bar flush against the table, and the pager flush against that — the
+   "sections touching" the redesign was asked to fix. Pages compensated with
+   ad-hoc mb-3 / mb-4 utilities where someone noticed, which is why the rhythm
+   differed page to page.
+
+   Putting the gap on the page's own root instead (via <Page>, which renders
+   this class) makes it apply to the sections that actually need separating,
+   and makes the spacing between them a property of the design system rather
+   than of whoever last edited the page. */
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap);
+  /* min-width:0 so a wide child (a scrolling table) can't stretch the column
+     past the viewport and introduce a horizontal scrollbar on the page. */
+  min-width: 0;
+}
+
+/* A tighter stack for grouping closely-related things *within* one section —
+   a label above its control, a card above its own caption. */
+.page-stack--tight {
+  gap: var(--space-3);
+}
+
+/* ---------- Section grids ----------
+   Plain CSS grid rather than Bootstrap's Row/Col for the page-level layouts.
+   Row carries negative gutter margins that have to be cancelled by matching
+   padding on every child, which is easy to get half-right — and it made the
+   gap between two cards a different number (`g-3`) from the gap between the
+   sections holding them (`mb-4`). One `gap`, taken from the same scale as the
+   stack, keeps the horizontal and vertical rhythm identical.
+
+   Mobile first: one column, splitting upward. */
+.grid-2,
+.grid-3,
+.kpi-grid {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.grid-2 { grid-template-columns: 1fr; }
+.grid-3 { grid-template-columns: 1fr; }
+/* Two tiles on the narrowest screen: a KPI is a label and a number, which
+   still reads at half a phone's width, and six full-width tiles would push
+   everything else below the fold. */
+.kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (min-width: 768px) {
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  /* A time series needs horizontal room; a donut does not. Only applied once
+     there is width to divide unevenly. */
+  .grid-2--asymmetric { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+}
+
+/* Grid children stretch by default, so cards in a row match heights without
+   the h-100 utility every call site used to carry. */
+.grid-2 > *,
+.grid-3 > *,
+.kpi-grid > * {
+  min-width: 0;
+}
+
+/* ---------- List rows ----------
+   The shape shared by the dashboard's interview / activity lists and any other
+   "identity on the left, status on the right" row. */
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+.list-row__main {
+  min-width: 0;
+}
+.list-row__title {
+  display: block;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+a.list-row__title:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+.list-row__meta {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+/* Something happening inside 24 hours. Not colour-alone — it is also the only
+   bold item in the column. */
+.list-row__meta--urgent {
+  color: var(--danger);
+  font-weight: var(--weight-semibold);
+}
+.list-row__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* A flush list inside a section card bleeds to the card's border, so its row
+   separators run the full width instead of stopping short of it. */
+.pulse-card__body > .list-group-flush {
+  margin-inline: calc(-1 * var(--card-pad));
+}
+.pulse-card__body > .list-group-flush > .list-group-item {
+  padding-inline: var(--card-pad);
+  background: transparent;
+  border-color: var(--border);
+}
+.pulse-card__body > .list-group-flush > .list-group-item:first-child {
+  padding-top: 0;
+}
+.pulse-card__body > .list-group-flush > .list-group-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* ---------- Page header ----------
+   The band above a page's content: identity on the left, actions on the right.
+   `align-items: center` rather than flex-end so a one-line title and a 38px
+   button share a centre line; flex-end aligned their baselines only when the
+   left side happened to be exactly as tall as the button. */
 .page-eyebrow {
   display: block;
   color: var(--primary);
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .page-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
+  min-height: 38px;
+}
+.page-header__text {
+  min-width: 0;
 }
 .page-header h1,
 .page-header h2 {
   margin: 0;
   font-family: var(--font-heading);
   font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
   color: var(--secondary);
+  overflow-wrap: anywhere;
 }
 .page-header p {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--muted);
   font-size: var(--text-sm);
-  max-width: 760px;
+  line-height: var(--leading-normal);
+  max-width: 70ch;
 }
 .page-header__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
+/* When a page passes actions but no title, the header is a single right-hand
+   cluster. Pushing it with margin-left keeps it right-aligned without an
+   empty left-hand div holding the space open. */
+.page-header--actions-only {
+  justify-content: flex-end;
+}
 
-/* ---------- Cards ---------- */
+/* A back link above a page header. Its own class because three pages had the
+   same six inline styles. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--muted);
+}
+.back-link:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* ---------- Section heading ----------
+   The level between a page and a card's contents. The app previously used
+   .metric-label (a 13px muted micro-label) as the title of every dashboard
+   card, which flattened the hierarchy: the label naming a whole chart looked
+   identical to the label naming one figure inside it. .section-title is the
+   real heading; .metric-label goes back to labelling single values. */
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.section-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--text);
+}
+.section-description {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  max-width: 75ch;
+}
+.section-head__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* An uppercase micro-label above a group of fields or a figure. */
+.field-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  line-height: var(--leading-snug);
+  text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: var(--space-1);
+}
+
+/* ---------- Cards ----------
+   One surface treatment, one padding value. .pulse-card and Bootstrap's .card
+   are the same object rendered two ways (a plain div vs. react-bootstrap's
+   <Card>), so they must not drift: both take --card-pad, both take
+   --radius-card, both are flat and border-led.
+
+   Before this, .pulse-card was 14px/16px, Card.Body was Bootstrap's 16px and
+   Card.Header was 13.6px/16px — three insets on one screen. */
 .pulse-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  padding: var(--card-pad);
   box-shadow: none;
   color: inherit;
   transition: border-color 0.15s ease;
@@ -763,32 +1272,70 @@ a.user-card__name:hover {
   border-color: var(--primary);
 }
 
+/* A card that is a titled section. The head/body split gives every such card
+   the same distance from its title to its content, which is what makes a row
+   of dashboard cards line up internally and not just at their edges. */
+.pulse-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+.pulse-card__body {
+  min-width: 0;
+}
+/* A card whose content is a table or list that should bleed to the border:
+   the padding moves onto the head, and the body sits flush. */
+.pulse-card--flush {
+  padding: 0;
+}
+.pulse-card--flush > .pulse-card__head {
+  padding: var(--card-pad) var(--card-pad) 0;
+  margin-bottom: var(--space-4);
+}
+.pulse-card--flush > .pulse-card__body {
+  padding-bottom: 0;
+}
+/* Vertical stack of cards/sections inside a column. */
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
 /* ---------- Metric card ---------- */
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
+/* A label naming a single figure — not a section heading. Use .section-title
+   for the latter. */
 .metric-label {
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
 }
 .metric-value {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-family: var(--font-heading);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   line-height: 1.1;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 .metric-value small {
   font-size: var(--text-md);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--muted);
 }
 .metric-detail {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   color: var(--text-soft);
   font-size: var(--text-sm);
 }
@@ -830,17 +1377,28 @@ a.user-card__name:hover {
   opacity: 0.35;
 }
 
-/* A cell value that navigates. The underline is the affordance — the global
-   `a` rule strips it, which would leave a link reading as ordinary text. */
+/* A cell value that navigates. Never underlined — not at rest, and not on
+   hover either: the global `a:hover` rule below adds one by default, which is
+   right for a link inside a sentence but wrong for a table cell, where it
+   ruled every row's first column.
+
+   The affordances instead are colour + weight at rest (--primary and semibold
+   against the row's --text regular), a colour shift on hover, and the standard
+   focus ring for keyboard.
+
+   The weight is load-bearing, not decorative: in dark mode --primary (#7dbfca)
+   sits at only ~1.6:1 against --text (#dde2e3), well under the 3:1 that WCAG
+   1.4.1 wants before colour may be the sole distinguisher of a link. Don't
+   drop it to match the other cells. */
 .table-link {
   color: var(--primary);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
 }
-.table-link:hover {
-  color: var(--primary-dark);
-  text-decoration-thickness: 2px;
+.table-link:hover,
+.table-link:focus-visible {
+  color: var(--primary-hover);
+  text-decoration: none;
 }
 .table-clickable tbody tr {
   cursor: pointer;
@@ -967,6 +1525,24 @@ a.user-card__name:hover {
   }
 }
 
+/* A table that sits inside a card which already provides the border. Declared
+   after the .table-cards block so it also wins at >=768, where that block
+   restores the wrapper's own border. */
+.table-wrap.table-wrap--seamless {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+/* The card's own edge is the last row's rule. */
+.pulse-card--flush .table-wrap--seamless > .table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+/* Round the table's corners back into the card's, and stop a wide table's
+   horizontal scroll from spilling past the radius. */
+.pulse-card--flush {
+  overflow: hidden;
+}
+
 /* ---------- Badges ----------
    Status is never conveyed by colour alone; each carries a leading glyph. */
 .badge-pill {
@@ -991,6 +1567,19 @@ a.user-card__name:hover {
 .badge-danger::before { content: "\25A0"; }
 .badge-neutral { background: var(--surface-muted); color: var(--text-soft); }
 .badge-neutral::before { content: "\25CB"; }
+/* The brand-toned pill, for identity rather than health — a user's role, a
+   count. Replaces the raw Bootstrap <Badge bg="primary"> that the Users and
+   Audit tables used, which ignored the pill geometry and the glyph rule. */
+.badge-accent { background: var(--primary-tint); color: var(--primary); }
+.badge-accent::before { content: "\25C7"; }
+/* An outlined pill for a value that is a label, not a state: it carries no
+   glyph because there is no status being conveyed by its colour. */
+.badge-outline {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-soft);
+}
+.badge-outline::before { content: none; }
 
 .cat-chip {
   display: inline-flex;
@@ -1027,23 +1616,242 @@ a.user-card__name:hover {
   color: var(--primary);
 }
 .who-name {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
+}
+/* The identity avatar in a page header, sized to sit against a 20px title
+   rather than a 14px table row. */
+.avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: var(--text-lg);
 }
 
-/* ---------- States ---------- */
+/* A measured column for a single-purpose page (change password, a settings
+   form). Full page width is available but not useful for one short form. */
+.narrow-column {
+  width: 100%;
+  max-width: 520px;
+  min-width: 0;
+}
+
+/* The evaluation report's summary: the headline figures beside the
+   per-criterion table, stacking on a narrow screen. */
+.report-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .report-summary {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-6);
+  }
+}
+
+/* ---------- Candidate detail layout ----------
+   Read mode is profile-then-status, and the status column is the wider one:
+   the timeline carries comments, interviewer pills and evaluation cards, while
+   the profile is a fixed set of short fields.
+
+   Mobile first — one column, becoming two only at lg. A tablet gets the
+   stacked version because a 5/7 split at 768px leaves the timeline's
+   evaluation cards too narrow to hold their two-line rows. */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  min-width: 0;
+}
+@media (min-width: 992px) {
+  .detail-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    align-items: start;
+  }
+
+  /* ---------- Bounded, equal-height panels ----------
+     Opt-in via .detail-grid--panels. `align-items: stretch` is what makes the
+     two columns share the row's height so their bottoms line up; the cap is
+     what stops that shared height being "as tall as the longest status
+     history", which would push the page to several screens and leave the
+     profile beside a column of whitespace.
+
+     The cap is the viewport minus the chrome stacked above the grid (topbar,
+     the page's padding, the back link and page header with their stack gaps),
+     but never less than --detail-panel-min. The floor matters: derived purely
+     from the viewport, a 720px-tall laptop window produced 480px panels, which
+     is too short to read a timeline in — the cap was doing more harm than the
+     unbounded growth it was there to prevent. Below the floor the page simply
+     scrolls a little, which is the better trade.
+
+     Note this is a *cap*, not a height: two short columns still size to their
+     content, so a candidate with one status entry doesn't get a tall empty
+     card. */
+  .detail-grid--panels {
+    align-items: stretch;
+    --detail-panel-min: 760px;
+    /* Read outward:
+         max(...)  — at least --detail-panel-min, so a short window doesn't
+                     squeeze the panels down to something unreadable. 8rem
+                     rather than the exact chrome height because ending
+                     precisely at the fold kept them honest but short, and a
+                     little page scroll is far cheaper than two cramped panels.
+         min(...)  — but never taller than the viewport itself. A panel taller
+                     than the screen is strictly worse than one that fits: you
+                     end up scrolling the page *and* the panel to read it.
+       --detail-panel-min is the comfort dial; raise it to show more per
+       screen, and the min() keeps it honest on small windows. */
+    --detail-panel-max: min(
+      max(var(--detail-panel-min), calc(100dvh - var(--topbar-height) - 8rem)),
+      calc(100dvh - var(--topbar-height) - 1rem)
+    );
+  }
+  .detail-grid--panels > .card-stack {
+    max-height: var(--detail-panel-max);
+    /* Without this a flex item refuses to shrink below its content, and the
+       max-height above would be ignored. */
+    min-height: 0;
+  }
+
+  /* The card in each column that absorbs the leftover space and scrolls its
+     own overflow. Siblings (the CV files card) keep their natural height. */
+  .detail-grid--panels .detail-scroll {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    /* Neutralises the .h-100 the profile card carries for its other callers,
+       which would otherwise fight flex-basis here. */
+    height: auto;
+    overflow: hidden;
+  }
+  /* Scroll the body, not the card: the card's header (a section title, or the
+     profile's role + links) stays pinned while its content moves. */
+  .detail-grid--panels .detail-scroll > .pulse-card__body,
+  .detail-grid--panels .detail-scroll > .card-body {
+    overflow-y: auto;
+    min-height: 0;
+  }
+}
+/* Editing is a single measured column: a form is read top to bottom, and a
+   full-width form field is harder to scan than one capped near 70ch. */
+.detail-edit-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 860px;
+  min-width: 0;
+}
+
+/* ---------- States ----------
+   Empty, loading and error are three answers to "why is there nothing here",
+   and each gets a distinct treatment so the user can tell them apart at a
+   glance: dashed + neutral for empty, a shimmer of the shape that is coming
+   for loading, and a tinted danger border for error. */
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
   border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  padding: 22px;
+  border-radius: var(--radius-card);
+  padding: var(--space-7) var(--space-5);
   text-align: center;
   background: var(--surface-muted);
 }
+.empty-state__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
 .empty-state-title {
   color: var(--text);
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
 }
 .empty-state-description {
-  margin-top: 4px;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  max-width: 52ch;
+}
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+/* A failure is not an absence — it gets the danger border so it isn't read as
+   "there is simply nothing here". */
+.empty-state--error {
+  border-style: solid;
+  border-color: var(--danger);
+  background: var(--danger-tint);
+}
+.empty-state--error .empty-state__icon {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--surface);
+}
+/* Used for a whole-page state (a 404, an interview you can't see) rather than
+   an empty section, so it doesn't sit as a short band at the top of a tall
+   blank page. */
+.empty-state--page {
+  padding-block: var(--space-10);
+}
+
+/* ---------- Loading ----------
+   Skeletons rather than a bare spinner: they hold the height the content will
+   occupy, so the page does not jump when data lands, and they say *what* is
+   loading. The spinner is kept for actions in flight (a save), where there is
+   no shape to preview. */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.skeleton + .skeleton {
+  margin-top: var(--space-2);
+}
+.skeleton--text { height: 12px; }
+.skeleton--line { height: 16px; }
+.skeleton--row { height: 44px; border-radius: var(--radius-md); }
+.skeleton--card { height: 120px; border-radius: var(--radius-card); }
+.skeleton--chart { height: 240px; border-radius: var(--radius-md); }
+/* A skeleton is decoration standing in for content; it must not be announced. */
+.skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* Centred spinner for a whole page or panel that has no shape to preview. */
+.loading-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding-block: var(--space-9);
   color: var(--muted);
   font-size: var(--text-sm);
 }
@@ -1052,11 +1860,17 @@ a.user-card__name:hover {
    own .alert-success / .alert-warning, which are still used elsewhere. */
 .alert-success-soft,
 .alert-warning-soft,
-.alert-info-soft {
-  padding: 12px 14px;
+.alert-info-soft,
+.alert-danger-soft {
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   line-height: 1.55;
+}
+.alert-danger-soft {
+  background: var(--danger-tint);
+  color: var(--danger);
+  border: 1px solid var(--danger);
 }
 .alert-success-soft {
   background: var(--success-tint);
@@ -1076,8 +1890,30 @@ a.user-card__name:hover {
 
 /* The CV drop zone is an .empty-state that accepts a drop. */
 .dropzone {
-  padding: 32px 22px;
+  padding: var(--space-9) var(--space-5);
+  cursor: pointer;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.dropzone:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+.dropzone--busy {
+  cursor: default;
+}
+.dropzone__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 320px;
+}
+.dropzone__bar {
+  width: 100%;
+  height: 6px;
+  margin-top: var(--space-2);
+  background: var(--surface);
 }
 .dropzone--active {
   border-color: var(--primary);
@@ -1088,14 +1924,255 @@ a.user-card__name:hover {
   .dropzone { transition: none; }
 }
 
-/* ---------- Toolbars ---------- */
+/* ---------- Page bar ----------
+   The row a list page opens with: its filters on the left, its primary action
+   on the right, on ONE line.
+
+   This exists because the action used to sit in a `PageHeader` of its own.
+   Since the topbar already owns the page title, that header had no text — it
+   was an empty 38px row plus a 24px stack gap, 62px of vertical space to hold
+   a single button, directly above a filter bar that had room to spare. Pairing
+   them reclaims the space while keeping the action on the page, next to the
+   content it acts on, rather than in the app chrome.
+
+   Mobile first: the action drops below the filters and goes full width. */
+.page-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+.page-bar > .data-toolbar {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.page-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.page-bar__actions > .btn {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 768px) {
+  .page-bar {
+    flex-direction: row;
+    align-items: center;
+  }
+  .page-bar__actions > .btn {
+    flex: 0 0 auto;
+  }
+}
+
+/* ---------- Filter / data toolbar ----------
+   The controls above a list. Given a surface of its own so the page reads as
+   "filters, then results" rather than as loose inputs floating on the page
+   background above a bordered table.
+
+   `justify-content: flex-start`, not space-between: space-between distributes
+   whatever slack is left in the row between the controls, so the gap between
+   two filters changed with the viewport width and with how many filters the
+   user's role could see. A fixed gap plus an explicit `--end` group is
+   predictable. */
 .data-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: var(--space-3);
   flex-wrap: wrap;
+  padding: var(--space-3) var(--card-pad-tight);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
 }
+/* Mobile first: on a phone every control is full width — two half-width
+   selects side by side leave neither label readable. The min-width block
+   below lets them share a row and gives search the slack. */
+.data-toolbar__search,
+.data-toolbar__field,
+.data-toolbar__field--wide {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.data-toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  flex: 1 1 100%;
+}
+
+@media (min-width: 576px) {
+  /* Search is the primary control, so it takes the slack; the rest size to
+     their content.
+
+     The maxima are deliberately modest. A flex line breaks on the items'
+     *hypothetical* sizes (their flex-basis), not on how far they could shrink,
+     so generous max-widths made the row wrap and strand the "Referred only"
+     toggle alone on a second line as soon as the row also had to hold the
+     page's action button. Smaller caps keep every filter on one line and the
+     controls still read fine — a status dropdown does not need 230px. */
+  .data-toolbar__search {
+    flex: 1 1 200px;
+    min-width: 180px;
+    max-width: 320px;
+  }
+  .data-toolbar__field {
+    flex: 0 1 auto;
+    min-width: 140px;
+    max-width: 190px;
+  }
+  .data-toolbar__field--wide {
+    flex: 1 1 180px;
+    min-width: 160px;
+    max-width: 240px;
+  }
+  /* Pushed to the trailing edge: the toggle and the reset act on the filter
+     set as a whole rather than being another filter. */
+  .data-toolbar__end {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+/* An active filter that no visible control represents — currently the
+   dashboard bucket a KPI tile arrived with. Without it the list looks
+   inexplicably short. Removable, so it behaves like the other filters. */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 4px 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+.filter-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+}
+.filter-chip__remove:hover {
+  opacity: 1;
+  background: var(--primary-tint-hover);
+}
+
+/* A bare checkbox is ~24px tall next to 38px selects, so on one centre line it
+   reads as floating. Giving it the control height sits it on the same rail. */
+.data-toolbar .form-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 38px;
+  margin-bottom: 0;
+  padding-left: 0;
+  white-space: nowrap;
+}
+.data-toolbar .form-check-input {
+  margin-top: 0;
+  margin-left: 0;
+  float: none;
+  flex-shrink: 0;
+}
+.data-toolbar .form-check-label {
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+/* ---------- Toasts ----------
+   Bottom-right, above everything including a modal: a toast reports the
+   outcome of an action that may well have been taken *in* a dialog. */
+.toast-stack {
+  z-index: var(--z-toast);
+  padding: var(--space-4);
+  gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.toast-stack .toast {
+  min-width: 220px;
+  max-width: min(360px, calc(100vw - 2 * var(--space-4)));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.toast-stack .toast-body {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+/* A search input with a leading glyph. Its own class because the icon was
+   positioned with four inline styles at each call site, which meant the
+   padding that clears it was a magic number repeated alongside them. */
+.search-field {
+  position: relative;
+}
+.search-field__icon {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.search-field .form-control {
+  padding-left: 34px;
+}
+
+/* ---------- Segmented control ----------
+   For switching a view's filter in place — a range (7D/30D/90D), a status
+   filter. Distinct from .admin-tabs, which navigates between panels and is
+   underlined; a segmented control is a single enclosed group so it reads as
+   one setting with several values rather than as several buttons. */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+.segmented button {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.segmented button:hover {
+  color: var(--text);
+}
+.segmented button.active {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .segmented button { transition: none; }
+}
+
 .result-count {
   color: var(--muted);
   font-size: var(--text-sm);
@@ -1532,20 +2609,108 @@ a.user-card__name:hover {
 .chip-add input::placeholder {
   color: var(--muted);
 }
+.chip-add__btn {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+}
+
+/* ---------- Forms ----------
+   `.form-stack` is the vertical rhythm between fields, replacing a `mb-3` on
+   every Form.Group. A gap on the container means the last field has no
+   trailing margin fighting the container's padding, and a conditionally
+   rendered field can't leave a phantom gap behind when it disappears. */
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.form-stack--tight {
+  gap: var(--space-3);
+}
+/* The action row that closes a form. The top border separates committing from
+   editing, which is the one place in a form where a rule earns its keep. */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+/* On a phone the primary action goes full width and leads, so it is under the
+   thumb rather than tucked beside a Cancel. */
+.form-actions > .btn {
+  flex: 1 1 100%;
+}
+@media (min-width: 576px) {
+  .form-actions > .btn {
+    flex: 0 0 auto;
+  }
+}
+.form-help {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  margin: 0;
+}
+
+/* Separates one group of fields from the next inside a single form. A real
+   element rather than an <hr>, which carries Bootstrap's own margins and
+   opacity and sat unevenly between grid rows. */
+.field-divider {
+  height: 1px;
+  margin-block: var(--space-2) var(--space-4);
+  background: var(--border);
+}
+
+/* A set of related checkboxes (roles, options). Auto-fit columns rather than a
+   flex row, so the boxes line up in a grid instead of ragging wherever the
+   previous label happened to end. */
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+.check-grid .form-check {
+  margin-bottom: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: 0;
+}
+.check-grid .form-check-input {
+  margin: 0;
+  float: none;
+  flex-shrink: 0;
+}
+
+/* Badges inside a table cell. Right-aligned in card mode (where the cell is a
+   label/value row) and left-aligned once the table layout returns. */
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+@media (min-width: 768px) {
+  .badge-row { justify-content: flex-start; }
+}
 
 /* ---------- Grouped form sections ---------- */
 .form-section + .form-section {
-  margin-top: 20px;
-  padding-top: 20px;
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
 .form-section__title {
   font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
   color: var(--muted-light);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 /* ---------- Modals: sheet on phones, dialog from sm up ----------
@@ -1653,10 +2818,9 @@ a.user-card__name:hover {
   padding: 2rem;
 }
 .login-logo {
-  display: block;
-  height: 46px;
-  width: auto;
-  margin: 0 auto 1.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 .login-title {
   font-size: var(--text-2xl);
@@ -1672,19 +2836,151 @@ a.user-card__name:hover {
   margin-bottom: 1.5rem;
 }
 
-/* Dark mode: keep the (dark-inked) brand logo legible on a small light chip. */
-[data-bs-theme='dark'] .app-logo-img,
-[data-bs-theme='dark'] .login-logo {
-  background: #ffffff;
-  padding: 4px 8px;
-  border-radius: 8px;
+/* ---------- Brand logo ----------
+   Inline SVG mark + HTML wordmark (components/BrandLogo). The dark-mode white
+   chip that used to sit behind the old PNG is gone: the wordmark takes
+   `currentColor` and the mark carries its own palette, so both themes work
+   without pasting a white sticker into a dark sidebar.
+
+   Everything scales off --brand-size, which the component sets from its `size`
+   prop, so one number drives the mark and both wordmark lines together. */
+.brand {
+  display: inline-flex;
+  min-width: 0;
+  line-height: 1;
+  /* The mark's three tones, and what each has to contrast against — which is
+     what sets their values, not a shared ramp:
+       accent (fur)      sits on the page  → must clear the page background
+       soft   (face)     sits on the fur   → must clear accent, or the brow
+                                             overhang in the silhouette is lost
+       deep   (features) sits on the face  → must clear soft
+     Note `deep` never touches the page, so it stays dark in both themes. An
+     earlier revision lifted it for dark mode, which was right for the striding
+     figure it replaced (whose limbs lay directly on the background) and wrong
+     here — it washed the glasses out against the pale face.
+
+     Fixed values rather than token-derived: --primary brightens in dark mode to
+     stay legible as *text*, which would flatten the fur/face separation. */
+  --brand-mark-accent: #4a97a0;
+  --brand-mark-deep: #2b5a61;
+  --brand-mark-soft: #cbe8ec;
+}
+[data-bs-theme='dark'] .brand {
+  /* Fur lifts to clear the darker page ground; the face lifts further to keep
+     the gap between them; the features stay dark against that pale face. */
+  --brand-mark-accent: #4f9aa4;
+  --brand-mark-deep: #1e4249;
+  --brand-mark-soft: #d3ecef;
+}
+.brand__mark {
+  display: block;
+  flex-shrink: 0;
+  width: var(--brand-size);
+  height: var(--brand-size);
+}
+.brand__mark > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The wordmark: uppercase, tracked, two weights. The second line is set
+   smaller but tracked wider so the two optically align in width. */
+.brand__word {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.brand__word-a {
+  font-size: calc(var(--brand-size) * 0.42);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+  color: currentColor;
+}
+.brand__word-b {
+  font-size: calc(var(--brand-size) * 0.27);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.42em;
+  /* Tracking adds space after the final letter too, which visually shifts a
+     centred line left; the indent cancels it. */
+  text-indent: 0.42em;
+  line-height: 1.5;
+  color: var(--primary);
+}
+
+/* Presentation lockup — mark over wordmark, centred. */
+.brand--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--brand-size) * 0.16);
+  text-align: center;
+}
+.brand--stacked .brand__word {
+  align-items: center;
+}
+
+/* Badge alone. Belt-and-braces: the component omits the wordmark for this
+   layout, but the class alone should be enough to get the mark on its own. */
+.brand--mark .brand__word {
+  display: none;
+}
+
+/* Chrome lockup — mark beside wordmark, for the sidebar's 30px row. */
+.brand--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--brand-size) * 0.3);
 }
 
 /* ===== App bar: signed-in user + logout ===== */
 .navbar-user {
-  color: var(--ms-text-secondary);
+  color: var(--text-soft);
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+/* ===== Selected-value tokens (multi-select) =====
+   The selected items above a multi-select. Previously a raw Bootstrap
+   `.badge.bg-primary-subtle` with an inline-styled `.btn-close`, which was the
+   only badge in the app not using the pill geometry, and whose 8px close
+   button was well under any reasonable target size. */
+.token-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.token {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 4px 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+.token__remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+}
+.token__remove:hover {
+  opacity: 1;
+  background: var(--primary-tint-hover);
 }
 
 /* ===== Searchable select dropdown ===== */
@@ -1711,19 +3007,19 @@ a.user-card__name:hover {
   background: transparent;
   padding: 0.4rem 0.85rem;
   font-size: 0.95rem;
-  color: var(--ms-text);
+  color: var(--text);
 }
 .searchable-item:hover,
 .searchable-item:focus {
-  background: var(--ms-primary-tint);
-  color: var(--ms-primary-pressed);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
 }
 
 /* ===== CV preview ===== */
 .cv-preview-frame {
   width: 100%;
   height: 480px;
-  border: 1px solid var(--ms-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -1747,7 +3043,7 @@ a.user-card__name:hover {
   background: var(--status-color);
   flex: 0 0 auto;
   /* Soft ring so the solid dot reads distinctly from the tinted status badge. */
-  box-shadow: 0 0 0 2px var(--ms-surface), 0 0 0 5px var(--status-tint);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px var(--status-tint);
 }
 .status-badge {
   display: inline-block;
@@ -1791,14 +3087,92 @@ a.user-card__name:hover {
    not a lift. The translateY + drop shadow this replaces were the loudest
    interaction in the product. */
 .kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .kpi-card:hover {
   background-color: var(--kpi-tint);
   border-color: var(--kpi-accent);
 }
+/* A tile that drills through to the matching candidate list. Tiles without a
+   destination keep the plain .kpi-card and don't react to the pointer, so the
+   two are told apart before you click rather than after. */
+.kpi-card--link {
+  position: relative;
+  display: block;
+  color: inherit;
+  cursor: pointer;
+}
+.kpi-card--link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+/* Sits inline after the label, always visible so the tile reads as a link at
+   rest. It strengthens to the tile's accent on hover/focus rather than
+   appearing from nothing — and the icon chip stays put, since swapping it out
+   under the pointer looked like a glitch. */
+.kpi-card__top-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.kpi-card__go {
+  flex-shrink: 0;
+  color: var(--muted-light);
+  transition: color 150ms ease, transform 150ms ease;
+}
+.kpi-card--link:hover .kpi-card__go,
+.kpi-card--link:focus-visible .kpi-card__go {
+  color: var(--kpi-accent);
+  transform: translate(1px, -1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card__go { transition: none; }
+}
+.kpi-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+/* The label may run to two lines on a narrow tile; the value below it must
+   still start at the same height across the row, so the top block claims a
+   fixed minimum rather than letting each tile size itself. */
+.kpi-card__top .metric-label {
+  min-height: 2.7em;
+}
+.kpi-card .metric-value {
+  margin-top: 0;
+  /* The row is six tiles wide on a large screen and two on a phone; the value
+     scales with the tile so a four-digit count never overflows it. */
+  font-size: clamp(22px, 2.2vw, 28px);
+}
+.kpi-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+.kpi-card__sub {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kpi-card__pct {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
 
 .kpi-card__icon {
+  display: grid;
+  place-items: center;
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
@@ -1809,7 +3183,7 @@ a.user-card__name:hover {
 
 .kpi-card__bar {
   height: 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-muted);
   overflow: hidden;
 }
@@ -1856,8 +3230,8 @@ a.user-card__name:hover {
 
 /* Active Job Openings table — subtle row hover + muted meta icons */
 .job-openings-table td { vertical-align: middle; }
-.job-openings-table .job-meta-icon { color: var(--ms-text-secondary); flex: 0 0 auto; }
-.job-openings-table .job-id { color: var(--ms-text-secondary); font-variant-numeric: tabular-nums; }
+.job-openings-table .job-meta-icon { color: var(--text-soft); flex: 0 0 auto; }
+.job-openings-table .job-id { color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .job-closing-soon {
   display: inline-block;
   margin-left: 0.4rem;
@@ -1903,9 +3277,9 @@ a.user-card__name:hover {
   background: transparent;
   color: inherit;
 }
-.notification-item:hover { background: var(--ms-neutral-light); }
-.notification-item--unread { background: var(--ms-primary-tint); }
-.notification-item--unread:hover { background: var(--ms-primary-tint-2); }
+.notification-item:hover { background: var(--surface-muted); }
+.notification-item--unread { background: var(--primary-tint); }
+.notification-item--unread:hover { background: var(--primary-tint-hover); }
 
 /* ===== Dashboard hero kicker =====
    Flat, like every other surface now: the gradient wash and shadow are gone,
@@ -1914,20 +3288,33 @@ a.user-card__name:hover {
 .dashboard-hero-kicker {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   box-shadow: none;
-  padding: 1.25rem 1.5rem;
+  padding: var(--card-pad);
 }
 .dashboard-hero-kicker__eyebrow {
   color: var(--primary);
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
 }
-.dashboard-hero-kicker h2 {
+.dashboard-hero-kicker__greeting {
   font-size: var(--text-xl);
+  margin-bottom: var(--space-1);
+}
+.dashboard-hero-kicker__lede {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+/* The chip row is the last thing in the card, so its own margin is zero and
+   the card's padding closes the gap. */
+.hero-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .hero-chip {
   display: inline-flex;
@@ -1957,6 +3344,14 @@ a.hero-chip:hover {
 a.hero-chip--accent:hover {
   color: var(--primary);
 }
+/* "You're all caught up" — a chip in shape so the row keeps its height, but
+   borderless so it doesn't read as another actionable item. */
+.hero-chip--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  padding-inline: 0;
+}
 
 /* ===== Interview page ===== */
 @keyframes fade-slide-up {
@@ -1970,16 +3365,152 @@ a.hero-chip--accent:hover {
 .interview-hero {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   box-shadow: none;
-  padding: 1.25rem;
+  padding: var(--card-pad);
 }
-.interview-hero__eyebrow {
-  color: var(--primary);
+.interview-hero__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.interview-hero__identity {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+/* Role and interview-type tags on one line under the name, rather than each
+   claiming a row of its own. */
+.interview-hero__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* ---------- Recruiter's briefing ----------
+   Lives *inside* the evaluation card, above the progress bar. It is
+   instructions for that form, so it belongs to the same object rather than
+   floating above it as a second card — which cost a whole surface plus a gap
+   to show what is usually one line. Sitting outside the scrolling rubric, it
+   stays readable the whole way down the twelve criteria.
+
+   A band, not a nested card: a bordered box inside a bordered card reads as
+   clutter. The rule below it does the separating. */
+.eval-briefing {
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.eval-briefing__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
+  color: var(--muted-light);
+  margin-bottom: var(--space-1);
+}
+.eval-briefing__body {
+  white-space: pre-line;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-soft);
+  /* A long brief must not eat the rubric's height; past a few lines it scrolls
+     in place. */
+  max-height: 7.5em;
+  overflow-y: auto;
+}
+
+/* ---------- Evaluation card ----------
+   Twelve criteria across four open sections made this card ~2500px tall, so
+   the progress bar was long gone by the time you reached section D and Submit
+   was another screen below that. The rubric now scrolls inside the card while
+   the header (progress) and the footer (Submit / Save draft) stay put.
+
+   Desktop only. On a phone a bounded scroll area nested inside a page that
+   also scrolls is worse than a long page — you get two scrollbars fighting and
+   no way to flick past the form. */
+@media (min-width: 992px) {
+  /* Both columns pin under the topbar at exactly the height the viewport
+     leaves below it. Reuses .detail-grid--panels for the equal-height /
+     internal-scroll mechanics and only overrides the height:
+     --detail-panel-max's 760px floor is deliberately dropped here, because a
+     column taller than the space below the topbar would hang past the fold —
+     which is what capping only the evaluation card left behind.
+
+     The result is a fixed two-panel workspace: candidate reference scrolls on
+     the left, rubric on the right, and their bottoms line up. */
+  .interview-grid {
+    --detail-panel-max: calc(100dvh - var(--topbar-height) - (2 * var(--space-page)));
+  }
+  .interview-grid > .card-stack {
+    position: sticky;
+    top: calc(var(--topbar-height) + var(--space-page));
+  }
+  .eval-form-card {
+    display: flex;
+    flex-direction: column;
+    /* Fills whatever the notes card leaves; the rubric inside takes the slack. */
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .eval-form-card > .pulse-card__head {
+    flex-shrink: 0;
+  }
+  .eval-form-card > .pulse-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .eval-form-card .eval-progress__bar,
+  .eval-form-card .form-actions {
+    flex-shrink: 0;
+  }
+  .eval-form-card__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* Pull out to the card's edge and pad back in, so the scrollbar rides the
+       card border instead of floating inside the padding. */
+    margin-inline: calc(-1 * var(--card-pad));
+    padding-inline: var(--card-pad);
+  }
+}
+/* Space below the progress bar, and above the actions, in both layouts. */
+.eval-form-card .eval-progress__bar {
+  margin-bottom: var(--space-4);
+}
+/* Schedule + interviewers as one right-hand cluster. Previously the
+   interviewers were a full-width strip under a divider, which spent a third of
+   the hero's height on what is usually a single avatar pill. */
+.interview-hero__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.interview-hero__people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.interview-hero__people-label {
+  margin-bottom: 0;
+}
+@media (min-width: 768px) {
+  .interview-hero__aside {
+    align-items: flex-end;
+  }
+  .interview-hero__people {
+    justify-content: flex-end;
+  }
 }
 .interview-chip {
   display: inline-flex;
@@ -1987,8 +3518,8 @@ a.hero-chip--accent:hover {
   gap: 0.45rem;
   padding: 0.35rem 0.8rem;
   border-radius: 999px;
-  background: var(--ms-primary-tint);
-  color: var(--ms-primary-pressed);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -2000,7 +3531,7 @@ a.hero-chip--accent:hover {
   padding: 0.25rem 0.7rem 0.25rem 0.3rem;
   border-radius: 999px;
   border: 1px solid var(--bs-border-color);
-  background: var(--ms-surface);
+  background: var(--surface);
   font-size: 0.85rem;
 }
 .interviewer-pill__avatar {
@@ -2019,13 +3550,61 @@ a.hero-chip--accent:hover {
   font-weight: 700;
 }
 
+/* ===== Status timeline =====
+   The node rail plus the entry beside it. Previously assembled from Bootstrap
+   utilities (`d-flex`, `pb-4`, `bg-secondary-subtle`, an inline `width: 2`),
+   which meant the connector's colour came from a Bootstrap variable rather
+   than a token and the gap between entries was a utility class. */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.timeline__item {
+  display: flex;
+  gap: var(--space-3);
+}
+.timeline__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  /* Nudges the dot onto the centre line of the badge beside it. */
+  padding-top: 4px;
+}
+.timeline__line {
+  flex: 1 1 auto;
+  width: 2px;
+  margin-top: var(--space-2);
+  background: var(--border);
+}
+.timeline__body {
+  min-width: 0;
+  padding-bottom: var(--space-6);
+}
+.timeline__body--last {
+  padding-bottom: 0;
+}
+.timeline__current {
+  color: var(--primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+.timeline__meta {
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
 /* ===== Interview-completed evaluation summary cards (status timeline) ===== */
 .eval-summary {
   border: 1px solid var(--bs-border-color);
   border-radius: 12px;
-  background: var(--ms-surface);
+  background: var(--surface);
   padding: 0.6rem 0.7rem;
-  border-left: 3px solid var(--ms-primary);
+  border-left: 3px solid var(--primary);
 }
 .eval-summary__head {
   display: flex;
@@ -2035,7 +3614,7 @@ a.hero-chip--accent:hover {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--ms-primary);
+  color: var(--primary);
   margin-bottom: 0.55rem;
 }
 .eval-summary__count {
@@ -2110,8 +3689,59 @@ a.hero-chip--accent:hover {
 }
 
 /* ===== Interview evaluation ===== */
-.eval-criterion { padding: 0.7rem 0; border-bottom: 1px solid var(--bs-border-color); }
-.eval-criterion:last-child { border-bottom: 0; padding-bottom: 0.2rem; }
+.eval-criterion {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+.eval-criterion:last-child { border-bottom: 0; padding-bottom: var(--space-1); }
+
+/* The criterion and its 1–5 scale.
+   The label column is capped rather than allowed to fill. This row used to be
+   `justify-content: space-between`, which parked the rating pills against the
+   panel's right edge — roughly 400px from the text they rate on a wide screen.
+   Rating twelve criteria then meant twelve trips across the card, and it was
+   easy to land on the wrong row. Capping the label puts the scale a short and,
+   more importantly, *constant* distance from every label, so the pills line up
+   in one column the eye can run straight down. */
+.eval-criterion {
+  /* The label column, and the scale's width derived from it: five 32px pills,
+     four 0.3rem gaps and the group's 2px padding. Declared once so the comment
+     field below can span exactly label + scale. */
+  --eval-label-w: 320px;
+  --eval-scale-w: 184px;
+}
+.eval-criterion__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.eval-criterion__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: var(--eval-label-w);
+}
+.eval-criterion__name {
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  color: var(--text);
+}
+.eval-criterion__hint {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--muted);
+}
+.eval-criterion .rating-group {
+  flex-shrink: 0;
+}
+/* Spans exactly label + gap + scale, so the criterion reads as one block with
+   a straight right edge rather than a short question above a full-bleed input. */
+.eval-criterion .eval-comment-input {
+  margin-top: var(--space-2);
+  max-width: calc(var(--eval-label-w) + var(--space-4) + var(--eval-scale-w));
+}
+
 .readonly-value { white-space: pre-wrap; }
 
 /* Section accents (same technique as .kpi--*) */
@@ -2140,16 +3770,23 @@ a.hero-chip--accent:hover {
 .eval-panel__header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  /* Wraps so the "n/3 rated" chip drops to its own line on a phone instead of
+     squeezing the section title into a ~150px column. */
+  flex-wrap: wrap;
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: var(--space-3) var(--card-pad-tight);
   border: 0;
   background: transparent;
   text-align: left;
-  color: var(--ms-text);
+  color: var(--text);
   transition: background-color 0.15s ease;
 }
-.eval-panel__header:hover { background: var(--eval-tint, var(--ms-neutral-light)); }
+.eval-panel__titles {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.eval-panel__header:hover { background: var(--eval-tint, var(--surface-muted)); }
 .eval-panel__icon {
   flex: 0 0 auto;
   width: 34px;
@@ -2163,7 +3800,7 @@ a.hero-chip--accent:hover {
   color: var(--eval-ink, #fff);
 }
 .eval-panel__title { font-weight: 600; line-height: 1.2; }
-.eval-panel__hint { color: var(--ms-text-secondary); font-size: 0.78rem; }
+.eval-panel__hint { color: var(--text-soft); font-size: 0.78rem; }
 .eval-panel__meta {
   margin-left: auto;
   display: flex;
@@ -2174,14 +3811,14 @@ a.hero-chip--accent:hover {
 .eval-panel__count {
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  background: var(--eval-tint, var(--ms-neutral-light));
-  color: var(--eval-accent, var(--ms-text-secondary));
+  background: var(--eval-tint, var(--surface-muted));
+  color: var(--eval-accent, var(--text-soft));
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
 }
 .eval-panel__chevron {
-  color: var(--ms-text-secondary);
+  color: var(--text-soft);
   transition: transform 0.25s ease;
 }
 .eval-panel__chevron--open { transform: rotate(180deg); }
@@ -2200,8 +3837,8 @@ a.hero-chip--accent:hover {
   height: 32px;
   border-radius: 8px;
   border: 1px solid var(--bs-border-color);
-  background: var(--ms-surface);
-  color: var(--ms-text-secondary);
+  background: var(--surface);
+  color: var(--text-soft);
   font-size: 0.85rem;
   font-weight: 600;
   display: grid;
@@ -2212,11 +3849,11 @@ a.hero-chip--accent:hover {
 }
 .rating-btn:hover {
   transform: scale(1.1);
-  border-color: var(--eval-accent, var(--ms-primary));
-  color: var(--eval-accent, var(--ms-primary));
+  border-color: var(--eval-accent, var(--primary));
+  color: var(--eval-accent, var(--primary));
 }
 .rating-btn:focus-visible {
-  outline: 2px solid var(--eval-accent, var(--ms-primary));
+  outline: 2px solid var(--eval-accent, var(--primary));
   outline-offset: 1px;
 }
 .rating-btn--selected {
@@ -2232,30 +3869,63 @@ a.hero-chip--accent:hover {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--ms-neutral);
+  background: var(--border);
 }
-.rating-dot--filled { background: var(--eval-accent, var(--ms-primary)); }
+.rating-dot--filled { background: var(--eval-accent, var(--primary)); }
+
+/* The summary panel closes the rubric, so it takes the brand accent rather
+   than one of the four section hues. Declared here instead of as an inline
+   style object at the call site. */
+.eval-panel--summary {
+  --eval-accent: var(--primary);
+  --eval-tint: var(--primary-tint);
+}
+[data-bs-theme='dark'] .eval-panel--summary {
+  --eval-ink: #121617;
+}
+
+/* Radio options stacked with a consistent gap, so a revealed "please specify"
+   field doesn't close up against the next option. */
+.radio-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.radio-stack .form-check {
+  margin-bottom: 0;
+}
 
 /* Evaluation progress */
 .eval-progress__bar {
   height: 6px;
-  border-radius: 999px;
-  background: var(--ms-neutral);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .eval-progress__fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--primary);
   transition: width 0.5s ease;
+}
+.eval-progress__count {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.eval-progress__count--invalid {
+  color: var(--danger);
 }
 
 .eval-comment-input {
   border-color: transparent;
-  background: var(--ms-neutral-light);
+  background: var(--surface-muted);
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
-.eval-comment-input:focus { background: var(--ms-surface); }
+.eval-comment-input:focus { background: var(--surface); }
 
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up { animation: none; }
@@ -2272,8 +3942,6 @@ a.hero-chip--accent:hover {
   }
   a.hero-chip:hover { transform: none; box-shadow: none; }
   .rating-btn:hover { transform: none; }
-  .btn-cv-download:hover { transform: none; box-shadow: none; }
-  .btn-cv-download:hover .btn-cv-download__icon { animation: none; }
 }
 
 /* ===== Read-only candidate profile (interview view) ===== */
@@ -2296,9 +3964,9 @@ a.hero-chip--accent:hover {
   background: var(--primary-dark);
   box-shadow: none;
 }
-.profile-title { font-weight: 600; font-size: 1.02rem; color: var(--ms-text); }
+.profile-title { font-weight: 600; font-size: 1.02rem; color: var(--text); }
 .profile-field-label {
-  color: var(--ms-text-secondary);
+  color: var(--text-soft);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -2312,17 +3980,17 @@ a.hero-chip--accent:hover {
 }
 .profile-tile {
   padding: 0.55rem 0.75rem;
-  background: var(--ms-neutral-light);
+  background: var(--surface-muted);
   border: 1px solid var(--bs-border-color);
   border-radius: 9px;
 }
-.profile-tile__value { color: var(--ms-text); font-weight: 500; word-break: break-word; }
+.profile-tile__value { color: var(--text); font-weight: 500; word-break: break-word; }
 
 /* Extendable summary */
 .profile-summary {
   white-space: pre-wrap;
   line-height: 1.5;
-  color: var(--ms-text);
+  color: var(--text);
 }
 .profile-summary--collapsed {
   max-height: 5.6em;
@@ -2335,7 +4003,7 @@ a.hero-chip--accent:hover {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--ms-primary);
+  color: var(--primary);
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -2349,7 +4017,7 @@ a.hero-chip--accent:hover {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--bs-border-color);
   border-radius: 10px;
-  background: var(--ms-surface);
+  background: var(--surface);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .cv-file-item + .cv-file-item { margin-top: 0.5rem; }
@@ -2361,40 +4029,53 @@ a.hero-chip--accent:hover {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: var(--ms-primary-tint);
-  color: var(--ms-primary-pressed);
+  background: var(--primary-tint);
+  color: var(--primary-dark);
 }
-.cv-file-item__meta { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
-.cv-file-item__name { font-size: 0.85rem; font-weight: 500; }
-.cv-file-item__size { font-size: 0.72rem; color: var(--ms-text-secondary); }
+/* `flex: 1 1 auto` with `min-width: 0` so the file name is what shrinks and
+   ellipsises. Without a flex-basis the name column sized to its full content
+   and pushed the buttons onto a second line. */
+.cv-file-item__meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: auto;
+}
+.cv-file-item__name { font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.cv-file-item__size { font-size: var(--text-xs); color: var(--muted); }
+/* The two actions stay on one line — they are a pair, and wrapping them made
+   a one-line file row three lines tall. */
+.cv-file-item .row-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
 
-/* Yellow download button with hover animation */
-@keyframes cv-download-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(3px); }
-}
+/* Download CV.
+   This was a hardcoded yellow (#ffd43b) fill with an icon that bounced on
+   loop while hovered. Three things were wrong with it: the colour is a literal
+   rather than a token, which the design system's first rule forbids; yellow is
+   the app's warning hue, so the safest action on the panel was wearing the
+   colour that means "careful"; and it made Download louder than Preview, which
+   is the action a reviewer actually wants first.
+
+   It is now the same secondary control as its Preview sibling, distinguished
+   by its icon rather than by shouting. */
 .btn-cv-download {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  border: 1px solid #e6b800;
-  background: #ffd43b;
-  color: #533f03;
-  font-weight: 600;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  gap: var(--space-1);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-weight: var(--weight-semibold);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .btn-cv-download:hover {
-  background: #fcc419;
-  border-color: #d9a400;
-  color: #533f03;
+  background: var(--surface-muted);
+  border-color: var(--primary);
+  color: var(--primary);
 }
-.btn-cv-download:hover .btn-cv-download__icon { animation: cv-download-bounce 0.6s ease infinite; }
-[data-bs-theme='dark'] .btn-cv-download {
-  background: #d9a400;
-  border-color: #b88a00;
-  color: #1c1500;
-}
-[data-bs-theme='dark'] .btn-cv-download:hover { background: #e6b400; color: #1c1500; }
 
 .profile-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .profile-link {
@@ -2404,13 +4085,15 @@ a.hero-chip--accent:hover {
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   border: 1px solid var(--bs-border-color);
-  background: var(--ms-surface);
-  color: var(--ms-text);
+  background: var(--surface);
+  color: var(--text);
   font-size: 0.85rem;
   text-decoration: none;
   transition: border-color 0.15s, color 0.15s;
 }
-.profile-link:hover { border-color: var(--ms-primary); color: var(--ms-primary); }
+/* A chip, not a sentence — the border and colour are the hover cue, so the
+   global `a:hover` underline is suppressed here too. */
+.profile-link:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
 
 /* Colorful skill badges — stable per skill via .skill-badge--N (see utils/skillColors.ts). */
 .skill-badge {
@@ -2439,3 +4122,59 @@ a.hero-chip--accent:hover {
 [data-bs-theme='dark'] .skill-badge--5 { background: rgba(74, 115, 20, 0.28); color: #a8d072; }
 [data-bs-theme='dark'] .skill-badge--6 { background: rgba(165, 24, 91, 0.28); color: #f090bd; }
 [data-bs-theme='dark'] .skill-badge--7 { background: rgba(54, 74, 99, 0.35); color: #a9bdd8; }
+
+/* ============================================================
+   4. Print
+
+   Only one screen is meant to leave the app on paper: the candidate
+   evaluation report. Everything that is chrome or interaction is dropped, the
+   surfaces go white, and the panels are kept from being split across a page
+   break mid-rubric.
+   ============================================================ */
+@media print {
+  .app-sidebar,
+  .app-sidebar-scrim,
+  .app-topbar,
+  .d-print-none,
+  .back-link {
+    display: none !important;
+  }
+
+  .app-layout,
+  .app-main {
+    display: block;
+  }
+
+  .rg-content {
+    max-width: none;
+    padding: 0;
+  }
+
+  body,
+  .pulse-card,
+  .card,
+  .eval-panel {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .pulse-card,
+  .card,
+  .eval-panel {
+    border-color: #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* A rubric split across a page boundary is unreadable; keep each one whole. */
+  .eval-panel,
+  .eval-card,
+  .empty-state {
+    break-inside: avoid;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+}

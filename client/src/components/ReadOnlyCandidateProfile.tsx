@@ -58,8 +58,26 @@ function Tile({ label, value }: { label: string; value: React.ReactNode }) {
 
 const SUMMARY_COLLAPSE_THRESHOLD = 260;
 
-/** Non-editable candidate profile shown alongside the evaluation form. */
-export default function ReadOnlyCandidateProfile({ candidate }: { candidate: CandidateDetail }) {
+/**
+ * Non-editable candidate profile shown alongside the evaluation form.
+ *
+ * `showCvFiles` exists because the candidate detail page renders this card
+ * *and* its own `CvFilesCard`, which meant every candidate profile listed its
+ * CVs twice, in two different designs, each with its own Preview and Download
+ * buttons. The detail page keeps the richer card (it has the inline PDF
+ * viewer) and turns this list off; the interview page, where there is no
+ * second card, keeps it.
+ */
+export default function ReadOnlyCandidateProfile({
+  candidate,
+  showCvFiles = true,
+  className = '',
+}: {
+  candidate: CandidateDetail;
+  showCvFiles?: boolean;
+  /** Lets the caller opt this card into a bounded, scrolling panel. */
+  className?: string;
+}) {
   const [preview, setPreview] = useState<{ url: string; contentType: string } | null>(null);
   const [previewName, setPreviewName] = useState('');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
@@ -76,11 +94,13 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
   const summaryCollapsed = summaryIsLong && !summaryExpanded;
 
   return (
-    <Card className="h-100 profile-card">
+    <Card className={`h-100 profile-card ${className}`.trim()}>
       <div className="profile-header">
         <div className="d-flex justify-content-between align-items-start gap-2">
           <div>
-            <div className="profile-field-label">Position on Last Organization</div>
+            {/* Was "Position on Last Organization" — the most prominent label on
+                the card, and not grammatical. The field is `currentTitle`. */}
+            <div className="profile-field-label">Current position</div>
             <div className="profile-title">{candidate.currentTitle || '—'}</div>
           </div>
           <StatusBadge status={candidate.currentStatus} />
@@ -148,7 +168,7 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
           />
         )}
 
-        {candidate.cvFiles.length > 0 && (
+        {showCvFiles && candidate.cvFiles.length > 0 && (
           <div className="mt-3">
             <div className="profile-field-label mb-2">CV files</div>
             {candidate.cvFiles.map((f) => (
@@ -169,7 +189,7 @@ export default function ReadOnlyCandidateProfile({ candidate }: { candidate: Can
           </div>
         )}
 
-        {preview && (
+        {showCvFiles && preview && (
           <div className="mt-3">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="small text-muted text-truncate">{previewName}</span>

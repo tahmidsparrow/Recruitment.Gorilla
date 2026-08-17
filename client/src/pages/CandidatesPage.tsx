@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Button, Form, InputGroup, Spinner, Table } from 'react-bootstrap';
+import { Button, Form, InputGroup, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ChevronsUpDown, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
   deleteCandidate,
   getActiveSkillOptions,
@@ -14,8 +14,9 @@ import { SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
-import PageHeader from '../components/ui/PageHeader';
+import Page from '../components/ui/Page';
 import Pagination from '../components/ui/Pagination';
+import { SkeletonRows } from '../components/ui/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 
@@ -33,6 +34,19 @@ type SortKey = keyof typeof SORTS;
  * The `<thead>` is hidden below md (see .table-cards), which would take the
  * sortable headers with it. This select is the small-screen equivalent.
  */
+/**
+ * Human labels for the dashboard buckets (see the API's CandidateBuckets).
+ * Arriving from a KPI tile, the list is filtered by something none of the
+ * visible controls represent — so the bucket shows as a removable chip, or the
+ * filtered result looks like a bug.
+ */
+const BUCKET_LABELS: Record<string, string> = {
+  'in-process': 'In process',
+  recommended: 'Recommended',
+  rejected: 'Rejected',
+  'new-this-week': 'New this week',
+};
+
 const MOBILE_SORTS: { value: string; label: string }[] = [
   { value: 'added:desc', label: 'Newest first' },
   { value: 'added:asc', label: 'Oldest first' },
@@ -51,6 +65,8 @@ export default function CandidatesPage() {
   const roleId = searchParams.get('role') ?? '';
   const skillsCsv = searchParams.get('skills') ?? '';
   const referred = searchParams.get('referred') === '1';
+  // Set by the dashboard KPI tiles; see BUCKET_LABELS.
+  const bucket = searchParams.get('bucket') ?? '';
   const sort = searchParams.get('sort') ?? '';
   const dir = searchParams.get('dir') ?? '';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
@@ -75,10 +91,10 @@ export default function CandidatesPage() {
       { replace: true },
     );
 
-  const hasFilters = !!(search || status || roleId || skillsCsv || referred);
+  const hasFilters = !!(search || status || roleId || skillsCsv || referred || bucket);
   const clearFilters = () => {
     setSearchInput('');
-    setParams({ q: null, status: null, role: null, skills: null, referred: null });
+    setParams({ q: null, status: null, role: null, skills: null, referred: null, bucket: null });
   };
 
   // Default is Added desc. A first click on a column uses its natural direction;
@@ -93,7 +109,7 @@ export default function CandidatesPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, sort, dir, page }],
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page }],
     queryFn: () =>
       getCandidates({
         search: search || undefined,
@@ -101,6 +117,7 @@ export default function CandidatesPage() {
         roleId: roleId ? Number(roleId) : undefined,
         skillIds: skillsCsv || undefined,
         referred: referred || undefined,
+        bucket: bucket || undefined,
         sort: sort || undefined,
         dir: dir || undefined,
         page,
@@ -151,125 +168,154 @@ export default function CandidatesPage() {
   };
 
   return (
-    <div>
-      {/* No <h2> — the topbar owns the page title. */}
-      <PageHeader
-        actions={
-          canWriteCandidates && (
-            <Link to="/upload" className="btn btn-primary">
-              Upload CVs
-            </Link>
-          )
-        }
-      />
+    <Page>
+      {/* No <h2> — the topbar owns the page title. The primary action shares
+          this row with the filters rather than getting a header row of its
+          own; see .page-bar. */}
+      <div className="page-bar">
+        <search className="flex-grow-1">
+          <div className="data-toolbar">
+          <Form onSubmit={applySearch} className="data-toolbar__search" role="search">
+            <InputGroup>
+              <Form.Control
+                type="search"
+                placeholder="Search by name, email or phone"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                aria-label="Search candidates"
+              />
+              <Button type="submit" variant="outline-secondary" aria-label="Search">
+                <Search size={15} strokeWidth={1.75} aria-hidden="true" />
+              </Button>
+            </InputGroup>
+          </Form>
 
-      <div className="data-toolbar">
-        <Form onSubmit={applySearch} className="flex-grow-1" style={{ minWidth: 200, maxWidth: 380 }}>
-          <InputGroup>
-            <Form.Control
-              type="search"
-              placeholder="Search by name, email or phone"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Search candidates"
+          <Form.Select
+            aria-label="Filter by status"
+            className="data-toolbar__field"
+            value={status}
+            onChange={(e) => setParams({ status: e.target.value || null })}
+          >
+            <option value="">All statuses</option>
+            {statusOptions.map((option) => (
+              <option key={option.id} value={option.name}>
+                {option.name}
+              </option>
+            ))}
+          </Form.Select>
+
+          <Form.Select
+            aria-label="Filter by role"
+            className="data-toolbar__field"
+            value={roleId}
+            onChange={(e) => setParams({ role: e.target.value || null })}
+          >
+            <option value="">All roles</option>
+            {roleOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+                {option.isActive ? '' : ' (inactive)'}
+              </option>
+            ))}
+          </Form.Select>
+
+          <div className="data-toolbar__field--wide">
+            <SearchableMultiSelect
+              options={skillOptions}
+              value={skillIds}
+              onChange={(ids) => setParams({ skills: ids.join(',') || null })}
+              placeholder="Filter by skills…"
             />
-            <Button type="submit" variant="outline-secondary">
-              Search
-            </Button>
-          </InputGroup>
-        </Form>
+          </div>
 
-        <Form.Select
-          aria-label="Filter by status"
-          style={{ minWidth: 150, maxWidth: 210 }}
-          value={status}
-          onChange={(e) => setParams({ status: e.target.value || null })}
-        >
-          <option value="">All statuses</option>
-          {statusOptions.map((option) => (
-            <option key={option.id} value={option.name}>
-              {option.name}
-            </option>
-          ))}
-        </Form.Select>
+          <div className="data-toolbar__end">
+            {/* Small screens hide the table header, and the sortable columns
+                with it — this select is the equivalent control there. */}
+            <Form.Select
+              className="d-md-none data-toolbar__field"
+              aria-label="Sort candidates"
+              value={`${activeSort}:${activeDir}`}
+              onChange={(e) => {
+                const [col, d] = e.target.value.split(':');
+                setParams({ sort: col, dir: d }, false);
+              }}
+            >
+              {MOBILE_SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </Form.Select>
 
-        <Form.Select
-          aria-label="Filter by role"
-          style={{ minWidth: 150, maxWidth: 230 }}
-          value={roleId}
-          onChange={(e) => setParams({ role: e.target.value || null })}
-        >
-          <option value="">All roles</option>
-          {roleOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.name}
-              {option.isActive ? '' : ' (inactive)'}
-            </option>
-          ))}
-        </Form.Select>
+            <Form.Check
+              type="checkbox"
+              id="filter-referred"
+              label="Referred only"
+              checked={referred}
+              onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
+            />
 
-        <div style={{ flex: '1 1 200px', minWidth: 180, maxWidth: 300 }}>
-          <SearchableMultiSelect
-            options={skillOptions}
-            value={skillIds}
-            onChange={(ids) => setParams({ skills: ids.join(',') || null })}
-            placeholder="Filter by skills…"
-          />
-        </div>
+            {BUCKET_LABELS[bucket] && (
+              <span className="filter-chip">
+                {BUCKET_LABELS[bucket]}
+                <button
+                  type="button"
+                  className="filter-chip__remove"
+                  aria-label={`Remove the ${BUCKET_LABELS[bucket]} filter`}
+                  onClick={() => setParams({ bucket: null })}
+                >
+                  <X size={13} strokeWidth={2.5} aria-hidden="true" />
+                </button>
+              </span>
+            )}
 
-        <Form.Check
-          type="checkbox"
-          id="filter-referred"
-          label="Referred only"
-          checked={referred}
-          onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
-        />
+            {/* Rendered only when something is filtered, so the control appears
+                exactly when it can do anything. */}
+            {hasFilters && (
+              <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            )}
+            </div>
+          </div>
+        </search>
 
-        {/* Small screens hide the table header, and the sortable columns with it. */}
-        <Form.Select
-          className="d-md-none"
-          aria-label="Sort candidates"
-          style={{ minWidth: 150, maxWidth: 210 }}
-          value={`${activeSort}:${activeDir}`}
-          onChange={(e) => {
-            const [col, d] = e.target.value.split(':');
-            setParams({ sort: col, dir: d }, false);
-          }}
-        >
-          {MOBILE_SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </Form.Select>
-
-        {hasFilters && (
-          <Button variant="link" size="sm" className="text-decoration-none" onClick={clearFilters}>
-            Clear filters
-          </Button>
+        {canWriteCandidates && (
+          <div className="page-bar__actions">
+            <Link to="/upload" className="btn btn-primary">
+              <Upload size={15} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1">Upload CVs</span>
+            </Link>
+          </div>
         )}
       </div>
 
       {isLoading ? (
-        <Spinner animation="border" />
+        <SkeletonRows rows={8} label="Loading candidates" />
       ) : isError ? (
         <EmptyState
+          variant="error"
           title="Couldn't load candidates"
-          description="The request failed. Refresh to try again."
+          description="The request failed. Refresh the page to try again."
         />
       ) : !data || data.items.length === 0 ? (
         <EmptyState
+          icon={<Users size={20} strokeWidth={1.75} aria-hidden="true" />}
           title={hasFilters ? 'No candidates match these filters' : 'No candidates yet'}
           description={
             hasFilters
               ? 'Try widening the filters, or clear them to see everyone.'
-              : 'Upload some CVs to get started.'
+              : 'Upload some CVs to get started — the details are extracted for you to review.'
           }
           action={
             hasFilters ? (
               <Button variant="outline-secondary" onClick={clearFilters}>
                 Clear filters
               </Button>
+            ) : canWriteCandidates ? (
+              <Link to="/upload" className="btn btn-primary">
+                Upload CVs
+              </Link>
             ) : undefined
           }
         />
@@ -287,7 +333,7 @@ export default function CandidatesPage() {
                   <th><SortHeader col="status" /></th>
                   <th><SortHeader col="added" /></th>
                   {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
-                  {isAdminOrAbove && <th className="col-right">Actions</th>}
+                  {isAdminOrAbove && <th className="col-actions">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -308,15 +354,17 @@ export default function CandidatesPage() {
                     </td>
                     {isAdminOrAbove && (
                       <td className="col-actions">
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          onClick={() => setToDelete(c)}
-                          aria-label={`Delete ${c.fullName}`}
-                        >
-                          <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-                          <span className="ms-1">Delete</span>
-                        </Button>
+                        <span className="row-actions">
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            onClick={() => setToDelete(c)}
+                            aria-label={`Delete ${c.fullName}`}
+                          >
+                            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+                            <span className="ms-1">Delete</span>
+                          </Button>
+                        </span>
                       </td>
                     )}
                   </tr>
@@ -346,6 +394,6 @@ export default function CandidatesPage() {
         Permanently delete <strong>{toDelete?.fullName}</strong>, along with their CV file(s) and
         full status history? This cannot be undone.
       </ConfirmModal>
-    </div>
+    </Page>
   );
 }

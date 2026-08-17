@@ -219,6 +219,8 @@ export const getCandidates = async (
     roleId?: number;
     skillIds?: string; // CSV of skill-option ids
     referred?: boolean;
+    /** Dashboard pipeline bucket: recommended | rejected | in-process | new-this-week. */
+    bucket?: string;
     sort?: string; // name | status | added
     dir?: string; // asc | desc
     page?: number;

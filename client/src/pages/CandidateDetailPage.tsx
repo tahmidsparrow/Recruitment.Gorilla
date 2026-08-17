@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, FileText, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   addStatus,
   deleteCandidate,
@@ -23,6 +23,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
+import Page from '../components/ui/Page';
+import SectionCard from '../components/ui/SectionCard';
+import LoadingPanel from '../components/ui/Loading';
 import { useAuth } from '../auth/AuthContext';
 // The role-filter branch added a local copy of this; develop had already
 // extracted the same function to utils, so use the shared one.
@@ -44,6 +47,7 @@ export default function CandidateDetailPage() {
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [addingStatus, setAddingStatus] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidate', candidateId],
@@ -59,10 +63,12 @@ export default function CandidateDetailPage() {
     },
   });
 
-  if (isLoading) return <Spinner animation="border" />;
+  if (isLoading) return <LoadingPanel label="Loading candidate…" />;
   if (isError || !data) {
     return (
       <EmptyState
+        page
+        variant="error"
         title="Couldn't load this candidate"
         description="The record may have been deleted, or the request failed."
         action={
@@ -78,9 +84,9 @@ export default function CandidateDetailPage() {
   const canWrite = canWriteCandidates && !data.roleClosed;
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <Page>
       {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
-      <Link to="/candidates" className="d-inline-flex align-items-center gap-1" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', alignSelf: 'flex-start' }}>
+      <Link to="/candidates" className="back-link">
         <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
         Back to candidates
       </Link>
@@ -89,12 +95,12 @@ export default function CandidateDetailPage() {
           added (explicit Edit, evaluation report) rather than its gradient hero. */}
       <div className="page-header">
         <div className="who-cell">
-          <span className="avatar" aria-hidden="true">{initials(data.fullName) || '?'}</span>
-          <div>
+          <span className="avatar avatar--lg" aria-hidden="true">{initials(data.fullName) || '?'}</span>
+          <div className="min-w-0">
             <h2>{data.fullName}</h2>
             <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
               <StatusBadge status={data.currentStatus} />
-              {role && <span style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>{role}</span>}
+              {role && <span className="form-help">{role}</span>}
             </div>
           </div>
         </div>
@@ -140,57 +146,79 @@ export default function CandidateDetailPage() {
       </ConfirmModal>
 
       {/* The read/edit split comes from the role-filter branch — the form is no
-          longer permanently open — rendered on Prism's flat cards. */}
+          longer permanently open — rendered on Prism's flat cards. Editing is a
+          single narrow column: a form is read top-to-bottom, and the status
+          panel beside it is not actionable mid-edit. */}
       {editing ? (
-        <Row className="g-3">
-          <Col xs={12} lg={8}>
-            <div className="d-flex flex-column gap-3">
-              <div className="pulse-card">
-                <div className="metric-label mb-3">Edit profile</div>
-                <ProfileEditor
-                  candidate={data}
-                  onSaved={() => {
-                    void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
-                    void queryClient.invalidateQueries({ queryKey: ['candidates'] });
-                    setEditing(false);
-                  }}
-                  onCancel={() => setEditing(false)}
-                />
-              </div>
+        <div className="detail-edit-column">
+          <SectionCard
+            title="Edit profile"
+            description="Changes are saved to the candidate record and the audit trail."
+          >
+            <ProfileEditor
+              candidate={data}
+              onSaved={() => {
+                void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+                void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+                setEditing(false);
+              }}
+              onCancel={() => setEditing(false)}
+            />
+          </SectionCard>
 
-              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
-            </div>
-          </Col>
-        </Row>
+          <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+        </div>
       ) : (
-        <Row className="g-3">
-          <Col xs={12} lg={5}>
-            <div className="d-flex flex-column gap-3">
-              <ReadOnlyCandidateProfile candidate={data} />
-              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
-            </div>
-          </Col>
+        /* --panels: the two columns share one bounded height and scroll their
+           own overflow, rather than the longer one (usually the timeline)
+           stretching the page and leaving the profile stranded beside a column
+           of whitespace. Only this page opts in — the interview page uses a
+           bare .detail-grid, where the evaluation form must grow freely. */
+        <div className="detail-grid detail-grid--panels">
+          <div className="card-stack">
+            {/* showCvFiles={false}: CvFilesCard below is the CV surface for
+                this page, and rendering both listed every file twice. */}
+            <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} className="detail-scroll" />
+            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+          </div>
 
-          <Col xs={12} lg={7}>
-            <div className="pulse-card">
-              <div className="metric-label mb-3">Status history</div>
-              {canWrite && (
-                <>
-                  <AddStatus
-                    candidateId={candidateId}
-                    onAdded={() =>
-                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                    }
-                  />
-                  <hr />
-                </>
-              )}
+          <div className="card-stack">
+            {/* Advancing the pipeline is a deliberate, occasional act, so it is
+                a dialog rather than a form sitting permanently open above the
+                timeline — which pushed the history (the thing you came to read)
+                down the page on every visit, and grew to five fields when
+                "Interview Scheduled" was picked. The trigger lives on the
+                history card because that is what it changes. */}
+            <SectionCard
+              title="Status history"
+              className="detail-scroll"
+              actions={
+                canWrite ? (
+                  <Button size="sm" onClick={() => setAddingStatus(true)}>
+                    <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                    <span className="ms-1">Add status</span>
+                  </Button>
+                ) : undefined
+              }
+            >
               <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-            </div>
-          </Col>
-        </Row>
+            </SectionCard>
+          </div>
+        </div>
       )}
-    </div>
+
+      {canWrite && (
+        <AddStatusModal
+          candidateId={candidateId}
+          show={addingStatus}
+          onHide={() => setAddingStatus(false)}
+          onAdded={() => {
+            setAddingStatus(false);
+            void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+          }}
+        />
+      )}
+    </Page>
   );
 }
 
@@ -432,7 +460,7 @@ function ProfileEditor({
       </Row>
       </fieldset>
 
-      <div className="mt-3 d-flex align-items-center gap-2">
+      <div className="form-actions">
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save changes'}
         </Button>
@@ -476,20 +504,28 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
   const isPdf = preview?.contentType.includes('pdf') ?? false;
 
   return (
-    <Card>
-      <Card.Header>CV files</Card.Header>
-      <Card.Body>
+    <SectionCard title="CV files">
+      <div className="page-stack page-stack--tight">
         {files.length === 0 ? (
-          <p className="text-muted mb-0">No files.</p>
+          <EmptyState
+            icon={<FileText size={20} strokeWidth={1.75} aria-hidden="true" />}
+            title="No CV on file"
+            description="Files uploaded for this candidate will be listed here."
+          />
         ) : (
-          <ul className="list-unstyled mb-3">
+          <div>
             {files.map((f) => (
-              <li key={f.id} className="d-flex justify-content-between align-items-center py-1">
-                <span className="text-truncate">{f.originalFileName}</span>
-                <span className="d-flex align-items-center gap-2 ms-2">
-                  <span className="text-muted small text-nowrap">
+              <div key={f.id} className="cv-file-item">
+                <span className="cv-file-item__icon">
+                  <FileText size={18} strokeWidth={1.75} aria-hidden="true" />
+                </span>
+                <span className="cv-file-item__meta">
+                  <span className="cv-file-item__name text-truncate">{f.originalFileName}</span>
+                  <span className="cv-file-item__size">
                     {f.fileType} · {formatSize(f.fileSizeBytes)}
                   </span>
+                </span>
+                <span className="row-actions">
                   <Button
                     size="sm"
                     variant="outline-primary"
@@ -498,37 +534,54 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
                   >
                     {loadingId === f.id ? 'Loading…' : 'Preview'}
                   </Button>
-                  <Button size="sm" variant="outline-secondary" onClick={() => downloadCvFile(candidateId, f.id)}>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={() => downloadCvFile(candidateId, f.id)}
+                  >
                     Download
                   </Button>
                 </span>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
-        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+        {error && <div className="alert-danger-soft" role="alert">{error}</div>}
 
         {preview &&
           (isPdf ? (
             <iframe title="CV preview" src={preview.url} className="cv-preview-frame" />
           ) : (
-            <Alert variant="info" className="mb-0">
+            <div className="alert-info-soft">
               In-app preview isn't available for this file type. Use Download to open it.
-            </Alert>
+            </div>
           ))}
-      </Card.Body>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }
 
 type AddStatusFieldErrors = Partial<Record<'status' | 'comment' | 'taskDetails' | 'submissionUrl' | 'interviewAt' | 'interviewers', string>>;
 
-function AddStatus({
+/**
+ * The "move this candidate along" dialog.
+ *
+ * The whole Modal lives in here rather than in the caller so the form can wrap
+ * both the body and the footer — that is what lets the submit button sit in the
+ * pinned footer (which on a phone is a sheet footer within thumb reach) while
+ * still submitting the form, and it keeps the reset-on-close logic next to the
+ * state it resets.
+ */
+function AddStatusModal({
   candidateId,
+  show,
+  onHide,
   onAdded,
 }: {
   candidateId: number;
+  show: boolean;
+  onHide: () => void;
   onAdded: () => void;
 }) {
   const { addToast } = useToast();
@@ -572,6 +625,24 @@ function AddStatus({
   const clearFE = (field: keyof AddStatusFieldErrors) =>
     setFieldErrors((fe) => ({ ...fe, [field]: undefined }));
 
+  const resetForm = () => {
+    setStatus('');
+    setComment('');
+    setTaskDetails('');
+    setSubmissionUrl('');
+    setInterviewAt('');
+    setInterviewerIds([]);
+    setInterviewTypeIds([]);
+    setFieldErrors({});
+  };
+
+  /** Dismissing discards the draft — a half-filled form reappearing on the
+   *  next open reads as a bug, not as a saved draft. */
+  const handleHide = () => {
+    resetForm();
+    onHide();
+  };
+
   const mutation = useMutation({
     mutationFn: () =>
       addStatus(candidateId, {
@@ -584,14 +655,7 @@ function AddStatus({
         interviewTypeOptionIds: requiresInterviewers ? interviewTypeIds : null,
       }),
     onSuccess: () => {
-      setStatus('');
-      setComment('');
-      setTaskDetails('');
-      setSubmissionUrl('');
-      setInterviewAt('');
-      setInterviewerIds([]);
-      setInterviewTypeIds([]);
-      setFieldErrors({});
+      resetForm();
 
       void queryClient.invalidateQueries({ queryKey: ['status-options', 'next', candidateId] });
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -620,13 +684,21 @@ function AddStatus({
   };
 
   return (
-    <Form onSubmit={handleSubmit} noValidate>
-      {statusOptions.length === 0 && (
-        <Alert variant="info">
-          No next status is available from the candidate&apos;s current status.
-        </Alert>
-      )}
-      <Row className="g-2">
+    <Modal show={show} onHide={handleHide} centered size="lg">
+      <Form onSubmit={handleSubmit} noValidate>
+        <Modal.Header closeButton>
+          <Modal.Title>Add a status</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="form-help mb-4">
+            Moves the candidate to the next stage and records who changed it.
+          </p>
+          {statusOptions.length === 0 && (
+            <div className="alert-info-soft mb-4">
+              No next status is available from the candidate&apos;s current status.
+            </div>
+          )}
+          <Row className="g-3">
         <Col md={12}>
           <Form.Label className="mb-1">New status <Req /></Form.Label>
           <Form.Select
@@ -724,12 +796,19 @@ function AddStatus({
           {requiresInterviewers && (
             <Form.Text muted>Shared with the assigned interviewers on the interview page.</Form.Text>
           )}
-          <Form.Control.Feedback type="invalid">{fieldErrors.comment}</Form.Control.Feedback>
-        </Col>
-      </Row>
-      <Button type="submit" size="sm" className="mt-2" disabled={mutation.isPending}>
-        {mutation.isPending ? 'Adding…' : 'Add status'}
-      </Button>
-    </Form>
+              <Form.Control.Feedback type="invalid">{fieldErrors.comment}</Form.Control.Feedback>
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" type="button" onClick={handleHide}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={mutation.isPending || statusOptions.length === 0}>
+            {mutation.isPending ? 'Adding…' : 'Add status'}
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
   );
 }

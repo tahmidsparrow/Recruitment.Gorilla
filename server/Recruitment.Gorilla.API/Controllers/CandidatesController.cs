@@ -38,6 +38,7 @@ public class CandidatesController(
         [FromQuery] int? roleId,
         [FromQuery] string? skillIds, // CSV of SkillOption ids (axios-friendly)
         [FromQuery] bool referred = false,
+        [FromQuery] string? bucket = null,
         [FromQuery] string? sort = null,
         [FromQuery] string? dir = null,
         [FromQuery] int page = 1,
@@ -51,10 +52,19 @@ public class CandidatesController(
             .Select(v => v!.Value)
             .ToList();
 
+        // Named arguments deliberately: this was positional, so adding Bucket
+        // after ReferredOnly silently shifted `sort` into it.
         var query = new CandidateListQuery(
-            search, status, roleId,
-            parsedSkillIds.Count > 0 ? parsedSkillIds : null,
-            referred, sort, dir, page, pageSize);
+            Search: search,
+            Status: status,
+            RoleId: roleId,
+            SkillIds: parsedSkillIds.Count > 0 ? parsedSkillIds : null,
+            ReferredOnly: referred,
+            Bucket: CandidateBuckets.IsKnown(bucket) ? bucket : null,
+            Sort: sort,
+            Dir: dir,
+            Page: page,
+            PageSize: pageSize);
 
         var result = await candidateService.GetAllAsync(query, ReadOwnerScope);
         return Ok(result);

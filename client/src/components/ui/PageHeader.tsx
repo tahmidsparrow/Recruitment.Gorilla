@@ -18,17 +18,27 @@ type PageHeaderProps = {
  * The band above a page's content. Replaces the
  * `d-flex justify-content-between align-items-center mb-4` + `<h2>` block that
  * was copy-pasted across six pages.
+ *
+ * Note the `--actions-only` case: most pages pass actions and no title,
+ * because the topbar owns the title. Rendering an empty left-hand `<div>` to
+ * push the buttons right leaves a zero-width flex child that still takes part
+ * in wrapping, so the buttons could drop to their own line while the empty div
+ * held the first. Switching the justification instead is what actually keeps
+ * a lone action cluster on the right.
  */
 export default function PageHeader({ title, eyebrow, description, actions }: PageHeaderProps) {
-  if (!title && !eyebrow && !description && !actions) return null;
+  const hasText = Boolean(title || eyebrow || description);
+  if (!hasText && !actions) return null;
 
   return (
-    <div className="page-header">
-      <div>
-        {eyebrow && <span className="page-eyebrow">{eyebrow}</span>}
-        {title && <h2>{title}</h2>}
-        {description && <p>{description}</p>}
-      </div>
+    <div className={`page-header${!hasText ? ' page-header--actions-only' : ''}`}>
+      {hasText && (
+        <div className="page-header__text">
+          {eyebrow && <span className="page-eyebrow">{eyebrow}</span>}
+          {title && <h2>{title}</h2>}
+          {description && <p>{description}</p>}
+        </div>
+      )}
       {actions && <div className="page-header__actions">{actions}</div>}
     </div>
   );

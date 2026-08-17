@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Button, Form, Spinner } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEmailSettings, saveEmailSettings, sendTestEmail } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
+import PasswordInput from '../../components/ui/PasswordInput';
+import SectionCard from '../../components/ui/SectionCard';
+import { SkeletonRows } from '../../components/ui/Loading';
 
 /**
  * SMTP configuration, grouped into Server / Credentials / Sender rather than
@@ -69,21 +72,19 @@ export default function EmailSettingsTab() {
     onError: () => addToast('Could not send the test email.', 'danger'),
   });
 
-  if (isLoading) return <Spinner animation="border" size="sm" />;
+  if (isLoading) return <SkeletonRows rows={4} label="Loading email settings" />;
 
   return (
     <>
-      <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
-        <p className="mb-0" style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)', maxWidth: 620 }}>
-          Transactional email — interview assignments, account and password notices. The password is
-          encrypted at rest and never returned; leave it blank to keep the current one.
-        </p>
-        <span className={`badge-pill ${enabled ? 'badge-success' : 'badge-neutral'}`}>
-          {enabled ? 'Enabled' : 'Disabled'}
-        </span>
-      </div>
-
-      <div className="pulse-card">
+      <SectionCard
+        title="SMTP"
+        description="Transactional email — interview assignments, account and password notices. The password is encrypted at rest and never returned; leave it blank to keep the current one."
+        actions={
+          <span className={`badge-pill ${enabled ? 'badge-success' : 'badge-neutral'}`}>
+            {enabled ? 'Enabled' : 'Disabled'}
+          </span>
+        }
+      >
         <Form
           onSubmit={(e) => {
             e.preventDefault();
@@ -122,8 +123,7 @@ export default function EmailSettingsTab() {
               </div>
               <div className="col-12 col-md-6">
                 <Form.Label>App password</Form.Label>
-                <Form.Control
-                  type="password"
+                <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
@@ -163,20 +163,20 @@ export default function EmailSettingsTab() {
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
             />
-            <div className="mt-3">
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving…' : 'Save settings'}
-              </Button>
-            </div>
+          </div>
+
+          <div className="form-actions">
+            <Button type="submit" disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? 'Saving…' : 'Save settings'}
+            </Button>
           </div>
         </Form>
-      </div>
+      </SectionCard>
 
-      <div className="pulse-card">
-        <div className="metric-label mb-2">Send a test email</div>
-        <p className="mb-3" style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>
-          Uses the saved configuration, so save any changes first.
-        </p>
+      <SectionCard
+        title="Send a test email"
+        description="Uses the saved configuration, so save any changes first."
+      >
         <div className="d-flex flex-wrap gap-2 align-items-start">
           <Form.Control
             type="email"
@@ -195,7 +195,7 @@ export default function EmailSettingsTab() {
             {testMutation.isPending ? 'Sending…' : 'Send test'}
           </Button>
         </div>
-      </div>
+      </SectionCard>
     </>
   );
 }

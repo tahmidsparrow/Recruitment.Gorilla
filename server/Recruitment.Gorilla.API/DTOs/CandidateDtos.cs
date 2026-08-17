@@ -107,6 +107,12 @@ public record CandidateListItemDto(
 /// Filter/sort/paging parameters for the candidate list. Search matches name, email or phone;
 /// SkillIds is ANY-of; Sort is whitelisted to name|status|added (default added), Dir to asc|desc
 /// (default desc). Access scoping is applied separately and always wins.
+///
+/// <para><c>Bucket</c> is a dashboard pipeline bucket (see <see cref="Services.CandidateBuckets"/>)
+/// — recommended | rejected | in-process | new-this-week. It exists because those tiles span
+/// several statuses or a date window, which <c>Status</c> (a single exact match) cannot express;
+/// without it a KPI tile had no destination that reproduced its own count. Unknown values are
+/// ignored rather than rejected, so a stale link degrades to an unfiltered list.</para>
 /// </summary>
 public record CandidateListQuery(
     string? Search = null,
@@ -114,6 +120,7 @@ public record CandidateListQuery(
     int? RoleId = null,
     List<int>? SkillIds = null,
     bool ReferredOnly = false,
+    string? Bucket = null,
     string? Sort = null,
     string? Dir = null,
     int Page = 1,

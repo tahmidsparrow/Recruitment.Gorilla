@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, CalendarClock, CheckCircle2, ClipboardCheck, Users } from 'lucide-react';
+import { Bell, CalendarClock, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { getMyInterviews, getNotifications } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -22,11 +22,16 @@ function TaskChip({ to, children, tone = 'default' }: { to?: string; children: R
 }
 
 /**
- * Dashboard welcome kicker: greeting + user + date, and smart "pending task" chips built
- * from the caller's existing queries (no new endpoint). `inProcessCount` is passed in from
- * the dashboard payload for Recruiter+ (0/absent for interviewer-only users).
+ * Dashboard welcome kicker: greeting + user + date, and "pending task" chips
+ * built from the caller's existing queries (no new endpoint).
+ *
+ * The chips are strictly *the signed-in user's* outstanding work — evaluations
+ * they owe, their next interview, their unread notifications. A chip counting
+ * candidates in process was removed: it is a pipeline statistic, not a task,
+ * it is already the "In process" KPI card directly below, and it made the row
+ * read as a mix of "things you must do" and "things that are true".
  */
-export default function DashboardHero({ inProcessCount = 0 }: { inProcessCount?: number }) {
+export default function DashboardHero() {
   const { user } = useAuth();
 
   const { data: interviews } = useQuery({ queryKey: ['my-interviews'], queryFn: getMyInterviews });
@@ -43,14 +48,16 @@ export default function DashboardHero({ inProcessCount = 0 }: { inProcessCount?:
     ? new Date(next.scheduledAt).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })
     : null;
 
-  const nothingPending = pending.length === 0 && unread === 0 && inProcessCount === 0 && !next;
+  const nothingPending = pending.length === 0 && unread === 0 && !next;
 
   return (
     <div className="dashboard-hero-kicker animate-fade-in-up">
       <div className="dashboard-hero-kicker__eyebrow">{today}</div>
-      <h2 className="mb-1">{greeting()}, {user?.name ?? 'there'}</h2>
-      <p className="mb-3" style={{ color: 'var(--muted)' }}>Here's what needs your attention.</p>
-      <div className="d-flex flex-wrap gap-2">
+      <h2 className="dashboard-hero-kicker__greeting">{greeting()}, {user?.name ?? 'there'}</h2>
+      <p className="dashboard-hero-kicker__lede">
+        {nothingPending ? 'Nothing needs your attention right now.' : "Here's what needs your attention."}
+      </p>
+      <div className="hero-chip-row">
         {pending.length > 0 && (
           <TaskChip to={`/interviews/${pending[0].id}`} tone="accent">
             <ClipboardCheck size={14} strokeWidth={1.75} aria-hidden="true" />
@@ -69,14 +76,8 @@ export default function DashboardHero({ inProcessCount = 0 }: { inProcessCount?:
             {unread} unread notification{unread > 1 ? 's' : ''}
           </TaskChip>
         )}
-        {inProcessCount > 0 && (
-          <TaskChip to="/candidates">
-            <Users size={14} strokeWidth={1.75} aria-hidden="true" />
-            {inProcessCount} candidate{inProcessCount > 1 ? 's' : ''} in process
-          </TaskChip>
-        )}
         {nothingPending && (
-          <span className="d-inline-flex align-items-center gap-2" style={{ color: 'var(--muted)' }}>
+          <span className="hero-chip hero-chip--quiet">
             <CheckCircle2 size={14} strokeWidth={1.75} aria-hidden="true" />
             You're all caught up.
           </span>

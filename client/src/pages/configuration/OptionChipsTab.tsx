@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { Button, Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, X } from 'lucide-react';
+import { Plus, Tags, X } from 'lucide-react';
 import { useToast } from '../../components/ToastStack';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import EmptyState from '../../components/ui/EmptyState';
+import SectionCard from '../../components/ui/SectionCard';
+import { Skeleton } from '../../components/ui/Loading';
 import { skillColorModifier } from '../../utils/skillColors';
 import type { DeleteRoleResult, UpsertOptionPayload } from '../../types';
 import type { Opt } from './types';
@@ -45,6 +49,10 @@ export default function OptionChipsTab({
   const [editName, setEditName] = useState('');
   const [editActive, setEditActive] = useState(true);
   const [editInvalid, setEditInvalid] = useState(false);
+  // The chip's × used to fire the delete straight away. Deleting a skill can
+  // deactivate it across every candidate tagged with it, and the chips sit a
+  // few pixels apart — an easy misclick with a consequence and no undo.
+  const [toDelete, setToDelete] = useState<Opt | null>(null);
 
   const { data: options = [], isLoading } = useQuery({
     queryKey: ['config', queryKey, 'all'],
@@ -89,6 +97,7 @@ export default function OptionChipsTab({
     mutationFn: (id: number) => api.remove(id),
     onSuccess: (result) => {
       void invalidate();
+      setToDelete(null);
       if (result && 'deactivated' in result && result.deactivated) {
         addToast(
           `That ${noun} is in use by ${result.candidateCount} candidate(s) — it was deactivated instead of deleted.`,
@@ -116,72 +125,91 @@ export default function OptionChipsTab({
 
   return (
     <>
-      <p style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>{description}</p>
-
-      {isLoading ? (
-        <Spinner animation="border" size="sm" />
-      ) : (
-        <div className="chip-grid">
-          {options.map((o) => (
-            <span
-              key={o.id}
-              className={`option-chip ${skillColorModifier(o.name)}${o.isActive ? '' : ' option-chip--inactive'}`}
-              title={o.isActive ? undefined : 'Hidden from candidate forms'}
-            >
-              <button
-                type="button"
-                className="option-chip__name"
-                onClick={() => openEdit(o)}
-                aria-label={`Edit ${o.name}`}
-              >
-                {o.name}
-              </button>
-              <button
-                type="button"
-                className="option-chip__remove"
-                onClick={() => removeMutation.mutate(o.id)}
-                disabled={removeMutation.isPending}
-                aria-label={`Delete ${o.name}`}
-                title={`Delete ${o.name}`}
-              >
-                <X size={13} strokeWidth={2.25} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-
-          <span className="chip-add">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); submitDraft(); }
-              }}
-              placeholder={addPlaceholder}
-              aria-label={`Add a ${noun}`}
-            />
-            <Button
-              size="sm"
-              variant="outline-secondary"
-              onClick={submitDraft}
-              disabled={!draft.trim() || createMutation.isPending}
-              aria-label={`Add ${noun}`}
-              title={`Add ${noun}`}
-              style={{ minHeight: 28, padding: '0 8px' }}
-            >
-              <Plus size={14} strokeWidth={2} aria-hidden="true" />
-            </Button>
-          </span>
-        </div>
-      )}
-
-      {options.length === 0 && !isLoading && (
-        <div className="empty-state mt-3">
-          <div className="empty-state-title">No {noun} values yet</div>
-          <div className="empty-state-description">
-            Type one above and press Enter to make it selectable on candidate forms.
+      <SectionCard title={`${cap(noun)}s`} description={description}>
+        {isLoading ? (
+          <div className="chip-grid" aria-busy="true">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} variant="row" width={`${70 + (i % 3) * 30}px`} />
+            ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <>
+            <div className="chip-grid">
+              {options.map((o) => (
+                <span
+                  key={o.id}
+                  className={`option-chip ${skillColorModifier(o.name)}${o.isActive ? '' : ' option-chip--inactive'}`}
+                  title={o.isActive ? undefined : 'Hidden from candidate forms'}
+                >
+                  <button
+                    type="button"
+                    className="option-chip__name"
+                    onClick={() => openEdit(o)}
+                    aria-label={`Edit ${o.name}`}
+                  >
+                    {o.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="option-chip__remove"
+                    onClick={() => setToDelete(o)}
+                    disabled={removeMutation.isPending}
+                    aria-label={`Delete ${o.name}`}
+                    title={`Delete ${o.name}`}
+                  >
+                    <X size={13} strokeWidth={2.25} aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+
+              <span className="chip-add">
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); submitDraft(); }
+                  }}
+                  placeholder={addPlaceholder}
+                  aria-label={`Add a ${noun}`}
+                />
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={submitDraft}
+                  disabled={!draft.trim() || createMutation.isPending}
+                  aria-label={`Add ${noun}`}
+                  title={`Add ${noun}`}
+                  className="chip-add__btn"
+                >
+                  <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+              </span>
+            </div>
+
+            {options.length === 0 && (
+              <div className="mt-4">
+                <EmptyState
+                  icon={<Tags size={20} strokeWidth={1.75} aria-hidden="true" />}
+                  title={`No ${noun} values yet`}
+                  description="Type one above and press Enter to make it selectable on candidate forms."
+                />
+              </div>
+            )}
+          </>
+        )}
+      </SectionCard>
+
+      <ConfirmModal
+        show={toDelete !== null}
+        title={`Delete ${noun}`}
+        pending={removeMutation.isPending}
+        error={removeMutation.isError ? `Could not delete that ${noun}.` : undefined}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => toDelete && removeMutation.mutate(toDelete.id)}
+      >
+        Delete <strong>{toDelete?.name}</strong>? If any candidate is tagged with it, it is
+        deactivated instead — hidden from new forms but kept on existing records.
+      </ConfirmModal>
 
       <Modal show={editing !== null} onHide={() => setEditing(null)} centered>
         <Form
@@ -196,23 +224,25 @@ export default function OptionChipsTab({
             <Modal.Title>Edit {noun}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                value={editName}
-                onChange={(e) => { setEditName(e.target.value); if (editInvalid) setEditInvalid(false); }}
-                isInvalid={editInvalid}
-                autoFocus
+            <div className="form-stack">
+              <Form.Group>
+                <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control
+                  value={editName}
+                  onChange={(e) => { setEditName(e.target.value); if (editInvalid) setEditInvalid(false); }}
+                  isInvalid={editInvalid}
+                  autoFocus
+                />
+                <Form.Control.Feedback type="invalid">Name is required.</Form.Control.Feedback>
+              </Form.Group>
+              <Form.Check
+                type="checkbox"
+                id={`${queryKey}-active`}
+                label="Active — shown in candidate forms"
+                checked={editActive}
+                onChange={(e) => setEditActive(e.target.checked)}
               />
-              <Form.Control.Feedback type="invalid">Name is required.</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Check
-              type="checkbox"
-              id={`${queryKey}-active`}
-              label="Active — shown in candidate forms"
-              checked={editActive}
-              onChange={(e) => setEditActive(e.target.checked)}
-            />
+            </div>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={() => setEditing(null)}>Cancel</Button>

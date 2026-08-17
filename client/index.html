@@ -6,12 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recruitment Gorilla</title>
     <script>
-      // Set the theme before paint to avoid a flash. Honors a saved choice,
-      // else the OS preference. Mirrored by src/theme/ThemeContext.tsx.
+      // Set the theme before paint to avoid a flash. Mirrored by
+      // src/theme/ThemeContext.tsx — the stored value is the *preference*
+      // ('light' | 'dark' | 'system'), so 'system' and "nothing saved" both
+      // resolve against the OS here. Writing the raw stored value would set
+      // data-bs-theme="system", which matches no stylesheet and paints light.
       (function () {
         try {
           var saved = localStorage.getItem('rg-theme');
-          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          var theme =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
           document.documentElement.setAttribute('data-bs-theme', theme);
         } catch (e) {
           document.documentElement.setAttribute('data-bs-theme', 'light');

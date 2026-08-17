@@ -9,6 +9,7 @@ import {
   updateSkillOption,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
+import Page from '../components/ui/Page';
 import Tabs, { TabPanel, type TabDef } from '../components/ui/Tabs';
 import { useTabs } from '../components/ui/useTabs';
 import JobOpeningsTab from './configuration/JobOpeningsTab';
@@ -50,7 +51,7 @@ export default function ConfigurationPage() {
   const [active, setActive] = useTabs(tabs);
 
   return (
-    <>
+    <Page>
       <Tabs tabs={tabs} active={active} onChange={setActive} ariaLabel="Configuration sections" />
 
       {active === 'jobs' && (
@@ -88,6 +89,6 @@ export default function ConfigurationPage() {
           <EmailSettingsTab />
         </TabPanel>
       )}
-    </>
+    </Page>
   );
 }

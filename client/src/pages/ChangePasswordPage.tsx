@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, Card, Form, Spinner } from 'react-bootstrap';
+import { Button, Form, Spinner } from 'react-bootstrap';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../auth/AuthContext';
 import { changePassword } from '../services/api';
+import Page from '../components/ui/Page';
+import PasswordInput from '../components/ui/PasswordInput';
+import SectionCard from '../components/ui/SectionCard';
 
 const MIN_LENGTH = 8;
 
@@ -52,66 +55,83 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="d-flex justify-content-center">
-      <Card style={{ maxWidth: 480, width: '100%' }} className="mt-4">
-        <Card.Body>
-          <h2 className="h4 mb-3">Change password</h2>
-          {mustChangePassword && (
-            <Alert variant="info" className="py-2">
-              You must set a new password before continuing.
-            </Alert>
-          )}
-          {error && (
-            <Alert variant="danger" className="py-2">
-              {error}
-            </Alert>
-          )}
+    <Page>
+      {/* A single-purpose form, so it gets a measured column rather than the
+          full page width — a 1500px-wide password field is not easier to use. */}
+      <div className="narrow-column">
+        <SectionCard
+          as="h2"
+          title="Change password"
+          description={
+            mustChangePassword
+              ? undefined
+              : 'Choose a password you do not use anywhere else.'
+          }
+        >
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Current password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-                autoFocus
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>New password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-              <Form.Text className="text-muted">At least {MIN_LENGTH} characters.</Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label>Confirm new password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </Form.Group>
-            <Button type="submit" className="w-100" disabled={busy}>
-              {busy ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Saving…
-                </>
-              ) : (
-                'Update password'
+            <div className="form-stack">
+              {mustChangePassword && (
+                <div className="alert-info-soft">
+                  You must set a new password before continuing.
+                </div>
               )}
-            </Button>
+              {error && (
+                <div className="alert-danger-soft" role="alert">
+                  {error}
+                </div>
+              )}
+              <Form.Group>
+                <Form.Label htmlFor="current-password">
+                  Current password <span className="required-star" aria-hidden="true">*</span>
+                </Form.Label>
+                <PasswordInput
+                  id="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Label htmlFor="new-password">
+                  New password <span className="required-star" aria-hidden="true">*</span>
+                </Form.Label>
+                <PasswordInput
+                  id="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <Form.Text className="text-muted">At least {MIN_LENGTH} characters.</Form.Text>
+              </Form.Group>
+              <Form.Group>
+                <Form.Label htmlFor="confirm-password">
+                  Confirm new password <span className="required-star" aria-hidden="true">*</span>
+                </Form.Label>
+                <PasswordInput
+                  id="confirm-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+              </Form.Group>
+              <Button type="submit" className="w-100" disabled={busy}>
+                {busy ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" aria-hidden="true" />
+                    Saving…
+                  </>
+                ) : (
+                  'Update password'
+                )}
+              </Button>
+            </div>
           </Form>
-        </Card.Body>
-      </Card>
-    </div>
+        </SectionCard>
+      </div>
+    </Page>
   );
 }

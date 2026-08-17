@@ -44,6 +44,11 @@
      contrast check independent of the surrounding page. */
   --primary: #468189;
   --primary-dark: #37676e;
+  /* The accent as *text* under the pointer. Distinct from --primary-dark,
+     which is the solid-fill shade: darkening works as a hover cue on a light
+     ground but inverts on a dark one, where the accent has to get brighter to
+     read as "active". Both themes therefore define this separately. */
+  --primary-hover: #3b7379;
   --primary-tint: #dcebe8;
   --primary-tint-hover: #c7dfda;
   --focus-ring: rgba(70, 129, 137, 0.22);
@@ -83,11 +88,51 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  /* The card radius. It was written as a literal 14px in six places before
+     this token existed; those are now all this one value. */
+  --radius-card: 14px;
+  --radius-pill: 999px;
 
+  /* ---- Spacing scale ----
+     A 4px base. Every margin, padding and gap in the app resolves to one of
+     these — that is what makes two unrelated pages feel like one product.
+     Reach for the token, not a raw px value or a Bootstrap margin/padding
+     utility.
+
+       1  4px   hairline gaps (icon → its label)
+       2  8px   inside a control, between tightly-bound items
+       3  12px  the phone's default gutter; between fields
+       4  16px  the standard gap between cards in a grid
+       5  20px  card padding
+       6  24px  the desktop page gutter; between page sections
+       7  32px  between major, unrelated blocks
+       8  40px  section break on a long page
+       9  48px  empty-state / hero vertical padding
+      10  64px  full-page states (404, "not available") */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* Layout. --space-page is the page gutter and is re-declared per breakpoint
+     in index.css; --stack-gap is the vertical rhythm between the sections of
+     one page and tracks it. */
   --space-page: 24px;
+  --stack-gap: var(--space-6);
   --topbar-height: 64px;
   --sidebar-width: 248px;
   --sidebar-width-collapsed: 64px;
+
+  /* Padding inside a card. One value so a chart card, a form card and a table
+     card all have the same inset. */
+  --card-pad: var(--space-5);
+  --card-pad-tight: var(--space-4);
 
   /* ---- Typography ----
      Figtree is self-hosted via @fontsource-variable/figtree, imported in
@@ -102,26 +147,50 @@
   --text-lg: 16px;
   --text-xl: 20px;
   --text-2xl: 24px;
+  --text-3xl: 30px;
 
-  /* ---- Legacy aliases ----
-     The --ms-* names predate this file and are referenced throughout
-     index.css and ~18 components. Aliasing rather than deleting means the
-     token port is not also a sweeping find-and-replace; call sites can move to
-     the new names as pages are migrated. */
-  --ms-primary: var(--primary);
-  --ms-primary-hover: #3b7379;
-  --ms-primary-pressed: var(--primary-dark);
-  --ms-primary-tint: var(--primary-tint);
-  --ms-primary-tint-2: var(--primary-tint-hover);
-  --ms-bg: var(--bg);
-  --ms-surface: var(--surface);
-  --ms-neutral-light: var(--surface-muted);
-  --ms-neutral: var(--border);
-  --ms-border: var(--border);
-  --ms-text: var(--text);
-  --ms-text-secondary: var(--text-soft);
-  --ms-shadow-4: var(--shadow-sm);
-  --ms-shadow-8: var(--shadow-md);
+  /* Line heights. Paired with the sizes above rather than left to a global
+     1.5: display type at 1.5 looks slack, and a 12px label at 1.5 wastes the
+     row height a badge or table cell has to live in. */
+  --leading-tight: 1.2;   /* headings, metric values */
+  --leading-snug: 1.35;   /* labels, table cells, badges */
+  --leading-normal: 1.5;  /* body copy */
+  --leading-relaxed: 1.6; /* long-form paragraphs, help text */
+
+  /* Weights. Four steps, no more — a fifth never reads as distinct. */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tracking. Only uppercase micro-labels get letter-spacing; body text at
+     14px does not need it and looks thin with it. */
+  --tracking-caps: 0.06em;
+
+  /* ---- Layering ----
+     Named so a new floating element can't be given a number that happens to
+     land between two existing ones. Bootstrap's own scale is the reference:
+     sticky 1020, backdrop 1050, modal 1055, tooltip 1080. */
+  --z-sticky: 1020;
+  --z-scrim: 1030;
+  --z-drawer: 1040;
+  --z-dropdown: 1045;
+  --z-toast: 1090;
+
+  /* ---- Focus ----
+     WCAG 2.2 (2.4.11/2.4.13) wants a focus indicator with 3:1 contrast against
+     both the focused control and what's behind it. A 22%-alpha teal glow does
+     not clear that on its own, so the visible ring is a solid --primary line
+     with a soft halo behind it for separation from a dark border. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* The --ms-* legacy aliases that used to live here are gone. They were kept
+     so the Prism token port would not also be a sweeping find-and-replace,
+     with the intent that call sites move to the canonical names "as pages are
+     migrated". Every page has now been migrated, and every reference has been
+     rewritten to the token it already resolved to — so the second vocabulary
+     no longer exists. Don't reintroduce one: a colour has one name. */
 }
 
 /* ==========================================================================
@@ -162,6 +231,8 @@
      either mode at 6.3:1. */
   --primary: #7dbfca;
   --primary-dark: #37676e;
+  /* Brighter than --primary, not darker: see the light-mode note. */
+  --primary-hover: #96cdd6;
   --primary-tint: rgba(125, 191, 202, 0.14);
   --primary-tint-hover: rgba(125, 191, 202, 0.22);
   --focus-ring: rgba(125, 191, 202, 0.32);
@@ -192,6 +263,4 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
   --backdrop-bg: rgba(0, 0, 0, 0.7);
-
-  --ms-primary-hover: #96cdd6;
 }

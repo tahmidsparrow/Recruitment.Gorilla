@@ -54,43 +54,51 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
     disabled: busy,
   });
 
+  const className = [
+    'empty-state',
+    'dropzone',
+    isDragActive && 'dropzone--active',
+    busy && 'dropzone--busy',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div>
+    <div className="page-stack page-stack--tight">
       {/* Reuses .empty-state's dashed treatment so "nothing here yet" and
           "drop something here" read as the same kind of surface. */}
-      <div
-        {...getRootProps()}
-        className={`empty-state dropzone${isDragActive ? ' dropzone--active' : ''}`}
-        style={{ cursor: busy ? 'default' : 'pointer' }}
-      >
+      <div {...getRootProps()} className={className}>
         <input {...getInputProps()} />
         {busy ? (
-          <div>
-            <Spinner animation="border" size="sm" className="me-2" />
-            Parsing CVs… ({done}/{total})
+          <div className="dropzone__progress" role="status" aria-live="polite">
+            <Spinner animation="border" size="sm" aria-hidden="true" />
+            <div className="empty-state-title">Parsing CVs…</div>
+            <div className="empty-state-description">
+              {done} of {total} read
+            </div>
             <ProgressBar
-              className="mt-3"
+              className="dropzone__bar"
               now={total ? (done / total) * 100 : 0}
-              label={`${done}/${total}`}
+              aria-label={`Parsed ${done} of ${total} files`}
             />
           </div>
         ) : (
-          <div>
-            <UploadCloud
-              size={28}
-              strokeWidth={1.5}
-              aria-hidden="true"
-              style={{ color: 'var(--muted)', marginBottom: 8 }}
-            />
+          <>
+            <span className="empty-state__icon">
+              <UploadCloud size={20} strokeWidth={1.75} aria-hidden="true" />
+            </span>
             <div className="empty-state-title">Drag &amp; drop CVs here, or click to browse</div>
-            <div className="empty-state-description">PDF or Word (.docx), up to 10&nbsp;MB each</div>
-          </div>
+            <div className="empty-state-description">
+              PDF or Word (.docx), up to 10&nbsp;MB each. Several at once is fine — you'll review
+              them one by one.
+            </div>
+          </>
         )}
       </div>
 
       {errors.length > 0 && (
-        <Alert variant="warning" className="mt-3 mb-0">
-          Could not parse {errors.length} file(s): {errors.join(', ')}
+        <Alert variant="warning" className="mb-0">
+          Could not parse {errors.length} file{errors.length === 1 ? '' : 's'}: {errors.join(', ')}
         </Alert>
       )}
     </div>
