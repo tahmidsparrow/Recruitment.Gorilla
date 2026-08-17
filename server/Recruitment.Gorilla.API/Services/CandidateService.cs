@@ -74,7 +74,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 c.Id, c.FullName, c.Email, c.Phone,
                 c.CurrentTitle,
                 c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
-                c.CurrentStatus, c.CreatedAt))
+                c.CurrentStatus, c.CreatedAt,
+                c.SourceOption != null ? c.SourceOption.Name : null))
             .ToListAsync();
 
         return new PagedResult<CandidateListItemDto>(items, total, q.Page, q.PageSize);
@@ -86,6 +87,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
             .Include(x => x.CVFiles)
             .Include(x => x.StatusHistories.OrderByDescending(s => s.ChangedAt))
             .Include(x => x.RoleAppliedOption)
+            .Include(x => x.SourceOption)
             .Include(x => x.CandidateSkills).ThenInclude(cs => cs.SkillOption)
             .Include(x => x.Interviews).ThenInclude(i => i.Interviewers).ThenInclude(ii => ii.User)
             .Include(x => x.Interviews).ThenInclude(i => i.Tags).ThenInclude(t => t.InterviewTypeOption)
@@ -110,7 +112,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 c.Id, c.FullName, c.Email, c.Phone,
                 c.CurrentTitle,
                 c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
-                c.CurrentStatus, c.CreatedAt))
+                c.CurrentStatus, c.CreatedAt,
+                c.SourceOption != null ? c.SourceOption.Name : null))
             .FirstOrDefaultAsync();
     }
 
@@ -146,7 +149,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
     /// </summary>
     public async Task<string?> ValidateCandidateAsync(
         string fullName, string email, int? roleAppliedOptionId, List<int>? skillOptionIds,
-        string? relevantExperience)
+        string? relevantExperience, int? sourceOptionId = null)
     {
         if (string.IsNullOrWhiteSpace(fullName))
             return "Full name is required.";
@@ -160,6 +163,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         if (roleAppliedOptionId is int roleId &&
             !await db.RoleAppliedOptions.AnyAsync(r => r.Id == roleId && r.IsActive))
             return "The selected role is not a valid active option.";
+
+        if (sourceOptionId is int sourceId &&
+            !await db.CandidateSourceOptions.AnyAsync(s => s.Id == sourceId && s.IsActive))
+            return "The selected source is not a valid active option.";
 
         if (skillOptionIds is { Count: > 0 })
         {
@@ -324,6 +331,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
             ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null,
             ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null,
             RoleAppliedOptionId = dto.RoleAppliedOptionId,
+            SourceOptionId = dto.SourceOptionId,
+            SourceDetail = CleanText(dto.SourceDetail),
             CurrentStatus = dto.InitialStatus,
             OwnerUserId = ownerUserId,
         };
@@ -424,6 +433,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         candidate.ReferenceEmail = dto.IsReferred ? dto.ReferenceEmail : null;
         candidate.ReferenceEmployeeId = dto.IsReferred ? dto.ReferenceEmployeeId : null;
         candidate.RoleAppliedOptionId = dto.RoleAppliedOptionId;
+        candidate.SourceOptionId = dto.SourceOptionId;
+        candidate.SourceDetail = CleanText(dto.SourceDetail);
         candidate.UpdatedAt = DateTime.UtcNow;
 
         // Replace the candidate's skills with the new selection.
@@ -482,6 +493,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 CandidateId = id,
                 StatusHistory = entry,
                 ScheduledAt = dto.InterviewAt.Value,
+                DurationMinutes = NormalizeDuration(dto.InterviewDurationMinutes),
                 CreatedByUserId = currentUserId,
                 Interviewers = dto.InterviewerUserIds
                     .Distinct()
@@ -500,16 +512,21 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         if (interview is not null)
         {
             var interviewUrl = $"{config["App:ClientBaseUrl"]?.TrimEnd('/')}/interviews/{interview.Id}";
+            var invite = new InterviewInviteDetails(
+                interview.Id, candidate.FullName, candidate.AppliedRole,
+                interview.ScheduledAt, interview.DurationMinutes, interviewUrl);
+            var calendar = CalendarInvite.Build(invite);
+
             foreach (var uid in dto.InterviewerUserIds!.Distinct())
             {
                 var interviewer = await db.Users.FindAsync(uid);
                 var (emailSubject, emailHtml) = EmailTemplates.InterviewAssigned(
                     interviewer?.Name ?? "there", candidate.FullName, candidate.AppliedRole,
-                    interview.ScheduledAt, interviewUrl);
+                    interview.ScheduledAt, interviewUrl, invite);
 
                 await notificationService.NotifyAsync(
                     uid, "Interview assigned", $"You have been assigned to interview {candidate.FullName}.",
-                    $"/interviews/{interview.Id}", emailSubject, emailHtml);
+                    $"/interviews/{interview.Id}", emailSubject, emailHtml, calendar);
             }
         }
 
@@ -559,7 +576,10 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         c.CVFiles.Select(f => new CVFileDto(f.Id, f.OriginalFileName, f.FileType, f.FileSizeBytes, f.UploadedAt)).ToList(),
         c.StatusHistories.Select(s => ToStatusHistoryDto(s, c.Interviews)).ToList(),
         c.RoleAppliedOption != null ? c.RoleAppliedOption.EndDate : null,
-        c.RoleAppliedOption != null && c.RoleAppliedOption.EndDate < DateTime.UtcNow
+        c.RoleAppliedOption != null && c.RoleAppliedOption.EndDate < DateTime.UtcNow,
+        c.SourceOptionId,
+        c.SourceOption != null ? c.SourceOption.Name : null,
+        c.SourceDetail
     );
 
     /// <summary>
@@ -607,6 +627,17 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
             interviewTags,
             evaluationSummaries);
     }
+
+    /// <summary>Trim to null so a blank source detail isn't persisted as an empty string.</summary>
+    private static string? CleanText(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Clamped so a bad or missing value can't produce a nonsensical calendar event (a zero-length
+    /// or all-day block). Defaults to the standard hour.
+    /// </summary>
+    private static int NormalizeDuration(int? minutes) =>
+        minutes is int m && m > 0 ? Math.Clamp(m, 5, 480) : 60;
 
     private static bool RequiresComment(string status) =>
         status is Reject or Discontinued;

@@ -6,6 +6,7 @@ import type {
   CVDraft,
   CandidateDetail,
   CandidateEvaluationReport,
+  CandidateSourceOption,
   ChangePasswordPayload,
   EmailSettings,
   UpsertEmailSettings,
@@ -229,14 +230,14 @@ export const getCandidates = async (
   return data;
 };
 
-export const getCandidate = async (id: number): Promise<CandidateDetail> => {
-  const { data } = await api.get<CandidateDetail>(`/candidates/${id}`);
-  return data;
-};
-
 // Candidate evaluation report — all interviewers' full rubrics + aggregates (Recruiter+).
 export const getCandidateEvaluationReport = async (id: number): Promise<CandidateEvaluationReport> => {
   const { data } = await api.get<CandidateEvaluationReport>(`/candidates/${id}/evaluation-report`);
+  return data;
+};
+
+export const getCandidate = async (id: number): Promise<CandidateDetail> => {
+  const { data } = await api.get<CandidateDetail>(`/candidates/${id}`);
   return data;
 };
 
@@ -308,6 +309,12 @@ export const getActiveSkillOptions = async (): Promise<SkillOption[]> => {
   return data;
 };
 
+/** Active candidate sources for the candidate forms — reachable by Recruiters, unlike /config/*. */
+export const getActiveSourceOptions = async (): Promise<CandidateSourceOption[]> => {
+  const { data } = await api.get<CandidateSourceOption[]>('/candidates/source-options');
+  return data;
+};
+
 // Roles for the candidate-list role filter — includes inactive roles, scoped to the caller
 // (Admin+ get all; a Recruiter gets their assigned roles). Distinct from getActiveRoleOptions,
 // which is active-only for the create/edit form.
@@ -318,6 +325,13 @@ export const getCandidateFilterRoleOptions = async (): Promise<RoleAppliedOption
 
 export const getRoleOptions = async (includeInactive = false): Promise<RoleAppliedOption[]> => {
   const { data } = await api.get<RoleAppliedOption[]>('/config/roles', { params: { includeInactive } });
+  return data;
+};
+
+/** Users who may be assigned as a job opening's recruiter (Recruiter role or higher) — a
+ *  narrower list than getAssignableUsers, which answers the interviewer question. */
+export const getRecruiterOptions = async (): Promise<AssignableUser[]> => {
+  const { data } = await api.get<AssignableUser[]>('/config/recruiter-options');
   return data;
 };
 
@@ -370,6 +384,28 @@ export const updateSkillOption = async (id: number, payload: UpsertOptionPayload
 
 export const deleteSkillOption = async (id: number): Promise<void> => {
   await api.delete(`/config/skills/${id}`);
+};
+
+// ----- Configuration: Candidate source options -----
+export const getSourceOptions = async (includeInactive = false): Promise<CandidateSourceOption[]> => {
+  const { data } = await api.get<CandidateSourceOption[]>('/config/sources', { params: { includeInactive } });
+  return data;
+};
+
+export const createSourceOption = async (payload: UpsertOptionPayload): Promise<CandidateSourceOption> => {
+  const { data } = await api.post<CandidateSourceOption>('/config/sources', payload);
+  return data;
+};
+
+export const updateSourceOption = async (id: number, payload: UpsertOptionPayload): Promise<CandidateSourceOption> => {
+  const { data } = await api.put<CandidateSourceOption>(`/config/sources/${id}`, payload);
+  return data;
+};
+
+/** Returns the delete outcome (like roles, not skills) so the UI can report a soft-disable. */
+export const deleteSourceOption = async (id: number): Promise<DeleteRoleResult> => {
+  const { data } = await api.delete<DeleteRoleResult>(`/config/sources/${id}`);
+  return data;
 };
 
 // ----- Configuration: Interview type options -----

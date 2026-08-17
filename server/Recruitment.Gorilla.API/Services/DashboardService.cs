@@ -57,11 +57,17 @@ public class DashboardService(AppDbContext db)
     {
         days = days is 7 or 30 or 90 ? days : 30;
         var startDate = DateTime.UtcNow.Date.AddDays(-(days - 1));
-        var dailyCounts = await db.Candidates
+        // Grouped in memory, not in SQL: DateTime columns carry a UTC value converter, and EF cannot
+        // translate member access like .Date on a converted property. The row set is bounded by the
+        // window above. Buckets are UTC days — a pre-existing behaviour, not introduced here.
+        var created = await db.Candidates
             .Where(c => c.CreatedAt >= startDate)
-            .GroupBy(c => c.CreatedAt.Date)
-            .Select(g => new { g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Key, x => x.Count);
+            .Select(c => c.CreatedAt)
+            .ToListAsync();
+
+        var dailyCounts = created
+            .GroupBy(d => d.Date)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         return Enumerable.Range(0, days)
             .Select(i => startDate.AddDays(i))

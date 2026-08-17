@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Recruitment.Gorilla.API.Services;
 
 /// <summary>
@@ -33,15 +35,38 @@ public static class EmailTemplates
     }
 
     public static (string Subject, string Html) InterviewAssigned(
-        string interviewerName, string candidateName, string? roleName, DateTime scheduledAt, string interviewUrl)
+        string interviewerName, string candidateName, string? roleName, DateTime scheduledAt, string interviewUrl,
+        InterviewInviteDetails? invite = null)
     {
         var subject = $"Interview assigned: {candidateName}";
         var roleLine = string.IsNullOrWhiteSpace(roleName) ? "" : $"<p>Role: {roleName}</p>";
+        // Labelled UTC and formatted invariantly: email is the one surface that cannot know the
+        // recipient's timezone, and the server's culture must not change how the time reads.
+        var when = scheduledAt.ToUniversalTime()
+            .ToString("dd MMM yyyy, HH:mm", CultureInfo.InvariantCulture);
+
+        // Provider links complement the attached .ics: the attachment covers clients that handle
+        // invitations natively, the links cover webmail users who'd otherwise have to download it.
+        var calendarLinks = invite is null ? "" : $"""
+            <p style="margin-top:20px;font-size:13px;color:#555555;">
+              Add to your calendar:
+              <a href="{CalendarInvite.GoogleUrl(invite)}" style="color:#2b579a;">Google Calendar</a>
+              &nbsp;·&nbsp;
+              <a href="{CalendarInvite.OutlookUrl(invite)}" style="color:#2b579a;">Outlook</a>
+              <br />
+              <span style="color:#777777;">Or open the attached invite (interview.ics) in any calendar app.</span>
+            </p>
+            """;
+
+        var duration = invite is null ? "" : $"<p>Duration: {invite.DurationMinutes} minutes</p>";
+
         var body = $"""
             <p>Hi {interviewerName},</p>
             <p>You've been assigned to interview <strong>{candidateName}</strong>.</p>
             {roleLine}
-            <p>Scheduled for: <strong>{scheduledAt:f}</strong></p>
+            <p>Scheduled for: <strong>{when} UTC</strong></p>
+            {duration}
+            {calendarLinks}
             """;
         return (subject, Wrap(subject, body, interviewUrl, "View interview"));
     }

@@ -57,6 +57,14 @@ public class ConfigurationController(
 
     // ----- Role Applied -----
 
+    /// <summary>
+    /// Active users eligible to be a job opening's recruiter. Distinct from
+    /// <c>/api/interviews/assignable-users</c> (every active user), which answers the interviewer
+    /// question — assigning a recruiter only grants candidate access to Recruiter-and-above.
+    /// </summary>
+    [HttpGet("recruiter-options")]
+    public async Task<IActionResult> GetRecruiterOptions() => Ok(await config.GetRecruiterOptionsAsync());
+
     [HttpGet("roles")]
     public async Task<IActionResult> GetRoles([FromQuery] bool includeInactive = false) =>
         Ok(includeInactive ? await config.GetAllRolesAsync() : await config.GetActiveRolesAsync());
@@ -97,6 +105,52 @@ public class ConfigurationController(
             id, deleted ? "deleted" : "deactivated", candidateCount);
         await audit.RecordAsync("Role.Deleted", "Role", id,
             $"{(deleted ? "Deleted" : "Deactivated")} role #{id}" + (deactivated ? $" ({candidateCount} candidate(s))" : ""));
+        return Ok(new { deleted, deactivated, candidateCount });
+    }
+
+    // ----- Candidate sources -----
+
+    [HttpGet("sources")]
+    public async Task<IActionResult> GetSources([FromQuery] bool includeInactive = false) =>
+        Ok(includeInactive ? await config.GetAllSourcesAsync() : await config.GetActiveSourcesAsync());
+
+    [HttpPost("sources")]
+    public async Task<IActionResult> CreateSource([FromBody] UpsertCandidateSourceOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (created, conflict) = await config.CreateSourceAsync(dto);
+        if (conflict) return Conflict("A source with that name already exists.");
+
+        logger.LogInformation("Created candidate source {Id} ('{Name}').", created!.Id, created.Name);
+        await audit.RecordAsync("Source.Created", "Source", created.Id, $"Created source '{created.Name}' (#{created.Id})");
+        return Ok(created);
+    }
+
+    [HttpPut("sources/{id:int}")]
+    public async Task<IActionResult> UpdateSource(int id, [FromBody] UpsertCandidateSourceOptionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Name is required.");
+
+        var (updated, notFound, conflict) = await config.UpdateSourceAsync(id, dto);
+        if (notFound) return NotFound();
+        if (conflict) return Conflict("A source with that name already exists.");
+
+        logger.LogInformation("Updated candidate source {Id}.", id);
+        await audit.RecordAsync("Source.Updated", "Source", id, $"Updated source '{updated!.Name}' (#{id})");
+        return Ok(updated);
+    }
+
+    [HttpDelete("sources/{id:int}")]
+    public async Task<IActionResult> DeleteSource(int id)
+    {
+        var (found, deleted, deactivated, candidateCount) = await config.DeleteSourceAsync(id);
+        if (!found) return NotFound();
+
+        logger.LogInformation("Candidate source {Id} {Action} ({Count} candidates).",
+            id, deleted ? "deleted" : "deactivated", candidateCount);
+        await audit.RecordAsync("Source.Deleted", "Source", id,
+            $"{(deleted ? "Deleted" : "Deactivated")} source #{id}" + (deactivated ? $" ({candidateCount} candidate(s))" : ""));
         return Ok(new { deleted, deactivated, candidateCount });
     }
 

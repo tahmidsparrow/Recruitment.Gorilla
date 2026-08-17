@@ -39,6 +39,50 @@ public class ConfigurationServiceTests(MySqlDatabaseFixture fixture) : DbTestBas
     }
 
     [Fact]
+    public async Task CreateRole_rejects_a_recruiter_that_cannot_write_candidates()
+    {
+        // An Interviewer saves fine but gains nothing (CandidatesController excludes the role),
+        // so the assignment must be rejected rather than silently do nothing.
+        var interviewer = Data.AddUser(Roles.Interviewer, name: "Ivy Interviewer");
+
+        var (created, _, error) = await Config().CreateRoleAsync(RoleDto($"R-{Guid.NewGuid():N}", interviewer.Id));
+
+        Assert.Null(created);
+        Assert.Contains("Recruiter role or higher", error);
+        Assert.Contains("Ivy Interviewer", error);
+    }
+
+    [Theory]
+    [InlineData(Roles.SuperAdmin)]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.Recruiter)]
+    public async Task CreateRole_accepts_every_role_that_can_write_candidates(string role)
+    {
+        var user = Data.AddUser(role);
+
+        var (created, _, error) = await Config().CreateRoleAsync(RoleDto($"R-{Guid.NewGuid():N}", user.Id));
+
+        Assert.Null(error);
+        Assert.Equal([user.Id], created!.Recruiters.Select(x => x.UserId));
+    }
+
+    [Fact]
+    public async Task GetRecruiterOptions_lists_only_active_candidate_writers()
+    {
+        var recruiter = Data.AddUser(Roles.Recruiter);
+        var admin = Data.AddUser(Roles.Admin);
+        var interviewer = Data.AddUser(Roles.Interviewer);
+        var inactive = Data.AddUser(Roles.Recruiter, active: false);
+
+        var ids = (await Config().GetRecruiterOptionsAsync()).Select(u => u.Id).ToHashSet();
+
+        Assert.Contains(recruiter.Id, ids);
+        Assert.Contains(admin.Id, ids);
+        Assert.DoesNotContain(interviewer.Id, ids);
+        Assert.DoesNotContain(inactive.Id, ids);
+    }
+
+    [Fact]
     public async Task UpdateRole_replaces_the_recruiter_set()
     {
         var r1 = Data.AddUser(Roles.Recruiter);
@@ -105,6 +149,64 @@ public class ConfigurationServiceTests(MySqlDatabaseFixture fixture) : DbTestBas
         var still = await Db.SkillOptions.FindAsync(used.Id);
         Assert.NotNull(still);
         Assert.False(still!.IsActive);
+    }
+
+    [Fact]
+    public async Task CreateSource_conflicts_on_a_duplicate_name()
+    {
+        var name = $"Src-{Guid.NewGuid():N}";
+        var (created, conflict) = await Config().CreateSourceAsync(new UpsertCandidateSourceOptionDto(name, 1, true));
+        Assert.NotNull(created);
+        Assert.False(conflict);
+
+        var (dupe, dupeConflict) = await Config().CreateSourceAsync(new UpsertCandidateSourceOptionDto(name, 2, true));
+        Assert.Null(dupe);
+        Assert.True(dupeConflict);
+    }
+
+    [Fact]
+    public async Task GetActiveSources_excludes_inactive_options()
+    {
+        var (created, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 50, false));
+
+        var active = await Config().GetActiveSourcesAsync();
+        var all = await Config().GetAllSourcesAsync();
+
+        Assert.DoesNotContain(created!.Id, active.Select(s => s.Id));
+        Assert.Contains(created.Id, all.Select(s => s.Id));
+    }
+
+    [Fact]
+    public async Task DeleteSource_softdisables_when_a_candidate_uses_it_else_hard_deletes()
+    {
+        // In use → deactivate, and report the count so the UI can explain why.
+        var (used, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 51, true));
+        var candidate = Data.AddCandidate();
+        candidate.SourceOptionId = used!.Id;
+        await Db.SaveChangesAsync();
+
+        var inUse = await Config().DeleteSourceAsync(used.Id);
+        Assert.True(inUse.Found);
+        Assert.False(inUse.Deleted);
+        Assert.True(inUse.Deactivated);
+        Assert.Equal(1, inUse.CandidateCount);
+        Assert.False((await Db.CandidateSourceOptions.FindAsync(used.Id))!.IsActive);
+
+        // Unused → hard delete.
+        var (free, _) = await Config().CreateSourceAsync(
+            new UpsertCandidateSourceOptionDto($"Src-{Guid.NewGuid():N}", 52, true));
+        var unused = await Config().DeleteSourceAsync(free!.Id);
+        Assert.True(unused.Deleted);
+        Assert.Null(await Db.CandidateSourceOptions.FindAsync(free.Id));
+    }
+
+    [Fact]
+    public async Task DeleteSource_reports_not_found_for_an_unknown_id()
+    {
+        var result = await Config().DeleteSourceAsync(999999);
+        Assert.False(result.Found);
     }
 
     [Fact]

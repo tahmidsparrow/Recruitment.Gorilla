@@ -17,6 +17,13 @@ public class Candidate
     public string? AppliedRole { get; set; }
     public int? RoleAppliedOptionId { get; set; }
     public RoleAppliedOption? RoleAppliedOption { get; set; }
+    /// <summary>Where this candidate came from. Null on rows created before source tracking.</summary>
+    public int? SourceOptionId { get; set; }
+    public CandidateSourceOption? SourceOption { get; set; }
+
+    /// <summary>Free text qualifying the source — the agency, campaign, or job board name.</summary>
+    public string? SourceDetail { get; set; }
+
     public bool IsReferred { get; set; }
     public string? ReferenceName { get; set; }
     public string? ReferenceEmail { get; set; }

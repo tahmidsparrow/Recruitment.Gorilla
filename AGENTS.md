@@ -34,7 +34,7 @@ cd server/Recruitment.Gorilla.API
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=RecruitmentGorilla;User=root;Password=<yours>;"
 dotnet user-secrets set "Jwt:Key" "<random 32+ byte base64>"
 dotnet user-secrets set "Encryption:Key" "<32+ char random string>"
-dotnet user-secrets set "Auth:PasswordHash" "<pbkdf2 hash>"   # default login is admin/admin
+dotnet user-secrets set "Auth:PasswordHash" "<pbkdf2 hash>"   # hash of the default password, admin
 
 # 2. Database
 dotnet ef database update

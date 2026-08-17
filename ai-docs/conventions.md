@@ -41,6 +41,17 @@ Match these patterns. Consistency is the point — prefer the existing approach 
 ### ⚠️ JSON camelCase gotcha (important)
 ASP.NET serializes with camelCase, and it lowercases **runs of leading capitals**. So C# `CVFiles` becomes JSON **`cvFiles`** (not `cVFiles`). Always match the real serialized name in `types/index.ts` and component code. When in doubt, check the actual response. (This caused a real crash — `data.cvFiles` was undefined.)
 
+### ⚠️ Dates are UTC in the DB, local in the UI
+**Store UTC, render local.** Every `DateTime` column is MySQL `datetime(6)`, which stores **no offset** — so the "this is UTC" fact lives in convention, not in the data.
+
+- **Writing:** always `DateTime.UtcNow` server-side (never `DateTime.Now`); the client sends `new Date(x).toISOString()` so a `datetime-local` input is converted from the user's zone before it leaves the browser.
+- **Reading:** [UtcDateTimeConverter](server/Recruitment.Gorilla.API/Data/UtcDateTimeConverter.cs) is applied to every `DateTime`/`DateTime?` via `AppDbContext.ConfigureConventions`, re-marking values as `Kind=Utc`. Without it they materialize as `Unspecified`, serialize **without a trailing `Z`**, and browsers parse that as *local* — silently shifting every displayed time by the viewer's offset.
+- **Displaying:** just use `toLocaleString()`; it converts to the viewer's zone automatically once the payload carries `Z`. Add `timeZoneName: 'short'` where cross-timezone ambiguity matters (interview times).
+- **Emails** cannot detect the recipient's zone — format with `CultureInfo.InvariantCulture` and label the result `UTC` explicitly.
+- **Gotcha:** the converter stops EF translating member access on a date column, so `.GroupBy(c => c.CreatedAt.Date)` throws *"could not be translated"*. Project the column out and group in memory — see `DashboardService.GetApplicationsTrendAsync`.
+
+Guarded by `UtcDateTimeTests` (the `Kind` on read) and `DateSerializationTests` (the `Z` on the wire).
+
 ### Theme
 - The Microsoft **Fluent** theme lives in `client/src/index.css` as CSS variables mapped onto Bootstrap's variables (`--ms-primary: #0078d4`, neutrals, depth shadows, Segoe UI). Use existing Bootstrap classes/components; they pick up the theme. Don't hardcode colors — reference the look already established (primary blue, 4px/8px radii, subtle shadows).
 - Brand logo: `client/public/logo.png`, shown via `.app-logo-img`.

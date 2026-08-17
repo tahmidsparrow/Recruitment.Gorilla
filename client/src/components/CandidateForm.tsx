@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { createCandidate, getInitialStatusOptions, getActiveRoleOptions, getActiveSkillOptions } from '../services/api';
+import {
+  createCandidate,
+  getInitialStatusOptions,
+  getActiveRoleOptions,
+  getActiveSkillOptions,
+  getActiveSourceOptions,
+} from '../services/api';
 import { SearchableSelect, SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
 import type { CVDraft, DuplicateCandidate } from '../types';
@@ -32,6 +38,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const [githubUrl, setGithubUrl] = useState(draft.githubUrl ?? '');
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [roleAppliedOptionId, setRoleAppliedOptionId] = useState<number | null>(null);
+  const [sourceOptionId, setSourceOptionId] = useState<number | null>(null);
+  const [sourceDetail, setSourceDetail] = useState('');
   const [skillOptionIds, setSkillOptionIds] = useState<number[]>([]);
   const [isReferred, setIsReferred] = useState(false);
   const [referenceName, setReferenceName] = useState('');
@@ -58,6 +66,11 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   const { data: skillOptions = [] } = useQuery({
     queryKey: ['skill-options', 'active'],
     queryFn: getActiveSkillOptions,
+  });
+
+  const { data: sourceOptions = [] } = useQuery({
+    queryKey: ['source-options', 'active'],
+    queryFn: getActiveSourceOptions,
   });
 
   useEffect(() => {
@@ -94,6 +107,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         portfolioUrl: portfolioUrl.trim() || null,
         appliedRole: null,
         roleAppliedOptionId,
+        sourceOptionId,
+        sourceDetail: sourceDetail.trim() || null,
         skillOptionIds,
         isReferred,
         referenceName: isReferred ? referenceName.trim() || null : null,
@@ -227,6 +242,23 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source</Form.Label>
+          <SearchableSelect
+            options={sourceOptions}
+            value={sourceOptionId}
+            onChange={setSourceOptionId}
+            placeholder="Where did this candidate come from?"
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Source detail</Form.Label>
+          <Form.Control
+            value={sourceDetail}
+            onChange={(e) => setSourceDetail(e.target.value)}
+            placeholder="Agency, campaign or board name"
+          />
         </Col>
         <Col md={12}>
           <Form.Label>Skills</Form.Label>
