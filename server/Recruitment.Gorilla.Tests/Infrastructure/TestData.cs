@@ -38,10 +38,20 @@ public sealed class TestData(AppDbContext db)
         return role;
     }
 
+    public SkillOption AddSkill(string? name = null)
+    {
+        var skill = new SkillOption { Name = name ?? $"Skill-{Guid.NewGuid():N}", SortOrder = 100, IsActive = true };
+        db.SkillOptions.Add(skill);
+        db.SaveChanges();
+        return skill;
+    }
+
     /// <summary>Creates a candidate at <paramref name="status"/>, plus a StatusHistory row for each of
     /// <paramref name="priorStatuses"/> and the current status (so HasStatus checks work).</summary>
     public Candidate AddCandidate(
-        int? ownerUserId = null, int? roleId = null, string status = "Uploaded", params string[] priorStatuses)
+        int? ownerUserId = null, int? roleId = null, string status = "Uploaded",
+        string? phone = null, bool isReferred = false, List<int>? skillIds = null,
+        params string[] priorStatuses)
     {
         var candidate = new Candidate
         {
@@ -51,6 +61,12 @@ public sealed class TestData(AppDbContext db)
             OwnerUserId = ownerUserId,
             RoleAppliedOptionId = roleId,
             CurrentStatus = status,
+            Phone = phone,
+            IsReferred = isReferred,
+            ReferenceName = isReferred ? "Ref Name" : null,
+            ReferenceEmail = isReferred ? "ref@test.local" : null,
+            CandidateSkills = (skillIds ?? [])
+                .Select(sid => new CandidateSkill { SkillOptionId = sid }).ToList(),
         };
         foreach (var s in priorStatuses.Append(status))
             candidate.StatusHistories.Add(new StatusHistory { Status = s, ChangedBy = "test" });

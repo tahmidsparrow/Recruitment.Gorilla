@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Alert, Button, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, FileText, Pencil, Trash2 } from 'lucide-react';
 import {
   addStatus,
   deleteCandidate,
@@ -18,12 +18,16 @@ import {
   updateCandidate,
 } from '../services/api';
 import StatusTimeline from '../components/StatusTimeline';
+import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../auth/AuthContext';
+// The role-filter branch added a local copy of this; develop had already
+// extracted the same function to utils, so use the shared one.
+import { initials } from '../utils/initials';
 import type { CVFileInfo, CandidateDetail } from '../types';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
@@ -40,6 +44,7 @@ export default function CandidateDetailPage() {
   const navigate = useNavigate();
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidate', candidateId],
@@ -70,6 +75,9 @@ export default function CandidateDetailPage() {
     );
   }
 
+  const role = data.roleApplied ?? data.appliedRole;
+  const canWrite = canWriteCandidates && !data.roleClosed;
+
   return (
     <div className="d-flex flex-column gap-3">
       {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
@@ -78,19 +86,37 @@ export default function CandidateDetailPage() {
         Back to candidates
       </Link>
 
+      {/* Prism's flat page header, carrying the actions the role-filter branch
+          added (explicit Edit, evaluation report) rather than its gradient hero. */}
       <div className="page-header">
-        <div className="d-flex align-items-center gap-3 flex-wrap">
-          <h2>{data.fullName}</h2>
-          <StatusBadge status={data.currentStatus} />
+        <div className="who-cell">
+          <span className="avatar" aria-hidden="true">{initials(data.fullName) || '?'}</span>
+          <div>
+            <h2>{data.fullName}</h2>
+            <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
+              <StatusBadge status={data.currentStatus} />
+              {role && <span style={{ color: 'var(--muted)', fontSize: 'var(--text-sm)' }}>{role}</span>}
+            </div>
+          </div>
         </div>
-        {isAdminOrAbove && (
-          <div className="page-header__actions">
+        <div className="page-header__actions">
+          {canWrite && !editing && (
+            <Button onClick={() => setEditing(true)}>
+              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1">Edit</span>
+            </Button>
+          )}
+          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary">
+            <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
+            <span className="ms-1">Evaluation report</span>
+          </Link>
+          {isAdminOrAbove && (
             <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
               <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
               <span className="ms-1">Delete candidate</span>
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {data.roleClosed && (
@@ -114,43 +140,57 @@ export default function CandidateDetailPage() {
         status history? This cannot be undone.
       </ConfirmModal>
 
-      <Row className="g-3">
-        <Col xs={12} lg={7}>
-          <div className="d-flex flex-column gap-3">
-            <div className="pulse-card">
-              <div className="metric-label mb-3">Profile</div>
-              <ProfileEditor
-                candidate={data}
-                canWrite={canWriteCandidates && !data.roleClosed}
-                onSaved={() => {
-                  void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
-                  void queryClient.invalidateQueries({ queryKey: ['candidates'] });
-                }}
-              />
-            </div>
-
-            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
-          </div>
-        </Col>
-
-        <Col xs={12} lg={5}>
-          <div className="pulse-card">
-            <div className="metric-label mb-3">Status history</div>
-            {canWriteCandidates && !data.roleClosed && (
-              <>
-                <AddStatus
-                  candidateId={candidateId}
-                  onAdded={() =>
-                    queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
-                  }
+      {/* The read/edit split comes from the role-filter branch — the form is no
+          longer permanently open — rendered on Prism's flat cards. */}
+      {editing ? (
+        <Row className="g-3">
+          <Col xs={12} lg={8}>
+            <div className="d-flex flex-column gap-3">
+              <div className="pulse-card">
+                <div className="metric-label mb-3">Edit profile</div>
+                <ProfileEditor
+                  candidate={data}
+                  onSaved={() => {
+                    void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+                    void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+                    setEditing(false);
+                  }}
+                  onCancel={() => setEditing(false)}
                 />
-                <hr />
-              </>
-            )}
-            <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-          </div>
-        </Col>
-      </Row>
+              </div>
+
+              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+            </div>
+          </Col>
+        </Row>
+      ) : (
+        <Row className="g-3">
+          <Col xs={12} lg={5}>
+            <div className="d-flex flex-column gap-3">
+              <ReadOnlyCandidateProfile candidate={data} />
+              <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
+            </div>
+          </Col>
+
+          <Col xs={12} lg={7}>
+            <div className="pulse-card">
+              <div className="metric-label mb-3">Status history</div>
+              {canWrite && (
+                <>
+                  <AddStatus
+                    candidateId={candidateId}
+                    onAdded={() =>
+                      queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] })
+                    }
+                  />
+                  <hr />
+                </>
+              )}
+              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
+            </div>
+          </Col>
+        </Row>
+      )}
     </div>
   );
 }
@@ -159,12 +199,12 @@ type ProfileFieldErrors = Partial<Record<'fullName' | 'email' | 'roleApplied' | 
 
 function ProfileEditor({
   candidate,
-  canWrite,
   onSaved,
+  onCancel,
 }: {
   candidate: CandidateDetail;
-  canWrite: boolean;
   onSaved: () => void;
+  onCancel: () => void;
 }) {
   const { addToast } = useToast();
   const [form, setForm] = useState(candidate);
@@ -175,6 +215,13 @@ function ProfileEditor({
     setForm(candidate);
     setSkillIds(candidate.skillOptions.map((s) => s.id));
   }, [candidate]);
+
+  const handleCancel = () => {
+    setForm(candidate);
+    setSkillIds(candidate.skillOptions.map((s) => s.id));
+    setFieldErrors({});
+    onCancel();
+  };
 
   const { data: roleOptions = [] } = useQuery({
     queryKey: ['role-options', 'active'],
@@ -246,7 +293,7 @@ function ProfileEditor({
 
   return (
     <Form onSubmit={handleSubmit} noValidate>
-      <fieldset disabled={!canWrite} className="border-0 p-0 m-0">
+      <fieldset className="border-0 p-0 m-0">
       <Row className="g-3">
         <Col md={6}>
           <Form.Label>Full name <Req /></Form.Label>
@@ -409,13 +456,14 @@ function ProfileEditor({
       </Row>
       </fieldset>
 
-      {canWrite && (
-        <div className="mt-3 d-flex align-items-center gap-2">
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saving…' : 'Save changes'}
-          </Button>
-        </div>
-      )}
+      <div className="mt-3 d-flex align-items-center gap-2">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
+        <Button variant="outline-secondary" type="button" disabled={mutation.isPending} onClick={handleCancel}>
+          Cancel
+        </Button>
+      </div>
     </Form>
   );
 }

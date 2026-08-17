@@ -17,6 +17,8 @@ Four roles in a strict hierarchy **SuperAdmin → Admin → Recruiter → Interv
 | Edit / change status candidate | ✅ (all) | ✅ (all) | **own OR assigned-role** | – |
 | **Delete** candidate | ✅ | ✅ | – | – |
 | Dashboard + assigned interviews + evaluations | ✅ | ✅ | ✅ | ✅ |
+| Candidate **evaluation report** (`/candidates/:id/evaluations`) | ✅ | ✅ | **own OR assigned-role** | – |
+| See **peers'** evaluations on an interview | all | all | – | **after submitting own (same interview, submitted only)** |
 
 - **Recruiter scoping** (`CandidateService.ApplyAccess`): a non-admin caller may access a candidate when they **own** it (`OwnerUserId`) **OR** are an assigned **recruiter of that candidate's role** (`RoleAppliedOption.Recruiters`, a many-to-many). This is creator-agnostic — an Admin-created candidate under a recruiter's role is visible to that recruiter, and a role can name **multiple** recruiters (all get access). Admin+ pass `null` (no filter). Applies to list / detail / CV stream / edit / change status.
 - **Who may be assigned as a recruiter**: only users in `Roles.CanWriteCandidate` (Recruiter or higher). The scoping above grants nothing to an Interviewer, since `CandidatesController` excludes the role outright — so `ConfigurationService` **rejects** the assignment and the picker reads the narrower `GET /api/config/recruiter-options` rather than the interviewer list.
