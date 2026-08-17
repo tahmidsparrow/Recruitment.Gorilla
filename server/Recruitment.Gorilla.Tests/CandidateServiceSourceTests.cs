@@ -109,7 +109,7 @@ public class CandidateServiceSourceTests(MySqlDatabaseFixture fixture) : DbTestB
         candidate.SourceOptionId = source.Id;
         await Db.SaveChangesAsync();
 
-        var page = await Candidates().GetAllAsync(null, null, 1, 500);
+        var page = await Candidates().GetAllAsync(new CandidateListQuery(PageSize: 500));
         var row = page.Items.Single(i => i.Id == candidate.Id);
 
         Assert.Equal(source.Name, row.Source);
