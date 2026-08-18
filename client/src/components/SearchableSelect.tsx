@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-bootstrap';
+import { X } from 'lucide-react';
 
 export interface Option {
   id: number;
@@ -103,20 +104,18 @@ export function SearchableMultiSelect({
   return (
     <div className="position-relative">
       {selected.length > 0 && (
-        <div className="d-flex flex-wrap gap-1 mb-1">
+        <div className="token-row">
           {selected.map((o) => (
-            <span
-              key={o.id}
-              className="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1"
-            >
+            <span key={o.id} className="token">
               {o.name}
               <button
                 type="button"
-                className="btn-close"
-                style={{ fontSize: '0.5rem' }}
+                className="token__remove"
                 aria-label={`Remove ${o.name}`}
                 onClick={() => onChange(value.filter((v) => v !== o.id))}
-              />
+              >
+                <X size={12} strokeWidth={2.5} aria-hidden="true" />
+              </button>
             </span>
           ))}
         </div>

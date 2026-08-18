@@ -32,19 +32,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <ToastContainer position="bottom-end" className="p-3" style={{ zIndex: 9999 }}>
+      {/* aria-live so a toast is announced; the region exists even when empty
+          so an insertion into it is what gets read, not the region appearing. */}
+      <ToastContainer position="bottom-end" className="toast-stack">
         {toasts.map((t) => (
           <Toast
             key={t.id}
             onClose={() => remove(t.id)}
-            className={`text-bg-${t.variant} border-0 mb-2`}
-            style={{ minWidth: 220 }}
+            className={`text-bg-${t.variant} border-0`}
           >
-            <Toast.Body className="d-flex justify-content-between align-items-center py-2 px-3">
+            <Toast.Body className="d-flex justify-content-between align-items-center gap-3">
               <span>{t.message}</span>
               <button
                 type="button"
-                className={`btn-close ms-3${['success', 'danger', 'warning'].includes(t.variant) ? ' btn-close-white' : ''}`}
+                className={`btn-close${['success', 'danger', 'warning'].includes(t.variant) ? ' btn-close-white' : ''}`}
                 onClick={() => remove(t.id)}
                 aria-label="Close"
               />

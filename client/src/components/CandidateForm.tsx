@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Col, Form, Row } from 'react-bootstrap';
+import { Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -155,29 +155,32 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   };
 
   return (
+    // The card that hosts this form owns the heading and the file name now, so
+    // the form no longer prints its own <h5> above them.
     <Form onSubmit={handleSubmit} noValidate>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0">Review extracted details</h5>
-        <span className="text-muted small">{draft.originalFileName}</span>
-      </div>
-
-      {saveError && <Alert variant="danger">{saveError}</Alert>}
+      {saveError && (
+        <div className="alert-danger-soft mb-4" role="alert">
+          {saveError}
+        </div>
+      )}
 
       {duplicate && (
-        <Alert variant="warning">
-          {duplicate.message}{' '}
-          <Link to={`/candidates/${duplicate.existing.id}`}>Open existing candidate</Link>.
-          <div className="mt-2">
+        <div className="alert-warning-soft mb-4">
+          <div>
+            {duplicate.message}{' '}
+            <Link to={`/candidates/${duplicate.existing.id}`}>Open existing candidate</Link>.
+          </div>
+          <div className="mt-3">
             <Button
               size="sm"
-              variant="outline-warning"
+              variant="outline-secondary"
               disabled={saving}
               onClick={() => void save(true)}
             >
               Save anyway
             </Button>
           </div>
-        </Alert>
+        </div>
       )}
 
       <Row className="g-3">
@@ -278,7 +281,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           <Form.Control as="textarea" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} />
         </Col>
         <Col md={12}>
-          <hr className="mb-2" />
+          <div className="field-divider" />
           <Form.Check
             type="checkbox"
             id="is-referred"
@@ -319,12 +322,12 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         )}
       </Row>
 
-      <div className="d-flex gap-2 mt-4">
+      <div className="form-actions">
         <Button type="submit" variant="primary" disabled={saving}>
           {saving ? 'Saving…' : 'Save candidate'}
         </Button>
         <Button type="button" variant="outline-secondary" disabled={saving} onClick={onCancel}>
-          Skip
+          Skip this CV
         </Button>
       </div>
     </Form>

@@ -61,7 +61,7 @@ Local disk under `Uploads/`, named `{GUID}{ext}` to avoid collisions; original n
 
 ## Dashboard aggregation
 - `DashboardController` is `[Authorize]` (all roles). It splits into **org-wide** endpoints (no owner scope — every role sees the same figures) and one **owner-scoped** endpoint:
-  - `GET /api/dashboard/kpis` → `DashboardService.GetKpisAsync()` — total/in-process/recommended/rejected/new-this-week/referred, bucketed from a single `GroupBy(CurrentStatus)` (terminal sets are `HashSet<string>` of the exact seeded status strings).
+  - `GET /api/dashboard/kpis` → `DashboardService.GetKpisAsync()` — total/in-process/recommended/rejected/new-this-week/referred, bucketed from a single `GroupBy(CurrentStatus)`. **The terminal sets live in `Services/CandidateBuckets.cs`**, shared with the candidate list so a KPI tile and the list it links to cannot disagree — don't re-declare them locally.
   - `GET /api/dashboard/status-breakdown` → `GetStatusBreakdownAsync()` ordered by `StatusOptions.SortOrder`.
   - `GET /api/dashboard/applications-trend?days=` → `GetApplicationsTrendAsync(days)`; `days ∈ {7,30,90}` (else 30); groups `CreatedAt.Date` and **zero-fills** missing days in C#.
   - `GET /api/dashboard/job-openings` → `GetJobOpeningsAsync()` — **open** roles only (`IsActive && EndDate >= now`) projected to `JobOpeningDto` (incl. `EndDate`), applicant counts derived by role.
@@ -101,7 +101,7 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | POST | `/api/auth/refresh` | anon (cookie) | Rotate refresh, new access token |
 | POST | `/api/auth/logout` | anon (cookie) | Revoke refresh, clear cookie |
 | POST | `/api/cvupload` | required | Upload CV → extracted draft |
-| GET | `/api/candidates` | required | Paged list. Filters: `search` (name/email/**phone**), `status`, `roleId` (structured `RoleAppliedOptionId`), `skillIds` (**CSV**, ANY-of over `CandidateSkills`), `referred` (bool). Sorting: `sort` (whitelist `name`\|`status`\|`added`, default added) + `dir` (`asc`\|`desc`, default desc). All parameters are wrapped in a `CandidateListQuery` record and intersected with the caller's access scope |
+| GET | `/api/candidates` | required | Paged list. Filters: `search` (name/email/**phone**), `status`, `roleId` (structured `RoleAppliedOptionId`), `skillIds` (**CSV**, ANY-of over `CandidateSkills`), `referred` (bool), `bucket` (`in-process`\|`recommended`\|`rejected`\|`new-this-week` — the dashboard's pipeline buckets, resolved through `CandidateBuckets` so they select exactly what the KPI tiles count; unknown values are ignored rather than rejected, so a stale link degrades to an unfiltered list instead of an empty one). `bucket` exists because `status` is a single exact match, while *Rejected* spans four statuses, *In process* is "not yet terminal", and *New this week* is a date window — without it those tiles had no destination reproducing their own count. Sorting: `sort` (whitelist `name`\|`status`\|`added`, default added) + `dir` (`asc`\|`desc`, default desc). All parameters are wrapped in a `CandidateListQuery` record and intersected with the caller's access scope |
 | POST | `/api/candidates` | required | Create (409 on duplicate email unless `allowDuplicate`) |
 | GET | `/api/candidates/{id}` | required | Detail + CV files + status history |
 | PUT | `/api/candidates/{id}` | required | Update profile |

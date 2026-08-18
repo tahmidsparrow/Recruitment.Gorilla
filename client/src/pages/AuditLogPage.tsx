@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Badge, Button, Col, Form, Row, Spinner, Table } from 'react-bootstrap';
+import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
 import EmptyState from '../components/ui/EmptyState';
+import Page from '../components/ui/Page';
 import Pagination from '../components/ui/Pagination';
+import { SkeletonRows } from '../components/ui/Loading';
 import type { AuditQuery } from '../types';
 
 const ENTITY_TYPES = ['Candidate', 'Interview', 'Role', 'Skill', 'InterviewType', 'User'];
@@ -12,12 +15,19 @@ const PAGE_SIZE = 50;
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
-/** Color the action badge by its top-level area (matches nothing security-sensitive; purely visual). */
-const actionVariant = (action: string) => {
-  if (action.startsWith('Auth')) return action.includes('Failed') ? 'danger' : 'secondary';
-  if (action.endsWith('.Deleted')) return 'warning';
-  if (action.endsWith('.Created')) return 'success';
-  return 'info';
+/**
+ * Colour the action pill by its top-level area. Purely visual — nothing
+ * security-sensitive keys off it. Pills rather than raw Bootstrap badges so
+ * they match every other badge in the app and carry a glyph, since the colour
+ * is the only thing distinguishing a create from a delete at a glance.
+ */
+const actionBadge = (action: string): string => {
+  if (action.startsWith('Auth')) {
+    return action.includes('Failed') ? 'badge-pill badge-danger' : 'badge-pill badge-neutral';
+  }
+  if (action.endsWith('.Deleted')) return 'badge-pill badge-warning';
+  if (action.endsWith('.Created')) return 'badge-pill badge-success';
+  return 'badge-pill badge-info';
 };
 
 export default function AuditLogPage() {
@@ -53,30 +63,35 @@ export default function AuditLogPage() {
 
   const total = data?.totalCount ?? 0;
 
+  const hasFilters = Object.values(applied).some(Boolean);
+
   return (
-    <div>
+    <Page>
       {/* No <h2> — the topbar owns the page title. */}
+      {/* No heading: the fields are self-describing and the topbar already says
+          "Audit". A title and a caption over four labelled inputs was just
+          height. */}
       <div className="pulse-card">
         <Form onSubmit={applyFilters}>
           <Row className="g-3 align-items-end">
             <Col xs={12} md={6} lg={3}>
-              <Form.Label>Entity type</Form.Label>
-              <Form.Select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
+              <Form.Label htmlFor="audit-entity">Entity type</Form.Label>
+              <Form.Select id="audit-entity" value={entityType} onChange={(e) => setEntityType(e.target.value)}>
                 <option value="">All</option>
                 {ENTITY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
               </Form.Select>
             </Col>
             <Col xs={12} md={6} lg={3}>
-              <Form.Label>Action contains</Form.Label>
-              <Form.Control value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
+              <Form.Label htmlFor="audit-action">Action contains</Form.Label>
+              <Form.Control id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
             </Col>
             <Col xs={12} sm={6} lg={2}>
-              <Form.Label>From</Form.Label>
-              <Form.Control type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Form.Label htmlFor="audit-from">From</Form.Label>
+              <Form.Control id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
             </Col>
             <Col xs={12} sm={6} lg={2}>
-              <Form.Label>To</Form.Label>
-              <Form.Control type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+              <Form.Label htmlFor="audit-to">To</Form.Label>
+              <Form.Control id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
             </Col>
             <Col xs={12} lg={2} className="d-flex gap-2">
               <Button type="submit" className="flex-grow-1">Filter</Button>
@@ -87,29 +102,46 @@ export default function AuditLogPage() {
       </div>
 
       {isLoading ? (
-        <Spinner animation="border" />
+        <SkeletonRows rows={10} label="Loading audit events" />
       ) : isError ? (
         <EmptyState
+          variant="error"
           title="Couldn't load the audit trail"
-          description="The request failed. Refresh to try again."
+          description="The request failed. Refresh the page to try again."
         />
       ) : data!.items.length === 0 ? (
         <EmptyState
+          icon={<ScrollText size={20} strokeWidth={1.75} aria-hidden="true" />}
           title="No audit events match"
-          description="Widen the date range or clear the filters."
+          description={
+            hasFilters
+              ? 'Widen the date range, or reset the filters to see everything.'
+              : 'Actions taken in the portal will be recorded here.'
+          }
+          action={
+            hasFilters ? (
+              <Button variant="outline-secondary" onClick={reset}>
+                Reset filters
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <>
-          <span className="result-count">
-            {total.toLocaleString()} event{total === 1 ? '' : 's'}
-            {isFetching ? ' · updating…' : ''}
-          </span>
+          {/* Only the in-flight state is shown here — the total already appears
+              in the pager below, and printing it twice on one screen just made
+              the reader check whether the two numbers agreed. */}
+          {isFetching && (
+            <span className="result-count" aria-live="polite">
+              Updating…
+            </span>
+          )}
 
           <div className="table-wrap">
-            <Table hover size="sm" className="table-cards align-middle">
+            <Table hover className="table-cards align-middle">
               <thead>
                 <tr>
-                  <th style={{ whiteSpace: 'nowrap' }}>Time</th>
+                  <th>Time</th>
                   <th>Actor</th>
                   <th>Action</th>
                   <th>Entity</th>
@@ -119,10 +151,12 @@ export default function AuditLogPage() {
               <tbody>
                 {data!.items.map((e) => (
                   <tr key={e.id}>
-                    <td data-label="Time" className="text-nowrap">{fmt(e.timestamp)}</td>
-                    <td data-label="Actor">{e.actorName}</td>
-                    <td data-label="Action"><Badge bg={actionVariant(e.action)}>{e.action}</Badge></td>
-                    <td data-label="Entity" className="text-nowrap">
+                    <td data-label="Time" className="text-nowrap table-muted">{fmt(e.timestamp)}</td>
+                    <td data-label="Actor" className="fw-semibold">{e.actorName}</td>
+                    <td data-label="Action">
+                      <span className={actionBadge(e.action)}>{e.action}</span>
+                    </td>
+                    <td data-label="Entity" className="text-nowrap col-mono">
                       {e.entityType ? `${e.entityType}${e.entityId != null ? ` #${e.entityId}` : ''}` : '—'}
                     </td>
                     <td data-label="Summary">{e.summary ?? '—'}</td>
@@ -141,6 +175,6 @@ export default function AuditLogPage() {
           />
         </>
       )}
-    </div>
+    </Page>
   );
 }

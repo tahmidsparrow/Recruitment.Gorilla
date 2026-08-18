@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Badge, Button, Form, Modal, Spinner, Table } from 'react-bootstrap';
+import { Button, Form, Modal, Table } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
+import { UserCog, UserPlus } from 'lucide-react';
 import {
   createUser,
   getUsers,
@@ -10,14 +11,23 @@ import {
 } from '../services/api';
 import { useToast } from '../components/ToastStack';
 import EmptyState from '../components/ui/EmptyState';
+import Page from '../components/ui/Page';
 import PageHeader from '../components/ui/PageHeader';
+import { SkeletonRows } from '../components/ui/Loading';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
 
-const roleVariant: Record<Role, string> = {
-  SuperAdmin: 'danger',
-  Admin: 'primary',
-  Recruiter: 'info',
-  Interviewer: 'secondary',
+/**
+ * Roles as pill badges rather than raw Bootstrap `<Badge bg="…">`, which
+ * ignored the pill geometry used everywhere else and coloured SuperAdmin
+ * `danger` — the hue this app reserves for destructive actions and failures,
+ * which made the most senior account look like an error. Seniority is now
+ * conveyed by fill weight (accent → outline), not by a warning colour.
+ */
+const roleBadge: Record<Role, string> = {
+  SuperAdmin: 'badge-pill badge-accent',
+  Admin: 'badge-pill badge-accent',
+  Recruiter: 'badge-pill badge-outline',
+  Interviewer: 'badge-pill badge-outline',
 };
 
 function errorMessage(err: unknown, fallback: string): string {
@@ -162,57 +172,69 @@ export default function UsersPage() {
   };
 
   return (
-    <div>
-      {/* No <h2> — the topbar owns the page title. */}
-      <PageHeader actions={<Button onClick={openAdd}>Add user</Button>} />
+    <Page>
+      {/* No <h2> — the topbar owns the page title. This page has no filter
+          bar for the action to share a row with, so it keeps a header. */}
+      <PageHeader
+        actions={
+          <Button onClick={openAdd}>
+            <UserPlus size={15} strokeWidth={1.75} aria-hidden="true" />
+            <span className="ms-1">Add user</span>
+          </Button>
+        }
+      />
 
       {isLoading ? (
-        <Spinner animation="border" size="sm" />
+        <SkeletonRows rows={5} label="Loading users" />
       ) : users.length === 0 ? (
         <EmptyState
+          icon={<UserCog size={20} strokeWidth={1.75} aria-hidden="true" />}
           title="No users yet"
-          description="Add an account to give someone access."
+          description="Add an account to give someone access to the portal."
           action={<Button onClick={openAdd}>Add user</Button>}
         />
       ) : (
         <div className="table-wrap">
-            <Table hover className="table-cards align-middle">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Roles</th>
-                  <th style={{ width: 110 }}>Status</th>
-                  <th style={{ width: 180 }}>Last login</th>
-                  <th className="col-right" style={{ width: 260 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td data-label="Name">
-                      {u.name}
+          <Table hover className="table-cards align-middle">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th style={{ width: 110 }}>Status</th>
+                <th style={{ width: 180 }}>Last login</th>
+                <th className="col-actions" style={{ width: 300 }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td data-label="Name">
+                    <span className="d-inline-flex align-items-center gap-2 flex-wrap">
+                      <span className="fw-semibold">{u.name}</span>
                       {u.mustChangePassword && (
-                        <span className="badge-pill badge-warning ms-2">Pending password</span>
+                        <span className="badge-pill badge-warning">Pending password</span>
                       )}
-                    </td>
-                    <td data-label="Email" className="text-break">{u.email}</td>
-                    <td data-label="Roles">
-                      <div className="d-flex flex-wrap gap-1 justify-content-end justify-content-md-start">
-                        {u.roles.map((r) => (
-                          <Badge key={r} bg={roleVariant[r]}>
-                            {r}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td data-label="Status">
-                      <span className={`badge-pill ${u.isActive ? 'badge-success' : 'badge-neutral'}`}>
-                        {u.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td data-label="Last login">{formatDate(u.lastLoginAt)}</td>
-                    <td className="col-actions">
+                    </span>
+                  </td>
+                  <td data-label="Email" className="text-break">{u.email}</td>
+                  <td data-label="Roles">
+                    <span className="badge-row">
+                      {u.roles.map((r) => (
+                        <span key={r} className={roleBadge[r]}>
+                          {r}
+                        </span>
+                      ))}
+                    </span>
+                  </td>
+                  <td data-label="Status">
+                    <span className={`badge-pill ${u.isActive ? 'badge-success' : 'badge-neutral'}`}>
+                      {u.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td data-label="Last login" className="table-muted">{formatDate(u.lastLoginAt)}</td>
+                  <td className="col-actions">
+                    <span className="row-actions">
                       <Button size="sm" variant="outline-secondary" onClick={() => openEdit(u)}>
                         Edit
                       </Button>
@@ -227,11 +249,12 @@ export default function UsersPage() {
                       >
                         {u.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
         </div>
       )}
 
@@ -242,61 +265,69 @@ export default function UsersPage() {
             <Modal.Title>{editing ? 'Edit user' : 'Add user'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {formError && <p className="text-danger small">{formError}</p>}
-            <Form.Group className="mb-3">
-              <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Email <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={!!editing}
-              />
-              {editing && <Form.Text className="text-muted">Email can't be changed.</Form.Text>}
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Roles <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <div className="d-flex flex-wrap gap-3">
-                {ALL_ROLES.map((r) => (
-                  <Form.Check
-                    key={r}
-                    type="checkbox"
-                    id={`role-${r}`}
-                    label={r}
-                    checked={roles.includes(r)}
-                    onChange={() => toggleRole(r)}
-                  />
-                ))}
-              </div>
-            </Form.Group>
-            {!editing && (
-              <Form.Group className="mb-3">
-                <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
-                  value={temporaryPassword}
-                  onChange={(e) => setTemporaryPassword(e.target.value)}
-                  autoComplete="off"
-                />
-                <Form.Text className="text-muted">
-                  At least 8 characters. The user must change it on first login.
-                </Form.Text>
+            <div className="form-stack">
+              {formError && (
+                <div className="alert-danger-soft" role="alert">
+                  {formError}
+                </div>
+              )}
+              <Form.Group>
+                <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control value={name} onChange={(e) => setName(e.target.value)} autoFocus />
               </Form.Group>
-            )}
-            {editing && (
-              <Form.Check
-                type="checkbox"
-                id="user-active"
-                label="Active"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-              />
-            )}
+              <Form.Group>
+                <Form.Label>Email <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={!!editing}
+                />
+                {editing && <Form.Text className="text-muted">Email can't be changed.</Form.Text>}
+              </Form.Group>
+              <Form.Group>
+                <Form.Label as="legend">
+                  Roles <span className="required-star" aria-hidden="true">*</span>
+                </Form.Label>
+                <div className="check-grid">
+                  {ALL_ROLES.map((r) => (
+                    <Form.Check
+                      key={r}
+                      type="checkbox"
+                      id={`role-${r}`}
+                      label={r}
+                      checked={roles.includes(r)}
+                      onChange={() => toggleRole(r)}
+                    />
+                  ))}
+                </div>
+              </Form.Group>
+              {!editing && (
+                <Form.Group>
+                  <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                  <Form.Control
+                    value={temporaryPassword}
+                    onChange={(e) => setTemporaryPassword(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <Form.Text className="text-muted">
+                    At least 8 characters. The user must change it on first login.
+                  </Form.Text>
+                </Form.Group>
+              )}
+              {editing && (
+                <Form.Check
+                  type="checkbox"
+                  id="user-active"
+                  label="Active — can sign in"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
+              )}
+            </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowEdit(false)}>
+            <Button variant="outline-secondary" onClick={() => setShowEdit(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
@@ -313,24 +344,30 @@ export default function UsersPage() {
             <Modal.Title>Reset password</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {resetError && <p className="text-danger small">{resetError}</p>}
-            <p className="text-muted">
-              Set a temporary password for <strong>{resetTarget?.name}</strong>. They'll be required to
-              change it on next login.
-            </p>
-            <Form.Group>
-              <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-              <Form.Control
-                value={resetPassword}
-                onChange={(e) => setResetPassword(e.target.value)}
-                autoComplete="off"
-                autoFocus
-              />
-              <Form.Text className="text-muted">At least 8 characters.</Form.Text>
-            </Form.Group>
+            <div className="form-stack">
+              {resetError && (
+                <div className="alert-danger-soft" role="alert">
+                  {resetError}
+                </div>
+              )}
+              <p className="form-help">
+                Set a temporary password for <strong>{resetTarget?.name}</strong>. They'll be required
+                to change it on next login.
+              </p>
+              <Form.Group>
+                <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
+                <Form.Control
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  autoComplete="off"
+                  autoFocus
+                />
+                <Form.Text className="text-muted">At least 8 characters.</Form.Text>
+              </Form.Group>
+            </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setResetTarget(null)}>
+            <Button variant="outline-secondary" onClick={() => setResetTarget(null)}>
               Cancel
             </Button>
             <Button type="submit" disabled={resetMutation.isPending}>
@@ -339,6 +376,6 @@ export default function UsersPage() {
           </Modal.Footer>
         </Form>
       </Modal>
-    </div>
+    </Page>
   );
 }

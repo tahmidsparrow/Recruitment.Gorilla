@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Card, Collapse, Form, Modal } from 'react-bootstrap';
+import { Button, Collapse, Form } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
+import ConfirmModal from './ui/ConfirmModal';
+import SectionCard from './ui/SectionCard';
 import {
   ALL_CRITERION_KEYS,
   EVALUATION_SECTIONS,
@@ -131,9 +133,16 @@ export function EvaluationReadOnly({ evaluation }: { evaluation: InterviewEvalua
 export default function EvaluationForm({
   interviewId,
   evaluation,
+  briefing,
 }: {
   interviewId: number;
   evaluation: InterviewEvaluation | null;
+  /**
+   * Optional context shown at the head of the card, above the progress bar and
+   * outside the scrolling rubric — currently the recruiter's notes. Passed in
+   * as a node so the form doesn't need to know what the briefing *is*.
+   */
+  briefing?: React.ReactNode;
 }) {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
@@ -179,15 +188,13 @@ export default function EvaluationForm({
 
   if (submitted && evaluation) {
     return (
-      <Card>
-        <Card.Body>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="mb-0">Your evaluation</h5>
-            <span className="badge bg-success-subtle text-success">Submitted</span>
-          </div>
-          <EvaluationReadOnly evaluation={evaluation} />
-        </Card.Body>
-      </Card>
+      <SectionCard
+        title="Your evaluation"
+        actions={<span className="badge-pill badge-success">Submitted</span>}
+      >
+        {briefing}
+        <EvaluationReadOnly evaluation={evaluation} />
+      </SectionCard>
     );
   }
 
@@ -231,18 +238,27 @@ export default function EvaluationForm({
   };
 
   return (
-    <Card>
-      <Card.Body>
-        <div className="d-flex justify-content-between align-items-center mb-1">
-          <h5 className="mb-0">Interview Evaluation</h5>
-          <span className={`small${showErrors && !allRated ? ' text-danger' : ' text-muted'}`}>
-            Rated {ratedCount} of {ALL_CRITERION_KEYS.length}
-            <span className="text-danger"> *</span>
-          </span>
-        </div>
-        <div className="eval-progress__bar mb-3" role="progressbar" aria-valuenow={ratedCount} aria-valuemin={0} aria-valuemax={ALL_CRITERION_KEYS.length}>
-          <div className="eval-progress__fill" style={{ width: `${(ratedCount / ALL_CRITERION_KEYS.length) * 100}%` }} />
-        </div>
+    <SectionCard
+      className="eval-form-card"
+      title="Interview evaluation"
+      actions={
+        <span className={`eval-progress__count${showErrors && !allRated ? ' eval-progress__count--invalid' : ''}`}>
+          Rated {ratedCount} of {ALL_CRITERION_KEYS.length}
+          <span className="required-star" aria-hidden="true">*</span>
+        </span>
+      }
+    >
+      {briefing}
+
+      <div className="eval-progress__bar" role="progressbar" aria-label="Criteria rated" aria-valuenow={ratedCount} aria-valuemin={0} aria-valuemax={ALL_CRITERION_KEYS.length}>
+        <div className="eval-progress__fill" style={{ width: `${(ratedCount / ALL_CRITERION_KEYS.length) * 100}%` }} />
+      </div>
+
+      {/* Only the rubric scrolls. The progress bar above and the Submit /
+          Save draft actions below stay in view, so you always know how far
+          through twelve criteria you are and can submit without scrolling
+          back — the card was ~2500px tall with all four sections open. */}
+      <div className="eval-form-card__scroll">
 
         {EVALUATION_SECTIONS.map((section) => {
           const open = openSections[section.id] ?? true;
@@ -257,7 +273,7 @@ export default function EvaluationForm({
                 aria-controls={`eval-body-${section.id}`}
               >
                 <span className="eval-panel__icon">{SECTION_ICONS[section.id]}</span>
-                <span>
+                <span className="eval-panel__titles">
                   <span className="eval-panel__title d-block">{section.title}</span>
                   <span className="eval-panel__hint">{section.description}</span>
                 </span>
@@ -275,10 +291,10 @@ export default function EvaluationForm({
                       const v = items[c.key];
                       return (
                         <div key={c.key} className="eval-criterion">
-                          <div className="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                            <div>
-                              <div className="fw-medium">{c.label}</div>
-                              {c.hint && <div className="text-muted small">{c.hint}</div>}
+                          <div className="eval-criterion__head">
+                            <div className="eval-criterion__label">
+                              <div className="eval-criterion__name">{c.label}</div>
+                              {c.hint && <div className="eval-criterion__hint">{c.hint}</div>}
                             </div>
                             <div
                               className={`rating-group${showErrors && v?.rating == null ? ' rating-group--invalid' : ''}`}
@@ -300,9 +316,10 @@ export default function EvaluationForm({
                             </div>
                           </div>
                           <Form.Control
-                            className="mt-2 eval-comment-input"
+                            className="eval-comment-input"
                             size="sm"
                             placeholder="Comments / observations"
+                            aria-label={`${c.label} comments`}
                             value={v?.comment ?? ''}
                             onChange={(e) => setItem(c.key, { comment: e.target.value })}
                           />
@@ -316,18 +333,19 @@ export default function EvaluationForm({
           );
         })}
 
-        <div className="eval-panel mt-3" style={{ '--eval-accent': 'var(--ms-primary)', '--eval-tint': 'var(--ms-primary-tint)' } as React.CSSProperties}>
-          <div className="eval-panel__header">
-            <span className="eval-panel__icon">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M9 12l2 2 4-5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
-              </svg>
-            </span>
-            <span className="eval-panel__title">Summary & recommendation</span>
-          </div>
-          <div className="eval-panel__body">
-            <Form.Group className="mb-3">
-              <Form.Label className="mb-1">General assessment</Form.Label>
+      <div className="eval-panel eval-panel--summary">
+        <div className="eval-panel__header">
+          <span className="eval-panel__icon">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M9 12l2 2 4-5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
+            </svg>
+          </span>
+          <span className="eval-panel__title">Summary &amp; recommendation</span>
+        </div>
+        <div className="eval-panel__body">
+          <div className="form-stack">
+            <Form.Group>
+              <Form.Label>General assessment</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -337,37 +355,39 @@ export default function EvaluationForm({
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label className={`mb-1${showErrors && recommendationMissing ? ' text-danger' : ''}`}>
-                Final recommendation<span className="text-danger"> *</span>
+            <Form.Group>
+              <Form.Label as="legend" className={showErrors && recommendationMissing ? 'text-danger' : undefined}>
+                Final recommendation<span className="required-star" aria-hidden="true">*</span>
               </Form.Label>
-              {RECOMMENDATIONS.map((r) => (
-                <div key={r.value}>
-                  <Form.Check
-                    type="radio"
-                    name="recommendation"
-                    id={`rec-${r.value}`}
-                    label={<span><strong>{r.label}:</strong> <span className="text-muted small">{r.hint}</span></span>}
-                    checked={recommendation === r.value}
-                    onChange={() => setRecommendation(r.value)}
-                  />
-                  {r.value === 'Other' && recommendation === 'Other' && (
-                    <Form.Control
-                      className="mt-1"
-                      size="sm"
-                      placeholder="Please specify"
-                      value={recommendationOther}
-                      isInvalid={otherMissing}
-                      onChange={(e) => setRecommendationOther(e.target.value)}
+              <div className="radio-stack">
+                {RECOMMENDATIONS.map((r) => (
+                  <div key={r.value}>
+                    <Form.Check
+                      type="radio"
+                      name="recommendation"
+                      id={`rec-${r.value}`}
+                      label={<span><strong>{r.label}:</strong> <span className="text-muted small">{r.hint}</span></span>}
+                      checked={recommendation === r.value}
+                      onChange={() => setRecommendation(r.value)}
                     />
-                  )}
-                </div>
-              ))}
+                    {r.value === 'Other' && recommendation === 'Other' && (
+                      <Form.Control
+                        className="mt-2"
+                        size="sm"
+                        placeholder="Please specify"
+                        value={recommendationOther}
+                        isInvalid={otherMissing}
+                        onChange={(e) => setRecommendationOther(e.target.value)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
             </Form.Group>
 
-            <Form.Group className="mb-1">
-              <Form.Label className={`mb-1 d-block${showErrors && overallMissing ? ' text-danger' : ''}`}>
-                Overall rating<span className="text-danger"> *</span>
+            <Form.Group>
+              <Form.Label as="legend" className={showErrors && overallMissing ? 'text-danger' : undefined}>
+                Overall rating<span className="required-star" aria-hidden="true">*</span>
               </Form.Label>
               <div
                 className={`rating-group${showErrors && overallMissing ? ' rating-group--invalid' : ''}`}
@@ -390,33 +410,34 @@ export default function EvaluationForm({
             </Form.Group>
           </div>
         </div>
+      </div>
+      </div>
 
-        <div className="d-flex gap-2 mt-3">
-          <Button variant="outline-secondary" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}>
-            {mutation.isPending ? 'Saving…' : 'Save draft'}
-          </Button>
-          <Button variant="primary" disabled={mutation.isPending} onClick={onSubmitClick}>
-            Submit
-          </Button>
-        </div>
-      </Card.Body>
+      {/* Submit leads: it is the action this whole panel exists for. Save draft
+          is the escape hatch and reads as secondary. */}
+      <div className="form-actions">
+        <Button variant="primary" disabled={mutation.isPending} onClick={onSubmitClick}>
+          Submit
+        </Button>
+        <Button variant="outline-secondary" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}>
+          {mutation.isPending ? 'Saving…' : 'Save draft'}
+        </Button>
+      </div>
 
-      <Modal show={confirmSubmit} onHide={() => setConfirmSubmit(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Submit evaluation</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Once submitted, this evaluation is <strong>locked</strong> and can no longer be edited.
-          Continue?
-          {mutation.isError && <Alert variant="danger" className="mt-3 mb-0">Submit failed. Please try again.</Alert>}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setConfirmSubmit(false)}>Cancel</Button>
-          <Button variant="primary" disabled={mutation.isPending} onClick={() => mutation.mutate(true)}>
-            {mutation.isPending ? 'Submitting…' : 'Submit & lock'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Card>
+      <ConfirmModal
+        show={confirmSubmit}
+        title="Submit evaluation"
+        confirmLabel="Submit & lock"
+        pendingLabel="Submitting…"
+        confirmVariant="primary"
+        pending={mutation.isPending}
+        error={mutation.isError ? 'Submit failed. Please try again.' : undefined}
+        onCancel={() => setConfirmSubmit(false)}
+        onConfirm={() => mutation.mutate(true)}
+      >
+        Once submitted, this evaluation is <strong>locked</strong> and can no longer be edited.
+        Continue?
+      </ConfirmModal>
+    </SectionCard>
   );
 }

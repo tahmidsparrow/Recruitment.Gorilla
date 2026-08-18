@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import NotificationBell from '../NotificationBell';
+import ThemeMenu from '../ThemeMenu';
 import SidebarNav from './SidebarNav';
 import TopbarTitle from './TopbarTitle';
+import UserMenu from './UserMenu';
 
 const STORAGE_KEY = 'rg-sidebar';
 
@@ -59,6 +61,12 @@ export default function AppShell() {
 
   return (
     <div className="app-layout">
+      {/* Keyboard users would otherwise tab through the whole sidebar on every
+          page before reaching the content. */}
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+
       <SidebarNav
         isVisible={visible}
         isCollapsed={collapsed}
@@ -88,13 +96,15 @@ export default function AppShell() {
           </button>
           <TopbarTitle />
           <div className="app-topbar__actions">
+            <ThemeMenu />
             <NotificationBell />
+            <UserMenu />
           </div>
         </header>
 
-        <div className="rg-content">
+        <main id="main-content" className="rg-content" tabIndex={-1}>
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );

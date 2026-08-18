@@ -57,6 +57,23 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         if (q.ReferredOnly)
             query = query.Where(c => c.IsReferred);
 
+        // Pipeline bucket — the same definitions the dashboard KPI tiles count,
+        // so a tile and the list it links to always agree.
+        query = q.Bucket switch
+        {
+            CandidateBuckets.Recommended =>
+                query.Where(c => CandidateBuckets.PositiveTerminal.Contains(c.CurrentStatus)),
+            CandidateBuckets.Rejected =>
+                query.Where(c => CandidateBuckets.NegativeTerminal.Contains(c.CurrentStatus)),
+            // Anything not yet terminal, either way.
+            CandidateBuckets.InProcess =>
+                query.Where(c => !CandidateBuckets.PositiveTerminal.Contains(c.CurrentStatus)
+                              && !CandidateBuckets.NegativeTerminal.Contains(c.CurrentStatus)),
+            CandidateBuckets.NewThisWeek =>
+                query.Where(c => c.CreatedAt >= DateTime.UtcNow.AddDays(-CandidateBuckets.NewWindowDays)),
+            _ => query,
+        };
+
         // Whitelisted sort — unknown values fall back to newest-first.
         var desc = q.Dir != "asc";
         query = q.Sort switch

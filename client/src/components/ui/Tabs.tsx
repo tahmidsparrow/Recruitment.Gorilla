@@ -36,10 +36,17 @@ export default function Tabs({
   );
 }
 
-/** The panel a tab controls. Kept next to Tabs so the aria wiring stays in one place. */
+/**
+ * The panel a tab controls. Kept next to Tabs so the aria wiring stays in one
+ * place.
+ *
+ * The panel is itself a page stack: a tab's contents are sections like any
+ * other page's, so they get the same rhythm rather than each tab inventing its
+ * own spacing.
+ */
 export function TabPanel({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`}>
+    <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`} className="page-stack">
       {children}
     </div>
   );

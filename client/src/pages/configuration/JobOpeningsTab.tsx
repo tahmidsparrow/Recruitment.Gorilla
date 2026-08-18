@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { Button, Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import {
   createRoleOption,
@@ -13,7 +13,9 @@ import {
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
 import { SearchableMultiSelect } from '../../components/SearchableSelect';
-import PageHeader from '../../components/ui/PageHeader';
+import ConfirmModal from '../../components/ui/ConfirmModal';
+import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonRows } from '../../components/ui/Loading';
 import { skillColorModifier } from '../../utils/skillColors';
 import {
   JOB_STATUS_BADGE,
@@ -176,55 +178,73 @@ export default function JobOpeningsTab() {
 
   return (
     <>
-      <PageHeader actions={<Button onClick={() => resetForm(null)}>Add job opening</Button>} />
+      {/* The action shares the filter row rather than taking one of its own
+          — see .page-bar. */}
+      <div className="page-bar">
+        <search className="flex-grow-1">
+          <div className="data-toolbar">
+          <div className="search-field data-toolbar__search">
+            <Search size={15} strokeWidth={1.75} aria-hidden="true" className="search-field__icon" />
+            <Form.Control
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search role, recruiter or department…"
+              aria-label="Search job openings"
+            />
+          </div>
+          {/* A segmented control, not the underline tab strip it borrowed
+              before: these filter a list in place, they don't switch between
+              panels, and an underline inside a bordered toolbar read as a
+              stray rule. */}
+          <div className="segmented data-toolbar__end" role="group" aria-label="Filter by status">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={statusFilter === f.id}
+                className={statusFilter === f.id ? 'active' : ''}
+                onClick={() => setStatusFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+            </div>
+          </div>
+        </search>
 
-      <div className="data-toolbar">
-        <div className="position-relative flex-grow-1" style={{ minWidth: 200, maxWidth: 360 }}>
-          <Search
-            size={15}
-            strokeWidth={1.75}
-            aria-hidden="true"
-            className="position-absolute top-50 translate-middle-y"
-            style={{ left: 11, color: 'var(--muted)' }}
-          />
-          <Form.Control
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search role, recruiter or department…"
-            aria-label="Search job openings"
-            style={{ paddingLeft: 34 }}
-          />
-        </div>
-        <div className="admin-tabs" role="tablist" aria-label="Filter by status">
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={statusFilter === f.id}
-              className={statusFilter === f.id ? 'active' : ''}
-              onClick={() => setStatusFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="page-bar__actions">
+          <Button onClick={() => resetForm(null)}>
+            <Plus size={15} strokeWidth={2} aria-hidden="true" />
+            <span className="ms-1">Add job opening</span>
+          </Button>
         </div>
       </div>
 
       {isLoading ? (
-        <Spinner animation="border" size="sm" />
+        <SkeletonRows rows={4} label="Loading job openings" />
       ) : visible.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">
-            {options.length === 0 ? 'No job openings yet' : 'No openings match these filters'}
-          </div>
-          <div className="empty-state-description">
-            {options.length === 0
+        <EmptyState
+          icon={<Briefcase size={20} strokeWidth={1.75} aria-hidden="true" />}
+          title={options.length === 0 ? 'No job openings yet' : 'No openings match these filters'}
+          description={
+            options.length === 0
               ? 'Add one to make it selectable on candidate forms and visible on the dashboard.'
-              : 'Try a different status or clear the search.'}
-          </div>
-        </div>
+              : 'Try a different status, or clear the search.'
+          }
+          action={
+            options.length === 0 ? (
+              <Button onClick={() => resetForm(null)}>Add job opening</Button>
+            ) : (
+              <Button
+                variant="outline-secondary"
+                onClick={() => { setQuery(''); setStatusFilter('all'); }}
+              >
+                Clear filters
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="job-list">
           {visible.map((o) => (
@@ -255,7 +275,11 @@ export default function JobOpeningsTab() {
             <Modal.Title>{editing ? 'Edit job opening' : 'Add job opening'}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {error && <p className="text-danger small">{error}</p>}
+            {error && (
+              <div className="alert-danger-soft mb-4" role="alert">
+                {error}
+              </div>
+            )}
 
             {/* Title and Posted date used to sit here as readOnly plaintext
                 fields, which rendered borderless and read as broken. Both are
@@ -338,25 +362,18 @@ export default function JobOpeningsTab() {
         </Form>
       </Modal>
 
-      <Modal show={deleting !== null} onHide={() => setDeleting(null)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete job opening</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Delete <strong>{deleting?.name}</strong>? If any candidates are assigned to this role, it
-          will be <strong>deactivated</strong> (kept for history) instead of permanently deleted.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setDeleting(null)}>Cancel</Button>
-          <Button
-            variant="danger"
-            disabled={removeMutation.isPending}
-            onClick={() => deleting && removeMutation.mutate(deleting.id)}
-          >
-            {removeMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* The shared confirm dialog rather than a fourth hand-rolled copy of the
+          same three elements. */}
+      <ConfirmModal
+        show={deleting !== null}
+        title="Delete job opening"
+        pending={removeMutation.isPending}
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => deleting && removeMutation.mutate(deleting.id)}
+      >
+        Delete <strong>{deleting?.name}</strong>? If any candidates are assigned to this role, it
+        will be <strong>deactivated</strong> (kept for history) instead of permanently deleted.
+      </ConfirmModal>
     </>
   );
 }

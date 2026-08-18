@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { History } from 'lucide-react';
 import { StatusBadge, StatusDot } from './StatusBadge';
+import EmptyState from './ui/EmptyState';
 import { skillColorClass } from '../utils/skillColors';
 import { initials } from '../utils/initials';
 import type { EvaluationSummary, StatusHistoryEntry } from '../types';
@@ -82,28 +84,34 @@ function EvaluationSummaries({ items }: { items: EvaluationSummary[] }) {
 
 export default function StatusTimeline({ history, canViewEvaluations = false }: Props) {
   if (history.length === 0) {
-    return <p className="text-muted">No status history yet.</p>;
+    return (
+      <EmptyState
+        icon={<History size={20} strokeWidth={1.75} aria-hidden="true" />}
+        title="No status history yet"
+        description="Every status change is recorded here, with who made it and when."
+      />
+    );
   }
 
   return (
-    <ul className="list-unstyled mb-0">
+    <ul className="timeline">
       {history.map((entry, i) => {
         const isLatest = i === 0;
         const isLast = i === history.length - 1;
         return (
-          <li key={entry.id} className="d-flex">
+          <li key={entry.id} className="timeline__item">
             {/* node + connector rail */}
-            <div className="d-flex flex-column align-items-center me-3">
-              <StatusDot status={entry.status} style={{ marginTop: 4 }} />
-              {!isLast && <span className="flex-grow-1 bg-secondary-subtle" style={{ width: 2 }} />}
+            <div className="timeline__rail">
+              <StatusDot status={entry.status} />
+              {!isLast && <span className="timeline__line" />}
             </div>
 
-            <div className={isLast ? 'pb-1' : 'pb-4'}>
-              <div className="d-flex align-items-center gap-2">
+            <div className={`timeline__body${isLast ? ' timeline__body--last' : ''}`}>
+              <div className="d-flex align-items-center gap-2 flex-wrap">
                 <StatusBadge status={entry.status} />
-                {isLatest && <span className="text-primary small fw-semibold">Current</span>}
+                {isLatest && <span className="timeline__current">Current</span>}
               </div>
-              <div className="text-muted small">
+              <div className="timeline__meta">
                 {formatDate(entry.changedAt)} · {entry.changedBy}
               </div>
               {entry.comment && cleanComment(entry.comment) && (

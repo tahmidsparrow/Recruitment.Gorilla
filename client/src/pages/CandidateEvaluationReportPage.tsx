@@ -1,12 +1,15 @@
 import { Link, useParams } from 'react-router-dom';
-import { Button, Col, Row, Spinner, Table } from 'react-bootstrap';
+import { Button, Table } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { CalendarDays, ChevronLeft, Printer } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ClipboardList, Printer } from 'lucide-react';
 import { getCandidateEvaluationReport } from '../services/api';
 import { EvaluationReadOnly } from '../components/EvaluationForm';
 import EmptyState from '../components/ui/EmptyState';
+import Page from '../components/ui/Page';
 import PageHeader from '../components/ui/PageHeader';
+import SectionCard from '../components/ui/SectionCard';
+import LoadingPanel from '../components/ui/Loading';
 import { EVALUATION_SECTIONS, RECOMMENDATIONS } from '../utils/evaluationCriteria';
 import { skillColorClass } from '../utils/skillColors';
 import type { ReportEvaluation } from '../types';
@@ -50,13 +53,15 @@ export default function CandidateEvaluationReportPage() {
   });
 
   if (isLoading) {
-    return <div className="d-flex justify-content-center py-5"><Spinner animation="border" /></div>;
+    return <LoadingPanel label="Loading evaluation report…" />;
   }
 
   if (error || !data) {
     const notFound = isAxiosError(error) && error.response?.status === 404;
     return (
       <EmptyState
+        page
+        variant={notFound ? 'empty' : 'error'}
         title={notFound ? "This candidate's report isn't available to you" : 'Failed to load the report'}
         description={
           notFound
@@ -86,12 +91,8 @@ export default function CandidateEvaluationReportPage() {
   }
 
   return (
-    <div className="evaluation-report d-flex flex-column gap-3">
-      <Link
-        to={`/candidates/${candidateId}`}
-        className="d-inline-flex align-items-center gap-1 d-print-none"
-        style={{ fontSize: 'var(--text-sm)', color: 'var(--muted)', alignSelf: 'flex-start' }}
-      >
+    <Page className="evaluation-report">
+      <Link to={`/candidates/${candidateId}`} className="back-link d-print-none">
         <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
         Back to candidate
       </Link>
@@ -111,39 +112,44 @@ export default function CandidateEvaluationReportPage() {
 
       {summary.interviewerCount === 0 ? (
         <EmptyState
+          icon={<ClipboardList size={20} strokeWidth={1.75} aria-hidden="true" />}
           title="No submitted evaluations yet"
           description="Once an interviewer submits and locks their evaluation, it will appear here."
         />
       ) : (
         <>
-          <div className="pulse-card">
-            <div className="metric-label mb-3">
-              Summary — {summary.interviewerCount} interviewer{summary.interviewerCount === 1 ? '' : 's'}
-            </div>
-            <Row className="g-4">
-              <Col xs={12} md={5}>
-                <span className="job-row__meta-label">Average overall rating</span>
-                <div className="metric-value">
-                  {summary.averageOverall != null ? summary.averageOverall.toFixed(1) : '—'}
-                  <small> / 5</small>
+          <SectionCard
+            title="Summary"
+            description={`Across ${summary.interviewerCount} interviewer${summary.interviewerCount === 1 ? '' : 's'}.`}
+          >
+            <div className="report-summary">
+              <div className="page-stack page-stack--tight">
+                <div>
+                  <span className="field-label">Average overall rating</span>
+                  <div className="metric-value">
+                    {summary.averageOverall != null ? summary.averageOverall.toFixed(1) : '—'}
+                    <small> / 5</small>
+                  </div>
                 </div>
 
-                <span className="job-row__meta-label mt-3 d-block">Recommendations</span>
-                <div className="d-flex flex-wrap gap-2">
-                  {summary.recommendationCounts.length === 0 ? (
-                    <span className="table-muted">—</span>
-                  ) : (
-                    summary.recommendationCounts.map((r) => (
-                      <span key={r.recommendation} className={recBadgeClass(r.recommendation)}>
-                        {recLabel(r.recommendation)}: {r.count}
-                      </span>
-                    ))
-                  )}
+                <div>
+                  <span className="field-label">Recommendations</span>
+                  <div className="d-flex flex-wrap gap-2">
+                    {summary.recommendationCounts.length === 0 ? (
+                      <span className="table-muted">—</span>
+                    ) : (
+                      summary.recommendationCounts.map((r) => (
+                        <span key={r.recommendation} className={recBadgeClass(r.recommendation)}>
+                          {recLabel(r.recommendation)}: {r.count}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </Col>
+              </div>
 
-              <Col xs={12} md={7}>
-                <span className="job-row__meta-label">Average by criterion</span>
+              <div>
+                <span className="field-label">Average by criterion</span>
                 <Table size="sm" className="mb-0 align-middle">
                   <tbody>
                     {CRITERION_ORDER
@@ -159,40 +165,44 @@ export default function CandidateEvaluationReportPage() {
                       ))}
                   </tbody>
                 </Table>
-              </Col>
-            </Row>
-          </div>
+              </div>
+            </div>
+          </SectionCard>
 
           {groups.map((g) => (
-            <div key={g.interviewId}>
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <span className="metric-label d-inline-flex align-items-center gap-2">
-                  <CalendarDays size={14} strokeWidth={1.75} aria-hidden="true" />
+            <section key={g.interviewId} className="page-stack page-stack--tight">
+              <div className="section-head">
+                <h3 className="section-title d-inline-flex align-items-center gap-2">
+                  <CalendarDays size={16} strokeWidth={1.75} aria-hidden="true" />
                   {new Date(g.scheduledAt).toLocaleString(undefined, {
                     month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
                   })}
-                </span>
-                {g.tags.map((t) => (
-                  <span key={t} className={skillColorClass(t)}>{t}</span>
+                </h3>
+                {g.tags.length > 0 && (
+                  <div className="section-head__actions">
+                    {g.tags.map((t) => (
+                      <span key={t} className={skillColorClass(t)}>{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid-2">
+                {g.evals.map((r) => (
+                  <SectionCard
+                    key={r.evaluation.id}
+                    as="h4"
+                    title={r.evaluation.interviewerName}
+                    actions={<span className="badge-pill badge-success">Submitted</span>}
+                  >
+                    <EvaluationReadOnly evaluation={r.evaluation} />
+                  </SectionCard>
                 ))}
               </div>
-              <Row className="g-3">
-                {g.evals.map((r) => (
-                  <Col key={r.evaluation.id} xs={12} lg={6}>
-                    <div className="pulse-card h-100">
-                      <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
-                        <strong>{r.evaluation.interviewerName}</strong>
-                        <span className="badge-pill badge-success">Submitted</span>
-                      </div>
-                      <EvaluationReadOnly evaluation={r.evaluation} />
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            </div>
+            </section>
           ))}
         </>
       )}
-    </div>
+    </Page>
   );
 }

@@ -15,10 +15,10 @@ namespace Recruitment.Gorilla.API.Services;
 /// </summary>
 public class DashboardService(AppDbContext db)
 {
-    // Exact seeded status strings (including the historical typos) — see AppDbContext seed.
-    private static readonly HashSet<string> PositiveTerminal = ["Recommended"];
-    private static readonly HashSet<string> NegativeTerminal =
-        ["Reject", "Not Recommended", "Discontinued", "Not Available"];
+    // The bucket definitions live in CandidateBuckets so the candidate list
+    // filters on exactly what these tiles count — see that file.
+    private static HashSet<string> PositiveTerminal => CandidateBuckets.PositiveTerminal;
+    private static HashSet<string> NegativeTerminal => CandidateBuckets.NegativeTerminal;
 
     // ---- Org-wide (no owner scope) ----
 
@@ -31,7 +31,7 @@ public class DashboardService(AppDbContext db)
         var rejected = counts.Where(x => NegativeTerminal.Contains(x.Status)).Sum(x => x.Count);
         var inProcess = total - recommended - rejected;
 
-        var weekAgo = DateTime.UtcNow.AddDays(-7);
+        var weekAgo = DateTime.UtcNow.AddDays(-CandidateBuckets.NewWindowDays);
         var newThisWeek = await db.Candidates.CountAsync(c => c.CreatedAt >= weekAgo);
         var referredCount = await db.Candidates.CountAsync(c => c.IsReferred);
         var referredPercent = total == 0 ? 0 : Math.Round(referredCount * 100.0 / total, 1);

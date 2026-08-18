@@ -13,6 +13,7 @@ export default function ConfirmModal({
   title,
   children,
   confirmLabel = 'Delete',
+  pendingLabel,
   confirmVariant = 'danger',
   pending = false,
   error,
@@ -23,6 +24,13 @@ export default function ConfirmModal({
   title: string;
   children: ReactNode;
   confirmLabel?: string;
+  /**
+   * The in-flight label. Defaults to a naive "-ing" of `confirmLabel`, which
+   * is right for the single-verb labels ("Delete" → "Deleting…") but not for a
+   * phrase — "Submit & lock" would become "Submit & locking…". Pass it
+   * explicitly whenever the label is more than one word.
+   */
+  pendingLabel?: string;
   confirmVariant?: 'danger' | 'primary';
   pending?: boolean;
   /** Shown inside the dialog, so the failure appears where the action was taken. */
@@ -30,25 +38,29 @@ export default function ConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const busyLabel = pendingLabel ?? `${confirmLabel.replace(/e$/, '')}ing…`;
+
   return (
     <Modal show={show} onHide={onCancel} centered>
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {children}
-        {error && (
-          <Alert variant="danger" className="mt-3 mb-0">
-            {error}
-          </Alert>
-        )}
+        <div className="form-stack">
+          <div>{children}</div>
+          {error && (
+            <Alert variant="danger" className="mb-0">
+              {error}
+            </Alert>
+          )}
+        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onCancel}>
           Cancel
         </Button>
         <Button variant={confirmVariant} disabled={pending} onClick={onConfirm}>
-          {pending ? `${confirmLabel.replace(/e$/, '')}ing…` : confirmLabel}
+          {pending ? busyLabel : confirmLabel}
         </Button>
       </Modal.Footer>
     </Modal>

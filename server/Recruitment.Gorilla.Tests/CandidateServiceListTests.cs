@@ -1,5 +1,6 @@
 using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.DTOs;
+using Recruitment.Gorilla.API.Services;
 using Recruitment.Gorilla.Tests.Infrastructure;
 
 namespace Recruitment.Gorilla.Tests;
@@ -23,6 +24,76 @@ public class CandidateServiceListTests(MySqlDatabaseFixture fixture) : DbTestBas
         // name/email search still works
         var byName = await List(new CandidateListQuery(Search: withPhone.FullName));
         Assert.Contains(withPhone.Id, byName.Items.Select(i => i.Id));
+    }
+
+    /// <summary>
+    /// The dashboard's KPI tiles link into this list, so a bucket must select
+    /// exactly the set the matching tile counts. "rejected" in particular spans
+    /// four statuses, which the single-value Status filter cannot express — that
+    /// mismatch is why the bucket filter exists.
+    /// </summary>
+    [Fact]
+    public async Task Bucket_rejected_covers_every_negative_terminal_status()
+    {
+        var rejected = Data.AddCandidate(status: "Reject");
+        var notRecommended = Data.AddCandidate(status: "Not Recommended");
+        var discontinued = Data.AddCandidate(status: "Discontinued");
+        var notAvailable = Data.AddCandidate(status: "Not Available");
+        var recommended = Data.AddCandidate(status: "Recommended");
+        var inFlight = Data.AddCandidate(status: "Uploaded");
+
+        var ids = (await List(new CandidateListQuery(Bucket: CandidateBuckets.Rejected)))
+            .Items.Select(i => i.Id).ToHashSet();
+
+        Assert.Contains(rejected.Id, ids);
+        Assert.Contains(notRecommended.Id, ids);
+        Assert.Contains(discontinued.Id, ids);
+        Assert.Contains(notAvailable.Id, ids);
+        Assert.DoesNotContain(recommended.Id, ids);
+        Assert.DoesNotContain(inFlight.Id, ids);
+    }
+
+    [Fact]
+    public async Task Bucket_in_process_is_everything_not_yet_terminal()
+    {
+        var uploaded = Data.AddCandidate(status: "Uploaded");
+        var interviewing = Data.AddCandidate(status: "Interview Scheduled");
+        var recommended = Data.AddCandidate(status: "Recommended");
+        var rejected = Data.AddCandidate(status: "Discontinued");
+
+        var ids = (await List(new CandidateListQuery(Bucket: CandidateBuckets.InProcess)))
+            .Items.Select(i => i.Id).ToHashSet();
+
+        Assert.Contains(uploaded.Id, ids);
+        Assert.Contains(interviewing.Id, ids);
+        Assert.DoesNotContain(recommended.Id, ids);
+        Assert.DoesNotContain(rejected.Id, ids);
+    }
+
+    [Fact]
+    public async Task Bucket_recommended_selects_only_the_positive_terminal_status()
+    {
+        var recommended = Data.AddCandidate(status: "Recommended");
+        var other = Data.AddCandidate(status: "Uploaded");
+
+        var ids = (await List(new CandidateListQuery(Bucket: CandidateBuckets.Recommended)))
+            .Items.Select(i => i.Id).ToHashSet();
+
+        Assert.Contains(recommended.Id, ids);
+        Assert.DoesNotContain(other.Id, ids);
+    }
+
+    /// <summary>A stale or hand-edited link must degrade to an unfiltered list,
+    /// not throw and not silently return nothing.</summary>
+    [Fact]
+    public async Task Unknown_bucket_is_ignored_rather_than_excluding_everything()
+    {
+        var candidate = Data.AddCandidate();
+
+        var ids = (await List(new CandidateListQuery(Bucket: "not-a-bucket")))
+            .Items.Select(i => i.Id).ToHashSet();
+
+        Assert.Contains(candidate.Id, ids);
     }
 
     [Fact]
