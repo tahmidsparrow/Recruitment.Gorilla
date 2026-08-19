@@ -33,7 +33,7 @@ jobs:
           dotnet-version: "10.0.x"
       - run: dotnet restore
       # Includes ControllerAuthorizationTests.cs — the regression net for the
-      # eventual OIDC/authorization swap (see gorilla-platform identity work).
+      # eventual OIDC/authorization swap (see gorilla-platform's Gorilla.IAM work).
       - run: dotnet test --no-restore
 
   frontend:
