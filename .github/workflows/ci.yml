@@ -33,7 +33,7 @@ jobs:
           dotnet-version: "10.0.x"
       - run: dotnet restore
       # Includes ControllerAuthorizationTests.cs — the regression net for the
-      # eventual OIDC/authorization swap (see gorilla-platform's Gorilla.IAM work).
+      # eventual OIDC/authorization swap (see Gorilla.Platform's Gorilla.IAM work).
       - run: dotnet test --no-restore
 
   frontend:
@@ -63,4 +63,4 @@ jobs:
   # Playwright e2e needs a live, seeded stack (baseURL http://localhost:5173,
   # E2E_EMAIL/E2E_PASSWORD credentials — see client/playwright.config.ts) that
   # isn't available in this workflow yet. Runs manually until the gateway
-  # smoke test (gorilla-platform CI) gives us a stack to point it at.
+  # smoke test (Gorilla.Platform CI) gives us a stack to point it at.
