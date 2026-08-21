@@ -68,8 +68,37 @@ var encryptionKey = builder.Configuration["Encryption:Key"]
 if (Encoding.UTF8.GetByteCount(encryptionKey) < 16)
     throw new InvalidOperationException("Encryption:Key must be at least 16 characters.");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Two trust roots, selected per-request: RG's own locally-signed tokens (unchanged), and
+// Gorilla.IAM-issued tokens (spec section 3.3/P2) — a different signing algorithm (RS256 via
+// JWKS, not a shared HS256 key) and a different issuer, so they can't share one JwtBearer
+// scheme's TokenValidationParameters. The policy scheme below picks between them by peeking
+// (not validating) the token's "iss" claim; each named scheme still does full signature/
+// issuer/audience/lifetime validation afterward.
+const string LocalScheme = "Local";
+const string IamScheme = "Iam";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+
+builder.Services.AddAuthentication("Bearer")
+    .AddPolicyScheme("Bearer", "Bearer", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var header = context.Request.Headers.Authorization.ToString();
+            if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return LocalScheme;
+
+            try
+            {
+                var issuer = new JwtSecurityTokenHandler().ReadJwtToken(header["Bearer ".Length..]).Issuer;
+                return issuer == jwtIssuer ? LocalScheme : IamScheme;
+            }
+            catch (Exception ex) when (ex is ArgumentException or FormatException)
+            {
+                return LocalScheme; // malformed token — let the Local scheme's own validation reject it
+            }
+        };
+    })
+    .AddJwtBearer(LocalScheme, options =>
     {
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -80,7 +109,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             RequireExpirationTime = true,
             RequireSignedTokens = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidIssuer = jwtIssuer,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidAlgorithms = [SecurityAlgorithms.HmacSha256], // pin algorithm (prevents alg-confusion)
@@ -88,11 +117,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = ClaimTypes.Role,
         };
+    })
+    .AddJwtBearer(IamScheme, options =>
+    {
+        options.Authority = builder.Configuration["Iam:Authority"];
+        options.MapInboundClaims = false;
+        // No IssuerSigningKey here — JWKS-driven from the Authority's discovery document,
+        // matching IAM's own RS256/kid-tagged design (spec section 3.2).
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidAudience = "ats", // IAM sets the token's resource to the OpenIddict client_id (OidcEndpoints.cs: SetResources)
+            RoleClaimType = "ats_roles", // namespaced per spec section 3.2 — never a flat "roles" claim
+            NameClaimType = JwtRegisteredClaimNames.Sub,
+        };
+        if (builder.Environment.IsDevelopment())
+            options.RequireHttpsMetadata = false; // matches Gorilla.IAM's own dev-only bypass
     });
 
 // Default-deny: every endpoint requires an authenticated user (unless [AllowAnonymous]),
 // and a user with a pending forced password change is blocked from all but the
-// change-password endpoint.
+// change-password endpoint. Subject resolution (sub → local user id) is NOT a requirement
+// on this policy — see SubjectResolutionMiddleware's doc comment for why that doesn't
+// reliably run for every endpoint in this app; it runs as middleware instead, below.
 builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
@@ -113,6 +159,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseAuthentication();
+app.UseSubjectResolution();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -7,6 +7,15 @@ namespace Recruitment.Gorilla.API.Authorization;
 /// Part of the fallback policy, so it guards every endpoint except the allow-listed
 /// ones (the change-password endpoint), forcing a first-login user to set a new
 /// password before doing anything else.
+///
+/// KNOWN GAP, pre-existing and not introduced here: FallbackPolicy only applies to an
+/// endpoint with zero authorization metadata. Every controller in this app carries at
+/// least one [Authorize] attribute, so in practice this requirement is only pulled in
+/// when that attribute (or another on the same endpoint) is a completely bare
+/// [Authorize] — see SubjectResolutionMiddleware's doc comment, which hit the same
+/// mechanism and works around it with real middleware instead of a policy requirement.
+/// An endpoint whose every [Authorize] attribute specifies Roles (e.g. ConfigurationController's
+/// class + DeleteRole's method attribute, both Roles-only) never evaluates this at all.
 /// </summary>
 public class PasswordChangedRequirement : IAuthorizationRequirement;
 

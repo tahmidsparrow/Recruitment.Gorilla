@@ -21,7 +21,7 @@ public class UsersController(
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto)
     {
-        var result = await users.CreateAsync(dto, currentUser.UserId ?? 0);
+        var result = await users.CreateAsync(dto, currentUser.UserId);
         if (result.Error is not null) return BadRequest(new { message = result.Error });
 
         logger.LogInformation("Super Admin {By} created user {Id} ('{Email}').",

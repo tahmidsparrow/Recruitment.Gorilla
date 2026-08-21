@@ -31,7 +31,7 @@ public class ConfigurationController(
         if (string.IsNullOrWhiteSpace(dto.FromAddress)) return BadRequest("From address is required.");
         if (dto.Port is < 1 or > 65535) return BadRequest("Port must be between 1 and 65535.");
 
-        await emailSettings.SaveAsync(dto, currentUser.UserId);
+        await emailSettings.SaveAsync(dto, currentUser.UserId, currentUser.Name);
         logger.LogInformation("SMTP settings updated by user {UserId}.", currentUser.UserId);
         return Ok(await emailSettings.GetAsync());
     }

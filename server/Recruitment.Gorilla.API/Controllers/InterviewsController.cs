@@ -30,24 +30,20 @@ public class InterviewsController(
 
     /// <summary>Interviews the current user is assigned to.</summary>
     [HttpGet("mine")]
-    public async Task<IActionResult> GetMine()
-    {
-        if (currentUser.UserId is not int userId) return Unauthorized();
-        return Ok(await interviews.GetMineAsync(userId));
-    }
+    public async Task<IActionResult> GetMine() =>
+        Ok(await interviews.GetMineAsync(currentUser.UserId));
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        if (currentUser.UserId is not int userId) return Unauthorized();
-        var detail = await interviews.GetDetailAsync(id, userId, IsAdmin);
+        var detail = await interviews.GetDetailAsync(id, currentUser.UserId, IsAdmin);
         return detail is null ? NotFound() : Ok(detail);
     }
 
     [HttpPut("{id:int}/evaluation")]
     public async Task<IActionResult> SaveEvaluation(int id, [FromBody] UpsertEvaluationDto dto)
     {
-        if (currentUser.UserId is not int userId) return Unauthorized();
+        var userId = currentUser.UserId;
 
         var (result, error, notFound, conflict) = await interviews.UpsertEvaluationAsync(id, userId, dto);
         if (notFound) return NotFound();

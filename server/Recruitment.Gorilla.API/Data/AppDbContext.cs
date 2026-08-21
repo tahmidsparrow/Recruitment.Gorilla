@@ -329,6 +329,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(u => u.PasswordHash).HasMaxLength(400).IsRequired();
             e.Property(u => u.IsActive).HasDefaultValue(true);
             e.HasIndex(u => u.Email).IsUnique();
+            e.HasIndex(u => u.IamSubject).IsUnique();
             e.HasMany(u => u.Roles)
              .WithOne(r => r.User)
              .HasForeignKey(r => r.UserId)
