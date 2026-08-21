@@ -1,15 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import type { User as OidcUser } from 'oidc-client-ts';
 import { AuthProvider, useAuth } from './AuthContext';
 import type { Role } from '../types';
 
-// No network: the provider calls refreshSession() on mount.
-vi.mock('../services/api', () => ({
-  refreshSession: vi.fn(),
-  login: vi.fn(),
-  logout: vi.fn(),
+// No network: the provider calls userManager.getUser() on mount, oidc-client-ts's
+// own session restore. readAtsRoles is mocked too — its own decoding logic is
+// covered separately in userManager.test.ts; this file is about role-derivation.
+vi.mock('./userManager', () => ({
+  userManager: {
+    getUser: vi.fn(),
+    events: {
+      addUserLoaded: vi.fn(() => () => {}),
+      addUserUnloaded: vi.fn(() => () => {}),
+    },
+    signinRedirect: vi.fn(),
+    removeUser: vi.fn(),
+  },
+  readAtsRoles: vi.fn(),
 }));
-import { refreshSession } from '../services/api';
+import { userManager, readAtsRoles } from './userManager';
 
 function Flags() {
   const { isSuperAdmin, isAdminOrAbove, canWriteCandidates, isInterviewerOnly, loading } = useAuth();
@@ -25,11 +35,16 @@ function Flags() {
 }
 
 async function renderWithRoles(roles: Role[] | null) {
-  vi.mocked(refreshSession).mockResolvedValue(
+  vi.mocked(userManager.getUser).mockResolvedValue(
     roles === null
       ? null
-      : { token: 't', name: 'Test', email: 'test@x.io', roles, mustChangePassword: false, expiresAt: '' },
+      : ({
+          profile: { name: 'Test', email: 'test@x.io' },
+          access_token: 'fake-token',
+          expired: false,
+        } as unknown as OidcUser),
   );
+  vi.mocked(readAtsRoles).mockReturnValue(roles ?? []);
   render(
     <AuthProvider>
       <Flags />

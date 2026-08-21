@@ -67,7 +67,7 @@ public static class SubjectResolutionMiddleware
         var user = await db.Users.SingleOrDefaultAsync(u => u.IamSubject == iamSubject);
         if (user is null)
         {
-            var email = principal.FindFirst(ClaimTypes.Email)?.Value;
+            var email = ReadEmail(principal);
             user = email is null ? null : await db.Users.SingleOrDefaultAsync(u => u.Email == email);
             if (user is null)
                 return false; // no local RG account for this identity — fail closed, never "unrestricted"
@@ -82,6 +82,15 @@ public static class SubjectResolutionMiddleware
         AddResolvedClaim(principal, user.Id);
         return true;
     }
+
+    /// <summary>RG's own tokens carry email under <see cref="ClaimTypes.Email"/> (the long URI —
+    /// AuthService.CreateAccessToken's own choice, made so MapInboundClaims=false doesn't need to
+    /// touch it). An IAM-issued token carries it under the plain "email" (OpenIddict's
+    /// Claims.Email, standard OIDC short form) — MapInboundClaims=false on both schemes means
+    /// neither gets remapped to the other's shape, so this has to check both. Confirmed the hard
+    /// way: a real IAM token's JIT-link silently 403'd because this looked for only the long form.</summary>
+    private static string? ReadEmail(ClaimsPrincipal principal) =>
+        principal.FindFirst(ClaimTypes.Email)?.Value ?? principal.FindFirst("email")?.Value;
 
     private static void AddResolvedClaim(ClaimsPrincipal principal, int localUserId)
     {

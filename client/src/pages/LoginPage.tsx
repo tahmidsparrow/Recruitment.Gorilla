@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Button, Form, Spinner } from 'react-bootstrap';
-import { isAxiosError } from 'axios';
+import { Navigate, useLocation } from 'react-router-dom';
+import { Button, Spinner } from 'react-bootstrap';
 import { useAuth } from '../auth/AuthContext';
-import PasswordInput from '../components/ui/PasswordInput';
 import BrandLogo from '../components/BrandLogo';
 import ThemeMenu from '../components/ThemeMenu';
 
@@ -13,12 +11,9 @@ interface LocationState {
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from ?? '/candidates';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -26,20 +21,15 @@ export default function LoginPage() {
     return <Navigate to={from} replace />;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignIn = async () => {
     setError(null);
     setBusy(true);
     try {
-      const user = await login({ email: email.trim(), password });
-      navigate(user.mustChangePassword ? '/change-password' : from, { replace: true });
-    } catch (err) {
-      setError(
-        isAxiosError(err) && err.response?.status === 401
-          ? 'Invalid email or password.'
-          : 'Unable to sign in. Please try again.'
-      );
-    } finally {
+      // Redirects to Gorilla.IAM — this never resolves on success (full-page
+      // navigation); busy/error only matter for the redirect itself failing to start.
+      await login(from);
+    } catch {
+      setError('Unable to start sign-in. Please try again.');
       setBusy(false);
     }
   };
@@ -51,51 +41,23 @@ export default function LoginPage() {
         <BrandLogo layout="stacked" size={72} className="login-logo" title="Recruitment Gorilla" />
         <h1 className="login-title">Sign in</h1>
 
-        <Form onSubmit={handleSubmit}>
-          <div className="form-stack">
-            {error && (
-              <div className="alert-danger-soft" role="alert">
-                {error}
-              </div>
+        <div className="form-stack">
+          {error && (
+            <div className="alert-danger-soft" role="alert">
+              {error}
+            </div>
+          )}
+          <Button type="button" className="w-100" disabled={busy} onClick={handleSignIn}>
+            {busy ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" aria-hidden="true" />
+                Redirecting…
+              </>
+            ) : (
+              'Sign in'
             )}
-            <Form.Group>
-              <Form.Label htmlFor="login-email">
-                Email <span className="required-star" aria-hidden="true">*</span>
-              </Form.Label>
-              <Form.Control
-                id="login-email"
-                autoFocus
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label htmlFor="login-password">
-                Password <span className="required-star" aria-hidden="true">*</span>
-              </Form.Label>
-              <PasswordInput
-                id="login-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="off"
-                required
-              />
-            </Form.Group>
-            <Button type="submit" className="w-100" disabled={busy}>
-              {busy ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" aria-hidden="true" />
-                  Signing in…
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </Button>
-          </div>
-        </Form>
+          </Button>
+        </div>
       </div>
     </div>
   );

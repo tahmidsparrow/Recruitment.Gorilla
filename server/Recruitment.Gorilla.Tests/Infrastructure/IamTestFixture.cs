@@ -109,15 +109,22 @@ public sealed class IamTestFixture : IAsyncLifetime
     }
 
     /// <summary>Mints a token shaped like spec section 3.2's example: GUID sub, namespaced
-    /// "ats_roles" claim, signed with this fixture's test-only RSA key.</summary>
+    /// "ats_roles" claim, signed with this fixture's test-only RSA key. Email/name use the
+    /// plain OIDC short claim names ("email"/"name" — OpenIddict's own Claims.Email/Claims.Name,
+    /// set via OidcEndpoints.cs's identity.SetClaim), not ClaimTypes.Email/ClaimTypes.Name — those
+    /// long-URI forms are RG's own local tokens' convention (AuthService.CreateAccessToken), and
+    /// with MapInboundClaims=false on both JWT bearer schemes (Program.cs) neither gets remapped
+    /// to the other's shape. Using the wrong one here previously let this whole suite pass while
+    /// masking a real bug: SubjectResolutionMiddleware's JIT-link-by-email 403'd on every real IAM
+    /// token, found only by actually running the sign-in flow through a real browser.</summary>
     public string MintIamToken(Guid subject, string email, string name, params string[] atsRoles)
     {
         var creds = new SigningCredentials(new RsaSecurityKey(_rsa), SecurityAlgorithms.RsaSha256);
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, subject.ToString()),
-            new(ClaimTypes.Email, email),
-            new(ClaimTypes.Name, name),
+            new("email", email),
+            new("name", name),
         };
         claims.AddRange(atsRoles.Select(r => new Claim("ats_roles", r)));
 
