@@ -64,6 +64,18 @@ public static class SubjectResolutionMiddleware
         if (!Guid.TryParse(sub, out var iamSubject))
             return false; // neither shape — fail closed
 
+        // Defence in depth, not the primary control: IAM's own /connect/authorize
+        // handler is supposed to refuse a token for a client the subject holds no
+        // grant for (spec section 3.1 — role_grants is authoritative), so a
+        // correctly-behaving IAM should never hand RG a token with zero ats_roles
+        // at all. RG must not depend solely on that holding, though — a bug or
+        // future regression on IAM's side would otherwise turn straight into an
+        // RG access hole with nothing behind it. Checked before the JIT-link DB
+        // work below: a token with no role for this app has no business here
+        // regardless of whether a matching local user exists.
+        if (principal.Identity is not ClaimsIdentity identity || !identity.FindAll(identity.RoleClaimType).Any())
+            return false;
+
         var user = await db.Users.SingleOrDefaultAsync(u => u.IamSubject == iamSubject);
         if (user is null)
         {
