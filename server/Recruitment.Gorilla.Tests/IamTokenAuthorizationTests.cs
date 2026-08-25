@@ -137,4 +137,69 @@ public class IamTokenAuthorizationTests(IamTestFixture fx)
         Assert.Contains(byAdmin, ids);
         Assert.Contains(byRecruiter, ids);
     }
+
+    // ----- JIT role sync: IAM's grants mirrored into RG's local projection -----
+    //
+    // These do NOT test authorization — that is enforced from the token's own claims.
+    // They test that RG's local UserRoles stays accurate, which it must, because
+    // ConfigurationService's GetRecruiterOptionsAsync/ValidateRecruiters filter on it
+    // to drive the "who can be a job opening's recruiter" dropdown, and RG's own admin
+    // UI no longer writes roles (see UserServiceRoleOwnershipTests).
+
+    [Fact]
+    public async Task A_role_added_in_IAM_appears_in_the_local_projection_on_the_next_request()
+    {
+        var user = await fx.SeedUserAsync(Roles.Recruiter);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter, Roles.Interviewer);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal([Roles.Interviewer, Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task A_role_removed_in_IAM_disappears_from_the_local_projection()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal([Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id)); // Admin gone, not merged
+    }
+
+    /// <summary>Local login is unaffected: an RG-issued token carries roles under
+    /// ClaimTypes.Role and never reaches the IAM branch, so the projection it was
+    /// built from must not be rewritten out from under it.</summary>
+    [Fact]
+    public async Task A_local_token_does_not_touch_the_local_projection()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+        Assert.Equal([Roles.Admin], await fx.GetLocalRolesAsync(user.Id));
+    }
+
+    /// <summary>The regression test for a race no single-request test could catch:
+    /// a real SPA fires a burst of API calls on page load, every one runs the JIT
+    /// sync, and they all try to rewrite the same rows at once. Before the fix, the
+    /// requests that lost that race threw DbUpdateConcurrencyException and returned
+    /// 500 — found only by driving an actual browser login. Losing the race is the
+    /// normal case and must be harmless.</summary>
+    [Fact]
+    public async Task Concurrent_requests_all_succeed_while_the_projection_is_being_synced()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter, Roles.Interviewer);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => fx.SendAsync(HttpMethod.Get, "/api/dashboard/kpis", token)));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        Assert.Equal([Roles.Interviewer, Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id));
+    }
 }

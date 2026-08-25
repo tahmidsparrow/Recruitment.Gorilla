@@ -25,6 +25,14 @@ public class UserService(AppDbContext db, EmailService emailService)
         public static MutationResult Fail(string error) => new(null, error);
     }
 
+    /// <summary>
+    /// Creates a local user, including initial role assignments — deliberately unlike
+    /// <see cref="UpdateAsync"/>, which ignores them. The projection has to start
+    /// somewhere, and the local-login fallback needs a brand-new user to hold roles
+    /// before they have ever signed in through IAM. IAM still wins: the first IAM login
+    /// overwrites these with its own grants (SubjectResolutionMiddleware's JIT sync).
+    /// Once local login is retired, this can stop taking roles entirely.
+    /// </summary>
     public async Task<MutationResult> CreateAsync(CreateUserDto dto, int createdByUserId)
     {
         var error = ValidateRoles(dto.Roles)
@@ -57,31 +65,36 @@ public class UserService(AppDbContext db, EmailService emailService)
         return MutationResult.Ok(ToDto(user));
     }
 
+    /// <summary>
+    /// Updates name and active status. <b>Role assignments are deliberately ignored</b>,
+    /// even though the DTO still carries them.
+    ///
+    /// Gorilla.IAM owns role assignment now: an IAM-authenticated request is authorized
+    /// from its token's ats_roles claim, built from IAM's role_grants, so writing roles
+    /// here would change nothing for anyone signing in through IAM while appearing to
+    /// work — and would silently diverge from IAM for anyone still using the local login
+    /// fallback. One writer instead: grants are made in IAM's console, and
+    /// SubjectResolutionMiddleware's JIT sync mirrors them into this projection on each
+    /// IAM login. (CreateAsync still seeds initial roles — see its own note.)
+    /// </summary>
     public async Task<MutationResult> UpdateAsync(int id, UpdateUserDto dto)
     {
-        var error = ValidateRoles(dto.Roles)
-            ?? (string.IsNullOrWhiteSpace(dto.Name) ? "Name is required." : null);
+        var error = string.IsNullOrWhiteSpace(dto.Name) ? "Name is required." : null;
         if (error is not null) return MutationResult.Fail(error);
 
         var user = await db.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
         if (user is null) return MutationResult.Fail("User not found.");
 
-        var newRoles = DistinctRoles(dto.Roles);
-
-        // Protect the last active Super Admin from losing the role or being deactivated.
-        var wasActiveSuperAdmin = user.IsActive && user.Roles.Any(r => r.Role == Roles.SuperAdmin);
-        var staysActiveSuperAdmin = dto.IsActive && newRoles.Contains(Roles.SuperAdmin);
-        if (wasActiveSuperAdmin && !staysActiveSuperAdmin && await IsLastActiveSuperAdminAsync(id))
-            return MutationResult.Fail("Cannot remove the last active Super Admin.");
+        // Only the deactivation half of this guard is still reachable — roles can no
+        // longer be removed here — but deactivating the last active Super Admin would
+        // still lock the local-login fallback out of its own admin surface.
+        var isActiveSuperAdmin = user.IsActive && user.Roles.Any(r => r.Role == Roles.SuperAdmin);
+        if (isActiveSuperAdmin && !dto.IsActive && await IsLastActiveSuperAdminAsync(id))
+            return MutationResult.Fail("Cannot deactivate the last active Super Admin.");
 
         user.Name = dto.Name.Trim();
         user.IsActive = dto.IsActive;
         user.UpdatedAt = DateTime.UtcNow;
-
-        // Replace role assignments with the new set.
-        user.Roles.Clear();
-        foreach (var role in newRoles)
-            user.Roles.Add(new UserRole { Role = role });
 
         await db.SaveChangesAsync();
         return MutationResult.Ok(ToDto(user));

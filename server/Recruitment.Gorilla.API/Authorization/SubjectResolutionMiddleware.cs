@@ -76,11 +76,11 @@ public static class SubjectResolutionMiddleware
         if (principal.Identity is not ClaimsIdentity identity || !identity.FindAll(identity.RoleClaimType).Any())
             return false;
 
-        var user = await db.Users.SingleOrDefaultAsync(u => u.IamSubject == iamSubject);
+        var user = await db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.IamSubject == iamSubject);
         if (user is null)
         {
             var email = ReadEmail(principal);
-            user = email is null ? null : await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+            user = email is null ? null : await db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == email);
             if (user is null)
                 return false; // no local RG account for this identity — fail closed, never "unrestricted"
 
@@ -91,8 +91,67 @@ public static class SubjectResolutionMiddleware
         if (!user.IsActive)
             return false; // deactivated locally — fail closed even if IAM still considers the subject active
 
+        await SyncLocalRolesAsync(user, identity, db);
+
         AddResolvedClaim(principal, user.Id);
         return true;
+    }
+
+    /// <summary>
+    /// The "JIT" leg of spec section 3.6's "webhook + JIT + nightly reconcile"
+    /// provisioning: refresh RG's local UserRoles from the token's ats_roles on
+    /// every IAM-authenticated request.
+    ///
+    /// This does NOT affect what the caller may do — that is enforced entirely
+    /// from the token's own role claims. It keeps the local <b>projection</b>
+    /// accurate, which RG still genuinely needs: ConfigurationService's
+    /// GetRecruiterOptionsAsync and ValidateRecruiters both filter on UserRoles to
+    /// drive the "who can be a job opening's recruiter" dropdown, and no token can
+    /// answer "who are all our Recruiters?" (spec section 3.1 — keep the
+    /// projections). Now that IAM owns role assignment and RG's own admin UI no
+    /// longer writes roles, this is the only thing keeping that data from rotting.
+    ///
+    /// Writes only on an actual difference, so the steady-state cost per request
+    /// is a small set comparison rather than a round trip.
+    /// </summary>
+    private static async Task SyncLocalRolesAsync(Models.User user, ClaimsIdentity identity, AppDbContext db)
+    {
+        var tokenRoles = identity.FindAll(identity.RoleClaimType).Select(c => c.Value).ToHashSet(StringComparer.Ordinal);
+        var localRoles = user.Roles.Select(r => r.Role).ToHashSet(StringComparer.Ordinal);
+        if (tokenRoles.SetEquals(localRoles))
+            return;
+
+        // Minimal diff rather than clear-and-re-add: only the roles that actually
+        // changed are touched, so rows that are already correct aren't deleted and
+        // reinserted (churning their ids) and there is less for concurrent requests
+        // to collide over.
+        foreach (var stale in user.Roles.Where(r => !tokenRoles.Contains(r.Role)).ToList())
+            user.Roles.Remove(stale);
+        foreach (var added in tokenRoles.Where(r => !localRoles.Contains(r)))
+            user.Roles.Add(new Models.UserRole { Role = added });
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A concurrent request for the same user already applied this exact sync.
+            // Not an error: an SPA fires a burst of API calls on page load and every
+            // one of them runs this middleware, so losing the race is the normal case,
+            // and the winner already produced the end state this one wanted. Found the
+            // hard way — a real browser login 500'd on its first wave of requests while
+            // every single-request test passed.
+            //
+            // Detaching everything is safe here specifically because this middleware
+            // runs before routing and MVC: nothing but what was loaded above is tracked
+            // yet, and dropping the failed edits keeps a later SaveChanges in this same
+            // request (an audit write, say) from inheriting them.
+            foreach (var entry in db.ChangeTracker.Entries().ToList())
+                entry.State = EntityState.Detached;
+        }
     }
 
     /// <summary>RG's own tokens carry email under <see cref="ClaimTypes.Email"/> (the long URI —
