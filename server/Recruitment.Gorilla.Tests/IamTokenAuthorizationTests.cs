@@ -58,14 +58,55 @@ public class IamTokenAuthorizationTests(IamTestFixture fx)
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
 
+    /// <summary>Superseded by JIT provisioning: an IAM token for someone with no local
+    /// row now creates that row rather than refusing. The protection that actually
+    /// matters is unchanged and covered below — a token with no ats role is still
+    /// refused, so this cannot become "anyone with any token gets an RG account".</summary>
     [Fact]
-    public async Task Iam_token_for_an_unknown_email_is_rejected_not_granted_unrestricted_access()
+    public async Task Iam_token_for_an_unknown_email_provisions_a_shadow_user()
     {
-        var token = fx.MintIamToken(Guid.NewGuid(), "nobody@test.local", "Nobody", Roles.Recruiter);
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
 
         var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
 
-        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var provisioned = await fx.FindUserAsync(email);
+        Assert.NotNull(provisioned);
+        Assert.Equal("New Comer", provisioned!.Name);
+        Assert.True(provisioned.IsActive);
+        Assert.Equal([Roles.Recruiter], await fx.GetLocalRolesAsync(provisioned.Id));
+    }
+
+    /// <summary>A provisioned row is a projection, not an account: it must not be
+    /// possible to sign into it through RG's own local login, which still exists.</summary>
+    [Fact]
+    public async Task A_provisioned_shadow_user_has_no_usable_local_password()
+    {
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
+        await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        var provisioned = await fx.FindUserAsync(email);
+
+        Assert.False(PasswordHasher.Verify("", provisioned!.PasswordHash));
+        Assert.False(PasswordHasher.Verify(provisioned.PasswordHash, provisioned.PasswordHash));
+    }
+
+    /// <summary>The burst of parallel API calls an SPA fires on load must not race each
+    /// other into duplicate rows or a unique-index failure — the same shape of bug that
+    /// a real browser login already exposed once in the role sync.</summary>
+    [Fact]
+    public async Task Concurrent_first_requests_provision_exactly_one_shadow_user()
+    {
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => fx.SendAsync(HttpMethod.Get, "/api/dashboard/kpis", token)));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        Assert.Equal(1, await fx.CountUsersAsync(email));
     }
 
     /// <summary>Defence in depth: IAM's own /connect/authorize handler is supposed to

@@ -113,6 +113,20 @@ public sealed class IamTestFixture : IAsyncLifetime
             .ToArrayAsync();
     }
 
+    public async Task<User?> FindUserAsync(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<int> CountUsersAsync(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Users.CountAsync(u => u.Email == email);
+    }
+
     public async Task DeactivateAsync(int userId)
     {
         using var scope = _factory.Services.CreateScope();
