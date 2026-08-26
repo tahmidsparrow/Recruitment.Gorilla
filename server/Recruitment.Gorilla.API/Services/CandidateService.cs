@@ -13,7 +13,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
 
     private const string Uploaded = "Uploaded";
     private const string TechnicalAssessment = "Technical Assessment";
-    private const string SubmissionReceieved = "Submission Receieved";
+    private const string SubmissionReceived = "Submission Received";
     private const string CodeReview = "Code Review";
     private const string InterviewScheduled = "Interview Scheduled";
     private const string InterviewCompleted = "Interview Completed";
@@ -264,11 +264,11 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 return "Technical Assessment requires assigned task details.";
         }
 
-        if (dto.Status == SubmissionReceieved && string.IsNullOrWhiteSpace(dto.SubmissionUrl))
-            return "Submission Receieved requires a submission link.";
+        if (dto.Status == SubmissionReceived && string.IsNullOrWhiteSpace(dto.SubmissionUrl))
+            return "Submission Received requires a submission link.";
 
-        if (dto.Status == CodeReview && !HasStatus(candidate, SubmissionReceieved))
-            return "Code Review requires Submission Receieved to exist in the candidate history.";
+        if (dto.Status == CodeReview && !HasStatus(candidate, SubmissionReceived))
+            return "Code Review requires Submission Received to exist in the candidate history.";
 
         if (dto.Status == InterviewScheduled)
         {

@@ -67,7 +67,7 @@ One row per uploaded file. The physical file is on disk under `Uploads/` as `{GU
 | Status | varchar(100) | required; selected from active workflow options when appended |
 | Comment | text | nullable |
 | TaskDetails | varchar(1000) | nullable; used for Technical Assessment |
-| SubmissionUrl | varchar(1000) | nullable; used for Submission Receieved |
+| SubmissionUrl | varchar(1000) | nullable; used for Submission Received |
 | InterviewAt | datetime | nullable; used for Interview Scheduled |
 | ChangedAt | datetime | |
 | ChangedBy | varchar(200) | required; admin name/email |
@@ -211,7 +211,7 @@ Per-user in-app notification (e.g. interview assignment). `Id`, `UserId` (FK →
 - **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.
 - **Role/Skill values come from `RoleAppliedOptions`/`SkillOptions`** (configurable). Deleting a config value that's in use **soft-disables** it (IsActive=false) instead of hard-deleting. The legacy free-text `Candidate.AppliedRole`/`Candidate.Skills` columns are retained for back-compat but the UI uses the configured values.
 - **CurrentStatus is denormalized** — whenever you append a `StatusHistory`, update `Candidate.CurrentStatus` and `UpdatedAt` in the same save (see `CandidateService.AddStatusAsync`).
-- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment **and ≥1 submitted interviewer evaluation** for Interview Completed, comment for Reject/Discontinued, and required prior statuses for Code Review/Recommended.
+- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Received, interview date/time for Interview Scheduled, comment **and ≥1 submitted interviewer evaluation** for Interview Completed, comment for Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).
 - **The dashboard adds no tables.** `GET /api/dashboard` is a read-only aggregation over existing entities (Candidates, StatusHistories, RoleAppliedOptions, CandidateSkills), owner-scoped like the candidate list. See [backend.md](backend.md) / [frontend.md](frontend.md).

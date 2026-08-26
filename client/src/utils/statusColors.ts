@@ -20,6 +20,7 @@ const STATUS_TONE: Record<string, StatusTone> = {
   'Interview Scheduled': 'interview',
   'Interview Completed': 'interview',
   'Technical Assessment': 'assessment',
+  'Submission Received': 'assessment',
   'Submission Receieved': 'assessment',
   'Code Review': 'assessment',
   'No Submission': 'muted',
