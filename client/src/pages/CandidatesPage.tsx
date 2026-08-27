@@ -12,7 +12,7 @@ import {
 } from '../services/api';
 import SearchableDropdown, { SearchableMultiSelect, type DropdownOption } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
-import { getStatusTone } from '../utils/statusColors';
+import { getStatusSolidColor } from '../utils/statusColors';
 import KanbanBoard from '../components/kanban/KanbanBoard';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
@@ -157,7 +157,7 @@ export default function CandidatesPage() {
     return statusOptions.map((o) => ({
       id: o.name,
       name: o.name,
-      color: `var(--status-${getStatusTone(o.name)}-solid, #64748b)`,
+      color: getStatusSolidColor(o.name),
     }));
   }, [statusOptions]);
 

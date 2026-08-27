@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import SearchableDropdown, {
   SearchableMultiSelect,
-  SearchableSelect,
 } from './SearchableSelect';
 
 describe('SearchableDropdown', () => {
@@ -11,9 +10,10 @@ describe('SearchableDropdown', () => {
     { id: 2, name: 'TypeScript', subtitle: 'Typed JavaScript', badge: 'Popular' },
     { id: 3, name: 'C# / .NET', subtitle: 'Backend framework' },
     { id: 4, name: 'MySQL', subtitle: 'Relational database', disabled: true },
+    { id: 5, name: 'PostgreSQL', subtitle: 'SQL database' },
   ];
 
-  it('renders placeholder and opens menu on focus/click', () => {
+  it('renders placeholder and opens menu on click', () => {
     render(
       <SearchableDropdown
         options={sampleOptions}
@@ -23,10 +23,10 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText('Choose a technology...');
-    expect(input).toBeInTheDocument();
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).toHaveAttribute('placeholder', 'Choose a technology...');
 
-    fireEvent.focus(input);
+    fireEvent.click(trigger);
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     expect(screen.getByText('React')).toBeInTheDocument();
     expect(screen.getByText('TypeScript')).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe('SearchableDropdown', () => {
     expect(screen.getByText('Popular')).toBeInTheDocument();
   });
 
-  it('filters options by search query matching name and subtitle', () => {
+  it('filters options by search query inside the popover', () => {
     render(
       <SearchableDropdown
         options={sampleOptions}
@@ -43,9 +43,11 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    const input = screen.getByRole('combobox');
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: 'typed' } });
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
+
+    const searchInput = screen.getByPlaceholderText('Type to search...');
+    fireEvent.change(searchInput, { target: { value: 'typed' } });
 
     expect(screen.getByText('TypeScript')).toBeInTheDocument();
     expect(screen.queryByText('React')).not.toBeInTheDocument();
@@ -61,8 +63,8 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    const input = screen.getByRole('combobox');
-    fireEvent.focus(input);
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
     fireEvent.mouseDown(screen.getByText('TypeScript'));
 
     expect(handleChange).toHaveBeenCalledWith(2);
@@ -78,10 +80,11 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    const input = screen.getByRole('combobox');
-    fireEvent.focus(input);
-    fireEvent.keyDown(input, { key: 'ArrowDown' });
-    fireEvent.keyDown(input, { key: 'Enter' });
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
+
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    fireEvent.keyDown(trigger, { key: 'Enter' });
 
     expect(handleChange).toHaveBeenCalledWith(2);
   });

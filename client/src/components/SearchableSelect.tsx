@@ -22,7 +22,6 @@ export interface SearchableDropdownProps<T = number | string> {
   onChange: (val: any) => void;
   multiple?: boolean;
   placeholder?: string;
-  searchPlaceholder?: string;
   id?: string;
   isInvalid?: boolean;
   disabled?: boolean;
@@ -39,19 +38,19 @@ export default function SearchableDropdown<T = number | string>({
   onChange,
   multiple = false,
   placeholder = 'Select an option...',
-  searchPlaceholder,
   id: customId,
   isInvalid = false,
   disabled = false,
   clearable = true,
   size = 'md',
   className = '',
-  emptyMessage = 'No matches found',
+  emptyMessage = 'No options found',
   renderOption,
 }: SearchableDropdownProps<T>) {
   const autoId = useId();
   const inputId = customId || autoId;
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
@@ -106,7 +105,7 @@ export default function SearchableDropdown<T = number | string>({
   // Auto scroll highlighted item into view
   useEffect(() => {
     if (open && listRef.current) {
-      const items = listRef.current.querySelectorAll('.searchable-item');
+      const items = listRef.current.querySelectorAll('.dropdown-popover__item');
       if (items[highlightedIndex] && typeof items[highlightedIndex].scrollIntoView === 'function') {
         items[highlightedIndex].scrollIntoView({ block: 'nearest' });
       }
@@ -143,6 +142,7 @@ export default function SearchableDropdown<T = number | string>({
     e.stopPropagation();
     onChange(multiple ? [] : null);
     setQuery('');
+    setOpen(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,35 +192,29 @@ export default function SearchableDropdown<T = number | string>({
   return (
     <div
       ref={containerRef}
-      className={`searchable-dropdown-root position-relative ${className}`.trim()}
+      className={`dropdown-custom-root position-relative ${className}`.trim()}
       onKeyDown={handleKeyDown}
     >
       {/* Multi-select tokens */}
       {multiple && selectedOptions.length > 0 && (
-        <div className="token-row mb-1">
+        <div className="dropdown-token-group mb-1.5">
           {selectedOptions.map((o) => (
-            <span key={String(o.id)} className="token">
+            <span key={String(o.id)} className="dropdown-token">
               {o.color && (
                 <span
-                  className="token__dot me-1"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    backgroundColor: o.color,
-                    display: 'inline-block',
-                  }}
+                  className="dropdown-token__dot"
+                  style={{ backgroundColor: o.color }}
                 />
               )}
-              {o.name}
+              <span className="dropdown-token__text">{o.name}</span>
               {!disabled && (
                 <button
                   type="button"
-                  className="token__remove"
+                  className="dropdown-token__remove"
                   aria-label={`Remove ${o.name}`}
                   onClick={(e) => handleRemove(o.id, e)}
                 >
-                  <X size={12} strokeWidth={2.5} aria-hidden="true" />
+                  <X size={11} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               )}
             </span>
@@ -228,9 +222,18 @@ export default function SearchableDropdown<T = number | string>({
         </div>
       )}
 
-      {/* Main Input / Trigger */}
-      <div className="position-relative">
+      {/* Main Trigger Input Box */}
+      <div className="position-relative d-flex align-items-center">
+        {/* Leading dot / icon when closed */}
+        {!open && singleSelectedOption?.color && (
+          <span
+            className="dropdown-dot position-absolute ms-2.5 pointer-events-none"
+            style={{ backgroundColor: singleSelectedOption.color, zIndex: 3 }}
+          />
+        )}
+
         <Form.Control
+          ref={inputRef}
           id={inputId}
           autoComplete="off"
           size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : undefined}
@@ -253,122 +256,169 @@ export default function SearchableDropdown<T = number | string>({
             if (!open) setOpen(true);
           }}
           isInvalid={isInvalid}
-          className="searchable-dropdown__input"
-          style={{ paddingRight: clearable && (singleSelectedOption || (multiple && selectedOptions.length > 0)) ? '3rem' : '2rem' }}
+          className={`dropdown-trigger-input ${open ? 'dropdown-trigger-input--open' : ''} ${
+            !open && singleSelectedOption?.color ? 'ps-4' : ''
+          }`}
+          style={{
+            paddingRight: clearable && (singleSelectedOption || (multiple && selectedOptions.length > 0)) ? '3rem' : '2.2rem',
+          }}
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-controls={`${inputId}-menu`}
         />
 
-        {/* Clear Button */}
-        {clearable && !disabled && (singleSelectedOption || (multiple && selectedOptions.length > 0)) && !open && (
-          <button
-            type="button"
-            className="btn-close position-absolute"
-            style={{
-              right: '1.8rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '0.65rem',
-              zIndex: 2,
-            }}
-            aria-label="Clear selection"
-            onClick={handleClear}
+        <div className="dropdown-trigger-actions position-absolute end-0 me-2 d-flex align-items-center gap-1">
+          {clearable && !disabled && (singleSelectedOption || (multiple && selectedOptions.length > 0)) && !open && (
+            <button
+              type="button"
+              className="dropdown-clear-btn"
+              aria-label="Clear selection"
+              onClick={handleClear}
+            >
+              <X size={12} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+          )}
+          <ChevronDown
+            size={14}
+            className={`dropdown-chevron text-muted pointer-events-none ${
+              open ? 'dropdown-chevron--rotated text-primary' : ''
+            }`}
+            aria-hidden="true"
           />
-        )}
-
-        {/* Dropdown Chevron */}
-        <ChevronDown
-          size={14}
-          className="position-absolute end-0 top-50 translate-middle-y me-2.5 text-muted pointer-events-none"
-          style={{
-            opacity: 0.6,
-            transition: 'transform 0.15s ease',
-            transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)',
-          }}
-          aria-hidden="true"
-        />
+        </div>
       </div>
 
-      {/* Floating Menu */}
+      {/* Floating Popover Menu */}
       {open && (
         <div
           id={`${inputId}-menu`}
           ref={listRef}
-          className="searchable-menu"
+          className="dropdown-popover-menu"
           role="listbox"
           aria-label={placeholder}
         >
-          {filteredOptions.length === 0 ? (
-            <div className="searchable-dropdown__empty d-flex align-items-center justify-content-center p-3 text-muted">
-              <Search size={14} className="me-2 opacity-50" />
-              <span>{emptyMessage}</span>
-            </div>
-          ) : (
-            filteredOptions.map((option, idx) => {
-              const isSelected = selectedValues.includes(option.id);
-              const isHighlighted = idx === highlightedIndex;
-
-              return (
+          {/* Popover Filter Header if options list is long */}
+          {options.length > 4 && (
+            <div className="dropdown-popover__search">
+              <Search size={13} className="dropdown-popover__search-icon" aria-hidden="true" />
+              <input
+                type="text"
+                autoComplete="off"
+                className="dropdown-popover__search-input"
+                placeholder="Type to search..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoFocus
+              />
+              {query && (
                 <button
                   type="button"
-                  key={String(option.id)}
-                  disabled={option.disabled}
-                  className={`searchable-item d-flex align-items-center justify-content-between ${
-                    isSelected ? 'searchable-item--selected' : ''
-                  } ${isHighlighted ? 'searchable-item--highlighted' : ''}`.trim()}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(option);
-                  }}
-                  onMouseEnter={() => setHighlightedIndex(idx)}
-                  role="option"
-                  aria-selected={isSelected}
+                  className="dropdown-popover__search-clear"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search text"
                 >
-                  {renderOption ? (
-                    renderOption(option, isSelected)
-                  ) : (
-                    <div className="d-flex align-items-center gap-2 text-truncate me-2">
-                      {option.color && (
-                        <span
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: option.color,
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      {option.icon && <span className="me-1">{option.icon}</span>}
-                      <div className="text-truncate">
-                        <div className="searchable-item__name text-truncate">
-                          {option.name}
-                        </div>
-                        {option.subtitle && (
-                          <div className="searchable-item__subtitle small text-muted text-truncate">
-                            {option.subtitle}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="d-flex align-items-center gap-1 flex-shrink-0">
-                    {option.badge && (
-                      <span className={`badge bg-${option.badgeVariant || 'secondary'}-subtle text-${option.badgeVariant || 'secondary'} border px-1.5 py-0.5`}>
-                        {option.badge}
-                      </span>
-                    )}
-                    {isSelected && (
-                      <Check size={14} className="text-primary ms-1 flex-shrink-0" strokeWidth={2.5} />
-                    )}
-                  </div>
+                  <X size={12} strokeWidth={2.5} />
                 </button>
-              );
-            })
+              )}
+            </div>
           )}
+
+          {/* Options List */}
+          <div className="dropdown-popover__list">
+            {/* Top "All" reset option for single select when clearable */}
+            {clearable && !multiple && !query && (
+              <button
+                type="button"
+                className={`dropdown-popover__item ${
+                  !singleSelectedOption ? 'dropdown-popover__item--selected' : ''
+                }`}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleClear(e);
+                }}
+              >
+                <div className="d-flex align-items-center gap-2">
+                  <span
+                    className="dropdown-dot"
+                    style={{ backgroundColor: 'var(--text-muted, #94a3b8)', opacity: 0.5 }}
+                  />
+                  <span className="dropdown-popover__item-name text-muted">
+                    {placeholder.startsWith('All') ? placeholder : `All (${placeholder})`}
+                  </span>
+                </div>
+                {!singleSelectedOption && (
+                  <Check size={14} className="text-primary ms-1 flex-shrink-0" strokeWidth={2.5} />
+                )}
+              </button>
+            )}
+
+            {filteredOptions.length === 0 ? (
+              <div className="dropdown-popover__empty">
+                <Search size={15} className="dropdown-popover__empty-icon" />
+                <span>{emptyMessage}</span>
+              </div>
+            ) : (
+              filteredOptions.map((option, idx) => {
+                const isSelected = selectedValues.includes(option.id);
+                const isHighlighted = idx === highlightedIndex;
+
+                return (
+                  <button
+                    type="button"
+                    key={String(option.id)}
+                    disabled={option.disabled}
+                    className={`dropdown-popover__item ${
+                      isSelected ? 'dropdown-popover__item--selected' : ''
+                    } ${isHighlighted ? 'dropdown-popover__item--highlighted' : ''}`.trim()}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(option);
+                    }}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                    role="option"
+                    aria-selected={isSelected}
+                  >
+                    {renderOption ? (
+                      renderOption(option, isSelected)
+                    ) : (
+                      <div className="d-flex align-items-center gap-2 text-truncate me-2">
+                        {option.color && (
+                          <span
+                            className="dropdown-dot"
+                            style={{
+                              backgroundColor: option.color,
+                              boxShadow: `0 0 6px ${option.color}40`,
+                            }}
+                          />
+                        )}
+                        {option.icon && <span className="dropdown-icon">{option.icon}</span>}
+                        <div className="text-truncate">
+                          <div className="dropdown-popover__item-name text-truncate">
+                            {option.name}
+                          </div>
+                          {option.subtitle && (
+                            <div className="dropdown-popover__item-subtitle text-truncate">
+                              {option.subtitle}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="d-flex align-items-center gap-1.5 flex-shrink-0">
+                      {option.badge && (
+                        <span className="dropdown-pill-badge">{option.badge}</span>
+                      )}
+                      {isSelected && (
+                        <Check size={14} className="text-primary ms-1 flex-shrink-0" strokeWidth={2.5} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
