@@ -147,6 +147,7 @@ export interface CandidateListItem {
   currentStatus: string;
   createdAt: string;
   source: string | null;
+  updatedAt?: string;
 }
 
 export interface CVFileInfo {

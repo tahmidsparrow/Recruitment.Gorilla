@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Form, InputGroup, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
   deleteCandidate,
   getActiveSkillOptions,
@@ -12,6 +12,7 @@ import {
 } from '../services/api';
 import { SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
+import KanbanBoard from '../components/kanban/KanbanBoard';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
@@ -106,10 +107,19 @@ export default function CandidatesPage() {
       ? setParams({ sort: col, dir: activeDir === 'asc' ? 'desc' : 'asc' }, false)
       : setParams({ sort: col, dir: SORTS[col].natural }, false);
 
+  const [viewMode, setViewMode] = useState<'table' | 'board'>(() => {
+    return (localStorage.getItem('rg_candidate_view_mode') as 'table' | 'board') || 'table';
+  });
+
+  const handleViewModeChange = (mode: 'table' | 'board') => {
+    setViewMode(mode);
+    localStorage.setItem('rg_candidate_view_mode', mode);
+  };
+
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page }],
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page, viewMode }],
     queryFn: () =>
       getCandidates({
         search: search || undefined,
@@ -120,8 +130,8 @@ export default function CandidatesPage() {
         bucket: bucket || undefined,
         sort: sort || undefined,
         dir: dir || undefined,
-        page,
-        pageSize: PAGE_SIZE,
+        page: viewMode === 'board' ? 1 : page,
+        pageSize: viewMode === 'board' ? 150 : PAGE_SIZE,
       }),
     placeholderData: keepPreviousData,
   });
@@ -280,14 +290,37 @@ export default function CandidatesPage() {
           </div>
         </search>
 
-        {canWriteCandidates && (
-          <div className="page-bar__actions">
+        <div className="page-bar__actions d-flex align-items-center gap-2">
+          <div className="btn-group view-toggle" role="group" aria-label="Candidate view mode">
+            <button
+              type="button"
+              className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => handleViewModeChange('table')}
+              aria-label="Table view"
+              title="Table view (≡)"
+            >
+              <List size={15} strokeWidth={2} className="me-1" aria-hidden="true" />
+              Table
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => handleViewModeChange('board')}
+              aria-label="Pipeline board view"
+              title="Pipeline board view (⊞)"
+            >
+              <Kanban size={15} strokeWidth={2} className="me-1" aria-hidden="true" />
+              Board
+            </button>
+          </div>
+
+          {canWriteCandidates && (
             <Link to="/upload" className="btn btn-primary">
               <Upload size={15} strokeWidth={1.75} aria-hidden="true" />
               <span className="ms-1">Upload CVs</span>
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -318,6 +351,12 @@ export default function CandidatesPage() {
               </Link>
             ) : undefined
           }
+        />
+      ) : viewMode === 'board' ? (
+        <KanbanBoard
+          candidates={data.items}
+          isLoading={isLoading}
+          canWrite={canWriteCandidates}
         />
       ) : (
         <>
