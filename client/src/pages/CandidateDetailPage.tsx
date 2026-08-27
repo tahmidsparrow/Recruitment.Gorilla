@@ -180,7 +180,7 @@ export default function CandidateDetailPage() {
           <div className="card-stack">
             {/* showCvFiles={false}: CvFilesCard below is the CV surface for
                 this page, and rendering both listed every file twice. */}
-            <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} className="detail-scroll" />
+            <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} />
             {canWrite && <OfferCard candidate={data} />}
             <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
           </div>

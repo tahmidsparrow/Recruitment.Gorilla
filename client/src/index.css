@@ -1711,6 +1711,9 @@ a.list-row__title:hover {
     /* Without this a flex item refuses to shrink below its content, and the
        max-height above would be ignored. */
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
   }
 
   /* The card in each column that absorbs the leftover space and scrolls its
