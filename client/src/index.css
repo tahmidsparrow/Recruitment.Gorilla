@@ -1986,16 +1986,15 @@ a.list-row__title:hover {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-wrap: wrap;
-  padding: var(--space-3) var(--card-pad-tight);
+  padding: 8px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
+  min-height: 48px;
 }
-/* Mobile first: on a phone every control is full width — two half-width
-   selects side by side leave neither label readable. The min-width block
-   below lets them share a row and gives search the slack. */
+/* Mobile first: on a phone every control is full width */
 .data-toolbar__search,
 .data-toolbar__field,
 .data-toolbar__field--wide {
@@ -2005,41 +2004,39 @@ a.list-row__title:hover {
 .data-toolbar__end {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-wrap: wrap;
   flex: 1 1 100%;
 }
 
 @media (min-width: 576px) {
-  /* Search is the primary control, so it takes the slack; the rest size to
-     their content.
-
-     The maxima are deliberately modest. A flex line breaks on the items'
-     *hypothetical* sizes (their flex-basis), not on how far they could shrink,
-     so generous max-widths made the row wrap and strand the "Referred only"
-     toggle alone on a second line as soon as the row also had to hold the
-     page's action button. Smaller caps keep every filter on one line and the
-     controls still read fine — a status dropdown does not need 230px. */
   .data-toolbar__search {
-    flex: 1 1 200px;
-    min-width: 180px;
-    max-width: 320px;
+    flex: 1 1 180px;
+    min-width: 140px;
+    max-width: 240px;
   }
   .data-toolbar__field {
     flex: 0 1 auto;
-    min-width: 140px;
-    max-width: 190px;
+    min-width: 120px;
+    max-width: 160px;
   }
   .data-toolbar__field--wide {
-    flex: 1 1 180px;
-    min-width: 160px;
-    max-width: 240px;
+    flex: 1 1 160px;
+    min-width: 140px;
+    max-width: 210px;
   }
-  /* Pushed to the trailing edge: the toggle and the reset act on the filter
-     set as a whole rather than being another filter. */
   .data-toolbar__end {
     flex: 0 0 auto;
     margin-left: auto;
+  }
+}
+
+@media (min-width: 992px) {
+  .data-toolbar {
+    flex-wrap: nowrap;
+  }
+  .data-toolbar__end {
+    flex-wrap: nowrap;
   }
 }
 /* An active filter that no visible control represents — currently the
@@ -4273,8 +4270,8 @@ a.hero-chip--accent:hover {
 .kanban-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  gap: var(--space-2);
+  margin-top: 0;
   width: 100%;
 }
 
@@ -4282,7 +4279,7 @@ a.hero-chip--accent:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 6px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
