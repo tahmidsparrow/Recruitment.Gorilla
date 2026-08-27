@@ -21,6 +21,7 @@ export interface SearchableDropdownProps<T = number | string> {
   value: T | null | T[];
   onChange: (val: any) => void;
   multiple?: boolean;
+  showTokens?: boolean;
   placeholder?: string;
   id?: string;
   isInvalid?: boolean;
@@ -37,6 +38,7 @@ export default function SearchableDropdown<T = number | string>({
   value,
   onChange,
   multiple = false,
+  showTokens = true,
   placeholder = 'Select an option...',
   id: customId,
   isInvalid = false,
@@ -44,7 +46,7 @@ export default function SearchableDropdown<T = number | string>({
   clearable = true,
   size = 'md',
   className = '',
-  emptyMessage = 'No options found',
+  emptyMessage = 'No matches found',
   renderOption,
 }: SearchableDropdownProps<T>) {
   const autoId = useId();
@@ -69,7 +71,7 @@ export default function SearchableDropdown<T = number | string>({
     return options.filter((o) => selectedValues.includes(o.id));
   }, [options, selectedValues]);
 
-  // Filter options based on query
+  // Filter options based on direct input query
   const filteredOptions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
@@ -122,6 +124,7 @@ export default function SearchableDropdown<T = number | string>({
         : [...selectedValues, option.id];
       onChange(next);
       setQuery('');
+      inputRef.current?.focus();
     } else {
       onChange(option.id);
       setOpen(false);
@@ -189,14 +192,25 @@ export default function SearchableDropdown<T = number | string>({
 
   const singleSelectedOption = !multiple && selectedOptions.length > 0 ? selectedOptions[0] : null;
 
+  // Display value for input
+  const getInputValue = () => {
+    if (open) return query;
+    if (multiple) {
+      if (selectedOptions.length === 0) return '';
+      if (selectedOptions.length === 1) return selectedOptions[0].name;
+      return `${selectedOptions.length} skills selected`;
+    }
+    return singleSelectedOption ? singleSelectedOption.name : '';
+  };
+
   return (
     <div
       ref={containerRef}
       className={`dropdown-custom-root position-relative ${className}`.trim()}
       onKeyDown={handleKeyDown}
     >
-      {/* Multi-select tokens */}
-      {multiple && selectedOptions.length > 0 && (
+      {/* Multi-select tokens (when enabled for form / dialog modes) */}
+      {multiple && showTokens && selectedOptions.length > 0 && (
         <div className="dropdown-token-group mb-1.5">
           {selectedOptions.map((o) => (
             <span key={String(o.id)} className="dropdown-token">
@@ -222,13 +236,20 @@ export default function SearchableDropdown<T = number | string>({
         </div>
       )}
 
-      {/* Main Trigger Input Box */}
+      {/* Main Direct-Search Input Trigger */}
       <div className="position-relative d-flex align-items-center">
-        {/* Leading dot / icon when closed */}
+        {/* Leading colored dot for single-select */}
         {!open && singleSelectedOption?.color && (
           <span
-            className="dropdown-dot position-absolute ms-2.5 pointer-events-none"
-            style={{ backgroundColor: singleSelectedOption.color, zIndex: 3 }}
+            className="dropdown-dot position-absolute pointer-events-none"
+            style={{
+              left: 10,
+              width: 7,
+              height: 7,
+              backgroundColor: singleSelectedOption.color,
+              boxShadow: `0 0 5px ${singleSelectedOption.color}50`,
+              zIndex: 3,
+            }}
           />
         )}
 
@@ -238,8 +259,8 @@ export default function SearchableDropdown<T = number | string>({
           autoComplete="off"
           size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : undefined}
           disabled={disabled}
-          placeholder={placeholder}
-          value={open ? query : multiple ? query : singleSelectedOption ? singleSelectedOption.name : ''}
+          placeholder={open && singleSelectedOption ? singleSelectedOption.name : placeholder}
+          value={getInputValue()}
           onFocus={() => {
             if (!disabled) {
               setOpen(true);
@@ -256,11 +277,10 @@ export default function SearchableDropdown<T = number | string>({
             if (!open) setOpen(true);
           }}
           isInvalid={isInvalid}
-          className={`dropdown-trigger-input ${open ? 'dropdown-trigger-input--open' : ''} ${
-            !open && singleSelectedOption?.color ? 'ps-4' : ''
-          }`}
+          className={`dropdown-trigger-input ${open ? 'dropdown-trigger-input--open' : ''}`}
           style={{
-            paddingRight: clearable && (singleSelectedOption || (multiple && selectedOptions.length > 0)) ? '3rem' : '2.2rem',
+            paddingLeft: !open && singleSelectedOption?.color ? '23px' : '11px',
+            paddingRight: '2rem',
           }}
           role="combobox"
           aria-expanded={open}
@@ -268,20 +288,10 @@ export default function SearchableDropdown<T = number | string>({
           aria-controls={`${inputId}-menu`}
         />
 
-        <div className="dropdown-trigger-actions position-absolute end-0 me-2 d-flex align-items-center gap-1">
-          {clearable && !disabled && (singleSelectedOption || (multiple && selectedOptions.length > 0)) && !open && (
-            <button
-              type="button"
-              className="dropdown-clear-btn"
-              aria-label="Clear selection"
-              onClick={handleClear}
-            >
-              <X size={12} strokeWidth={2.5} aria-hidden="true" />
-            </button>
-          )}
+        <div className="dropdown-trigger-actions position-absolute end-0 me-2.5 d-flex align-items-center pointer-events-none">
           <ChevronDown
             size={14}
-            className={`dropdown-chevron text-muted pointer-events-none ${
+            className={`dropdown-chevron text-muted ${
               open ? 'dropdown-chevron--rotated text-primary' : ''
             }`}
             aria-hidden="true"
@@ -289,7 +299,7 @@ export default function SearchableDropdown<T = number | string>({
         </div>
       </div>
 
-      {/* Floating Popover Menu */}
+      {/* Floating Popover Menu (Direct options list only) */}
       {open && (
         <div
           id={`${inputId}-menu`}
@@ -298,35 +308,8 @@ export default function SearchableDropdown<T = number | string>({
           role="listbox"
           aria-label={placeholder}
         >
-          {/* Popover Filter Header if options list is long */}
-          {options.length > 4 && (
-            <div className="dropdown-popover__search">
-              <Search size={13} className="dropdown-popover__search-icon" aria-hidden="true" />
-              <input
-                type="text"
-                autoComplete="off"
-                className="dropdown-popover__search-input"
-                placeholder="Type to search..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                autoFocus
-              />
-              {query && (
-                <button
-                  type="button"
-                  className="dropdown-popover__search-clear"
-                  onClick={() => setQuery('')}
-                  aria-label="Clear search text"
-                >
-                  <X size={12} strokeWidth={2.5} />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Options List */}
           <div className="dropdown-popover__list">
-            {/* Top "All" reset option for single select when clearable */}
+            {/* "All" reset option for single select when clearable */}
             {clearable && !multiple && !query && (
               <button
                 type="button"
@@ -437,7 +420,7 @@ export function SearchableSelect({
   clearable = true,
   size,
 }: {
-  options: Option[];
+  options: Option<number>[];
   value: number | null;
   onChange: (id: number | null) => void;
   placeholder?: string;
@@ -474,8 +457,9 @@ export function SearchableMultiSelect({
   disabled,
   clearable = true,
   size,
+  showTokens = true,
 }: {
-  options: Option[];
+  options: Option<number>[];
   value: number[];
   onChange: (ids: number[]) => void;
   placeholder?: string;
@@ -484,6 +468,7 @@ export function SearchableMultiSelect({
   disabled?: boolean;
   clearable?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  showTokens?: boolean;
 }) {
   return (
     <SearchableDropdown<number>
@@ -491,6 +476,7 @@ export function SearchableMultiSelect({
       value={value}
       onChange={onChange}
       multiple={true}
+      showTokens={showTokens}
       placeholder={placeholder}
       id={id}
       isInvalid={isInvalid}

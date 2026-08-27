@@ -241,6 +241,7 @@ export default function CandidatesPage() {
               value={skillIds}
               onChange={(ids) => setParams({ skills: ids.join(',') || null })}
               placeholder="Filter by skills…"
+              showTokens={false}
             />
           </div>
 

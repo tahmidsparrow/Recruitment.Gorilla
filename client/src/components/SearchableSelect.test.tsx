@@ -34,7 +34,7 @@ describe('SearchableDropdown', () => {
     expect(screen.getByText('Popular')).toBeInTheDocument();
   });
 
-  it('filters options by search query inside the popover', () => {
+  it('filters options by typing directly in the input', () => {
     render(
       <SearchableDropdown
         options={sampleOptions}
@@ -43,11 +43,9 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    const trigger = screen.getByRole('combobox');
-    fireEvent.click(trigger);
-
-    const searchInput = screen.getByPlaceholderText('Type to search...');
-    fireEvent.change(searchInput, { target: { value: 'typed' } });
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'typed' } });
 
     expect(screen.getByText('TypeScript')).toBeInTheDocument();
     expect(screen.queryByText('React')).not.toBeInTheDocument();
@@ -89,7 +87,7 @@ describe('SearchableDropdown', () => {
     expect(handleChange).toHaveBeenCalledWith(2);
   });
 
-  it('supports multi-select mode with token badges and removal', () => {
+  it('supports multi-select mode and displays count', () => {
     const handleChange = vi.fn();
     render(
       <SearchableMultiSelect
@@ -100,12 +98,7 @@ describe('SearchableDropdown', () => {
       />
     );
 
-    expect(screen.getByText('React')).toBeInTheDocument();
-    expect(screen.getByText('TypeScript')).toBeInTheDocument();
-
-    const removeBtn = screen.getByLabelText('Remove React');
-    fireEvent.click(removeBtn);
-
-    expect(handleChange).toHaveBeenCalledWith([2]);
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveValue('2 skills selected');
   });
 });
