@@ -48,10 +48,13 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Tile({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === '') return null;
+  const strVal = typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
   return (
     <div className="profile-tile">
       <div className="profile-field-label">{label}</div>
-      <div className="profile-tile__value">{value}</div>
+      <div className="profile-tile__value text-truncate" title={strVal}>
+        {value}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Badge, Spinner, Row, Col } from 'react-bootstrap';
+import { Button, Badge, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, DollarSign, Download, Edit3, FileText, Plus, Send, XCircle } from 'lucide-react';
 import { useToast } from '../ToastStack';
@@ -107,21 +107,21 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
   if (isLoading) {
     return (
-      <Card className="rg-card mb-3 p-3">
+      <div className="offer-card mb-3 p-3">
         <div className="d-flex align-items-center gap-2 text-muted small">
           <Spinner size="sm" /> Loading compensation details...
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
     <>
-      <Card className="rg-card mb-3">
-        <Card.Header className="d-flex align-items-center justify-content-between py-2 px-3 bg-transparent">
+      <div className="offer-card mb-3">
+        <div className="offer-card__header">
           <div className="d-flex align-items-center gap-2">
-            <DollarSign size={18} className="text-primary" />
-            <span className="fw-bold small">Offer & Compensation</span>
+            <DollarSign size={17} className="text-primary" />
+            <span className="fw-semibold small">Offer & Compensation</span>
             {latestOffer && (
               <Badge bg={getStatusBadgeVariant(latestOffer.status)} className="ms-1 fw-normal">
                 {latestOffer.status}
@@ -133,7 +133,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               <Button
                 variant="outline-primary"
                 size="sm"
-                className="d-flex align-items-center gap-1 py-0 px-2"
+                className="d-flex align-items-center gap-1 py-1 px-2.5"
                 onClick={() => {
                   setEditingOffer(null);
                   setShowCreateModal(true);
@@ -145,7 +145,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               <Button
                 variant="primary"
                 size="sm"
-                className="d-flex align-items-center gap-1 py-0 px-2"
+                className="d-flex align-items-center gap-1 py-1 px-2.5"
                 onClick={() => {
                   setEditingOffer(null);
                   setShowCreateModal(true);
@@ -155,9 +155,9 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               </Button>
             )}
           </div>
-        </Card.Header>
+        </div>
 
-        <Card.Body className="p-3">
+        <div className="p-3">
           {!latestOffer ? (
             <div className="text-center py-3 text-muted small">
               <FileText size={28} className="mb-2 opacity-50 d-block mx-auto text-secondary" />
@@ -165,64 +165,69 @@ export default function OfferCard({ candidate }: OfferCardProps) {
             </div>
           ) : (
             <div>
-              <div className="d-flex align-items-baseline justify-content-between mb-2">
+              <div className="offer-hero">
                 <div>
-                  <h6 className="mb-0 fw-bold">{latestOffer.jobTitle}</h6>
+                  <div className="offer-hero__title">{latestOffer.jobTitle}</div>
                   <span className="text-muted small">Created by {latestOffer.createdByName || 'Recruiter'}</span>
                 </div>
                 <div className="text-end">
-                  <span className="fs-5 fw-bold text-success">
+                  <div className="offer-hero__salary">
                     {latestOffer.currency} {latestOffer.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-muted small d-block">/ year</span>
+                  </div>
+                  <span className="text-muted small">/ year (gross)</span>
                 </div>
               </div>
 
-              <Row className="g-2 my-2 py-2 border-top border-bottom small">
-                {latestOffer.bonus && latestOffer.bonus > 0 && (
-                  <Col sm={6}>
-                    <span className="text-muted">Bonus: </span>
-                    <span className="fw-semibold">
+              <div className="offer-meta-grid">
+                {latestOffer.bonus && latestOffer.bonus > 0 ? (
+                  <div className="offer-meta-tile">
+                    <div className="offer-meta-tile__label">Bonus / Incentive</div>
+                    <div className="offer-meta-tile__value">
                       {latestOffer.currency} {latestOffer.bonus.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </span>
-                  </Col>
-                )}
-                {latestOffer.equity && (
-                  <Col sm={6}>
-                    <span className="text-muted">Equity: </span>
-                    <span className="fw-semibold">{latestOffer.equity}</span>
-                  </Col>
-                )}
-                {latestOffer.startDate && (
-                  <Col sm={6}>
-                    <span className="text-muted">Start Date: </span>
-                    <span className="fw-semibold">
+                    </div>
+                  </div>
+                ) : null}
+
+                {latestOffer.equity ? (
+                  <div className="offer-meta-tile">
+                    <div className="offer-meta-tile__label">Equity / Options</div>
+                    <div className="offer-meta-tile__value" title={latestOffer.equity}>
+                      {latestOffer.equity}
+                    </div>
+                  </div>
+                ) : null}
+
+                {latestOffer.startDate ? (
+                  <div className="offer-meta-tile">
+                    <div className="offer-meta-tile__label">Proposed Start</div>
+                    <div className="offer-meta-tile__value">
                       {new Date(latestOffer.startDate).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </span>
-                  </Col>
-                )}
-                {latestOffer.expirationDate && (
-                  <Col sm={6}>
-                    <span className="text-muted">Valid Until: </span>
-                    <span className="fw-semibold">
+                    </div>
+                  </div>
+                ) : null}
+
+                {latestOffer.expirationDate ? (
+                  <div className="offer-meta-tile">
+                    <div className="offer-meta-tile__label">Valid Until</div>
+                    <div className="offer-meta-tile__value">
                       {new Date(latestOffer.expirationDate).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </span>
-                  </Col>
-                )}
-              </Row>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
               {latestOffer.notes && (
-                <p className="small text-muted mb-3 bg-light dark:bg-dark p-2 rounded">
+                <div className="offer-notes-callout">
                   {latestOffer.notes}
-                </p>
+                </div>
               )}
 
               {latestOffer.status === 'Declined' && latestOffer.declineReason && (
@@ -232,11 +237,11 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               )}
 
               {/* Action Toolbar */}
-              <div className="d-flex flex-wrap gap-2 justify-content-end pt-2">
+              <div className="offer-toolbar">
                 <Button
                   variant="outline-secondary"
                   size="sm"
-                  className="d-flex align-items-center gap-1"
+                  className="d-flex align-items-center gap-1.5"
                   disabled={isDownloadingPdf}
                   onClick={() => handleDownloadPdf(latestOffer)}
                 >
@@ -249,7 +254,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outline-secondary"
                       size="sm"
-                      className="d-flex align-items-center gap-1"
+                      className="d-flex align-items-center gap-1.5"
                       onClick={() => {
                         setEditingOffer(latestOffer);
                         setShowCreateModal(true);
@@ -260,7 +265,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outline-primary"
                       size="sm"
-                      className="d-flex align-items-center gap-1"
+                      className="d-flex align-items-center gap-1.5"
                       disabled={submitApprovalMutation.isPending}
                       onClick={() => submitApprovalMutation.mutate(latestOffer.id)}
                     >
@@ -269,7 +274,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="primary"
                       size="sm"
-                      className="d-flex align-items-center gap-1"
+                      className="d-flex align-items-center gap-1.5"
                       disabled={extendMutation.isPending}
                       onClick={() => extendMutation.mutate(latestOffer.id)}
                     >
@@ -283,7 +288,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outline-danger"
                       size="sm"
-                      className="d-flex align-items-center gap-1"
+                      className="d-flex align-items-center gap-1.5"
                       disabled={reviewMutation.isPending}
                       onClick={() => reviewMutation.mutate({ offerId: latestOffer.id, decision: 'Rejected' })}
                     >
@@ -292,7 +297,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="success"
                       size="sm"
-                      className="d-flex align-items-center gap-1"
+                      className="d-flex align-items-center gap-1.5"
                       disabled={reviewMutation.isPending}
                       onClick={() => reviewMutation.mutate({ offerId: latestOffer.id, decision: 'Approved' })}
                     >
@@ -305,7 +310,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="d-flex align-items-center gap-1"
+                    className="d-flex align-items-center gap-1.5"
                     disabled={extendMutation.isPending}
                     onClick={() => extendMutation.mutate(latestOffer.id)}
                   >
@@ -317,7 +322,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                   <Button
                     variant="primary"
                     size="sm"
-                    className="d-flex align-items-center gap-1"
+                    className="d-flex align-items-center gap-1.5"
                     onClick={() => {
                       setActiveDecisionOffer(latestOffer);
                       setShowDecisionModal(true);
@@ -329,8 +334,8 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               </div>
             </div>
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
 
       <CreateOfferModal
         candidateId={candidate.id}

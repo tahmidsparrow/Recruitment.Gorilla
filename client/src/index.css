@@ -4124,6 +4124,131 @@ a.hero-chip--accent:hover {
 [data-bs-theme='dark'] .skill-badge--7 { background: rgba(54, 74, 99, 0.35); color: #a9bdd8; }
 
 /* ============================================================
+   Offer & Compensation Card & Candidate Profile Modern Styling
+   ============================================================ */
+.offer-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.offer-card__header {
+  padding: 12px 16px;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.offer-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.offer-hero__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.offer-hero__salary {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--success-text);
+  letter-spacing: -0.01em;
+}
+
+.offer-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.offer-meta-tile {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.offer-meta-tile:hover {
+  border-color: var(--border-strong);
+}
+
+.offer-meta-tile__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.offer-meta-tile__value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-notes-callout {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: var(--leading-relaxed);
+  margin-bottom: 12px;
+}
+
+.offer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.profile-tile {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.profile-tile:hover {
+  border-color: var(--border-strong);
+}
+
+.profile-tile__value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
    4. Print
 
    Only one screen is meant to leave the app on paper: the candidate
