@@ -97,7 +97,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 c.CurrentTitle,
                 c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
                 c.CurrentStatus, c.CreatedAt,
-                c.SourceOption != null ? c.SourceOption.Name : null))
+                c.SourceOption != null ? c.SourceOption.Name : null,
+                c.UpdatedAt))
             .ToListAsync();
 
         return new PagedResult<CandidateListItemDto>(items, total, q.Page, q.PageSize);
@@ -135,7 +136,8 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 c.CurrentTitle,
                 c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
                 c.CurrentStatus, c.CreatedAt,
-                c.SourceOption != null ? c.SourceOption.Name : null))
+                c.SourceOption != null ? c.SourceOption.Name : null,
+                c.UpdatedAt))
             .FirstOrDefaultAsync();
     }
 

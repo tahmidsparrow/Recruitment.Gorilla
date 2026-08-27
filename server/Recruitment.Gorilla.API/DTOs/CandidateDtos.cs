@@ -109,7 +109,8 @@ public record CandidateListItemDto(
     string? AppliedRole,
     string CurrentStatus,
     DateTime CreatedAt,
-    string? Source = null
+    string? Source = null,
+    DateTime? UpdatedAt = null
 );
 
 /// <summary>
