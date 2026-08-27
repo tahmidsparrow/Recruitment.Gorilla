@@ -63,7 +63,7 @@ test.describe('Offer Management End-to-End Test', () => {
         await page.screenshot({ path: path.join(screenshotDir, '04_offer_created_card.png') });
 
         // Verify offer details rendered
-        await expect(page.getByText('145,000.00')).toBeVisible();
+        await expect(page.getByText('145,000.00').first()).toBeVisible();
 
         // 7. Test Extend Offer button if available
         const extendBtn = page.getByRole('button', { name: /Extend Offer/i }).first();
