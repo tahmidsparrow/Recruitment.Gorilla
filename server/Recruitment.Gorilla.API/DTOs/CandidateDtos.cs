@@ -83,10 +83,10 @@ public record UpdateCandidateDto(
 
 public record StatusChangeDto(
     string Status,
-    string? Comment,
-    string? TaskDetails,
-    string? SubmissionUrl,
-    DateTime? InterviewAt,
+    string? Comment = null,
+    string? TaskDetails = null,
+    string? SubmissionUrl = null,
+    DateTime? InterviewAt = null,
     // Required (non-empty) when Status == "Interview Scheduled": the users to assign
     // as interviewers. Each must be an existing active user.
     List<int>? InterviewerUserIds = null,

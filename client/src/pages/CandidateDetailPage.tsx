@@ -27,6 +27,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
 import SectionCard from '../components/ui/SectionCard';
 import LoadingPanel from '../components/ui/Loading';
+import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
 // The role-filter branch added a local copy of this; develop had already
 // extracted the same function to utils, so use the shared one.
@@ -180,6 +181,7 @@ export default function CandidateDetailPage() {
             {/* showCvFiles={false}: CvFilesCard below is the CV surface for
                 this page, and rendering both listed every file twice. */}
             <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} className="detail-scroll" />
+            {canWrite && <OfferCard candidate={data} />}
             <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
           </div>
 
