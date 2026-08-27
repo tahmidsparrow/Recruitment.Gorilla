@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Layers, Users } from 'lucide-react';
 import KanbanColumn from './KanbanColumn';
+import KanbanMinimap from './KanbanMinimap';
 import AddStatusModal from '../AddStatusModal';
 import { useToast } from '../ToastStack';
 import { addStatus, getNextStatusOptions, getStatusOptions } from '../../services/api';
@@ -34,6 +35,8 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
     name: string;
     targetStatus?: string;
   } | null>(null);
+
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const { data: statusOptions = [] } = useQuery({
     queryKey: ['status-options', 'active'],
@@ -172,7 +175,7 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
       </div>
 
       {/* Horizontal Scrolling Board Columns */}
-      <div className="kanban-board">
+      <div className="kanban-board" ref={boardRef}>
         {statusOptions.map((opt: StatusOption) => (
           <KanbanColumn
             key={opt.id}
@@ -184,6 +187,9 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
           />
         ))}
       </div>
+
+      {/* Floating Minimap / Viewport Navigator (Atlassian / Jira style) */}
+      <KanbanMinimap statusOptions={statusOptions} boardRef={boardRef} />
 
       {/* Shared Prerequisite & Status Advancement Dialog */}
       {activeModalCandidate && (

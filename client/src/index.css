@@ -4530,6 +4530,71 @@ a.hero-chip--accent:hover {
   align-items: center;
 }
 
+/* Floating Minimap / Viewport Navigator (Atlassian / Jira style) */
+.kanban-minimap {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 6px 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-bs-theme='dark'] .kanban-minimap {
+  background: rgba(30, 41, 59, 0.9);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.kanban-minimap:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  border-color: var(--border-strong);
+}
+
+.kanban-minimap__track {
+  display: flex;
+  align-items: center;
+  gap: 3.5px;
+  height: 28px;
+  position: relative;
+  max-width: 220px;
+  overflow: hidden;
+}
+
+.kanban-minimap__bar {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 100%;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.kanban-minimap__lens {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  border: 2px solid var(--primary);
+  border-radius: 3px;
+  background: rgba(59, 130, 246, 0.18);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.35);
+  transition: left 0.05s ease-out;
+}
+
+@media (max-width: 768px) {
+  .kanban-minimap {
+    display: none;
+  }
+}
+
 /* ============================================================
    4. Print
    ============================================================ */
