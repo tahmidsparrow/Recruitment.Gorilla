@@ -4918,8 +4918,7 @@ a.hero-chip--accent:hover {
 
 /* ============================================================
    4. Print
-   ============================================================ */
-
+   ============================================================
    Only one screen is meant to leave the app on paper: the candidate
    evaluation report. Everything that is chrome or interaction is dropped, the
    surfaces go white, and the panels are kept from being split across a page
