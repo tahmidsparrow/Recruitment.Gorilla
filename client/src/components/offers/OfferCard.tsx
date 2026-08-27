@@ -107,7 +107,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
   if (isLoading) {
     return (
-      <div className="offer-card mb-3 p-3">
+      <div className="offer-card p-3">
         <div className="d-flex align-items-center gap-2 text-muted small">
           <Spinner size="sm" /> Loading compensation details...
         </div>
@@ -117,7 +117,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
   return (
     <>
-      <div className="offer-card mb-3">
+      <div className="offer-card">
         <div className="offer-card__header">
           <div className="d-flex align-items-center gap-2">
             <DollarSign size={17} className="text-primary" />
