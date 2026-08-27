@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Form, InputGroup, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,8 +10,9 @@ import {
   getCandidates,
   getStatusOptions,
 } from '../services/api';
-import { SearchableMultiSelect } from '../components/SearchableSelect';
+import SearchableDropdown, { SearchableMultiSelect, type DropdownOption } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
+import { getStatusTone } from '../utils/statusColors';
 import KanbanBoard from '../components/kanban/KanbanBoard';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
@@ -152,6 +153,22 @@ export default function CandidatesPage() {
     queryFn: getActiveSkillOptions,
   });
 
+  const statusDropdownOptions: DropdownOption<string>[] = useMemo(() => {
+    return statusOptions.map((o) => ({
+      id: o.name,
+      name: o.name,
+      color: `var(--status-${getStatusTone(o.name)}-solid, #64748b)`,
+    }));
+  }, [statusOptions]);
+
+  const roleDropdownOptions: DropdownOption<string>[] = useMemo(() => {
+    return roleOptions.map((o) => ({
+      id: String(o.id),
+      name: o.name,
+      badge: o.isActive ? undefined : 'Inactive',
+    }));
+  }, [roleOptions]);
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCandidate(id),
     onSuccess: () => {
@@ -196,34 +213,27 @@ export default function CandidatesPage() {
             </InputGroup>
           </Form>
 
-          <Form.Select
-            aria-label="Filter by status"
-            className="data-toolbar__field"
-            value={status}
-            onChange={(e) => setParams({ status: e.target.value || null })}
-          >
-            <option value="">All statuses</option>
-            {statusOptions.map((option) => (
-              <option key={option.id} value={option.name}>
-                {option.name}
-              </option>
-            ))}
-          </Form.Select>
+          <div className="data-toolbar__field">
+            <SearchableDropdown<string>
+              options={statusDropdownOptions}
+              value={status || null}
+              onChange={(val) => setParams({ status: val || null })}
+              placeholder="All statuses"
+              emptyMessage="No status found"
+              clearable
+            />
+          </div>
 
-          <Form.Select
-            aria-label="Filter by role"
-            className="data-toolbar__field"
-            value={roleId}
-            onChange={(e) => setParams({ role: e.target.value || null })}
-          >
-            <option value="">All roles</option>
-            {roleOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-                {option.isActive ? '' : ' (inactive)'}
-              </option>
-            ))}
-          </Form.Select>
+          <div className="data-toolbar__field">
+            <SearchableDropdown<string>
+              options={roleDropdownOptions}
+              value={roleId || null}
+              onChange={(val) => setParams({ role: val || null })}
+              placeholder="All roles"
+              emptyMessage="No role found"
+              clearable
+            />
+          </div>
 
           <div className="data-toolbar__field--wide">
             <SearchableMultiSelect
