@@ -10,6 +10,7 @@ describe('statusColors', () => {
     expect(getStatusTone('Interview Scheduled')).toBe('interview');
     expect(getStatusTone('Interview Completed')).toBe('interview');
     expect(getStatusTone('Technical Assessment')).toBe('assessment');
+    expect(getStatusTone('Submission Received')).toBe('assessment');
     expect(getStatusTone('Uploaded')).toBe('uploaded');
     expect(getStatusTone('Ask for Assesment')).toBe('intake');
   });

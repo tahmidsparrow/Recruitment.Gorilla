@@ -633,7 +633,7 @@ function AddStatusModal({
     status === 'Reject' ||
     status === 'Discontinued';
   const requiresTaskDetails = status === 'Technical Assessment';
-  const requiresSubmissionUrl = status === 'Submission Receieved';
+  const requiresSubmissionUrl = status === 'Submission Received' || status === 'Submission Receieved';
   const requiresInterviewAt = status === 'Interview Scheduled';
   const requiresInterviewers = status === 'Interview Scheduled';
 
