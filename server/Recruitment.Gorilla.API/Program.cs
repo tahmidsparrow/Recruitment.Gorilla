@@ -46,6 +46,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<InterviewService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<OfferService>();
+builder.Services.AddScoped<EvaluationRubricService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<ISmtpTransport, MailKitSmtpTransport>();

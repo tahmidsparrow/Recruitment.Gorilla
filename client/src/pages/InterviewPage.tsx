@@ -3,7 +3,7 @@ import { Accordion } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { StickyNote } from 'lucide-react';
-import { getInterview } from '../services/api';
+import { getInterview, getInterviewEvaluationRubric } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
 import { skillColorClass } from '../utils/skillColors';
@@ -37,6 +37,12 @@ export default function InterviewPage() {
     queryKey: ['interview', interviewId],
     queryFn: () => getInterview(interviewId),
     retry: false,
+  });
+
+  const { data: rubric } = useQuery({
+    queryKey: ['interview-rubric', interviewId],
+    queryFn: () => getInterviewEvaluationRubric(interviewId),
+    enabled: !!data,
   });
 
   if (isLoading) {
@@ -178,7 +184,7 @@ export default function InterviewPage() {
                             {e.isSubmitted ? 'Submitted' : 'Draft'}
                           </span>
                         </div>
-                        <EvaluationReadOnly evaluation={e} />
+                        <EvaluationReadOnly evaluation={e} rubric={rubric} />
                       </div>
                     ))}
                   </div>

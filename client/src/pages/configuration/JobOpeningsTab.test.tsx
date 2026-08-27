@@ -11,6 +11,7 @@ vi.mock('../../services/api', () => ({
   createRoleOption: vi.fn(),
   updateRoleOption: vi.fn(),
   deleteRoleOption: vi.fn(),
+  getEvaluationRubrics: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => ({ isSuperAdmin: true }) }));
 import { getRoleOptions, getRecruiterOptions } from '../../services/api';

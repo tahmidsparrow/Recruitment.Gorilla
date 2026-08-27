@@ -89,6 +89,8 @@ export interface RoleAppliedOption {
   endDate: string;     // required closing deadline
   title: string;       // computed: "{name} — {posted date}"
   recruiters: { userId: number; name: string }[];
+  evaluationRubricId?: number | null;
+  evaluationRubricName?: string | null;
 }
 
 export interface SkillOption {
@@ -115,6 +117,7 @@ export interface UpsertOptionPayload {
   priority?: string | null;
   endDate?: string | null;   // required for roles
   recruiterUserIds?: number[];
+  evaluationRubricId?: number | null;
 }
 
 export interface DeleteRoleResult {
@@ -580,5 +583,48 @@ export interface OfferMetrics {
   declinedOffers: number;
   totalHired: number;
   acceptanceRatePercentage: number;
+}
+
+// ----- Evaluation Rubrics -----
+export interface RubricCriterion {
+  id: number;
+  evaluationRubricId: number;
+  sectionName: string;
+  key: string;
+  label: string;
+  hint?: string | null;
+  weight: number;
+  sortOrder: number;
+}
+
+export interface EvaluationRubric {
+  id: number;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  criteriaCount: number;
+  assignedRolesCount: number;
+  criteria: RubricCriterion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertRubricCriterionPayload {
+  id?: number;
+  sectionName: string;
+  key: string;
+  label: string;
+  hint?: string | null;
+  weight?: number;
+  sortOrder?: number;
+}
+
+export interface UpsertEvaluationRubricPayload {
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  criteria: UpsertRubricCriterionPayload[];
 }
 
