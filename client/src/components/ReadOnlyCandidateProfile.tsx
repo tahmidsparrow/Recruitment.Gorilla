@@ -97,7 +97,7 @@ export default function ReadOnlyCandidateProfile({
   const summaryCollapsed = summaryIsLong && !summaryExpanded;
 
   return (
-    <Card className={`h-100 profile-card ${className}`.trim()}>
+    <Card className={`profile-card ${className}`.trim()}>
       <div className="profile-header">
         <div className="d-flex justify-content-between align-items-start gap-2">
           <div>
