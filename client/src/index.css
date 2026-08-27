@@ -2074,6 +2074,14 @@ a.list-row__title:hover {
   background: var(--primary-tint-hover);
 }
 
+.toolbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
 /* A bare checkbox is ~24px tall next to 38px selects, so on one centre line it
    reads as floating. Giving it the control height sits it on the same rail. */
 .data-toolbar .form-check {

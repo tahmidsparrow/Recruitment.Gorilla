@@ -179,12 +179,8 @@ export default function CandidatesPage() {
 
   return (
     <Page>
-      {/* No <h2> — the topbar owns the page title. The primary action shares
-          this row with the filters rather than getting a header row of its
-          own; see .page-bar. */}
-      <div className="page-bar">
-        <search className="flex-grow-1">
-          <div className="data-toolbar">
+      <search>
+        <div className="data-toolbar">
           <Form onSubmit={applySearch} className="data-toolbar__search" role="search">
             <InputGroup>
               <Form.Control
@@ -279,49 +275,47 @@ export default function CandidatesPage() {
               </span>
             )}
 
-            {/* Rendered only when something is filtered, so the control appears
-                exactly when it can do anything. */}
+            {/* Rendered only when something is filtered */}
             {hasFilters && (
               <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             )}
+
+            <div className="toolbar-divider d-none d-md-block" />
+
+            <div className="btn-group view-toggle" role="group" aria-label="Candidate view mode">
+              <button
+                type="button"
+                className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => handleViewModeChange('table')}
+                aria-label="Table view"
+                title="Table view (≡)"
+              >
+                <List size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                Table
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => handleViewModeChange('board')}
+                aria-label="Pipeline board view"
+                title="Pipeline board view (⊞)"
+              >
+                <Kanban size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                Board
+              </button>
             </div>
-          </div>
-        </search>
 
-        <div className="page-bar__actions d-flex align-items-center gap-2">
-          <div className="btn-group view-toggle" role="group" aria-label="Candidate view mode">
-            <button
-              type="button"
-              className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => handleViewModeChange('table')}
-              aria-label="Table view"
-              title="Table view (≡)"
-            >
-              <List size={15} strokeWidth={2} className="me-1" aria-hidden="true" />
-              Table
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => handleViewModeChange('board')}
-              aria-label="Pipeline board view"
-              title="Pipeline board view (⊞)"
-            >
-              <Kanban size={15} strokeWidth={2} className="me-1" aria-hidden="true" />
-              Board
-            </button>
+            {canWriteCandidates && (
+              <Link to="/upload" className="btn btn-primary btn-sm d-inline-flex align-items-center">
+                <Upload size={14} strokeWidth={1.75} aria-hidden="true" />
+                <span className="ms-1">Upload CVs</span>
+              </Link>
+            )}
           </div>
-
-          {canWriteCandidates && (
-            <Link to="/upload" className="btn btn-primary">
-              <Upload size={15} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1">Upload CVs</span>
-            </Link>
-          )}
         </div>
-      </div>
+      </search>
 
       {isLoading ? (
         <SkeletonRows rows={8} label="Loading candidates" />
