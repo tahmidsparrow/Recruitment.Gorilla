@@ -270,6 +270,11 @@ public class OfferService(
             if (!isOwner && !isAssignedRecruiter) return null;
         }
 
+        if (offer.Status is "Extended" or "Accepted" or "Declined")
+        {
+            throw new InvalidOperationException($"Offer #{offerId} cannot be extended because its status is already '{offer.Status}'. Create a new offer version first.");
+        }
+
         offer.Status = "Extended";
         offer.ExtendedAt = DateTime.UtcNow;
         offer.UpdatedAt = DateTime.UtcNow;
@@ -305,6 +310,11 @@ public class OfferService(
             var isOwner = offer.Candidate.OwnerUserId == uid;
             var isAssignedRecruiter = offer.Candidate.RoleAppliedOption?.Recruiters.Any(rr => rr.UserId == uid) ?? false;
             if (!isOwner && !isAssignedRecruiter) return null;
+        }
+
+        if (offer.Status != "Extended")
+        {
+            throw new InvalidOperationException($"Cannot record decision on offer #{offerId} with status '{offer.Status}'. The offer must be in 'Extended' status.");
         }
 
         var isAccepted = string.Equals(dto.Decision, "Accepted", StringComparison.OrdinalIgnoreCase);
