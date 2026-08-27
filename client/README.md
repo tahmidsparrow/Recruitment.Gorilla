@@ -20,4 +20,15 @@ npm run preview   # preview production build locally
 ```
 
 The frontend expects the backend API to be running at `http://localhost:5000`.
-To change the API base URL, update `src/services/api.ts`.
+The browser always calls the same-origin path `/api`; the Vite dev server proxies
+that to the backend (see `vite.config.ts`).
+
+If your backend listens on a different port, **don't edit `vite.config.ts`** —
+create `client/.env.development.local` (gitignored) with:
+
+```
+VITE_API_PROXY_TARGET=http://localhost:5099
+```
+
+Keep the target on `localhost`/`127.0.0.1`: the proxy is what keeps the backend
+off the LAN while the dev server itself is exposed.
