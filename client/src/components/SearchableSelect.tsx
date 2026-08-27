@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Form } from 'react-bootstrap';
-import { X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 
 export interface Option {
   id: number;
@@ -45,7 +45,16 @@ export function SearchableSelect({
         onChange={(e) => setQuery(e.target.value)}
         onBlur={() => window.setTimeout(() => setOpen(false), 120)}
         isInvalid={isInvalid}
+        style={{ paddingRight: '2rem' }}
       />
+      {!selected && !open && (
+        <ChevronDown
+          size={14}
+          className="position-absolute end-0 top-50 translate-middle-y me-2.5 text-muted"
+          style={{ pointerEvents: 'none', opacity: 0.6 }}
+          aria-hidden="true"
+        />
+      )}
       {selected && !open && (
         <button
           type="button"
@@ -130,7 +139,16 @@ export function SearchableMultiSelect({
           setOpen(true);
         }}
         onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        style={{ paddingRight: '2rem' }}
       />
+      {!open && (
+        <ChevronDown
+          size={14}
+          className="position-absolute end-0 top-50 translate-middle-y me-2.5 text-muted"
+          style={{ pointerEvents: 'none', opacity: 0.6 }}
+          aria-hidden="true"
+        />
+      )}
       {open && (
         <div className="searchable-menu">
           {available.length === 0 ? (

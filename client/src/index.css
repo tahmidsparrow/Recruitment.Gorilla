@@ -2011,9 +2011,9 @@ a.list-row__title:hover {
 
 @media (min-width: 576px) {
   .data-toolbar__search {
-    flex: 1 1 180px;
-    min-width: 140px;
-    max-width: 240px;
+    flex: 1 1 240px;
+    min-width: 220px;
+    max-width: 320px;
   }
   .data-toolbar__field {
     flex: 0 1 auto;
@@ -2021,9 +2021,9 @@ a.list-row__title:hover {
     max-width: 160px;
   }
   .data-toolbar__field--wide {
-    flex: 1 1 160px;
-    min-width: 140px;
-    max-width: 210px;
+    flex: 1 1 170px;
+    min-width: 150px;
+    max-width: 220px;
   }
   .data-toolbar__end {
     flex: 0 0 auto;
@@ -2037,6 +2037,7 @@ a.list-row__title:hover {
   }
   .data-toolbar__end {
     flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 }
 /* An active filter that no visible control represents — currently the
