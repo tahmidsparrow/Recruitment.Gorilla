@@ -41,4 +41,5 @@ public class Candidate
     public ICollection<StatusHistory> StatusHistories { get; set; } = [];
     public ICollection<CandidateSkill> CandidateSkills { get; set; } = [];
     public ICollection<Interview> Interviews { get; set; } = [];
+    public ICollection<Offer> Offers { get; set; } = [];
 }

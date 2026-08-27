@@ -18,6 +18,11 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
     private const string InterviewScheduled = "Interview Scheduled";
     private const string InterviewCompleted = "Interview Completed";
     private const string Recommended = "Recommended";
+    private const string OfferPreparation = "Offer Preparation";
+    private const string OfferExtended = "Offer Extended";
+    private const string OfferAccepted = "Offer Accepted";
+    private const string OfferDeclined = "Offer Declined";
+    private const string Hired = "Hired";
     private const string Reject = "Reject";
     private const string Discontinued = "Discontinued";
 
@@ -311,6 +316,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
 
         if (dto.Status == Recommended && !HasAnyStatus(candidate, [CodeReview, InterviewCompleted]))
             return "Recommended requires Code Review or Interview Completed to exist in the candidate history.";
+
+        if (dto.Status == Hired && !HasStatus(candidate, OfferAccepted))
+            return "Hired requires Offer Accepted to exist in the candidate history.";
 
         return null;
     }
@@ -657,7 +665,7 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         minutes is int m && m > 0 ? Math.Clamp(m, 5, 480) : 60;
 
     private static bool RequiresComment(string status) =>
-        status is Reject or Discontinued;
+        status is Reject or Discontinued or OfferDeclined;
 
     private static bool HasStatus(Candidate candidate, string status) =>
         candidate.CurrentStatus == status || candidate.StatusHistories.Any(h => h.Status == status);

@@ -14,6 +14,8 @@ StatusOption 1───* StatusTransition (from/to lookup)
 RoleAppliedOption (standalone lookup)  ── Candidate.RoleAppliedOptionId (restrict)
 SkillOption       (standalone lookup)
 Candidate *───* SkillOption  via CandidateSkill (cascade from Candidate, restrict on SkillOption)
+Candidate 1───* Offer          (cascade delete)
+Offer 1───* OfferApproval      (cascade delete)
 ```
 
 ### Candidate (`Candidates`)
@@ -204,8 +206,42 @@ One interviewer's evaluation of one interview. Unique index `(InterviewId, Inter
 ### InterviewEvaluationItem (`InterviewEvaluationItems`)
 Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is one of the fixed keys in `Models/EvaluationCriteria.cs` (mirrored in `client/src/utils/evaluationCriteria.ts`); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
 
+### Offer (`Offers`)
+Candidate job offer details, structured compensation package, and lifecycle status (`Draft`, `PendingApproval`, `Approved`, `Extended`, `Accepted`, `Declined`, `Withdrawn`).
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | auto |
+| CandidateId | int FK → Candidate | cascade delete |
+| JobTitle | varchar(200) | required |
+| BaseSalary | decimal(18,2) | required; annual base compensation |
+| Currency | varchar(10) | required; e.g. "USD", "EUR", "GBP" |
+| Bonus | decimal(18,2) | nullable; signing or annual bonus |
+| Equity | varchar(200) | nullable; stock options / RSUs |
+| StartDate | datetime | nullable |
+| ExpirationDate | datetime | nullable |
+| Notes | varchar(2000) | nullable; terms and conditions |
+| Status | varchar(50) | required; Draft / PendingApproval / Approved / Extended / Accepted / Declined / Withdrawn |
+| CreatedByUserId | int FK → User | restrict |
+| CreatedAt / UpdatedAt | datetime | UTC |
+| ExtendedAt / RespondedAt | datetime? | UTC timestamps |
+| DeclineReason | varchar(1000) | nullable; reason when status = Declined |
+
+### OfferApproval (`OfferApprovals`)
+Internal sign-off workflow for offers before candidate extension.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | auto |
+| OfferId | int FK → Offer | cascade delete |
+| ApproverUserId | int FK → User | restrict |
+| Status | varchar(50) | "Pending", "Approved", "Rejected" |
+| Comment | varchar(1000) | nullable |
+| ReviewedAt | datetime? | UTC |
+| CreatedAt | datetime | UTC |
+
 ### Notification (`Notifications`)
-Per-user in-app notification (e.g. interview assignment). `Id`, `UserId` (FK → User, cascade), `Title` varchar(200), `Message` varchar(500), `LinkUrl` varchar(300)? (client route), `IsRead` bool (index `(UserId, IsRead)`), `CreatedAt`. In-app only — no email is sent.
+Per-user in-app notification (e.g. interview assignment, offer approval request). `Id`, `UserId` (FK → User, cascade), `Title` varchar(200), `Message` varchar(500), `LinkUrl` varchar(300)? (client route), `IsRead` bool (index `(UserId, IsRead)`), `CreatedAt`. In-app and transactional email dispatched via `NotificationService`.
 
 ## Key design rules
 - **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.

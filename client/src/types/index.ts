@@ -502,3 +502,82 @@ export interface UpsertEmailSettings {
   useStartTls: boolean;
   enabled: boolean;
 }
+
+// ----- Offers & Compensation -----
+export interface OfferApproval {
+  id: number;
+  offerId: number;
+  approverUserId: number;
+  approverName: string;
+  approverEmail: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  comment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export type OfferStatus =
+  | 'Draft'
+  | 'PendingApproval'
+  | 'Approved'
+  | 'Extended'
+  | 'Accepted'
+  | 'Declined'
+  | 'Withdrawn';
+
+export interface Offer {
+  id: number;
+  candidateId: number;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  baseSalary: number;
+  currency: string;
+  bonus: number | null;
+  equity: string | null;
+  startDate: string | null;
+  expirationDate: string | null;
+  notes: string | null;
+  status: OfferStatus;
+  createdByUserId: number;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  extendedAt: string | null;
+  respondedAt: string | null;
+  declineReason: string | null;
+  approvals: OfferApproval[];
+}
+
+export interface CreateOfferPayload {
+  jobTitle?: string;
+  baseSalary: number;
+  currency?: string;
+  bonus?: number | null;
+  equity?: string | null;
+  startDate?: string | null;
+  expirationDate?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateOfferPayload extends CreateOfferPayload {}
+
+export interface ReviewOfferApprovalPayload {
+  decision: 'Approved' | 'Rejected';
+  comment?: string;
+}
+
+export interface OfferDecisionPayload {
+  decision: 'Accepted' | 'Declined';
+  reason?: string;
+}
+
+export interface OfferMetrics {
+  totalOffers: number;
+  activeOffers: number;
+  acceptedOffers: number;
+  declinedOffers: number;
+  totalHired: number;
+  acceptanceRatePercentage: number;
+}
+

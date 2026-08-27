@@ -27,6 +27,11 @@ const STATUS_TONE: Record<string, StatusTone> = {
   'Not Available': 'muted',
   Uploaded: 'uploaded',
   'Ask for Assesment': 'intake',
+  'Offer Preparation': 'assessment',
+  'Offer Extended': 'interview',
+  'Offer Accepted': 'success',
+  'Offer Declined': 'reject',
+  Hired: 'success',
 };
 
 /** Tone key for a status (defaults to muted for unknown values). */
