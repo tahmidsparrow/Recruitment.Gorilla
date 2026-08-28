@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827054919_AddOfferManagementAndPipelineExtension")]
+    partial class AddOfferManagementAndPipelineExtension
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1771,9 +1774,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<Guid?>("IamSubject")
-                        .HasColumnType("char(36)");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -1801,9 +1801,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("IamSubject")
                         .IsUnique();
 
                     b.ToTable("Users");

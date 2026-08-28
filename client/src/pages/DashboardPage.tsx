@@ -8,10 +8,12 @@ import {
   getDashboard,
   getDashboardKpis,
   getJobOpenings,
+  getOfferMetrics,
   getStatusBreakdown,
 } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
 import KpiCard from '../components/dashboard/KpiCard';
+import OfferMetricsCard from '../components/dashboard/OfferMetricsCard';
 import {
   IdCardIcon,
   HourglassIcon,
@@ -130,6 +132,12 @@ export default function DashboardPage() {
     enabled: canWriteCandidates,
   });
 
+  const { data: offerMetrics } = useQuery({
+    queryKey: ['dashboard', 'offer-metrics'],
+    queryFn: getOfferMetrics,
+    enabled: canWriteCandidates,
+  });
+
   // The hero and the sections below it don't depend on the KPI query, so a
   // slow KPI fetch no longer blanks the whole page — only the tile row waits.
   const total = kpis?.totalCandidates ?? 0;
@@ -229,6 +237,10 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {offerMetrics && offerMetrics.totalOffers > 0 && (
+            <OfferMetricsCard metrics={offerMetrics} />
+          )}
 
           <div className="grid-2">
             <SectionCard title="Candidates by role">

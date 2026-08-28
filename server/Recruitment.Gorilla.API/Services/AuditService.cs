@@ -11,10 +11,13 @@ namespace Recruitment.Gorilla.API.Services;
 /// </summary>
 public class AuditService(AppDbContext db, CurrentUser currentUser, ILogger<AuditService> logger)
 {
-    /// <summary>Records an action attributed to the current authenticated user.</summary>
+    /// <summary>Records an action attributed to the current authenticated user. Uses
+    /// <see cref="CurrentUser.UserIdOrNull"/>, not <see cref="CurrentUser.UserId"/>: recording is
+    /// best-effort, so a missing identity must leave the row unattributed rather than throw out
+    /// of the operation being audited.</summary>
     public Task RecordAsync(
         string action, string? entityType = null, int? entityId = null, string? summary = null, string? details = null) =>
-        RecordAsync(action, currentUser.UserId, currentUser.Name, entityType, entityId, summary, details);
+        RecordAsync(action, currentUser.UserIdOrNull, currentUser.Name, entityType, entityId, summary, details);
 
     /// <summary>Records an action with an explicit actor (for auth events where the request is anonymous).</summary>
     public async Task RecordAsync(

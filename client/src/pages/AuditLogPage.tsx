@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
+import SearchableDropdown, { type DropdownOption } from '../components/SearchableSelect';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
 import Pagination from '../components/ui/Pagination';
@@ -65,6 +66,11 @@ export default function AuditLogPage() {
 
   const hasFilters = Object.values(applied).some(Boolean);
 
+  const entityOptions: DropdownOption<string>[] = useMemo(
+    () => ENTITY_TYPES.map((t) => ({ id: t, name: t })),
+    []
+  );
+
   return (
     <Page>
       {/* No <h2> — the topbar owns the page title. */}
@@ -76,10 +82,15 @@ export default function AuditLogPage() {
           <Row className="g-3 align-items-end">
             <Col xs={12} md={6} lg={3}>
               <Form.Label htmlFor="audit-entity">Entity type</Form.Label>
-              <Form.Select id="audit-entity" value={entityType} onChange={(e) => setEntityType(e.target.value)}>
-                <option value="">All</option>
-                {ENTITY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-              </Form.Select>
+              <SearchableDropdown<string>
+                id="audit-entity"
+                options={entityOptions}
+                value={entityType || null}
+                onChange={(val) => setEntityType(val || '')}
+                placeholder="All entity types"
+                emptyMessage="No entity type found"
+                clearable
+              />
             </Col>
             <Col xs={12} md={6} lg={3}>
               <Form.Label htmlFor="audit-action">Action contains</Form.Label>

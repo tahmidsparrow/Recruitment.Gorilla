@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826104442_FixSubmissionReceivedTypo")]
+    partial class FixSubmissionReceivedTypo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -677,120 +680,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("BaseSalary")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("Bonus")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<string>("DeclineReason")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<string>("Equity")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("ExtendedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("JobTitle")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
-
-                    b.Property<DateTime?>("RespondedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.ToTable("Offers");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.OfferApproval", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ApproverUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("OfferId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApproverUserId");
-
-                    b.HasIndex("OfferId");
-
-                    b.ToTable("OfferApprovals");
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -1278,51 +1167,6 @@ namespace Recruitment.Gorilla.API.Migrations
                             IsInitial = false,
                             Name = "Ask for Assesment",
                             SortOrder = 2
-                        },
-                        new
-                        {
-                            Id = 15,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            IsInitial = false,
-                            Name = "Offer Preparation",
-                            SortOrder = 12
-                        },
-                        new
-                        {
-                            Id = 16,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            IsInitial = false,
-                            Name = "Offer Extended",
-                            SortOrder = 13
-                        },
-                        new
-                        {
-                            Id = 17,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            IsInitial = false,
-                            Name = "Offer Accepted",
-                            SortOrder = 14
-                        },
-                        new
-                        {
-                            Id = 18,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            IsInitial = false,
-                            Name = "Offer Declined",
-                            SortOrder = 15
-                        },
-                        new
-                        {
-                            Id = 19,
-                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            IsInitial = false,
-                            Name = "Hired",
-                            SortOrder = 16
                         });
                 });
 
@@ -1605,150 +1449,6 @@ namespace Recruitment.Gorilla.API.Migrations
                             IsActive = true,
                             SortOrder = 5,
                             ToStatusOptionId = 3
-                        },
-                        new
-                        {
-                            Id = 32,
-                            FromStatusOptionId = 9,
-                            IsActive = true,
-                            SortOrder = 2,
-                            ToStatusOptionId = 15
-                        },
-                        new
-                        {
-                            Id = 33,
-                            FromStatusOptionId = 9,
-                            IsActive = true,
-                            SortOrder = 3,
-                            ToStatusOptionId = 16
-                        },
-                        new
-                        {
-                            Id = 34,
-                            FromStatusOptionId = 9,
-                            IsActive = true,
-                            SortOrder = 4,
-                            ToStatusOptionId = 1
-                        },
-                        new
-                        {
-                            Id = 35,
-                            FromStatusOptionId = 15,
-                            IsActive = true,
-                            SortOrder = 1,
-                            ToStatusOptionId = 16
-                        },
-                        new
-                        {
-                            Id = 36,
-                            FromStatusOptionId = 15,
-                            IsActive = true,
-                            SortOrder = 2,
-                            ToStatusOptionId = 18
-                        },
-                        new
-                        {
-                            Id = 37,
-                            FromStatusOptionId = 15,
-                            IsActive = true,
-                            SortOrder = 3,
-                            ToStatusOptionId = 1
-                        },
-                        new
-                        {
-                            Id = 38,
-                            FromStatusOptionId = 15,
-                            IsActive = true,
-                            SortOrder = 4,
-                            ToStatusOptionId = 12
-                        },
-                        new
-                        {
-                            Id = 39,
-                            FromStatusOptionId = 16,
-                            IsActive = true,
-                            SortOrder = 1,
-                            ToStatusOptionId = 17
-                        },
-                        new
-                        {
-                            Id = 40,
-                            FromStatusOptionId = 16,
-                            IsActive = true,
-                            SortOrder = 2,
-                            ToStatusOptionId = 18
-                        },
-                        new
-                        {
-                            Id = 41,
-                            FromStatusOptionId = 16,
-                            IsActive = true,
-                            SortOrder = 3,
-                            ToStatusOptionId = 1
-                        },
-                        new
-                        {
-                            Id = 42,
-                            FromStatusOptionId = 16,
-                            IsActive = true,
-                            SortOrder = 4,
-                            ToStatusOptionId = 12
-                        },
-                        new
-                        {
-                            Id = 43,
-                            FromStatusOptionId = 17,
-                            IsActive = true,
-                            SortOrder = 1,
-                            ToStatusOptionId = 19
-                        },
-                        new
-                        {
-                            Id = 44,
-                            FromStatusOptionId = 17,
-                            IsActive = true,
-                            SortOrder = 2,
-                            ToStatusOptionId = 18
-                        },
-                        new
-                        {
-                            Id = 45,
-                            FromStatusOptionId = 17,
-                            IsActive = true,
-                            SortOrder = 3,
-                            ToStatusOptionId = 12
-                        },
-                        new
-                        {
-                            Id = 46,
-                            FromStatusOptionId = 19,
-                            IsActive = true,
-                            SortOrder = 1,
-                            ToStatusOptionId = 12
-                        },
-                        new
-                        {
-                            Id = 47,
-                            FromStatusOptionId = 18,
-                            IsActive = true,
-                            SortOrder = 1,
-                            ToStatusOptionId = 15
-                        },
-                        new
-                        {
-                            Id = 48,
-                            FromStatusOptionId = 18,
-                            IsActive = true,
-                            SortOrder = 2,
-                            ToStatusOptionId = 1
-                        },
-                        new
-                        {
-                            Id = 49,
-                            FromStatusOptionId = 18,
-                            IsActive = true,
-                            SortOrder = 3,
-                            ToStatusOptionId = 12
                         });
                 });
 
@@ -1770,9 +1470,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
-
-                    b.Property<Guid?>("IamSubject")
-                        .HasColumnType("char(36)");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -1801,9 +1498,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("IamSubject")
                         .IsUnique();
 
                     b.ToTable("Users");
@@ -1991,44 +1685,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
-                        .WithMany("Offers")
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Recruitment.Gorilla.API.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-
-                    b.Navigation("CreatedByUser");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.OfferApproval", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.User", "ApproverUser")
-                        .WithMany()
-                        .HasForeignKey("ApproverUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Recruitment.Gorilla.API.Models.Offer", "Offer")
-                        .WithMany("Approvals")
-                        .HasForeignKey("OfferId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApproverUser");
-
-                    b.Navigation("Offer");
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleRecruiter", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.RoleAppliedOption", "RoleAppliedOption")
@@ -2104,8 +1760,6 @@ namespace Recruitment.Gorilla.API.Migrations
 
                     b.Navigation("Interviews");
 
-                    b.Navigation("Offers");
-
                     b.Navigation("StatusHistories");
                 });
 
@@ -2131,11 +1785,6 @@ namespace Recruitment.Gorilla.API.Migrations
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTypeOption", b =>
                 {
                     b.Navigation("Tags");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
-                {
-                    b.Navigation("Approvals");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>

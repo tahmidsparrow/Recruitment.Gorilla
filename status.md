@@ -6,7 +6,7 @@
 - Interview Scheduled
 - Not Available
 - Technical Assessment
-- Submission Receieved
+- Submission Received
 - Code Review
 - Interview Completed
 - Recommended
@@ -20,8 +20,8 @@
 
 ## Transitions
 - Ask for Assesment -> Technical Assessment, Not Available, Discontinued
-- Technical Assessment -> Submission Receieved, No Submission, Not Available, Discontinued
-- Submission Receieved -> Code Review
+- Technical Assessment -> Submission Received, No Submission, Not Available, Discontinued
+- Submission Received -> Code Review
 - Code Review -> Call for Interview, Not Recommended, Not Available, Discontinued
 - Call for Interview -> Interview Scheduled, Not Available, Discontinued
 - Interview Scheduled -> Interview Completed, Not Available, Discontinued
@@ -32,8 +32,8 @@
 
 ## Prerequisites
 - Technical Assessment requires: task assigned/comment required
-- Submission Receieved requires: submission link or file
-- Code Review requires: Submission Receieved already exists
+- Submission Received requires: submission link or file
+- Code Review requires: Submission Received already exists
 - Interview Scheduled requires: interview date/time
 - Interview Completed requires: Interview Scheduled already exists/comment required
 - Recommended requires: Code Review or Interview Completed already exists
