@@ -20,12 +20,34 @@ const STATUS_TONE: Record<string, StatusTone> = {
   'Interview Scheduled': 'interview',
   'Interview Completed': 'interview',
   'Technical Assessment': 'assessment',
+  'Submission Received': 'assessment',
   'Submission Receieved': 'assessment',
   'Code Review': 'assessment',
   'No Submission': 'muted',
   'Not Available': 'muted',
   Uploaded: 'uploaded',
   'Ask for Assesment': 'intake',
+  'Offer Preparation': 'assessment',
+  'Offer Extended': 'interview',
+  'Offer Accepted': 'success',
+  'Offer Declined': 'reject',
+  Hired: 'success',
+};
+
+export const STATUS_HEX_COLORS: Record<StatusTone, string> = {
+  uploaded: '#0d9488',
+  intake: '#d97706',
+  assessment: '#8b5cf6',
+  interview: '#3b82f6',
+  success: '#10b981',
+  reject: '#ef4444',
+  muted: '#64748b',
+};
+
+/** Solid hex color corresponding to the status tone. */
+export const getStatusSolidColor = (status: string): string => {
+  const tone = getStatusTone(status);
+  return STATUS_HEX_COLORS[tone] || '#64748b';
 };
 
 /** Tone key for a status (defaults to muted for unknown values). */

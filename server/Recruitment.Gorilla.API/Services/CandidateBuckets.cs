@@ -14,12 +14,13 @@ namespace Recruitment.Gorilla.API.Services;
 /// </summary>
 public static class CandidateBuckets
 {
-    /// <summary>Terminal statuses meaning the candidate was taken forward.</summary>
-    public static readonly HashSet<string> PositiveTerminal = ["Recommended"];
+    /// <summary>Terminal statuses meaning the candidate was taken forward or hired.</summary>
+    public static readonly HashSet<string> PositiveTerminal =
+        ["Recommended", "Offer Preparation", "Offer Extended", "Offer Accepted", "Hired"];
 
     /// <summary>Terminal statuses meaning the candidate did not proceed.</summary>
     public static readonly HashSet<string> NegativeTerminal =
-        ["Reject", "Not Recommended", "Discontinued", "Not Available"];
+        ["Reject", "Not Recommended", "Discontinued", "Not Available", "Offer Declined"];
 
     /// <summary>How far back "new this week" reaches.</summary>
     public const int NewWindowDays = 7;
@@ -29,8 +30,10 @@ public static class CandidateBuckets
     public const string Rejected = "rejected";
     public const string InProcess = "in-process";
     public const string NewThisWeek = "new-this-week";
+    public const string Hired = "hired";
+    public const string Offers = "offers";
 
     /// <summary>True when <paramref name="bucket"/> is one this app understands.</summary>
     public static bool IsKnown(string? bucket) =>
-        bucket is Recommended or Rejected or InProcess or NewThisWeek;
+        bucket is Recommended or Rejected or InProcess or NewThisWeek or Hired or Offers;
 }

@@ -276,7 +276,7 @@ then click **Add status**. Only the statuses that are *legal from the current st
 offered. The main path is:
 
 ```
-Uploaded → Ask for Assesment → Technical Assessment → Submission Receieved
+Uploaded → Ask for Assesment → Technical Assessment → Submission Received
         → Code Review → Call for Interview → Interview Scheduled
         → Interview Completed → Recommended
 ```
@@ -289,7 +289,7 @@ Some statuses require extra fields — the form asks for them automatically:
 | Moving to… | You must provide |
 |---|---|
 | **Technical Assessment** | the **task details** the candidate must complete |
-| **Submission Receieved** | the **submission URL** |
+| **Submission Received** | the **submission URL** |
 | **Interview Scheduled** | **date & time**, at least one **interviewer**, plus optional interview-type tags and notes |
 | **Interview Completed** | a **comment**, and **at least one interviewer must have submitted their evaluation** |
 
@@ -509,7 +509,7 @@ under it, the opening is deactivated instead of deleted and the app reports the 
 
 ```
                                     ┌──────────────────────────────────────────┐
-Uploaded ─→ Ask for Assesment ─→ Technical Assessment ─→ Submission Receieved │
+Uploaded ─→ Ask for Assesment ─→ Technical Assessment ─→ Submission Received   │
                                     │        (task details*)      (submission URL*)
                                     ▼
    Code Review ─→ Call for Interview ─→ Interview Scheduled ─→ Interview Completed ─→ Recommended

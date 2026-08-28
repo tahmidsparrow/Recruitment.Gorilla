@@ -38,6 +38,12 @@ import type {
   UpsertEvaluationPayload,
   UpsertOptionPayload,
   UserListItem,
+  Offer,
+  CreateOfferPayload,
+  UpdateOfferPayload,
+  ReviewOfferApprovalPayload,
+  OfferDecisionPayload,
+  OfferMetrics,
 } from '../types';
 
 // Same-origin path, built from import.meta.env.BASE_URL ("/" locally, where the
@@ -430,4 +436,85 @@ export const markNotificationRead = async (id: number): Promise<void> => {
 
 export const markAllNotificationsRead = async (): Promise<void> => {
   await api.post('/notifications/read-all');
+};
+
+// ----- Offers & Compensation -----
+export const getCandidateOffers = async (candidateId: number): Promise<Offer[]> => {
+  const { data } = await api.get<Offer[]>(`/candidates/${candidateId}/offers`);
+  return data;
+};
+
+export const getOfferById = async (candidateId: number, offerId: number): Promise<Offer> => {
+  const { data } = await api.get<Offer>(`/candidates/${candidateId}/offers/${offerId}`);
+  return data;
+};
+
+export const createOffer = async (
+  candidateId: number,
+  payload: CreateOfferPayload
+): Promise<Offer> => {
+  const { data } = await api.post<Offer>(`/candidates/${candidateId}/offers`, payload);
+  return data;
+};
+
+export const updateOffer = async (
+  candidateId: number,
+  offerId: number,
+  payload: UpdateOfferPayload
+): Promise<Offer> => {
+  const { data } = await api.put<Offer>(`/candidates/${candidateId}/offers/${offerId}`, payload);
+  return data;
+};
+
+export const submitOfferForApproval = async (
+  candidateId: number,
+  offerId: number,
+  approverUserIds?: number[]
+): Promise<Offer> => {
+  const { data } = await api.post<Offer>(
+    `/candidates/${candidateId}/offers/${offerId}/submit-approval`,
+    approverUserIds ?? []
+  );
+  return data;
+};
+
+export const reviewOfferApproval = async (
+  candidateId: number,
+  offerId: number,
+  payload: ReviewOfferApprovalPayload
+): Promise<Offer> => {
+  const { data } = await api.post<Offer>(
+    `/candidates/${candidateId}/offers/${offerId}/review`,
+    payload
+  );
+  return data;
+};
+
+export const extendOffer = async (candidateId: number, offerId: number): Promise<Offer> => {
+  const { data } = await api.post<Offer>(`/candidates/${candidateId}/offers/${offerId}/extend`);
+  return data;
+};
+
+export const recordOfferDecision = async (
+  candidateId: number,
+  offerId: number,
+  payload: OfferDecisionPayload
+): Promise<Offer> => {
+  const { data } = await api.post<Offer>(
+    `/candidates/${candidateId}/offers/${offerId}/decision`,
+    payload
+  );
+  return data;
+};
+
+export const downloadOfferPdf = async (candidateId: number, offerId: number): Promise<Blob> => {
+  const res = await api.get(`/candidates/${candidateId}/offers/${offerId}/pdf`, {
+    responseType: 'blob',
+  });
+  return res.data as Blob;
+};
+
+export const getOfferMetrics = async (): Promise<OfferMetrics> => {
+  const { data } = await api.get<OfferMetrics>('/offers/metrics');
+  return data;
 };
