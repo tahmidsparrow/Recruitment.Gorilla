@@ -46,7 +46,7 @@ public class OffersController(
         var created = await offerService.CreateOfferAsync(
             candidateId,
             dto,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty);
 
         if (created is null)
@@ -66,7 +66,7 @@ public class OffersController(
             offerId,
             dto,
             OwnerScope,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty);
 
         if (updated is null || updated.CandidateId != candidateId)
@@ -82,7 +82,7 @@ public class OffersController(
         var submitted = await offerService.SubmitForApprovalAsync(
             offerId,
             approverUserIds,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty,
             OwnerScope);
 
@@ -105,7 +105,7 @@ public class OffersController(
         var reviewed = await offerService.ReviewApprovalAsync(
             offerId,
             dto,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty);
 
         if (reviewed is null || reviewed.CandidateId != candidateId)
@@ -120,7 +120,7 @@ public class OffersController(
     {
         var extended = await offerService.ExtendOfferAsync(
             offerId,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty,
             OwnerScope);
 
@@ -148,7 +148,7 @@ public class OffersController(
         var decided = await offerService.RecordDecisionAsync(
             offerId,
             dto,
-            currentUser.UserId ?? 0,
+            currentUser.UserId,
             currentUser.Name ?? string.Empty,
             OwnerScope);
 

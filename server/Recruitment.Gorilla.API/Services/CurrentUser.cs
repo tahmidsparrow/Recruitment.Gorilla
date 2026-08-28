@@ -21,16 +21,21 @@ public class CurrentUser(IHttpContextAccessor accessor)
     public Guid? Subject =>
         Guid.TryParse(Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out var sub) ? sub : null;
 
+    /// <summary>The local user id if this request has a resolved identity, otherwise null.
+    /// For callers that legitimately run without one (a background or anonymous path, or a
+    /// service under unit test) and want unattributed behaviour rather than an exception.</summary>
+    public int? UserIdOrNull =>
+        int.TryParse(Principal?.FindFirst("local_user_id")?.Value, out var id) ? id : null;
+
     /// <summary>The local user id, resolved by <see cref="Authorization.SubjectResolutionMiddleware"/>
     /// before this request reached a controller. Throws if read outside an authenticated,
     /// resolved request — that should be unreachable, since an unresolved subject already
     /// gets a 403 from that middleware before routing/authorization even runs.</summary>
     public int UserId =>
-        int.TryParse(Principal?.FindFirst("local_user_id")?.Value, out var id)
-            ? id
-            : throw new InvalidOperationException(
-                "CurrentUser.UserId read without a resolved identity — SubjectResolutionMiddleware " +
-                "should already have run and rejected the request if this were reachable.");
+        UserIdOrNull
+        ?? throw new InvalidOperationException(
+            "CurrentUser.UserId read without a resolved identity — SubjectResolutionMiddleware " +
+            "should already have run and rejected the request if this were reachable.");
 
     public string? Name => Principal?.FindFirst(ClaimTypes.Name)?.Value;
 
