@@ -68,6 +68,23 @@ public class IamTokenAuthorizationTests(IamTestFixture fx)
         Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
     }
 
+    /// <summary>Defence in depth: IAM's own /connect/authorize handler is supposed to
+    /// refuse a token for a client the subject holds no grant for, so a real IAM
+    /// should never hand RG a token with zero ats_roles at all — but RG must not
+    /// depend solely on that holding. A token that would otherwise resolve fine
+    /// (known, active, matching email) must still be rejected if it carries no
+    /// ats_roles claim whatsoever.</summary>
+    [Fact]
+    public async Task Iam_token_with_no_ats_roles_claim_at_all_is_rejected()
+    {
+        var recruiter = await fx.SeedUserAsync(Roles.Recruiter);
+        var token = fx.MintIamToken(Guid.NewGuid(), recruiter.Email, recruiter.Name); // no roles passed
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
+    }
+
     [Fact]
     public async Task Iam_token_for_a_deactivated_local_user_is_rejected()
     {
