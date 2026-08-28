@@ -6,16 +6,22 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { login as apiLogin, logout as apiLogout, refreshSession } from '../services/api';
-import type { AuthUser, LoginPayload, LoginResult, Role } from '../types';
+import type { User as OidcUser } from 'oidc-client-ts';
+import { userManager, readAtsRoles } from './userManager';
+import type { AuthUser, Role } from '../types';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   user: AuthUser | null;
   loading: boolean;
-  login: (payload: LoginPayload) => Promise<AuthUser>;
+  /** Redirects to Gorilla.IAM to sign in; never resolves (full-page navigation).
+   *  `from` is round-tripped through oidc-client-ts's own state param and recovered
+   *  on /callback. */
+  login: (from?: string) => Promise<void>;
   logout: () => Promise<void>;
-  /** Re-sync auth state from the latest token (e.g. after changing password). */
+  /** Re-sync auth state from the current OIDC session (e.g. after a silent renewal
+   *  the app wants reflected immediately, or from ChangePasswordPage's local-login
+   *  path — see that file for why it still exists). */
   refresh: () => Promise<void>;
   hasRole: (role: Role) => boolean;
   hasAnyRole: (...roles: Role[]) => boolean;
@@ -29,12 +35,14 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function toUser(res: LoginResult): AuthUser {
+function toAuthUser(oidcUser: OidcUser): AuthUser {
   return {
-    name: res.name,
-    email: res.email,
-    roles: res.roles,
-    mustChangePassword: res.mustChangePassword,
+    name: oidcUser.profile.name ?? oidcUser.profile.email ?? '',
+    email: oidcUser.profile.email ?? '',
+    roles: readAtsRoles(oidcUser.access_token) as Role[],
+    // Gorilla.IAM never issues a token until a pending password change is resolved
+    // (spec 3.2) — there is no equivalent claim to read on an IAM-issued token.
+    mustChangePassword: false,
   };
 }
 
@@ -42,18 +50,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // On first load, try to restore a session from the httpOnly refresh cookie.
+  // On first load, try to restore a session oidc-client-ts already has (its own
+  // storage, not ours — replaces the httpOnly-cookie-restore dance this used to do).
   useEffect(() => {
     let mounted = true;
-    refreshSession()
-      .then((res) => {
-        if (mounted && res) setUser(toUser(res));
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+
+    userManager.getUser().then((oidcUser) => {
+      if (!mounted) return;
+      setUser(oidcUser && !oidcUser.expired ? toAuthUser(oidcUser) : null);
+      setLoading(false);
+    });
+
+    // Keeps React state in sync with automaticSilentRenew's background refresh-token
+    // renewal, and with the callback page's signinRedirectCallback() call.
+    const unsubscribeLoaded = userManager.events.addUserLoaded((oidcUser) => {
+      if (mounted) setUser(toAuthUser(oidcUser));
+    });
+    const unsubscribeUnloaded = userManager.events.addUserUnloaded(() => {
+      if (mounted) setUser(null);
+    });
+
     return () => {
       mounted = false;
+      unsubscribeLoaded();
+      unsubscribeUnloaded();
     };
   }, []);
 
@@ -65,19 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: user !== null,
       user,
       loading,
-      login: async (payload) => {
-        const res = await apiLogin(payload);
-        const u = toUser(res);
-        setUser(u);
-        return u;
-      },
+      login: (from) => userManager.signinRedirect({ state: { from } }),
       logout: async () => {
-        await apiLogout();
-        setUser(null);
+        // Local-only session clear: Gorilla.IAM has no /connect/logout (end-session)
+        // handler yet — same deliberately-deferred gap as /connect/userinfo (see
+        // userManager.ts). This does not end the IAM session cookie itself, so it is
+        // not yet true cross-app SSO logout (spec 3.5) — a later increment's job.
+        await userManager.removeUser();
       },
       refresh: async () => {
-        const res = await refreshSession();
-        setUser(res ? toUser(res) : null);
+        const oidcUser = await userManager.getUser();
+        setUser(oidcUser && !oidcUser.expired ? toAuthUser(oidcUser) : null);
       },
       hasRole,
       hasAnyRole,

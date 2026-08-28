@@ -1,4 +1,5 @@
-import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { isAxiosError } from 'axios';
+import { userManager } from '../auth/userManager';
 import type {
   AssignableUser,
   AuditLogEntry,
@@ -20,8 +21,6 @@ import type {
   DuplicateCandidate,
   InterviewDetail,
   InterviewEvaluation,
-  LoginPayload,
-  LoginResult,
   MyInterview,
   NotificationList,
   PagedResult,
@@ -52,84 +51,29 @@ import type {
 // where the gateway routes /ats/api/* to this app's own backend). Yields '/api'
 // or '/ats/api' — no trailing slash, matching every call site's leading-slash form.
 const baseURL = `${import.meta.env.BASE_URL}api`;
-// withCredentials so the httpOnly refresh-token cookie rides along on /auth/* calls.
-const api = axios.create({ baseURL, withCredentials: true });
+const api = axios.create({ baseURL });
 
-// The short-lived access token lives only in memory (not localStorage) to reduce
-// XSS exposure. Session persistence across reloads comes from the httpOnly refresh
-// cookie via refreshSession().
-let accessToken: string | null = null;
-export const getAccessToken = () => accessToken;
-
-interface RetriableConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
-}
-
-// Attach the in-memory access token to every request.
-api.interceptors.request.use((cfg) => {
-  if (accessToken) cfg.headers.Authorization = `Bearer ${accessToken}`;
+// Attach the current OIDC session's access token to every request. oidc-client-ts
+// owns the session (its own storage, not ours) — this just reads it.
+api.interceptors.request.use(async (cfg) => {
+  const user = await userManager.getUser();
+  if (user && !user.expired) cfg.headers.Authorization = `Bearer ${user.access_token}`;
   return cfg;
 });
 
-const isAuthUrl = (url?: string) =>
-  !!url && (url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout'));
-
-// Single-flight refresh so concurrent 401s trigger only one /refresh call.
-let refreshPromise: Promise<LoginResult | null> | null = null;
-
-export const refreshSession = async (): Promise<LoginResult | null> => {
-  try {
-    const { data } = await axios.post<LoginResult>(`${baseURL}/auth/refresh`, null, {
-      withCredentials: true,
-    });
-    accessToken = data.token;
-    return data;
-  } catch {
-    accessToken = null;
-    return null;
-  }
-};
-
-// On 401, try a single silent refresh and replay the request; otherwise go to login.
+// automaticSilentRenew (userManager.ts) already keeps the access token fresh via
+// refresh-token renewal in the background, so a 401 that still gets through means
+// the session is genuinely unrecoverable — start a fresh sign-in rather than the
+// single-flight-refresh dance this used to do.
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
-    const original = err.config as RetriableConfig | undefined;
-    const status = isAxiosError(err) ? err.response?.status : undefined;
-
-    if (status === 401 && original && !original._retry && !isAuthUrl(original.url)) {
-      original._retry = true;
-      refreshPromise = refreshPromise ?? refreshSession();
-      const result = await refreshPromise;
-      refreshPromise = null;
-
-      if (result) {
-        original.headers.Authorization = `Bearer ${result.token}`;
-        return api(original);
-      }
-      const loginPath = `${import.meta.env.BASE_URL}login`;
-      if (window.location.pathname !== loginPath) {
-        window.location.assign(loginPath);
-      }
+    if (isAxiosError(err) && err.response?.status === 401) {
+      await userManager.signinRedirect({ state: { from: window.location.pathname } });
     }
     return Promise.reject(err);
   }
 );
-
-export const login = async (payload: LoginPayload): Promise<LoginResult> => {
-  const { data } = await api.post<LoginResult>('/auth/login', payload);
-  accessToken = data.token;
-  return data;
-};
-
-export const logout = async (): Promise<void> => {
-  try {
-    await api.post('/auth/logout');
-  } catch {
-    // ignore network errors on logout
-  }
-  accessToken = null;
-};
 
 export const changePassword = async (payload: ChangePasswordPayload): Promise<void> => {
   await api.post('/auth/change-password', payload);

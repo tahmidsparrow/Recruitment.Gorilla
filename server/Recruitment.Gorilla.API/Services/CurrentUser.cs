@@ -37,9 +37,13 @@ public class CurrentUser(IHttpContextAccessor accessor)
             "CurrentUser.UserId read without a resolved identity — SubjectResolutionMiddleware " +
             "should already have run and rejected the request if this were reachable.");
 
-    public string? Name => Principal?.FindFirst(ClaimTypes.Name)?.Value;
+    // RG's own tokens carry these under the long ClaimTypes.* URI (AuthService.CreateAccessToken's
+    // own choice); an IAM-issued token carries them under the plain OIDC short form ("name"/"email")
+    // — MapInboundClaims=false on both schemes (Program.cs) means neither gets remapped to the
+    // other's shape, so both are checked. Same reasoning as SubjectResolutionMiddleware.ReadEmail.
+    public string? Name => Principal?.FindFirst(ClaimTypes.Name)?.Value ?? Principal?.FindFirst("name")?.Value;
 
-    public string? Email => Principal?.FindFirst(ClaimTypes.Email)?.Value;
+    public string? Email => Principal?.FindFirst(ClaimTypes.Email)?.Value ?? Principal?.FindFirst("email")?.Value;
 
     /// <summary>Role claim type varies by scheme — <see cref="ClaimTypes.Role"/> for RG's
     /// own tokens, "ats_roles" for an IAM-issued one (set via each scheme's

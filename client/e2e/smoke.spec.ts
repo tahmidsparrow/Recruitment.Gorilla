@@ -8,8 +8,14 @@ test.describe('smoke (read-only)', () => {
   test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD to run the E2E smoke.');
 
   test('login → dashboard → candidates → candidate detail', async ({ page }) => {
-    // Unauthenticated visits are redirected to the login screen.
+    // Unauthenticated visits are redirected to /login, whose "Sign in" button
+    // redirects to Gorilla.IAM — a real cross-origin OIDC round trip (authorization
+    // code + PKCE), not a same-app form post. Playwright follows the navigation
+    // transparently; only the two sign-in fields' selectors need to still exist on
+    // whatever page is loaded (IAM's break-glass console form uses the same
+    // input[type=email]/input[type=password] shape RG's own form used to).
     await page.goto('/');
+    await page.getByRole('button', { name: 'Sign in' }).click();
     await page.locator('input[type="email"]').fill(email!);
     await page.locator('input[type="password"]').fill(password!);
     await page.getByRole('button', { name: 'Sign in' }).click();

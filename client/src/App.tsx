@@ -3,6 +3,7 @@ import { Spinner } from 'react-bootstrap';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
+import CallbackPage from './pages/CallbackPage';
 import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
@@ -50,6 +51,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/callback" element={<CallbackPage />} />
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<DashboardPage />} />
             <Route
