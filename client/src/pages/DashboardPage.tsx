@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Form, ListGroup } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
+import { User } from 'lucide-react';
 import {
   getActiveRoleOptions,
   getApplicationsTrend,
@@ -12,6 +13,7 @@ import {
   getStatusBreakdown,
 } from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
+import { initials } from '../utils/initials';
 import KpiCard from '../components/dashboard/KpiCard';
 import OfferMetricsCard from '../components/dashboard/OfferMetricsCard';
 import {
@@ -77,18 +79,27 @@ function InterviewRow({ item }: { item: UpcomingInterview }) {
 
 function ActivityRow({ item }: { item: ActivityItem }) {
   return (
-    <ListGroup.Item className="list-row">
-      <div className="list-row__main">
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <Link to={`/candidates/${item.candidateId}`} className="list-row__title">
+    <li className="feed-row">
+      {/* An activity feed is scanned by person, so the candidate's initials take
+          the lead slot that a scheduled date holds in the interview feed.
+          aria-hidden because the name it abbreviates is the very next thing
+          read out. */}
+      <span className="avatar" aria-hidden="true">
+        {initials(item.fullName) || <User size={14} strokeWidth={1.75} />}
+      </span>
+      <div className="feed-row__main">
+        <div className="feed-row__headline">
+          <Link to={`/candidates/${item.candidateId}`} className="feed-row__name">
             {item.fullName}
           </Link>
           <StatusBadge status={item.status} />
         </div>
-        <div className="list-row__meta">by {item.changedBy}</div>
+        <div className="feed-row__meta">by {item.changedBy}</div>
       </div>
-      <span className="list-row__meta flex-shrink-0">{relativeTime(item.changedAt)}</span>
-    </ListGroup.Item>
+      <time className="feed-row__aside" dateTime={item.changedAt}>
+        {relativeTime(item.changedAt)}
+      </time>
+    </li>
   );
 }
 
@@ -274,11 +285,18 @@ export default function DashboardPage() {
                   description="Status changes on your candidates will show up here."
                 />
               ) : (
-                <ListGroup variant="flush">
-                  {scoped!.recentActivity.map((a, idx) => (
-                    <ActivityRow key={`${a.candidateId}-${idx}`} item={a} />
-                  ))}
-                </ListGroup>
+                <div
+                  className="feed-list"
+                  tabIndex={0}
+                  role="group"
+                  aria-label={`Recent activity, ${scoped!.recentActivity.length} entries`}
+                >
+                  <ul className="feed-list__items">
+                    {scoped!.recentActivity.map((a, idx) => (
+                      <ActivityRow key={`${a.candidateId}-${idx}`} item={a} />
+                    ))}
+                  </ul>
+                </div>
               )}
             </SectionCard>
           </div>
