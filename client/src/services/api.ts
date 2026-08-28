@@ -38,6 +38,8 @@ import type {
   UpdateUserPayload,
   UpsertEvaluationPayload,
   UpsertOptionPayload,
+  EvaluationRubric,
+  UpsertEvaluationRubricPayload,
   UserListItem,
   Offer,
   CreateOfferPayload,
@@ -573,4 +575,48 @@ export const downloadOfferPdf = async (candidateId: number, offerId: number): Pr
 export const getOfferMetrics = async (): Promise<OfferMetrics> => {
   const { data } = await api.get<OfferMetrics>('/offers/metrics');
   return data;
+};
+
+// ----- Evaluation Rubrics -----
+export const getEvaluationRubrics = async (): Promise<EvaluationRubric[]> => {
+  const { data } = await api.get<EvaluationRubric[]>('/evaluation-rubrics');
+  return data;
+};
+
+export const getEvaluationRubric = async (id: number): Promise<EvaluationRubric> => {
+  const { data } = await api.get<EvaluationRubric>(`/evaluation-rubrics/${id}`);
+  return data;
+};
+
+export const getInterviewEvaluationRubric = async (interviewId: number): Promise<EvaluationRubric> => {
+  const { data } = await api.get<EvaluationRubric>(`/evaluation-rubrics/for-interview/${interviewId}`);
+  return data;
+};
+
+export const createEvaluationRubric = async (
+  payload: UpsertEvaluationRubricPayload
+): Promise<EvaluationRubric> => {
+  const { data } = await api.post<EvaluationRubric>('/evaluation-rubrics', payload);
+  return data;
+};
+
+export const updateEvaluationRubric = async (
+  id: number,
+  payload: UpsertEvaluationRubricPayload
+): Promise<EvaluationRubric> => {
+  const { data } = await api.put<EvaluationRubric>(`/evaluation-rubrics/${id}`, payload);
+  return data;
+};
+
+export const deleteEvaluationRubric = async (id: number): Promise<void> => {
+  await api.delete(`/evaluation-rubrics/${id}`);
+};
+
+export const cloneEvaluationRubric = async (id: number): Promise<EvaluationRubric> => {
+  const { data } = await api.post<EvaluationRubric>(`/evaluation-rubrics/${id}/clone`);
+  return data;
+};
+
+export const setDefaultEvaluationRubric = async (id: number): Promise<void> => {
+  await api.post(`/evaluation-rubrics/${id}/default`);
 };

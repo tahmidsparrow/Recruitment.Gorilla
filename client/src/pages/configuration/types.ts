@@ -13,4 +13,6 @@ export interface Opt {
   endDate?: string;
   title?: string;
   recruiters?: { userId: number; name: string }[];
+  evaluationRubricId?: number | null;
+  evaluationRubricName?: string | null;
 }

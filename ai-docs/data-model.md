@@ -204,7 +204,13 @@ One interviewer's evaluation of one interview. Unique index `(InterviewId, Inter
 | CreatedAt / UpdatedAt | datetime | UTC |
 
 ### InterviewEvaluationItem (`InterviewEvaluationItems`)
-Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is one of the fixed keys in `Models/EvaluationCriteria.cs` (mirrored in `client/src/utils/evaluationCriteria.ts`); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
+Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is validated dynamically against the candidate's assigned role rubric (or the default system rubric); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
+
+### EvaluationRubric (`EvaluationRubrics`) & RubricCriterion (`RubricCriteria`)
+Scorecard template definitions that can be customized per Job Opening (`RoleAppliedOption.EvaluationRubricId`).
+- `EvaluationRubric`: `Id`, `Name` (unique, ≤200), `Description` (≤1000), `IsDefault`, `IsActive`, `CreatedAt`, `UpdatedAt`.
+- `RubricCriterion`: `Id`, `EvaluationRubricId` (FK, cascade), `SectionName` (≤100), `Key` (unique per rubric, ≤100), `Label` (≤200), `Hint` (≤500), `Weight` (double, default 1.0), `SortOrder`.
+- Seed data ensures the default 12-criterion standard rubric exists (`Id = 1`, `IsDefault = true`).
 
 ### Offer (`Offers`)
 Candidate job offer details, structured compensation package, and lifecycle status (`Draft`, `PendingApproval`, `Approved`, `Extended`, `Accepted`, `Declined`, `Withdrawn`).

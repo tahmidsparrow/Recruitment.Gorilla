@@ -187,6 +187,7 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
         UpsertEvaluationAsync(int interviewId, int userId, UpsertEvaluationDto dto)
     {
         var interview = await db.Interviews
+            .Include(i => i.Candidate)
             .Include(i => i.Interviewers)
             .Include(i => i.Evaluations).ThenInclude(e => e.Items)
             .Include(i => i.Evaluations).ThenInclude(e => e.InterviewerUser)
@@ -194,6 +195,38 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
 
         if (interview is null || !interview.Interviewers.Any(ii => ii.UserId == userId))
             return (null, null, true, false);
+
+        // Resolve rubric criteria for this candidate / interview
+        HashSet<string> validKeys;
+        if (!string.IsNullOrWhiteSpace(interview.Candidate?.AppliedRole))
+        {
+            var roleOption = await db.RoleAppliedOptions
+                .Include(r => r.EvaluationRubric).ThenInclude(er => er!.Criteria)
+                .FirstOrDefaultAsync(r => r.Name == interview.Candidate.AppliedRole);
+
+            if (roleOption?.EvaluationRubric is { IsActive: true } er && er.Criteria.Count > 0)
+            {
+                validKeys = er.Criteria.Select(c => c.Key).ToHashSet();
+            }
+            else
+            {
+                var defaultRubric = await db.EvaluationRubrics
+                    .Include(r => r.Criteria)
+                    .FirstOrDefaultAsync(r => r.IsDefault && r.IsActive);
+                validKeys = defaultRubric?.Criteria.Count > 0
+                    ? defaultRubric.Criteria.Select(c => c.Key).ToHashSet()
+                    : EvaluationCriteria.Keys.ToHashSet();
+            }
+        }
+        else
+        {
+            var defaultRubric = await db.EvaluationRubrics
+                .Include(r => r.Criteria)
+                .FirstOrDefaultAsync(r => r.IsDefault && r.IsActive);
+            validKeys = defaultRubric?.Criteria.Count > 0
+                ? defaultRubric.Criteria.Select(c => c.Key).ToHashSet()
+                : EvaluationCriteria.Keys.ToHashSet();
+        }
 
         if (dto.Recommendation is not null && !EvaluationCriteria.Recommendations.Contains(dto.Recommendation))
             return (null, "Invalid recommendation.", false, false);
@@ -205,7 +238,7 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
         {
             foreach (var it in dto.Items)
             {
-                if (!EvaluationCriteria.Keys.Contains(it.CriterionKey))
+                if (!validKeys.Contains(it.CriterionKey))
                     return (null, $"Unknown criterion '{it.CriterionKey}'.", false, false);
                 if (it.Rating is int r && r is < 1 or > 5)
                     return (null, "Ratings must be between 1 and 5.", false, false);
@@ -225,7 +258,7 @@ public class InterviewService(AppDbContext db, CandidateService candidateService
                 .Where(it => it.Rating is not null)
                 .Select(it => it.CriterionKey)
                 .ToHashSet();
-            if (!EvaluationCriteria.Keys.All(ratedKeys.Contains))
+            if (!validKeys.All(ratedKeys.Contains))
                 return (null, "Please rate all evaluation criteria before submitting.", false, false);
         }
 

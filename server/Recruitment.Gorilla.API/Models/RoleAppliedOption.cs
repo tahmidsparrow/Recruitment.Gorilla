@@ -26,6 +26,10 @@ public class RoleAppliedOption
     /// candidate under this role. Many-to-many via <see cref="RoleRecruiter"/>.</summary>
     public ICollection<RoleRecruiter> Recruiters { get; set; } = [];
 
+    /// <summary>Optional custom evaluation rubric assigned to this job opening. If null, the default rubric is used.</summary>
+    public int? EvaluationRubricId { get; set; }
+    public EvaluationRubric? EvaluationRubric { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // = the posted date
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
