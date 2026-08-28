@@ -76,8 +76,7 @@ public class AuthController(
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
-        if (currentUser.UserId is not int userId)
-            return Unauthorized();
+        var userId = currentUser.UserId;
 
         if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 8)
             return BadRequest(new { message = "New password must be at least 8 characters." });

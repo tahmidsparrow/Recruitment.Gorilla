@@ -142,8 +142,15 @@ public sealed class ApiFixture : IAsyncLifetime
     }
 }
 
+// IamTestFixture shares this collection deliberately, not its own: both boot a
+// WebApplicationFactory<Program> that sets process-wide environment variables
+// (ConnectionStrings__DefaultConnection, Jwt__*) before Program.cs reads them — a genuine
+// race across xUnit's default cross-collection parallelization, confirmed the hard way
+// (ApiFixture's own host ended up pointed at IamTestFixture's throwaway database).
+// One collection means xUnit runs every test here sequentially, never concurrently with
+// itself, so the two fixtures' env-var windows never overlap.
 [CollectionDefinition(Name)]
-public sealed class ApiCollection : ICollectionFixture<ApiFixture>
+public sealed class ApiCollection : ICollectionFixture<ApiFixture>, ICollectionFixture<IamTestFixture>
 {
     public const string Name = "api";
 }

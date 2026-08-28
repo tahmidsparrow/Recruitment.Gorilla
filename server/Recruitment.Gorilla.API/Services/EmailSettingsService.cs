@@ -82,7 +82,7 @@ public class EmailSettingsService(
             row.Enabled, PasswordSet: !string.IsNullOrEmpty(row.PasswordEncrypted), row.UpdatedAt);
     }
 
-    public async Task SaveAsync(UpsertEmailSettingsDto dto, int? actorUserId)
+    public async Task SaveAsync(UpsertEmailSettingsDto dto, int? actorUserId, string? actorName = null)
     {
         var row = await db.EmailSettings.FirstOrDefaultAsync(s => s.Id == EmailSettingsResolver.RowId);
         if (row is null)
@@ -107,8 +107,10 @@ public class EmailSettingsService(
 
         await db.SaveChangesAsync();
 
-        // Never record the password in the audit trail.
-        await audit.RecordAsync("Config.EmailUpdated", "EmailSetting", row.Id,
+        // Never record the password in the audit trail. Uses this method's own actorUserId
+        // parameter (already required for row.UpdatedByUserId above), not the CurrentUser-implicit
+        // overload — SaveAsync has no HTTP-request dependency otherwise, and shouldn't gain one here.
+        await audit.RecordAsync("Config.EmailUpdated", actorUserId, actorName, "EmailSetting", row.Id,
             $"Updated SMTP settings (host '{row.Host}', enabled {row.Enabled})");
     }
 }

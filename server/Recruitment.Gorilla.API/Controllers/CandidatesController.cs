@@ -120,7 +120,7 @@ public class CandidatesController(
         // Enforce read scope before serving the file. Assigned interviewers get access to
         // the candidate's CV too (parallels the interview page bypassing owner-scope).
         if (await candidateService.GetByIdAsync(id, ReadOwnerScope) is null &&
-            !await interviewService.IsAssignedInterviewerForCandidateAsync(id, currentUser.UserId ?? 0))
+            !await interviewService.IsAssignedInterviewerForCandidateAsync(id, currentUser.UserId))
             return NotFound();
 
         var file = await candidateService.GetCvFileAsync(id, fileId);
@@ -172,7 +172,7 @@ public class CandidatesController(
     public async Task<IActionResult> GetRoleOptions() =>
         Ok(IsAdmin
             ? await config.GetActiveRolesAsync()
-            : await config.GetAssignedRolesAsync(currentUser.UserId ?? 0));
+            : await config.GetAssignedRolesAsync(currentUser.UserId));
 
     // Roles for the candidate-list role filter. Unlike the create/edit form's role-options
     // (active only), this includes inactive roles so candidates under a closed/deactivated
@@ -183,7 +183,7 @@ public class CandidatesController(
     public async Task<IActionResult> GetRoleFilterOptions() =>
         Ok(IsAdmin
             ? await config.GetAllRolesAsync()
-            : await config.GetAssignedRolesAsync(currentUser.UserId ?? 0, includeInactive: true));
+            : await config.GetAssignedRolesAsync(currentUser.UserId, includeInactive: true));
 
     [Authorize(Roles = Roles.CanWriteCandidate)]
     [HttpGet("skill-options")]

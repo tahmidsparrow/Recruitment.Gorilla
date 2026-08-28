@@ -12,25 +12,20 @@ public class NotificationsController(
     CurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetMine()
-    {
-        if (currentUser.UserId is not int userId) return Unauthorized();
-        return Ok(await notifications.GetMineAsync(userId));
-    }
+    public async Task<IActionResult> GetMine() =>
+        Ok(await notifications.GetMineAsync(currentUser.UserId));
 
     [HttpPost("{id:int}/read")]
     public async Task<IActionResult> MarkRead(int id)
     {
-        if (currentUser.UserId is not int userId) return Unauthorized();
-        var ok = await notifications.MarkReadAsync(id, userId);
+        var ok = await notifications.MarkReadAsync(id, currentUser.UserId);
         return ok ? NoContent() : NotFound();
     }
 
     [HttpPost("read-all")]
     public async Task<IActionResult> MarkAllRead()
     {
-        if (currentUser.UserId is not int userId) return Unauthorized();
-        await notifications.MarkAllReadAsync(userId);
+        await notifications.MarkAllReadAsync(currentUser.UserId);
         return NoContent();
     }
 }
