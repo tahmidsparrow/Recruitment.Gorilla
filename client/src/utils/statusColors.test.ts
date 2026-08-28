@@ -10,8 +10,14 @@ describe('statusColors', () => {
     expect(getStatusTone('Interview Scheduled')).toBe('interview');
     expect(getStatusTone('Interview Completed')).toBe('interview');
     expect(getStatusTone('Technical Assessment')).toBe('assessment');
+    expect(getStatusTone('Submission Received')).toBe('assessment');
     expect(getStatusTone('Uploaded')).toBe('uploaded');
     expect(getStatusTone('Ask for Assesment')).toBe('intake');
+    expect(getStatusTone('Offer Preparation')).toBe('assessment');
+    expect(getStatusTone('Offer Extended')).toBe('interview');
+    expect(getStatusTone('Offer Accepted')).toBe('success');
+    expect(getStatusTone('Offer Declined')).toBe('reject');
+    expect(getStatusTone('Hired')).toBe('success');
   });
 
   it('falls back to "muted" for unknown statuses', () => {

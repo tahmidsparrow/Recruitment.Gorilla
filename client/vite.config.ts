@@ -19,9 +19,9 @@ export default defineConfig({
     host: true, // expose the dev server on the LAN (other PCs reach the frontend)
     proxy: {
       // Browser calls same-origin /api; Vite forwards to the backend on this
-      // host only, so the backend (port 5000) is never exposed to the network.
+      // host only, so the backend (port 5134) is never exposed to the network.
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5134',
         changeOrigin: true,
       },
     },

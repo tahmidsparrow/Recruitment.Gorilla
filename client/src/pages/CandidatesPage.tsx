@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Form, InputGroup, Table } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ChevronsUpDown, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
   deleteCandidate,
   getActiveSkillOptions,
@@ -10,8 +10,10 @@ import {
   getCandidates,
   getStatusOptions,
 } from '../services/api';
-import { SearchableMultiSelect } from '../components/SearchableSelect';
+import SearchableDropdown, { SearchableMultiSelect, type DropdownOption } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
+import { getStatusSolidColor } from '../utils/statusColors';
+import KanbanBoard from '../components/kanban/KanbanBoard';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
@@ -106,10 +108,19 @@ export default function CandidatesPage() {
       ? setParams({ sort: col, dir: activeDir === 'asc' ? 'desc' : 'asc' }, false)
       : setParams({ sort: col, dir: SORTS[col].natural }, false);
 
+  const [viewMode, setViewMode] = useState<'table' | 'board'>(() => {
+    return (localStorage.getItem('rg_candidate_view_mode') as 'table' | 'board') || 'table';
+  });
+
+  const handleViewModeChange = (mode: 'table' | 'board') => {
+    setViewMode(mode);
+    localStorage.setItem('rg_candidate_view_mode', mode);
+  };
+
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page }],
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page, viewMode }],
     queryFn: () =>
       getCandidates({
         search: search || undefined,
@@ -120,8 +131,8 @@ export default function CandidatesPage() {
         bucket: bucket || undefined,
         sort: sort || undefined,
         dir: dir || undefined,
-        page,
-        pageSize: PAGE_SIZE,
+        page: viewMode === 'board' ? 1 : page,
+        pageSize: viewMode === 'board' ? 150 : PAGE_SIZE,
       }),
     placeholderData: keepPreviousData,
   });
@@ -141,6 +152,22 @@ export default function CandidatesPage() {
     queryKey: ['skill-options', 'active'],
     queryFn: getActiveSkillOptions,
   });
+
+  const statusDropdownOptions: DropdownOption<string>[] = useMemo(() => {
+    return statusOptions.map((o) => ({
+      id: o.name,
+      name: o.name,
+      color: getStatusSolidColor(o.name),
+    }));
+  }, [statusOptions]);
+
+  const roleDropdownOptions: DropdownOption<string>[] = useMemo(() => {
+    return roleOptions.map((o) => ({
+      id: String(o.id),
+      name: o.name,
+      badge: o.isActive ? undefined : 'Inactive',
+    }));
+  }, [roleOptions]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCandidate(id),
@@ -169,12 +196,8 @@ export default function CandidatesPage() {
 
   return (
     <Page>
-      {/* No <h2> — the topbar owns the page title. The primary action shares
-          this row with the filters rather than getting a header row of its
-          own; see .page-bar. */}
-      <div className="page-bar">
-        <search className="flex-grow-1">
-          <div className="data-toolbar">
+      <search>
+        <div className="data-toolbar">
           <Form onSubmit={applySearch} className="data-toolbar__search" role="search">
             <InputGroup>
               <Form.Control
@@ -190,34 +213,27 @@ export default function CandidatesPage() {
             </InputGroup>
           </Form>
 
-          <Form.Select
-            aria-label="Filter by status"
-            className="data-toolbar__field"
-            value={status}
-            onChange={(e) => setParams({ status: e.target.value || null })}
-          >
-            <option value="">All statuses</option>
-            {statusOptions.map((option) => (
-              <option key={option.id} value={option.name}>
-                {option.name}
-              </option>
-            ))}
-          </Form.Select>
+          <div className="data-toolbar__field">
+            <SearchableDropdown<string>
+              options={statusDropdownOptions}
+              value={status || null}
+              onChange={(val) => setParams({ status: val || null })}
+              placeholder="All statuses"
+              emptyMessage="No status found"
+              clearable
+            />
+          </div>
 
-          <Form.Select
-            aria-label="Filter by role"
-            className="data-toolbar__field"
-            value={roleId}
-            onChange={(e) => setParams({ role: e.target.value || null })}
-          >
-            <option value="">All roles</option>
-            {roleOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-                {option.isActive ? '' : ' (inactive)'}
-              </option>
-            ))}
-          </Form.Select>
+          <div className="data-toolbar__field">
+            <SearchableDropdown<string>
+              options={roleDropdownOptions}
+              value={roleId || null}
+              onChange={(val) => setParams({ role: val || null })}
+              placeholder="All roles"
+              emptyMessage="No role found"
+              clearable
+            />
+          </div>
 
           <div className="data-toolbar__field--wide">
             <SearchableMultiSelect
@@ -225,6 +241,7 @@ export default function CandidatesPage() {
               value={skillIds}
               onChange={(ids) => setParams({ skills: ids.join(',') || null })}
               placeholder="Filter by skills…"
+              showTokens={false}
             />
           </div>
 
@@ -269,26 +286,47 @@ export default function CandidatesPage() {
               </span>
             )}
 
-            {/* Rendered only when something is filtered, so the control appears
-                exactly when it can do anything. */}
+            {/* Rendered only when something is filtered */}
             {hasFilters && (
               <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             )}
-            </div>
-          </div>
-        </search>
 
-        {canWriteCandidates && (
-          <div className="page-bar__actions">
-            <Link to="/upload" className="btn btn-primary">
-              <Upload size={15} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1">Upload CVs</span>
-            </Link>
+            <div className="toolbar-divider d-none d-md-block" />
+
+            <div className="btn-group view-toggle" role="group" aria-label="Candidate view mode">
+              <button
+                type="button"
+                className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => handleViewModeChange('table')}
+                aria-label="Table view"
+                title="Table view (≡)"
+              >
+                <List size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                Table
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                onClick={() => handleViewModeChange('board')}
+                aria-label="Pipeline board view"
+                title="Pipeline board view (⊞)"
+              >
+                <Kanban size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                Board
+              </button>
+            </div>
+
+            {canWriteCandidates && (
+              <Link to="/upload" className="btn btn-primary btn-sm d-inline-flex align-items-center">
+                <Upload size={14} strokeWidth={1.75} aria-hidden="true" />
+                <span className="ms-1">Upload CVs</span>
+              </Link>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </search>
 
       {isLoading ? (
         <SkeletonRows rows={8} label="Loading candidates" />
@@ -318,6 +356,12 @@ export default function CandidatesPage() {
               </Link>
             ) : undefined
           }
+        />
+      ) : viewMode === 'board' ? (
+        <KanbanBoard
+          candidates={data.items}
+          isLoading={isLoading}
+          canWrite={canWriteCandidates}
         />
       ) : (
         <>
