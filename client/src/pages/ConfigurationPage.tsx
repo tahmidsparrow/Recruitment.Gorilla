@@ -19,6 +19,7 @@ import { useTabs } from '../components/ui/useTabs';
 import JobOpeningsTab from './configuration/JobOpeningsTab';
 import OptionChipsTab, { type OptionApi } from './configuration/OptionChipsTab';
 import EmailSettingsTab from './configuration/EmailSettingsTab';
+import EvaluationRubricsTab from './configuration/EvaluationRubricsTab';
 
 const skillsApi: OptionApi = {
   list: getSkillOptions,
@@ -54,6 +55,7 @@ export default function ConfigurationPage() {
 
   const tabs: TabDef[] = [
     { id: 'jobs', label: 'Job openings' },
+    { id: 'rubrics', label: 'Evaluation rubrics' },
     { id: 'skills', label: 'Skills' },
     { id: 'sources', label: 'Candidate sources' },
     { id: 'interview-types', label: 'Interview types' },
@@ -69,6 +71,12 @@ export default function ConfigurationPage() {
       {active === 'jobs' && (
         <TabPanel id="jobs">
           <JobOpeningsTab />
+        </TabPanel>
+      )}
+
+      {active === 'rubrics' && (
+        <TabPanel id="rubrics">
+          <EvaluationRubricsTab />
         </TabPanel>
       )}
 

@@ -18,6 +18,7 @@ public class ConfigurationService(AppDbContext db)
     public async Task<List<RoleAppliedOptionDto>> GetActiveRolesAsync() =>
         (await db.RoleAppliedOptions
             .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
+            .Include(r => r.EvaluationRubric)
             .Where(r => r.IsActive)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
@@ -26,6 +27,7 @@ public class ConfigurationService(AppDbContext db)
     public async Task<List<RoleAppliedOptionDto>> GetAllRolesAsync() =>
         (await db.RoleAppliedOptions
             .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
+            .Include(r => r.EvaluationRubric)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
             .Select(ToDto).ToList();
@@ -39,6 +41,7 @@ public class ConfigurationService(AppDbContext db)
         int recruiterUserId, bool includeInactive = false) =>
         (await db.RoleAppliedOptions
             .Include(r => r.Recruiters).ThenInclude(rr => rr.User)
+            .Include(r => r.EvaluationRubric)
             .Where(r => (includeInactive || r.IsActive) && r.Recruiters.Any(rr => rr.UserId == recruiterUserId))
             .OrderBy(r => r.SortOrder).ThenBy(r => r.Name)
             .ToListAsync())
@@ -48,6 +51,8 @@ public class ConfigurationService(AppDbContext db)
     {
         if (ValidateRole(dto) is string error) return (null, false, error);
         if (await ValidateRecruitersAsync(dto.RecruiterUserIds) is string recErr) return (null, false, recErr);
+        if (dto.EvaluationRubricId is int rubricId && !await db.EvaluationRubrics.AnyAsync(r => r.Id == rubricId))
+            return (null, false, "The selected evaluation rubric does not exist.");
 
         var name = dto.Name.Trim();
         if (await db.RoleAppliedOptions.AnyAsync(r => r.Name == name))
@@ -63,10 +68,13 @@ public class ConfigurationService(AppDbContext db)
             Priority = Clean(dto.Priority),
             EndDate = dto.EndDate,
             Recruiters = BuildRecruiters(dto.RecruiterUserIds),
+            EvaluationRubricId = dto.EvaluationRubricId,
         };
         db.RoleAppliedOptions.Add(entity);
         await db.SaveChangesAsync();
         await LoadRecruitersAsync(entity);
+        if (entity.EvaluationRubricId is not null)
+            await db.Entry(entity).Reference(r => r.EvaluationRubric).LoadAsync();
         return (ToDto(entity), false, null);
     }
 
@@ -74,9 +82,12 @@ public class ConfigurationService(AppDbContext db)
     {
         if (ValidateRole(dto) is string error) return (null, false, false, error);
         if (await ValidateRecruitersAsync(dto.RecruiterUserIds) is string recErr) return (null, false, false, recErr);
+        if (dto.EvaluationRubricId is int rubricId && !await db.EvaluationRubrics.AnyAsync(r => r.Id == rubricId))
+            return (null, false, false, "The selected evaluation rubric does not exist.");
 
         var entity = await db.RoleAppliedOptions
             .Include(r => r.Recruiters)
+            .Include(r => r.EvaluationRubric)
             .FirstOrDefaultAsync(r => r.Id == id);
         if (entity is null) return (null, true, false, null);
 
@@ -91,6 +102,7 @@ public class ConfigurationService(AppDbContext db)
         entity.Department = Clean(dto.Department);
         entity.Priority = Clean(dto.Priority);
         entity.EndDate = dto.EndDate;
+        entity.EvaluationRubricId = dto.EvaluationRubricId;
         // Replace the recruiter assignments with the new selection.
         entity.Recruiters.Clear();
         foreach (var uid in (dto.RecruiterUserIds ?? []).Distinct())
@@ -98,6 +110,8 @@ public class ConfigurationService(AppDbContext db)
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         await LoadRecruitersAsync(entity);
+        if (entity.EvaluationRubricId is not null)
+            await db.Entry(entity).Reference(r => r.EvaluationRubric).LoadAsync();
         return (ToDto(entity), false, false, null);
     }
 
@@ -392,7 +406,9 @@ public class ConfigurationService(AppDbContext db)
             r.CreatedAt, r.EndDate, RoleTitle(r.Name, r.CreatedAt),
             r.Recruiters
                 .Select(rr => new RecruiterDto(rr.UserId, rr.User.Name))
-                .OrderBy(x => x.Name).ToList());
+                .OrderBy(x => x.Name).ToList(),
+            r.EvaluationRubricId,
+            r.EvaluationRubric?.Name);
     private static SkillOptionDto ToDto(SkillOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
     private static CandidateSourceOptionDto ToDto(CandidateSourceOption s) => new(s.Id, s.Name, s.SortOrder, s.IsActive);
     private static InterviewTypeOptionDto ToDto(InterviewTypeOption t) => new(t.Id, t.Name, t.SortOrder, t.IsActive);

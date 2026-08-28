@@ -180,6 +180,24 @@ public class ControllerAuthorizationTests(ApiFixture fx)
         await AssertStatus("Admin", HttpMethod.Delete, $"/api/config/roles/{id}", HttpStatusCode.Forbidden);
     }
 
+    // ---- Evaluation rubrics authorization ----
+
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.OK)]
+    [InlineData("Admin", HttpStatusCode.OK)]
+    [InlineData("Recruiter", HttpStatusCode.OK)]
+    [InlineData("Interviewer", HttpStatusCode.OK)]
+    public Task Get_evaluation_rubrics(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Get, "/api/evaluation-rubrics", expected);
+
+    [Theory]
+    [InlineData("SuperAdmin", HttpStatusCode.UnsupportedMediaType)]
+    [InlineData("Admin", HttpStatusCode.UnsupportedMediaType)]
+    [InlineData("Recruiter", HttpStatusCode.Forbidden)]
+    [InlineData("Interviewer", HttpStatusCode.Forbidden)]
+    public Task Post_evaluation_rubric_authorized_roles(string role, HttpStatusCode expected) =>
+        AssertStatus(role, HttpMethod.Post, "/api/evaluation-rubrics", expected);
+
     // ---- Audit recording is wired: an action produces a queryable row ----
 
     [Fact]

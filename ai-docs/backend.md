@@ -123,7 +123,13 @@ log4net (`log4net.config`): console + daily rolling file under `Logs/`. App cate
 | GET/POST | `/api/config/skills` | required | List / create Skill options |
 | PUT/DELETE | `/api/config/skills/{id}` | required | Update / soft-disable-or-delete a Skill option |
 | GET/POST | `/api/config/sources` | Admin+ | List (`?includeInactive=true`) / create candidate **source** options (referral, job board, agency, …) |
-| PUT/DELETE | `/api/config/sources/{id}` | Admin+ | Update / delete a source. Delete returns `{deleted,deactivated,candidateCount}` — soft-disables when candidates reference it, since `Candidate.SourceOptionId` is a `Restrict` FK |
+| PUT/DELETE | `/api/config/sources/{id}` | Admin+ | Update / soft-disable-or-delete a candidate source option |
+| GET/POST | `/api/config/interview-types` | Admin+ | List (`?includeInactive=true`) / create **interview type** options |
+| PUT/DELETE | `/api/config/interview-types/{id}` | Admin+ | Update / soft-disable-or-delete an interview type option |
+| GET | `/api/evaluation-rubrics` · `/{id}` · `/for-interview/{interviewId}` | required | List / get evaluation rubrics, or resolve rubric for a specific interview |
+| POST/PUT | `/api/evaluation-rubrics` · `/{id}` | **Admin+** | Create or update scorecard rubric with weighted criteria and sections |
+| DELETE | `/api/evaluation-rubrics/{id}` | **Admin+** | Delete rubric (disallowed on system default) |
+| POST | `/api/evaluation-rubrics/{id}/clone` · `/{id}/default` | **Admin+** | Clone a scorecard rubric template or designate it as system default |
 | GET | `/api/candidates/source-options` | CanWriteCandidate | Active sources for the candidate create/edit forms (Recruiters can't reach `/config/*`) |
 | GET/PUT | `/api/config/email` | **SuperAdmin** | Read / save the in-app **SMTP settings** (`EmailSettingsService`). GET returns everything **except** the password + a `passwordSet` flag; PUT's `password` is write-only (blank keeps the stored one). Audited as `Config.EmailUpdated` (never logs the secret) |
 | POST | `/api/config/email/test` | **SuperAdmin** | Send a test email to `{ toEmail }` using the saved settings → `{ ok, error? }` |

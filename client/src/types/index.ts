@@ -89,6 +89,8 @@ export interface RoleAppliedOption {
   endDate: string;     // required closing deadline
   title: string;       // computed: "{name} — {posted date}"
   recruiters: { userId: number; name: string }[];
+  evaluationRubricId?: number | null;
+  evaluationRubricName?: string | null;
 }
 
 export interface SkillOption {
@@ -115,6 +117,7 @@ export interface UpsertOptionPayload {
   priority?: string | null;
   endDate?: string | null;   // required for roles
   recruiterUserIds?: number[];
+  evaluationRubricId?: number | null;
 }
 
 export interface DeleteRoleResult {
@@ -147,6 +150,7 @@ export interface CandidateListItem {
   currentStatus: string;
   createdAt: string;
   source: string | null;
+  updatedAt?: string;
 }
 
 export interface CVFileInfo {
@@ -502,3 +506,125 @@ export interface UpsertEmailSettings {
   useStartTls: boolean;
   enabled: boolean;
 }
+
+// ----- Offers & Compensation -----
+export interface OfferApproval {
+  id: number;
+  offerId: number;
+  approverUserId: number;
+  approverName: string;
+  approverEmail: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  comment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export type OfferStatus =
+  | 'Draft'
+  | 'PendingApproval'
+  | 'Approved'
+  | 'Extended'
+  | 'Accepted'
+  | 'Declined'
+  | 'Withdrawn';
+
+export interface Offer {
+  id: number;
+  candidateId: number;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  baseSalary: number;
+  currency: string;
+  bonus: number | null;
+  equity: string | null;
+  startDate: string | null;
+  expirationDate: string | null;
+  notes: string | null;
+  status: OfferStatus;
+  createdByUserId: number;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  extendedAt: string | null;
+  respondedAt: string | null;
+  declineReason: string | null;
+  approvals: OfferApproval[];
+}
+
+export interface CreateOfferPayload {
+  jobTitle?: string;
+  baseSalary: number;
+  currency?: string;
+  bonus?: number | null;
+  equity?: string | null;
+  startDate?: string | null;
+  expirationDate?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateOfferPayload extends CreateOfferPayload {}
+
+export interface ReviewOfferApprovalPayload {
+  decision: 'Approved' | 'Rejected';
+  comment?: string;
+}
+
+export interface OfferDecisionPayload {
+  decision: 'Accepted' | 'Declined';
+  reason?: string;
+}
+
+export interface OfferMetrics {
+  totalOffers: number;
+  activeOffers: number;
+  acceptedOffers: number;
+  declinedOffers: number;
+  totalHired: number;
+  acceptanceRatePercentage: number;
+}
+
+// ----- Evaluation Rubrics -----
+export interface RubricCriterion {
+  id: number;
+  evaluationRubricId: number;
+  sectionName: string;
+  key: string;
+  label: string;
+  hint?: string | null;
+  weight: number;
+  sortOrder: number;
+}
+
+export interface EvaluationRubric {
+  id: number;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  criteriaCount: number;
+  assignedRolesCount: number;
+  criteria: RubricCriterion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertRubricCriterionPayload {
+  id?: number;
+  sectionName: string;
+  key: string;
+  label: string;
+  hint?: string | null;
+  weight?: number;
+  sortOrder?: number;
+}
+
+export interface UpsertEvaluationRubricPayload {
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  criteria: UpsertRubricCriterionPayload[];
+}
+

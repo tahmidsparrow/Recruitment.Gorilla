@@ -6,7 +6,7 @@ namespace Recruitment.Gorilla.Tests;
 
 /// <summary>Status-transition rules and required-field gates in ValidateStatusChangeAsync
 /// (exercises the seeded StatusTransitions graph — note the seed spellings "Ask for Assesment" /
-/// "Submission Receieved").</summary>
+/// "Submission Received").</summary>
 public class CandidateServiceStatusTests(MySqlDatabaseFixture fixture) : DbTestBase(fixture)
 {
     private static StatusChangeDto Change(
@@ -104,9 +104,9 @@ public class CandidateServiceStatusTests(MySqlDatabaseFixture fixture) : DbTestB
     {
         var c = Data.AddCandidate(status: "Technical Assessment");
         Assert.Contains("submission link", await Candidates().ValidateStatusChangeAsync(
-            c.Id, Change("Submission Receieved")));
+            c.Id, Change("Submission Received")));
         Assert.Null(await Candidates().ValidateStatusChangeAsync(
-            c.Id, Change("Submission Receieved", submissionUrl: "https://github.com/x/y")));
+            c.Id, Change("Submission Received", submissionUrl: "https://github.com/x/y")));
     }
 
     [Fact]

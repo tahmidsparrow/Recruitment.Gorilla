@@ -14,6 +14,8 @@ StatusOption 1───* StatusTransition (from/to lookup)
 RoleAppliedOption (standalone lookup)  ── Candidate.RoleAppliedOptionId (restrict)
 SkillOption       (standalone lookup)
 Candidate *───* SkillOption  via CandidateSkill (cascade from Candidate, restrict on SkillOption)
+Candidate 1───* Offer          (cascade delete)
+Offer 1───* OfferApproval      (cascade delete)
 ```
 
 ### Candidate (`Candidates`)
@@ -67,7 +69,7 @@ One row per uploaded file. The physical file is on disk under `Uploads/` as `{GU
 | Status | varchar(100) | required; selected from active workflow options when appended |
 | Comment | text | nullable |
 | TaskDetails | varchar(1000) | nullable; used for Technical Assessment |
-| SubmissionUrl | varchar(1000) | nullable; used for Submission Receieved |
+| SubmissionUrl | varchar(1000) | nullable; used for Submission Received |
 | InterviewAt | datetime | nullable; used for Interview Scheduled |
 | ChangedAt | datetime | |
 | ChangedBy | varchar(200) | required; admin name/email |
@@ -202,16 +204,56 @@ One interviewer's evaluation of one interview. Unique index `(InterviewId, Inter
 | CreatedAt / UpdatedAt | datetime | UTC |
 
 ### InterviewEvaluationItem (`InterviewEvaluationItems`)
-Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is one of the fixed keys in `Models/EvaluationCriteria.cs` (mirrored in `client/src/utils/evaluationCriteria.ts`); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
+Per-criterion score within an evaluation. Unique `(InterviewEvaluationId, CriterionKey)`; cascade from evaluation. `CriterionKey` is validated dynamically against the candidate's assigned role rubric (or the default system rubric); `Rating` 1–5 nullable; `Comment` varchar(1000) nullable. Empty items (no rating + no comment) are not persisted.
+
+### EvaluationRubric (`EvaluationRubrics`) & RubricCriterion (`RubricCriteria`)
+Scorecard template definitions that can be customized per Job Opening (`RoleAppliedOption.EvaluationRubricId`).
+- `EvaluationRubric`: `Id`, `Name` (unique, ≤200), `Description` (≤1000), `IsDefault`, `IsActive`, `CreatedAt`, `UpdatedAt`.
+- `RubricCriterion`: `Id`, `EvaluationRubricId` (FK, cascade), `SectionName` (≤100), `Key` (unique per rubric, ≤100), `Label` (≤200), `Hint` (≤500), `Weight` (double, default 1.0), `SortOrder`.
+- Seed data ensures the default 12-criterion standard rubric exists (`Id = 1`, `IsDefault = true`).
+
+### Offer (`Offers`)
+Candidate job offer details, structured compensation package, and lifecycle status (`Draft`, `PendingApproval`, `Approved`, `Extended`, `Accepted`, `Declined`, `Withdrawn`).
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | auto |
+| CandidateId | int FK → Candidate | cascade delete |
+| JobTitle | varchar(200) | required |
+| BaseSalary | decimal(18,2) | required; annual base compensation |
+| Currency | varchar(10) | required; e.g. "USD", "EUR", "GBP" |
+| Bonus | decimal(18,2) | nullable; signing or annual bonus |
+| Equity | varchar(200) | nullable; stock options / RSUs |
+| StartDate | datetime | nullable |
+| ExpirationDate | datetime | nullable |
+| Notes | varchar(2000) | nullable; terms and conditions |
+| Status | varchar(50) | required; Draft / PendingApproval / Approved / Extended / Accepted / Declined / Withdrawn |
+| CreatedByUserId | int FK → User | restrict |
+| CreatedAt / UpdatedAt | datetime | UTC |
+| ExtendedAt / RespondedAt | datetime? | UTC timestamps |
+| DeclineReason | varchar(1000) | nullable; reason when status = Declined |
+
+### OfferApproval (`OfferApprovals`)
+Internal sign-off workflow for offers before candidate extension.
+
+| Field | Type | Notes |
+|---|---|---|
+| Id | int PK | auto |
+| OfferId | int FK → Offer | cascade delete |
+| ApproverUserId | int FK → User | restrict |
+| Status | varchar(50) | "Pending", "Approved", "Rejected" |
+| Comment | varchar(1000) | nullable |
+| ReviewedAt | datetime? | UTC |
+| CreatedAt | datetime | UTC |
 
 ### Notification (`Notifications`)
-Per-user in-app notification (e.g. interview assignment). `Id`, `UserId` (FK → User, cascade), `Title` varchar(200), `Message` varchar(500), `LinkUrl` varchar(300)? (client route), `IsRead` bool (index `(UserId, IsRead)`), `CreatedAt`. In-app only — no email is sent.
+Per-user in-app notification (e.g. interview assignment, offer approval request). `Id`, `UserId` (FK → User, cascade), `Title` varchar(200), `Message` varchar(500), `LinkUrl` varchar(300)? (client route), `IsRead` bool (index `(UserId, IsRead)`), `CreatedAt`. In-app and transactional email dispatched via `NotificationService`.
 
 ## Key design rules
 - **Status choices come from `StatusOptions`** and valid next steps come from `StatusTransitions`. Keep `Candidate.CurrentStatus` and `StatusHistory.Status` as strings for readable history and low-risk future edits. Seed includes `Uploaded → Call for Interview`.
 - **Role/Skill values come from `RoleAppliedOptions`/`SkillOptions`** (configurable). Deleting a config value that's in use **soft-disables** it (IsActive=false) instead of hard-deleting. The legacy free-text `Candidate.AppliedRole`/`Candidate.Skills` columns are retained for back-compat but the UI uses the configured values.
 - **CurrentStatus is denormalized** — whenever you append a `StatusHistory`, update `Candidate.CurrentStatus` and `UpdatedAt` in the same save (see `CandidateService.AddStatusAsync`).
-- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Receieved, interview date/time for Interview Scheduled, comment **and ≥1 submitted interviewer evaluation** for Interview Completed, comment for Reject/Discontinued, and required prior statuses for Code Review/Recommended.
+- **Prerequisites are enforced by the API** for status changes: task/comment for Technical Assessment, submission link for Submission Received, interview date/time for Interview Scheduled, comment **and ≥1 submitted interviewer evaluation** for Interview Completed, comment for Reject/Discontinued, and required prior statuses for Code Review/Recommended.
 - **Cascade deletes** are configured for CVFiles and StatusHistories. Deleting a candidate also removes its physical CV files from disk (`CandidateService.DeleteAsync`).
 - **Schema changes go through EF migrations** — never hand-edit the DB. See [backend.md](backend.md) and [feature-playbook.md](feature-playbook.md).
 - **The dashboard adds no tables.** `GET /api/dashboard` is a read-only aggregation over existing entities (Candidates, StatusHistories, RoleAppliedOptions, CandidateSkills), owner-scoped like the candidate list. See [backend.md](backend.md) / [frontend.md](frontend.md).

@@ -45,6 +45,8 @@ builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<InterviewService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<OfferService>();
+builder.Services.AddScoped<EvaluationRubricService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<ISmtpTransport, MailKitSmtpTransport>();
@@ -124,9 +126,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
-    if (!await db.Users.AnyAsync())
+    var email = app.Configuration["Auth:SeedAdminEmail"] ?? "admin@recruitmentgorilla.com";
+    var passwordHash = app.Configuration["Auth:PasswordHash"];
+    var adminUser = await db.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
+    if (adminUser is null)
     {
-        var passwordHash = app.Configuration["Auth:PasswordHash"];
         if (string.IsNullOrWhiteSpace(passwordHash))
         {
             app.Logger.LogWarning(
@@ -134,7 +138,6 @@ using (var scope = app.Services.CreateScope())
         }
         else
         {
-            var email = app.Configuration["Auth:SeedAdminEmail"] ?? "admin@recruitmentgorilla.com";
             var name = app.Configuration["Auth:SeedAdminName"] ?? "Super Admin";
             db.Users.Add(new User
             {
@@ -148,6 +151,12 @@ using (var scope = app.Services.CreateScope())
             await db.SaveChangesAsync();
             app.Logger.LogInformation("Seeded initial Super Admin '{Email}'.", email);
         }
+    }
+    else if (!string.IsNullOrWhiteSpace(passwordHash) && app.Environment.IsDevelopment())
+    {
+        adminUser.PasswordHash = passwordHash;
+        adminUser.IsActive = true;
+        await db.SaveChangesAsync();
     }
 }
 

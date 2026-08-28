@@ -398,6 +398,56 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.ToTable("EmailSettings");
                 });
 
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.EvaluationRubric", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EvaluationRubrics");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Default general-purpose evaluation rubric across 4 standard sections.",
+                            IsActive = true,
+                            IsDefault = true,
+                            Name = "Standard 12-Criterion Rubric",
+                            UpdatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
+                });
+
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Interview", b =>
                 {
                     b.Property<int>("Id")
@@ -677,6 +727,120 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BaseSalary")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("Bonus")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CandidateId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("DeclineReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("Equity")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("ExtendedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("JobTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CandidateId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("Offers");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.OfferApproval", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApproverUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("OfferId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApproverUserId");
+
+                    b.HasIndex("OfferId");
+
+                    b.ToTable("OfferApprovals");
+                });
+
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -734,6 +898,9 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("EvaluationRubricId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
@@ -759,6 +926,8 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EvaluationRubricId");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -841,6 +1010,186 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RoleRecruiters");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RubricCriterion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EvaluationRubricId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hint")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SectionName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Weight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double")
+                        .HasDefaultValue(1.0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvaluationRubricId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("RubricCriteria");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            EvaluationRubricId = 1,
+                            Hint = "Does work history align with the JD?",
+                            Key = "RelevanceOfExperience",
+                            Label = "Relevance of Experience",
+                            SectionName = "Educational & Professional Background",
+                            SortOrder = 1,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            EvaluationRubricId = 1,
+                            Hint = "History of growth and tenure",
+                            Key = "JobStabilityProgression",
+                            Label = "Job Stability & Progression",
+                            SectionName = "Educational & Professional Background",
+                            SortOrder = 2,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 3,
+                            EvaluationRubricId = 1,
+                            Hint = "Degrees, certifications, training",
+                            Key = "EducationalBackground",
+                            Label = "Educational Background",
+                            SectionName = "Educational & Professional Background",
+                            SortOrder = 3,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 4,
+                            EvaluationRubricId = 1,
+                            Hint = "Subject matter expertise",
+                            Key = "CoreTechnicalCompetency",
+                            Label = "Core Technical Competency",
+                            SectionName = "Technical Skills & Job Knowledge",
+                            SortOrder = 4,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 5,
+                            EvaluationRubricId = 1,
+                            Hint = "Familiarity with the necessary stack",
+                            Key = "ToolsSoftwareProficiency",
+                            Label = "Tools & Software Proficiency",
+                            SectionName = "Technical Skills & Job Knowledge",
+                            SortOrder = 5,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 6,
+                            EvaluationRubricId = 1,
+                            Hint = "Ability to troubleshoot and find solutions",
+                            Key = "ProblemSolvingSkills",
+                            Label = "Problem-Solving Skills",
+                            SectionName = "Technical Skills & Job Knowledge",
+                            SortOrder = 6,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 7,
+                            EvaluationRubricId = 1,
+                            Hint = "Verbal and written articulation",
+                            Key = "CommunicationClarity",
+                            Label = "Communication Clarity",
+                            SectionName = "Soft Skills & Communication",
+                            SortOrder = 7,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 8,
+                            EvaluationRubricId = 1,
+                            Hint = "Understands questions, attentive",
+                            Key = "ListeningSkills",
+                            Label = "Listening Skills",
+                            SectionName = "Soft Skills & Communication",
+                            SortOrder = 8,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 9,
+                            EvaluationRubricId = 1,
+                            Hint = "Handling change or ambiguity",
+                            Key = "AdaptabilityFlexibility",
+                            Label = "Adaptability & Flexibility",
+                            SectionName = "Soft Skills & Communication",
+                            SortOrder = 9,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 10,
+                            EvaluationRubricId = 1,
+                            Hint = "Alignment with core principles",
+                            Key = "AlignmentWithCompanyValues",
+                            Label = "Alignment with Company Values",
+                            SectionName = "Cultural Fit & Motivation",
+                            SortOrder = 10,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 11,
+                            EvaluationRubricId = 1,
+                            Hint = "Interest in the role/company",
+                            Key = "MotivationEnthusiasm",
+                            Label = "Motivation & Enthusiasm",
+                            SectionName = "Cultural Fit & Motivation",
+                            SortOrder = 11,
+                            Weight = 1.0
+                        },
+                        new
+                        {
+                            Id = 12,
+                            EvaluationRubricId = 1,
+                            Hint = "Collaborative vs. independent style",
+                            Key = "TeamDynamics",
+                            Label = "Team Dynamics",
+                            SectionName = "Cultural Fit & Motivation",
+                            SortOrder = 12,
+                            Weight = 1.0
+                        });
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.SkillOption", b =>
@@ -1090,7 +1439,7 @@ namespace Recruitment.Gorilla.API.Migrations
                             CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             IsInitial = false,
-                            Name = "Submission Receieved",
+                            Name = "Submission Received",
                             SortOrder = 4
                         },
                         new
@@ -1164,6 +1513,51 @@ namespace Recruitment.Gorilla.API.Migrations
                             IsInitial = false,
                             Name = "Ask for Assesment",
                             SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 15,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsInitial = false,
+                            Name = "Offer Preparation",
+                            SortOrder = 12
+                        },
+                        new
+                        {
+                            Id = 16,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsInitial = false,
+                            Name = "Offer Extended",
+                            SortOrder = 13
+                        },
+                        new
+                        {
+                            Id = 17,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsInitial = false,
+                            Name = "Offer Accepted",
+                            SortOrder = 14
+                        },
+                        new
+                        {
+                            Id = 18,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsInitial = false,
+                            Name = "Offer Declined",
+                            SortOrder = 15
+                        },
+                        new
+                        {
+                            Id = 19,
+                            CreatedAt = new DateTime(2026, 6, 29, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsInitial = false,
+                            Name = "Hired",
+                            SortOrder = 16
                         });
                 });
 
@@ -1446,6 +1840,150 @@ namespace Recruitment.Gorilla.API.Migrations
                             IsActive = true,
                             SortOrder = 5,
                             ToStatusOptionId = 3
+                        },
+                        new
+                        {
+                            Id = 32,
+                            FromStatusOptionId = 9,
+                            IsActive = true,
+                            SortOrder = 2,
+                            ToStatusOptionId = 15
+                        },
+                        new
+                        {
+                            Id = 33,
+                            FromStatusOptionId = 9,
+                            IsActive = true,
+                            SortOrder = 3,
+                            ToStatusOptionId = 16
+                        },
+                        new
+                        {
+                            Id = 34,
+                            FromStatusOptionId = 9,
+                            IsActive = true,
+                            SortOrder = 4,
+                            ToStatusOptionId = 1
+                        },
+                        new
+                        {
+                            Id = 35,
+                            FromStatusOptionId = 15,
+                            IsActive = true,
+                            SortOrder = 1,
+                            ToStatusOptionId = 16
+                        },
+                        new
+                        {
+                            Id = 36,
+                            FromStatusOptionId = 15,
+                            IsActive = true,
+                            SortOrder = 2,
+                            ToStatusOptionId = 18
+                        },
+                        new
+                        {
+                            Id = 37,
+                            FromStatusOptionId = 15,
+                            IsActive = true,
+                            SortOrder = 3,
+                            ToStatusOptionId = 1
+                        },
+                        new
+                        {
+                            Id = 38,
+                            FromStatusOptionId = 15,
+                            IsActive = true,
+                            SortOrder = 4,
+                            ToStatusOptionId = 12
+                        },
+                        new
+                        {
+                            Id = 39,
+                            FromStatusOptionId = 16,
+                            IsActive = true,
+                            SortOrder = 1,
+                            ToStatusOptionId = 17
+                        },
+                        new
+                        {
+                            Id = 40,
+                            FromStatusOptionId = 16,
+                            IsActive = true,
+                            SortOrder = 2,
+                            ToStatusOptionId = 18
+                        },
+                        new
+                        {
+                            Id = 41,
+                            FromStatusOptionId = 16,
+                            IsActive = true,
+                            SortOrder = 3,
+                            ToStatusOptionId = 1
+                        },
+                        new
+                        {
+                            Id = 42,
+                            FromStatusOptionId = 16,
+                            IsActive = true,
+                            SortOrder = 4,
+                            ToStatusOptionId = 12
+                        },
+                        new
+                        {
+                            Id = 43,
+                            FromStatusOptionId = 17,
+                            IsActive = true,
+                            SortOrder = 1,
+                            ToStatusOptionId = 19
+                        },
+                        new
+                        {
+                            Id = 44,
+                            FromStatusOptionId = 17,
+                            IsActive = true,
+                            SortOrder = 2,
+                            ToStatusOptionId = 18
+                        },
+                        new
+                        {
+                            Id = 45,
+                            FromStatusOptionId = 17,
+                            IsActive = true,
+                            SortOrder = 3,
+                            ToStatusOptionId = 12
+                        },
+                        new
+                        {
+                            Id = 46,
+                            FromStatusOptionId = 19,
+                            IsActive = true,
+                            SortOrder = 1,
+                            ToStatusOptionId = 12
+                        },
+                        new
+                        {
+                            Id = 47,
+                            FromStatusOptionId = 18,
+                            IsActive = true,
+                            SortOrder = 1,
+                            ToStatusOptionId = 15
+                        },
+                        new
+                        {
+                            Id = 48,
+                            FromStatusOptionId = 18,
+                            IsActive = true,
+                            SortOrder = 2,
+                            ToStatusOptionId = 1
+                        },
+                        new
+                        {
+                            Id = 49,
+                            FromStatusOptionId = 18,
+                            IsActive = true,
+                            SortOrder = 3,
+                            ToStatusOptionId = 12
                         });
                 });
 
@@ -1682,6 +2220,54 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
+                {
+                    b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
+                        .WithMany("Offers")
+                        .HasForeignKey("CandidateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Recruitment.Gorilla.API.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Candidate");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.OfferApproval", b =>
+                {
+                    b.HasOne("Recruitment.Gorilla.API.Models.User", "ApproverUser")
+                        .WithMany()
+                        .HasForeignKey("ApproverUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Recruitment.Gorilla.API.Models.Offer", "Offer")
+                        .WithMany("Approvals")
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApproverUser");
+
+                    b.Navigation("Offer");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>
+                {
+                    b.HasOne("Recruitment.Gorilla.API.Models.EvaluationRubric", "EvaluationRubric")
+                        .WithMany("RoleAppliedOptions")
+                        .HasForeignKey("EvaluationRubricId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EvaluationRubric");
+                });
+
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleRecruiter", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.RoleAppliedOption", "RoleAppliedOption")
@@ -1699,6 +2285,17 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("RoleAppliedOption");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.RubricCriterion", b =>
+                {
+                    b.HasOne("Recruitment.Gorilla.API.Models.EvaluationRubric", "EvaluationRubric")
+                        .WithMany("Criteria")
+                        .HasForeignKey("EvaluationRubricId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EvaluationRubric");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.StatusHistory", b =>
@@ -1757,12 +2354,21 @@ namespace Recruitment.Gorilla.API.Migrations
 
                     b.Navigation("Interviews");
 
+                    b.Navigation("Offers");
+
                     b.Navigation("StatusHistories");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSourceOption", b =>
                 {
                     b.Navigation("Candidates");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.EvaluationRubric", b =>
+                {
+                    b.Navigation("Criteria");
+
+                    b.Navigation("RoleAppliedOptions");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.Interview", b =>
@@ -1782,6 +2388,11 @@ namespace Recruitment.Gorilla.API.Migrations
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.InterviewTypeOption", b =>
                 {
                     b.Navigation("Tags");
+                });
+
+            modelBuilder.Entity("Recruitment.Gorilla.API.Models.Offer", b =>
+                {
+                    b.Navigation("Approvals");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.RoleAppliedOption", b =>

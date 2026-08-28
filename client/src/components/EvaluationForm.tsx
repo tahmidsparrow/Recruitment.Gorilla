@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button, Collapse, Form } from 'react-bootstrap';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { saveEvaluation } from '../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getInterviewEvaluationRubric, saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
 import ConfirmModal from './ui/ConfirmModal';
 import SectionCard from './ui/SectionCard';
@@ -11,8 +11,9 @@ import {
   RATING_SCALE,
   RECOMMENDATIONS,
   type CriteriaSection,
+  type Criterion,
 } from '../utils/evaluationCriteria';
-import type { EvaluationItem, InterviewEvaluation } from '../types';
+import type { EvaluationItem, EvaluationRubric, InterviewEvaluation } from '../types';
 
 type ItemMap = Record<string, { rating: number | null; comment: string }>;
 
@@ -51,6 +52,13 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
+const DefaultSectionIcon = (
+  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M9 11l3 3L22 4" />
+    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+  </svg>
+);
+
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg
     className={`eval-panel__chevron${open ? ' eval-panel__chevron--open' : ''}`}
@@ -59,6 +67,29 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
+
+/** Convert rubric criteria to sections */
+const rubricToSections = (rubric?: EvaluationRubric | null): CriteriaSection[] => {
+  if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
+    return EVALUATION_SECTIONS;
+  }
+  const map = new Map<string, Criterion[]>();
+  for (const c of rubric.criteria) {
+    const sec = c.sectionName || 'General';
+    if (!map.has(sec)) map.set(sec, []);
+    map.get(sec)!.push({
+      key: c.key,
+      label: c.label,
+      hint: c.hint || '',
+    });
+  }
+  return Array.from(map.entries()).map(([title, criteria], idx) => ({
+    id: String.fromCharCode(65 + (idx % 26)),
+    title,
+    description: `Evaluation criteria for ${title}`,
+    criteria,
+  }));
+};
 
 /** Section stats from the current item map: rated count + average. */
 const sectionStats = (section: CriteriaSection, itemMap: ItemMap) => {
@@ -79,14 +110,22 @@ const RatingDots = ({ rating }: { rating: number | null }) => (
 );
 
 /** Read-only rendering of a submitted (or other interviewer's) evaluation. */
-export function EvaluationReadOnly({ evaluation }: { evaluation: InterviewEvaluation }) {
+export function EvaluationReadOnly({
+  evaluation,
+  rubric,
+}: {
+  evaluation: InterviewEvaluation;
+  rubric?: EvaluationRubric | null;
+}) {
   const itemMap = buildItemMap(evaluation.items);
+  const sections = useMemo(() => rubricToSections(rubric), [rubric]);
+
   return (
     <div>
-      {EVALUATION_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <div key={section.id} className={`eval-panel eval-panel--${section.id.toLowerCase()}`}>
           <div className="eval-panel__header">
-            <span className="eval-panel__icon">{SECTION_ICONS[section.id]}</span>
+            <span className="eval-panel__icon">{SECTION_ICONS[section.id] || DefaultSectionIcon}</span>
             <span className="eval-panel__title">{section.title}</span>
           </div>
           <div className="eval-panel__body pt-0">
@@ -107,7 +146,10 @@ export function EvaluationReadOnly({ evaluation }: { evaluation: InterviewEvalua
       ))}
       <div className="mt-3">
         {evaluation.generalAssessment && (
-          <div className="mb-2"><div className="text-muted small">General assessment</div><div className="readonly-value">{evaluation.generalAssessment}</div></div>
+          <div className="mb-2">
+            <div className="text-muted small">General assessment</div>
+            <div className="readonly-value">{evaluation.generalAssessment}</div>
+          </div>
         )}
         <div className="mb-2">
           <div className="text-muted small">Final recommendation</div>
@@ -118,7 +160,10 @@ export function EvaluationReadOnly({ evaluation }: { evaluation: InterviewEvalua
               : ''}
           </div>
         </div>
-        <div className="mb-2"><div className="text-muted small">Overall rating</div><RatingDots rating={evaluation.overallRating} /></div>
+        <div className="mb-2">
+          <div className="text-muted small">Overall rating</div>
+          <RatingDots rating={evaluation.overallRating} />
+        </div>
         {evaluation.isSubmitted && evaluation.submittedAt && (
           <p className="text-muted small mb-0">
             Submitted {new Date(evaluation.submittedAt).toLocaleString()} by {evaluation.interviewerName}
@@ -138,24 +183,35 @@ export default function EvaluationForm({
   interviewId: number;
   evaluation: InterviewEvaluation | null;
   /**
-   * Optional context shown at the head of the card, above the progress bar and
-   * outside the scrolling rubric — currently the recruiter's notes. Passed in
-   * as a node so the form doesn't need to know what the briefing *is*.
+   * Pre-interview briefing notes injected between the card header and the form.
+   * Rendered here so it scrolls with the form, keeping the action buttons docked.
    */
   briefing?: React.ReactNode;
 }) {
-  const { addToast } = useToast();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+
+  const { data: rubric } = useQuery({
+    queryKey: ['interview-rubric', interviewId],
+    queryFn: () => getInterviewEvaluationRubric(interviewId),
+  });
+
+  const sections = useMemo(() => rubricToSections(rubric), [rubric]);
+
+  const allCriterionKeys = useMemo(
+    () => sections.flatMap((s) => s.criteria.map((c) => c.key)),
+    [sections]
+  );
 
   const [items, setItems] = useState<ItemMap>(buildItemMap(evaluation?.items ?? []));
   const [generalAssessment, setGeneralAssessment] = useState(evaluation?.generalAssessment ?? '');
   const [recommendation, setRecommendation] = useState(evaluation?.recommendation ?? '');
   const [recommendationOther, setRecommendationOther] = useState(evaluation?.recommendationOther ?? '');
   const [overallRating, setOverallRating] = useState<string>(evaluation?.overallRating?.toString() ?? '');
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(
-    () => Object.fromEntries(EVALUATION_SECTIONS.map((s) => [s.id, true]))
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(sections.map((s) => [s.id, true]))
   );
 
   const submitted = evaluation?.isSubmitted ?? false;
@@ -190,10 +246,19 @@ export default function EvaluationForm({
     return (
       <SectionCard
         title="Your evaluation"
-        actions={<span className="badge-pill badge-success">Submitted</span>}
+        actions={
+          <div className="d-flex align-items-center gap-2">
+            {rubric && (
+              <span className="badge-pill badge-neutral small">
+                Rubric: {rubric.name}
+              </span>
+            )}
+            <span className="badge-pill badge-success">Submitted</span>
+          </div>
+        }
       >
         {briefing}
-        <EvaluationReadOnly evaluation={evaluation} />
+        <EvaluationReadOnly evaluation={evaluation} rubric={rubric} />
       </SectionCard>
     );
   }
@@ -205,10 +270,11 @@ export default function EvaluationForm({
     }));
 
   const toggleSection = (id: string) =>
-    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
+    setOpenSections((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
 
-  const ratedCount = ALL_CRITERION_KEYS.filter((k) => items[k]?.rating != null).length;
-  const allRated = ratedCount === ALL_CRITERION_KEYS.length;
+  const totalCriteriaCount = allCriterionKeys.length || ALL_CRITERION_KEYS.length;
+  const ratedCount = allCriterionKeys.filter((k) => items[k]?.rating != null).length;
+  const allRated = ratedCount === totalCriteriaCount;
   const otherMissing = recommendation === 'Other' && !recommendationOther.trim();
   const recommendationMissing = !recommendation;
   const overallMissing = !overallRating;
@@ -216,7 +282,7 @@ export default function EvaluationForm({
   const onSubmitClick = () => {
     if (!allRated) {
       setShowErrors(true);
-      addToast(`Please rate all ${ALL_CRITERION_KEYS.length} evaluation criteria before submitting.`, 'danger');
+      addToast(`Please rate all ${totalCriteriaCount} evaluation criteria before submitting.`, 'danger');
       return;
     }
     if (recommendationMissing) {
@@ -242,25 +308,37 @@ export default function EvaluationForm({
       className="eval-form-card"
       title="Interview evaluation"
       actions={
-        <span className={`eval-progress__count${showErrors && !allRated ? ' eval-progress__count--invalid' : ''}`}>
-          Rated {ratedCount} of {ALL_CRITERION_KEYS.length}
-          <span className="required-star" aria-hidden="true">*</span>
-        </span>
+        <div className="d-flex align-items-center gap-2">
+          {rubric && (
+            <span className="badge-pill badge-neutral small" title={rubric.description || undefined}>
+              {rubric.name}
+            </span>
+          )}
+          <span className={`eval-progress__count${showErrors && !allRated ? ' eval-progress__count--invalid' : ''}`}>
+            Rated {ratedCount} of {totalCriteriaCount}
+            <span className="required-star" aria-hidden="true">*</span>
+          </span>
+        </div>
       }
     >
       {briefing}
 
-      <div className="eval-progress__bar" role="progressbar" aria-label="Criteria rated" aria-valuenow={ratedCount} aria-valuemin={0} aria-valuemax={ALL_CRITERION_KEYS.length}>
-        <div className="eval-progress__fill" style={{ width: `${(ratedCount / ALL_CRITERION_KEYS.length) * 100}%` }} />
+      <div
+        className="eval-progress__bar"
+        role="progressbar"
+        aria-label="Criteria rated"
+        aria-valuenow={ratedCount}
+        aria-valuemin={0}
+        aria-valuemax={totalCriteriaCount}
+      >
+        <div
+          className="eval-progress__fill"
+          style={{ width: `${totalCriteriaCount > 0 ? (ratedCount / totalCriteriaCount) * 100 : 0}%` }}
+        />
       </div>
 
-      {/* Only the rubric scrolls. The progress bar above and the Submit /
-          Save draft actions below stay in view, so you always know how far
-          through twelve criteria you are and can submit without scrolling
-          back — the card was ~2500px tall with all four sections open. */}
       <div className="eval-form-card__scroll">
-
-        {EVALUATION_SECTIONS.map((section) => {
+        {sections.map((section) => {
           const open = openSections[section.id] ?? true;
           const stats = sectionStats(section, items);
           return (
@@ -272,7 +350,7 @@ export default function EvaluationForm({
                 aria-expanded={open}
                 aria-controls={`eval-body-${section.id}`}
               >
-                <span className="eval-panel__icon">{SECTION_ICONS[section.id]}</span>
+                <span className="eval-panel__icon">{SECTION_ICONS[section.id] || DefaultSectionIcon}</span>
                 <span className="eval-panel__titles">
                   <span className="eval-panel__title d-block">{section.title}</span>
                   <span className="eval-panel__hint">{section.description}</span>
@@ -298,30 +376,36 @@ export default function EvaluationForm({
                             </div>
                             <div
                               className={`rating-group${showErrors && v?.rating == null ? ' rating-group--invalid' : ''}`}
-                              role="group"
-                              aria-label={`${c.label} rating`}
+                              role="radiogroup"
+                              aria-label={`Rating for ${c.label}`}
                             >
-                              {[1, 2, 3, 4, 5].map((n) => (
-                                <button
-                                  key={n}
-                                  type="button"
-                                  title={ratingTitle(n)}
-                                  aria-pressed={v?.rating === n}
-                                  className={`rating-btn${v?.rating === n ? ' rating-btn--selected' : ''}`}
-                                  onClick={() => setItem(c.key, { rating: v?.rating === n ? null : n })}
-                                >
-                                  {n}
-                                </button>
-                              ))}
+                              {RATING_SCALE.map((r) => {
+                                const selected = v?.rating === r.value;
+                                return (
+                                  <button
+                                    key={r.value}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={selected}
+                                    title={r.label}
+                                    className={`rating-btn${selected ? ' rating-btn--active' : ''}`}
+                                    onClick={() =>
+                                      setItem(c.key, { rating: selected ? null : r.value })
+                                    }
+                                  >
+                                    <span className="rating-btn__val">{r.value}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                           <Form.Control
-                            className="eval-comment-input"
                             size="sm"
-                            placeholder="Comments / observations"
-                            aria-label={`${c.label} comments`}
+                            className="mt-2 eval-criterion__comment"
+                            placeholder="Optional notes or examples…"
                             value={v?.comment ?? ''}
                             onChange={(e) => setItem(c.key, { comment: e.target.value })}
+                            maxLength={500}
                           />
                         </div>
                       );
@@ -333,110 +417,127 @@ export default function EvaluationForm({
           );
         })}
 
-      <div className="eval-panel eval-panel--summary">
-        <div className="eval-panel__header">
-          <span className="eval-panel__icon">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M9 12l2 2 4-5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
-            </svg>
-          </span>
-          <span className="eval-panel__title">Summary &amp; recommendation</span>
-        </div>
-        <div className="eval-panel__body">
-          <div className="form-stack">
-            <Form.Group>
-              <Form.Label>General assessment</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Strengths / areas for improvement / red flags"
-                value={generalAssessment}
-                onChange={(e) => setGeneralAssessment(e.target.value)}
-              />
-            </Form.Group>
+        <div className="eval-summary">
+          <h4 className="eval-summary__title">Overall evaluation</h4>
 
-            <Form.Group>
-              <Form.Label as="legend" className={showErrors && recommendationMissing ? 'text-danger' : undefined}>
-                Final recommendation<span className="required-star" aria-hidden="true">*</span>
-              </Form.Label>
-              <div className="radio-stack">
-                {RECOMMENDATIONS.map((r) => (
-                  <div key={r.value}>
-                    <Form.Check
-                      type="radio"
-                      name="recommendation"
-                      id={`rec-${r.value}`}
-                      label={<span><strong>{r.label}:</strong> <span className="text-muted small">{r.hint}</span></span>}
-                      checked={recommendation === r.value}
-                      onChange={() => setRecommendation(r.value)}
-                    />
-                    {r.value === 'Other' && recommendation === 'Other' && (
-                      <Form.Control
-                        className="mt-2"
-                        size="sm"
-                        placeholder="Please specify"
-                        value={recommendationOther}
-                        isInvalid={otherMissing}
-                        onChange={(e) => setRecommendationOther(e.target.value)}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Form.Group>
+          <div className="mb-3">
+            <Form.Label htmlFor="eval-general">General assessment</Form.Label>
+            <Form.Control
+              id="eval-general"
+              as="textarea"
+              rows={3}
+              placeholder="Summary of the interview, candidate's key strengths and concerns…"
+              value={generalAssessment}
+              onChange={(e) => setGeneralAssessment(e.target.value)}
+              maxLength={2000}
+            />
+          </div>
 
-            <Form.Group>
-              <Form.Label as="legend" className={showErrors && overallMissing ? 'text-danger' : undefined}>
-                Overall rating<span className="required-star" aria-hidden="true">*</span>
+          <div className="row g-3 mb-3">
+            <div className="col-12 col-md-6">
+              <Form.Label htmlFor="eval-rec">
+                Final recommendation <span className="required-star" aria-hidden="true">*</span>
               </Form.Label>
-              <div
-                className={`rating-group${showErrors && overallMissing ? ' rating-group--invalid' : ''}`}
-                role="group"
-                aria-label="Overall rating"
+              <Form.Select
+                id="eval-rec"
+                value={recommendation}
+                onChange={(e) => setRecommendation(e.target.value)}
+                isInvalid={showErrors && recommendationMissing}
               >
-                {RATING_SCALE.map((r) => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    title={r.label}
-                    aria-pressed={overallRating === String(r.value)}
-                    className={`rating-btn${overallRating === String(r.value) ? ' rating-btn--selected' : ''}`}
-                    onClick={() => setOverallRating(overallRating === String(r.value) ? '' : String(r.value))}
-                  >
-                    {r.value}
-                  </button>
+                <option value="">Select a recommendation…</option>
+                {RECOMMENDATIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
                 ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Recommendation is required to submit.
+              </Form.Control.Feedback>
+            </div>
+
+            <div className="col-12 col-md-6">
+              <Form.Label htmlFor="eval-overall">
+                Overall rating <span className="required-star" aria-hidden="true">*</span>
+              </Form.Label>
+              <Form.Select
+                id="eval-overall"
+                value={overallRating}
+                onChange={(e) => setOverallRating(e.target.value)}
+                isInvalid={showErrors && overallMissing}
+              >
+                <option value="">Select an overall rating…</option>
+                {RATING_SCALE.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.value} — {r.label}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Overall rating is required to submit.
+              </Form.Control.Feedback>
+            </div>
+
+            {recommendation === 'Other' && (
+              <div className="col-12">
+                <Form.Label htmlFor="eval-rec-other">
+                  Please specify <span className="required-star" aria-hidden="true">*</span>
+                </Form.Label>
+                <Form.Control
+                  id="eval-rec-other"
+                  value={recommendationOther}
+                  onChange={(e) => setRecommendationOther(e.target.value)}
+                  placeholder="e.g., Hold for senior position, Consider for different team…"
+                  isInvalid={showErrors && otherMissing}
+                  maxLength={100}
+                />
+                <Form.Control.Feedback type="invalid">
+                  Please specify the recommendation.
+                </Form.Control.Feedback>
               </div>
-            </Form.Group>
+            )}
           </div>
         </div>
       </div>
-      </div>
 
-      {/* Submit leads: it is the action this whole panel exists for. Save draft
-          is the escape hatch and reads as secondary. */}
-      <div className="form-actions">
-        <Button variant="primary" disabled={mutation.isPending} onClick={onSubmitClick}>
-          Submit
-        </Button>
-        <Button variant="outline-secondary" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}>
-          {mutation.isPending ? 'Saving…' : 'Save draft'}
-        </Button>
+      <div className="eval-form-actions">
+        <div className="eval-form-actions__hint">
+          {allRated ? (
+            <span className="text-success small">All criteria rated — ready to submit.</span>
+          ) : (
+            <span className="text-muted small">
+              {totalCriteriaCount - ratedCount} criteria left to rate before submitting.
+            </span>
+          )}
+        </div>
+        <div className="eval-form-actions__buttons">
+          <Button
+            variant="outline-secondary"
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate(false)}
+          >
+            Save draft
+          </Button>
+          <Button
+            variant="primary"
+            disabled={mutation.isPending}
+            onClick={onSubmitClick}
+          >
+            Submit evaluation
+          </Button>
+        </div>
       </div>
 
       <ConfirmModal
         show={confirmSubmit}
-        title="Submit evaluation"
-        confirmLabel="Submit & lock"
-        pendingLabel="Submitting…"
+        title="Submit evaluation?"
+        confirmLabel="Yes, submit"
         confirmVariant="primary"
-        pending={mutation.isPending}
-        error={mutation.isError ? 'Submit failed. Please try again.' : undefined}
-        onCancel={() => setConfirmSubmit(false)}
         onConfirm={() => mutation.mutate(true)}
+        onCancel={() => setConfirmSubmit(false)}
+        pending={mutation.isPending}
       >
-        Once submitted, this evaluation is <strong>locked</strong> and can no longer be edited.
-        Continue?
+        Once submitted, your evaluation is locked and cannot be edited. Are you ready to submit?
       </ConfirmModal>
     </SectionCard>
   );

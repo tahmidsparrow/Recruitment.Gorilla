@@ -83,10 +83,10 @@ public record UpdateCandidateDto(
 
 public record StatusChangeDto(
     string Status,
-    string? Comment,
-    string? TaskDetails,
-    string? SubmissionUrl,
-    DateTime? InterviewAt,
+    string? Comment = null,
+    string? TaskDetails = null,
+    string? SubmissionUrl = null,
+    DateTime? InterviewAt = null,
     // Required (non-empty) when Status == "Interview Scheduled": the users to assign
     // as interviewers. Each must be an existing active user.
     List<int>? InterviewerUserIds = null,
@@ -109,7 +109,8 @@ public record CandidateListItemDto(
     string? AppliedRole,
     string CurrentStatus,
     DateTime CreatedAt,
-    string? Source = null
+    string? Source = null,
+    DateTime? UpdatedAt = null
 );
 
 /// <summary>
@@ -220,7 +221,9 @@ public record RoleAppliedOptionDto(
     DateTime CreatedAt,   // = posted date (read-only)
     DateTime EndDate,
     string Title,         // computed: "{Name} — {CreatedAt:dd MMM yyyy}"
-    List<RecruiterDto> Recruiters);
+    List<RecruiterDto> Recruiters,
+    int? EvaluationRubricId = null,
+    string? EvaluationRubricName = null);
 
 public record UpsertRoleAppliedOptionDto(
     string Name,
@@ -230,7 +233,8 @@ public record UpsertRoleAppliedOptionDto(
     string? Location = null,
     string? Department = null,
     string? Priority = null,
-    List<int>? RecruiterUserIds = null);
+    List<int>? RecruiterUserIds = null,
+    int? EvaluationRubricId = null);
 
 public record CandidateSourceOptionDto(int Id, string Name, int SortOrder, bool IsActive);
 

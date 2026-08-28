@@ -27,6 +27,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<EmailSetting> EmailSettings => Set<EmailSetting>();
+    public DbSet<Offer> Offers => Set<Offer>();
+    public DbSet<OfferApproval> OfferApprovals => Set<OfferApproval>();
+    public DbSet<EvaluationRubric> EvaluationRubrics => Set<EvaluationRubric>();
+    public DbSet<RubricCriterion> RubricCriteria => Set<RubricCriterion>();
 
     /// <summary>
     /// Marks every DateTime coming out of MySQL as UTC — see <see cref="UtcDateTimeConverter"/>.
@@ -151,7 +155,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new StatusOption { Id = 3, Name = "Interview Scheduled", SortOrder = 9, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 4, Name = "Not Available", SortOrder = 12, IsInitial = true, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 5, Name = "Technical Assessment", SortOrder = 3, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
-                new StatusOption { Id = 6, Name = "Submission Receieved", SortOrder = 4, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 6, Name = "Submission Received", SortOrder = 4, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 7, Name = "Code Review", SortOrder = 5, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 8, Name = "Interview Completed", SortOrder = 10, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 9, Name = "Recommended", SortOrder = 11, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
@@ -159,7 +163,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new StatusOption { Id = 11, Name = "Not Recommended", SortOrder = 13, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 12, Name = "Discontinued", SortOrder = 15, IsInitial = true, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 13, Name = "Uploaded", SortOrder = 1, IsInitial = true, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
-                new StatusOption { Id = 14, Name = "Ask for Assesment", SortOrder = 2, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) }
+                new StatusOption { Id = 14, Name = "Ask for Assesment", SortOrder = 2, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 15, Name = "Offer Preparation", SortOrder = 12, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 16, Name = "Offer Extended", SortOrder = 13, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 17, Name = "Offer Accepted", SortOrder = 14, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 18, Name = "Offer Declined", SortOrder = 15, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 19, Name = "Hired", SortOrder = 16, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) }
             );
         });
 
@@ -210,7 +219,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 // Uploaded -> Call for Interview
                 new StatusTransition { Id = 30, FromStatusOptionId = 13, ToStatusOptionId = 2, SortOrder = 5, IsActive = true },
                 // Interview Completed -> Interview Scheduled (re-schedule another round)
-                new StatusTransition { Id = 31, FromStatusOptionId = 8, ToStatusOptionId = 3, SortOrder = 5, IsActive = true }
+                new StatusTransition { Id = 31, FromStatusOptionId = 8, ToStatusOptionId = 3, SortOrder = 5, IsActive = true },
+                // Recommended -> Offer stages
+                new StatusTransition { Id = 32, FromStatusOptionId = 9, ToStatusOptionId = 15, SortOrder = 2, IsActive = true },
+                new StatusTransition { Id = 33, FromStatusOptionId = 9, ToStatusOptionId = 16, SortOrder = 3, IsActive = true },
+                new StatusTransition { Id = 34, FromStatusOptionId = 9, ToStatusOptionId = 1, SortOrder = 4, IsActive = true },
+                // Offer Preparation -> Next
+                new StatusTransition { Id = 35, FromStatusOptionId = 15, ToStatusOptionId = 16, SortOrder = 1, IsActive = true },
+                new StatusTransition { Id = 36, FromStatusOptionId = 15, ToStatusOptionId = 18, SortOrder = 2, IsActive = true },
+                new StatusTransition { Id = 37, FromStatusOptionId = 15, ToStatusOptionId = 1, SortOrder = 3, IsActive = true },
+                new StatusTransition { Id = 38, FromStatusOptionId = 15, ToStatusOptionId = 12, SortOrder = 4, IsActive = true },
+                // Offer Extended -> Decisions
+                new StatusTransition { Id = 39, FromStatusOptionId = 16, ToStatusOptionId = 17, SortOrder = 1, IsActive = true },
+                new StatusTransition { Id = 40, FromStatusOptionId = 16, ToStatusOptionId = 18, SortOrder = 2, IsActive = true },
+                new StatusTransition { Id = 41, FromStatusOptionId = 16, ToStatusOptionId = 1, SortOrder = 3, IsActive = true },
+                new StatusTransition { Id = 42, FromStatusOptionId = 16, ToStatusOptionId = 12, SortOrder = 4, IsActive = true },
+                // Offer Accepted -> Hired / Declined / Discontinued
+                new StatusTransition { Id = 43, FromStatusOptionId = 17, ToStatusOptionId = 19, SortOrder = 1, IsActive = true },
+                new StatusTransition { Id = 44, FromStatusOptionId = 17, ToStatusOptionId = 18, SortOrder = 2, IsActive = true },
+                new StatusTransition { Id = 45, FromStatusOptionId = 17, ToStatusOptionId = 12, SortOrder = 3, IsActive = true },
+                // Hired -> Discontinued
+                new StatusTransition { Id = 46, FromStatusOptionId = 19, ToStatusOptionId = 12, SortOrder = 1, IsActive = true },
+                // Offer Declined -> Retry Preparation or Reject / Discontinue
+                new StatusTransition { Id = 47, FromStatusOptionId = 18, ToStatusOptionId = 15, SortOrder = 1, IsActive = true },
+                new StatusTransition { Id = 48, FromStatusOptionId = 18, ToStatusOptionId = 1, SortOrder = 2, IsActive = true },
+                new StatusTransition { Id = 49, FromStatusOptionId = 18, ToStatusOptionId = 12, SortOrder = 3, IsActive = true }
             );
         });
 
@@ -426,6 +459,99 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(n => n.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Offer>(e =>
+        {
+            e.HasKey(o => o.Id);
+            e.Property(o => o.JobTitle).HasMaxLength(200).IsRequired();
+            e.Property(o => o.BaseSalary).HasPrecision(18, 2);
+            e.Property(o => o.Currency).HasMaxLength(10).IsRequired();
+            e.Property(o => o.Bonus).HasPrecision(18, 2);
+            e.Property(o => o.Equity).HasMaxLength(200);
+            e.Property(o => o.Notes).HasMaxLength(2000);
+            e.Property(o => o.Status).HasMaxLength(50).IsRequired();
+            e.Property(o => o.DeclineReason).HasMaxLength(1000);
+            e.HasOne(o => o.Candidate)
+             .WithMany(c => c.Offers)
+             .HasForeignKey(o => o.CandidateId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(o => o.CreatedByUser)
+             .WithMany()
+             .HasForeignKey(o => o.CreatedByUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<OfferApproval>(e =>
+        {
+            e.HasKey(oa => oa.Id);
+            e.Property(oa => oa.Status).HasMaxLength(50).IsRequired();
+            e.Property(oa => oa.Comment).HasMaxLength(1000);
+            e.HasOne(oa => oa.Offer)
+             .WithMany(o => o.Approvals)
+             .HasForeignKey(oa => oa.OfferId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(oa => oa.ApproverUser)
+             .WithMany()
+             .HasForeignKey(oa => oa.ApproverUserId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<EvaluationRubric>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Name).HasMaxLength(200).IsRequired();
+            e.Property(r => r.Description).HasMaxLength(1000);
+            e.Property(r => r.IsDefault).HasDefaultValue(false);
+            e.Property(r => r.IsActive).HasDefaultValue(true);
+            e.HasMany(r => r.Criteria)
+             .WithOne(c => c.EvaluationRubric)
+             .HasForeignKey(c => c.EvaluationRubricId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(r => r.RoleAppliedOptions)
+             .WithOne(ro => ro.EvaluationRubric)
+             .HasForeignKey(ro => ro.EvaluationRubricId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            var seeded = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new EvaluationRubric
+                {
+                    Id = 1,
+                    Name = "Standard 12-Criterion Rubric",
+                    Description = "Default general-purpose evaluation rubric across 4 standard sections.",
+                    IsDefault = true,
+                    IsActive = true,
+                    CreatedAt = seeded,
+                    UpdatedAt = seeded
+                }
+            );
+        });
+
+        modelBuilder.Entity<RubricCriterion>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.SectionName).HasMaxLength(150).IsRequired();
+            e.Property(c => c.Key).HasMaxLength(100).IsRequired();
+            e.Property(c => c.Label).HasMaxLength(200).IsRequired();
+            e.Property(c => c.Hint).HasMaxLength(500);
+            e.Property(c => c.Weight).HasDefaultValue(1.0);
+            e.HasIndex(c => new { c.EvaluationRubricId, c.Key }).IsUnique();
+
+            e.HasData(
+                new RubricCriterion { Id = 1, EvaluationRubricId = 1, SectionName = "Educational & Professional Background", Key = "RelevanceOfExperience", Label = "Relevance of Experience", Hint = "Does work history align with the JD?", Weight = 1.0, SortOrder = 1 },
+                new RubricCriterion { Id = 2, EvaluationRubricId = 1, SectionName = "Educational & Professional Background", Key = "JobStabilityProgression", Label = "Job Stability & Progression", Hint = "History of growth and tenure", Weight = 1.0, SortOrder = 2 },
+                new RubricCriterion { Id = 3, EvaluationRubricId = 1, SectionName = "Educational & Professional Background", Key = "EducationalBackground", Label = "Educational Background", Hint = "Degrees, certifications, training", Weight = 1.0, SortOrder = 3 },
+                new RubricCriterion { Id = 4, EvaluationRubricId = 1, SectionName = "Technical Skills & Job Knowledge", Key = "CoreTechnicalCompetency", Label = "Core Technical Competency", Hint = "Subject matter expertise", Weight = 1.0, SortOrder = 4 },
+                new RubricCriterion { Id = 5, EvaluationRubricId = 1, SectionName = "Technical Skills & Job Knowledge", Key = "ToolsSoftwareProficiency", Label = "Tools & Software Proficiency", Hint = "Familiarity with the necessary stack", Weight = 1.0, SortOrder = 5 },
+                new RubricCriterion { Id = 6, EvaluationRubricId = 1, SectionName = "Technical Skills & Job Knowledge", Key = "ProblemSolvingSkills", Label = "Problem-Solving Skills", Hint = "Ability to troubleshoot and find solutions", Weight = 1.0, SortOrder = 6 },
+                new RubricCriterion { Id = 7, EvaluationRubricId = 1, SectionName = "Soft Skills & Communication", Key = "CommunicationClarity", Label = "Communication Clarity", Hint = "Verbal and written articulation", Weight = 1.0, SortOrder = 7 },
+                new RubricCriterion { Id = 8, EvaluationRubricId = 1, SectionName = "Soft Skills & Communication", Key = "ListeningSkills", Label = "Listening Skills", Hint = "Understands questions, attentive", Weight = 1.0, SortOrder = 8 },
+                new RubricCriterion { Id = 9, EvaluationRubricId = 1, SectionName = "Soft Skills & Communication", Key = "AdaptabilityFlexibility", Label = "Adaptability & Flexibility", Hint = "Handling change or ambiguity", Weight = 1.0, SortOrder = 9 },
+                new RubricCriterion { Id = 10, EvaluationRubricId = 1, SectionName = "Cultural Fit & Motivation", Key = "AlignmentWithCompanyValues", Label = "Alignment with Company Values", Hint = "Alignment with core principles", Weight = 1.0, SortOrder = 10 },
+                new RubricCriterion { Id = 11, EvaluationRubricId = 1, SectionName = "Cultural Fit & Motivation", Key = "MotivationEnthusiasm", Label = "Motivation & Enthusiasm", Hint = "Interest in the role/company", Weight = 1.0, SortOrder = 11 },
+                new RubricCriterion { Id = 12, EvaluationRubricId = 1, SectionName = "Cultural Fit & Motivation", Key = "TeamDynamics", Label = "Team Dynamics", Hint = "Collaborative vs. independent style", Weight = 1.0, SortOrder = 12 }
+            );
         });
     }
 }

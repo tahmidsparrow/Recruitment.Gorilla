@@ -6,13 +6,14 @@ import { isAxiosError } from 'axios';
 import {
   createRoleOption,
   deleteRoleOption,
+  getEvaluationRubrics,
   getRecruiterOptions,
   getRoleOptions,
   updateRoleOption,
 } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
-import { SearchableMultiSelect } from '../../components/SearchableSelect';
+import SearchableDropdown, { SearchableMultiSelect } from '../../components/SearchableSelect';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import EmptyState from '../../components/ui/EmptyState';
 import { SkeletonRows } from '../../components/ui/Loading';
@@ -74,6 +75,7 @@ export default function JobOpeningsTab() {
   const [priority, setPriority] = useState('');
   const [endDate, setEndDate] = useState('');
   const [recruiterUserIds, setRecruiterUserIds] = useState<number[]>([]);
+  const [evaluationRubricId, setEvaluationRubricId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nameInvalid, setNameInvalid] = useState(false);
   const [endDateInvalid, setEndDateInvalid] = useState(false);
@@ -84,6 +86,21 @@ export default function JobOpeningsTab() {
   });
 
   const { data: users = [] } = useQuery({ queryKey: ['recruiter-options'], queryFn: getRecruiterOptions });
+
+  const { data: rubrics = [] } = useQuery({
+    queryKey: ['evaluation-rubrics'],
+    queryFn: getEvaluationRubrics,
+  });
+
+  const rubricOptions = useMemo(() => {
+    return rubrics
+      .filter((r) => r.isActive || r.id === editing?.evaluationRubricId)
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        badge: r.isDefault ? 'Default' : undefined,
+      }));
+  }, [rubrics, editing]);
 
   const recruiterOptions = useMemo(() => {
     // Label carries name + email so the searchable select matches on either.
@@ -112,6 +129,7 @@ export default function JobOpeningsTab() {
         priority: priority || null,
         endDate: endDate ? new Date(endDate).toISOString() : null,
         recruiterUserIds,
+        evaluationRubricId: evaluationRubricId || null,
       };
       return editing ? updateRoleOption(editing.id, payload) : createRoleOption(payload);
     },
@@ -157,6 +175,7 @@ export default function JobOpeningsTab() {
     setPriority(o?.priority ?? '');
     setEndDate(o?.endDate ? toLocalInput(o.endDate) : '');
     setRecruiterUserIds((o?.recruiters ?? []).map((r) => r.userId));
+    setEvaluationRubricId(o?.evaluationRubricId ?? null);
     setError(null);
     setNameInvalid(false);
     setEndDateInvalid(false);
@@ -329,6 +348,20 @@ export default function JobOpeningsTab() {
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </Form.Select>
               </div>
+              <div className="col-12 col-md-6">
+                <Form.Label>Evaluation rubric</Form.Label>
+                <SearchableDropdown<number>
+                  options={rubricOptions}
+                  value={evaluationRubricId}
+                  onChange={setEvaluationRubricId}
+                  placeholder="System default rubric"
+                  emptyMessage="No rubric found"
+                  clearable
+                />
+                <Form.Text muted>
+                  Determines the scorecard criteria and sections for candidates in this opening.
+                </Form.Text>
+              </div>
               <div className="col-12">
                 <Form.Label>Recruiters</Form.Label>
                 <SearchableMultiSelect
@@ -453,6 +486,14 @@ function JobRow({
               ? 'No recruiters'
               : `${recruiters.length} recruiter${recruiters.length === 1 ? '' : 's'}`}
           </span>
+          {job.evaluationRubricName && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="text-muted" title="Assigned scorecard rubric">
+                Rubric: {job.evaluationRubricName}
+              </span>
+            </>
+          )}
           {prio && <span className={`priority-badge ${prio}`}>{job.priority}</span>}
         </div>
       </div>
