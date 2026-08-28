@@ -362,7 +362,10 @@ export default function EvaluationRubricsTab() {
   };
 
   return (
-    <div className="evaluation-rubrics-tab">
+    // A fragment, not a wrapper: TabPanel renders .page-stack, which spaces a
+    // tab's sections. Wrapping them made the stack a single child, so the gap
+    // had nothing to apply between and the action bar sat flush on the table.
+    <>
       {/* Header bar */}
       <div className="page-bar">
         <div className="page-bar__main">
@@ -710,6 +713,6 @@ export default function EvaluationRubricsTab() {
           Are you sure you want to delete &ldquo;{deleteTarget.name}&rdquo;? Job openings linked to this rubric will automatically revert to the system default.
         </ConfirmModal>
       )}
-    </div>
+    </>
   );
 }
