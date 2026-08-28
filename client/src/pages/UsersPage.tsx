@@ -150,7 +150,9 @@ export default function UsersPage() {
       setFormError('Email is required.');
       return;
     }
-    if (roles.length === 0) {
+    // Creation still seeds the initial roles; editing doesn't send them at all
+    // (the server ignores role changes on update — Gorilla.IAM owns assignment).
+    if (!editing && roles.length === 0) {
       setFormError('Select at least one role.');
       return;
     }
@@ -287,7 +289,7 @@ export default function UsersPage() {
               </Form.Group>
               <Form.Group>
                 <Form.Label as="legend">
-                  Roles <span className="required-star" aria-hidden="true">*</span>
+                  Roles {!editing && <span className="required-star" aria-hidden="true">*</span>}
                 </Form.Label>
                 <div className="check-grid">
                   {ALL_ROLES.map((r) => (
@@ -297,10 +299,17 @@ export default function UsersPage() {
                       id={`role-${r}`}
                       label={r}
                       checked={roles.includes(r)}
+                      disabled={!!editing}
                       onChange={() => toggleRole(r)}
                     />
                   ))}
                 </div>
+                {editing && (
+                  <Form.Text className="text-muted">
+                    Roles are managed in Gorilla.IAM and can't be changed here. Changes made there
+                    apply the next time this person signs in.
+                  </Form.Text>
+                )}
               </Form.Group>
               {!editing && (
                 <Form.Group>

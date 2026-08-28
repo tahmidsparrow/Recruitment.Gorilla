@@ -58,14 +58,55 @@ public class IamTokenAuthorizationTests(IamTestFixture fx)
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
 
+    /// <summary>Superseded by JIT provisioning: an IAM token for someone with no local
+    /// row now creates that row rather than refusing. The protection that actually
+    /// matters is unchanged and covered below — a token with no ats role is still
+    /// refused, so this cannot become "anyone with any token gets an RG account".</summary>
     [Fact]
-    public async Task Iam_token_for_an_unknown_email_is_rejected_not_granted_unrestricted_access()
+    public async Task Iam_token_for_an_unknown_email_provisions_a_shadow_user()
     {
-        var token = fx.MintIamToken(Guid.NewGuid(), "nobody@test.local", "Nobody", Roles.Recruiter);
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
 
         var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
 
-        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var provisioned = await fx.FindUserAsync(email);
+        Assert.NotNull(provisioned);
+        Assert.Equal("New Comer", provisioned!.Name);
+        Assert.True(provisioned.IsActive);
+        Assert.Equal([Roles.Recruiter], await fx.GetLocalRolesAsync(provisioned.Id));
+    }
+
+    /// <summary>A provisioned row is a projection, not an account: it must not be
+    /// possible to sign into it through RG's own local login, which still exists.</summary>
+    [Fact]
+    public async Task A_provisioned_shadow_user_has_no_usable_local_password()
+    {
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
+        await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        var provisioned = await fx.FindUserAsync(email);
+
+        Assert.False(PasswordHasher.Verify("", provisioned!.PasswordHash));
+        Assert.False(PasswordHasher.Verify(provisioned.PasswordHash, provisioned.PasswordHash));
+    }
+
+    /// <summary>The burst of parallel API calls an SPA fires on load must not race each
+    /// other into duplicate rows or a unique-index failure — the same shape of bug that
+    /// a real browser login already exposed once in the role sync.</summary>
+    [Fact]
+    public async Task Concurrent_first_requests_provision_exactly_one_shadow_user()
+    {
+        var email = $"newcomer-{Guid.NewGuid():N}@test.local";
+        var token = fx.MintIamToken(Guid.NewGuid(), email, "New Comer", Roles.Recruiter);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => fx.SendAsync(HttpMethod.Get, "/api/dashboard/kpis", token)));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        Assert.Equal(1, await fx.CountUsersAsync(email));
     }
 
     /// <summary>Defence in depth: IAM's own /connect/authorize handler is supposed to
@@ -136,5 +177,70 @@ public class IamTokenAuthorizationTests(IamTestFixture fx)
 
         Assert.Contains(byAdmin, ids);
         Assert.Contains(byRecruiter, ids);
+    }
+
+    // ----- JIT role sync: IAM's grants mirrored into RG's local projection -----
+    //
+    // These do NOT test authorization — that is enforced from the token's own claims.
+    // They test that RG's local UserRoles stays accurate, which it must, because
+    // ConfigurationService's GetRecruiterOptionsAsync/ValidateRecruiters filter on it
+    // to drive the "who can be a job opening's recruiter" dropdown, and RG's own admin
+    // UI no longer writes roles (see UserServiceRoleOwnershipTests).
+
+    [Fact]
+    public async Task A_role_added_in_IAM_appears_in_the_local_projection_on_the_next_request()
+    {
+        var user = await fx.SeedUserAsync(Roles.Recruiter);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter, Roles.Interviewer);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal([Roles.Interviewer, Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id));
+    }
+
+    [Fact]
+    public async Task A_role_removed_in_IAM_disappears_from_the_local_projection()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal([Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id)); // Admin gone, not merged
+    }
+
+    /// <summary>Local login is unaffected: an RG-issued token carries roles under
+    /// ClaimTypes.Role and never reaches the IAM branch, so the projection it was
+    /// built from must not be rewritten out from under it.</summary>
+    [Fact]
+    public async Task A_local_token_does_not_touch_the_local_projection()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+
+        var resp = await fx.SendAsync(HttpMethod.Get, "/api/candidates", token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+        Assert.Equal([Roles.Admin], await fx.GetLocalRolesAsync(user.Id));
+    }
+
+    /// <summary>The regression test for a race no single-request test could catch:
+    /// a real SPA fires a burst of API calls on page load, every one runs the JIT
+    /// sync, and they all try to rewrite the same rows at once. Before the fix, the
+    /// requests that lost that race threw DbUpdateConcurrencyException and returned
+    /// 500 — found only by driving an actual browser login. Losing the race is the
+    /// normal case and must be harmless.</summary>
+    [Fact]
+    public async Task Concurrent_requests_all_succeed_while_the_projection_is_being_synced()
+    {
+        var user = await fx.SeedUserAsync(Roles.Admin);
+        var token = fx.MintIamToken(Guid.NewGuid(), user.Email, user.Name, Roles.Recruiter, Roles.Interviewer);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8)
+            .Select(_ => fx.SendAsync(HttpMethod.Get, "/api/dashboard/kpis", token)));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        Assert.Equal([Roles.Interviewer, Roles.Recruiter], await fx.GetLocalRolesAsync(user.Id));
     }
 }

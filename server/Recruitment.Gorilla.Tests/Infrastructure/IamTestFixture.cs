@@ -100,6 +100,33 @@ public sealed class IamTestFixture : IAsyncLifetime
         return (await db.Users.FindAsync(userId))!.IamSubject;
     }
 
+    /// <summary>The local UserRoles projection, for asserting SubjectResolutionMiddleware's
+    /// JIT sync actually wrote it — sorted so assertions don't depend on row order.</summary>
+    public async Task<string[]> GetLocalRolesAsync(int userId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Users
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Roles.Select(r => r.Role))
+            .OrderBy(r => r)
+            .ToArrayAsync();
+    }
+
+    public async Task<User?> FindUserAsync(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<int> CountUsersAsync(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Users.CountAsync(u => u.Email == email);
+    }
+
     public async Task DeactivateAsync(int userId)
     {
         using var scope = _factory.Services.CreateScope();
