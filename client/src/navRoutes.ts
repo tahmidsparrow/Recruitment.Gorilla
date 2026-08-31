@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  BarChart3,
   CalendarCheck,
   KeyRound,
   LayoutDashboard,
@@ -42,6 +43,13 @@ export const NAV_ROUTES: NavRoute[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     description: 'Pipeline health, upcoming interviews and recent activity at a glance.',
+  },
+  {
+    path: '/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    description: 'Pipeline velocity, time-to-hire, funnel conversion and sourcing ROI.',
+    roles: ['SuperAdmin', 'Admin', 'Recruiter'],
   },
   {
     path: '/upload',
