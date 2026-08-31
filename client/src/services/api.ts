@@ -185,9 +185,17 @@ export type CreateCandidateResult =
   | { kind: 'created'; candidate: CandidateDetail }
   | { kind: 'duplicate'; duplicate: DuplicateCandidate };
 
-export const uploadCV = async (file: File): Promise<CVDraft> => {
+export const uploadCV = async (
+  file: File,
+  batchId?: string,
+  fileIndex?: number,
+  totalFiles?: number
+): Promise<CVDraft> => {
   const form = new FormData();
   form.append('file', file);
+  if (batchId) form.append('batchId', batchId);
+  if (fileIndex != null) form.append('fileIndex', fileIndex.toString());
+  if (totalFiles != null) form.append('totalFiles', totalFiles.toString());
   const { data } = await api.post<CVDraft>('/cvupload', form);
   return data;
 };
