@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Form, Modal, Table } from 'react-bootstrap';
+import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import {
+  Briefcase,
   Copy,
   FileCheck2,
   GripVertical,
   Pencil,
   Plus,
+  Search,
   Star,
   Trash2,
   X,
@@ -34,6 +36,8 @@ interface SectionDraft {
   criteria: UpsertRubricCriterionPayload[];
 }
 
+type FilterType = 'all' | 'active' | 'default';
+
 export default function EvaluationRubricsTab() {
   const queryClient = useQueryClient();
 
@@ -41,6 +45,10 @@ export default function EvaluationRubricsTab() {
     queryKey: ['evaluation-rubrics'],
     queryFn: getEvaluationRubrics,
   });
+
+  // Filter & Search states
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -73,31 +81,39 @@ export default function EvaluationRubricsTab() {
             sectionName: 'Technical Competency',
             key: 'CoreTechnicalKnowledge',
             label: 'Core Technical Knowledge',
-            hint: 'Depth of domain knowledge and practical experience',
-            weight: 1,
+            hint: 'Depth of domain knowledge, system architecture and practical implementation experience',
+            weight: 1.0,
             sortOrder: 1,
           },
           {
             sectionName: 'Technical Competency',
             key: 'ProblemSolving',
-            label: 'Problem Solving & Architecture',
-            hint: 'Ability to dissect complexity and design robust solutions',
-            weight: 1,
+            label: 'Problem Solving & Code Quality',
+            hint: 'Ability to dissect complexity, reason about edge cases, and write maintainable code',
+            weight: 1.0,
             sortOrder: 2,
           },
         ],
       },
       {
         id: 'sec-2',
-        name: 'Soft Skills & Communication',
+        name: 'Communication & Collaboration',
         criteria: [
           {
-            sectionName: 'Soft Skills & Communication',
+            sectionName: 'Communication & Collaboration',
             key: 'CommunicationClarity',
             label: 'Communication Clarity',
-            hint: 'Ability to articulate ideas effectively and listen attentively',
-            weight: 1,
+            hint: 'Ability to articulate ideas effectively, listen attentively, and ask clarifying questions',
+            weight: 1.0,
             sortOrder: 3,
+          },
+          {
+            sectionName: 'Communication & Collaboration',
+            key: 'CulturalFit',
+            label: 'Team Dynamics & Values',
+            hint: 'Alignment with team values, receptiveness to feedback, and collaborative mindset',
+            weight: 1.0,
+            sortOrder: 4,
           },
         ],
       },
@@ -135,21 +151,32 @@ export default function EvaluationRubricsTab() {
       criteria: critList,
     }));
 
-    setSections(loadedSections.length > 0 ? loadedSections : [
-      {
-        id: 'sec-1',
-        name: 'General',
-        criteria: [
-          { sectionName: 'General', key: 'Performance', label: 'Overall Performance', hint: '', weight: 1, sortOrder: 1 },
-        ],
-      },
-    ]);
+    setSections(
+      loadedSections.length > 0
+        ? loadedSections
+        : [
+            {
+              id: 'sec-1',
+              name: 'General',
+              criteria: [
+                {
+                  sectionName: 'General',
+                  key: 'Performance',
+                  label: 'Overall Performance',
+                  hint: '',
+                  weight: 1.0,
+                  sortOrder: 1,
+                },
+              ],
+            },
+          ]
+    );
     setShowModal(true);
   };
 
   // Section manipulation
   const addSection = () => {
-    const defaultSecName = 'New Section';
+    const defaultSecName = `Section ${sections.length + 1}`;
     setSections((prev) => [
       ...prev,
       {
@@ -159,9 +186,9 @@ export default function EvaluationRubricsTab() {
           {
             sectionName: defaultSecName,
             key: `Criterion_${Date.now()}`,
-            label: 'New Criterion',
+            label: '',
             hint: '',
-            weight: 1,
+            weight: 1.0,
             sortOrder: 1,
           },
         ],
@@ -206,7 +233,7 @@ export default function EvaluationRubricsTab() {
               key: `Criterion_${Date.now()}`,
               label: '',
               hint: '',
-              weight: 1,
+              weight: 1.0,
               sortOrder: nextSort,
             },
           ],
@@ -275,7 +302,7 @@ export default function EvaluationRubricsTab() {
       }
       for (const crit of sec.criteria) {
         if (!crit.label?.trim()) {
-          setErrorMsg('All evaluation criteria must have a label.');
+          setErrorMsg('All evaluation criteria must have a descriptive label.');
           return null;
         }
         let k = crit.key?.trim();
@@ -283,7 +310,7 @@ export default function EvaluationRubricsTab() {
           k = crit.label.replace(/[^a-zA-Z0-9]/g, '').trim() || `Crit${sort}`;
         }
         if (usedKeys.has(k.toLowerCase())) {
-          setErrorMsg(`Duplicate criterion key "${k}". Each criterion must have a unique identifier.`);
+          setErrorMsg(`Duplicate criterion identifier "${k}". Each criterion must have a unique key.`);
           return null;
         }
         usedKeys.add(k.toLowerCase());
@@ -294,7 +321,7 @@ export default function EvaluationRubricsTab() {
           key: k,
           label: crit.label.trim(),
           hint: crit.hint?.trim() || null,
-          weight: crit.weight && crit.weight > 0 ? Number(crit.weight) : 1,
+          weight: crit.weight && crit.weight > 0 ? Number(crit.weight) : 1.0,
           sortOrder: sort++,
         });
       }
@@ -361,331 +388,421 @@ export default function EvaluationRubricsTab() {
     if (payload) saveMutation.mutate(payload);
   };
 
+  // Filtered rubrics
+  const visibleRubrics = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rubrics.filter((r) => {
+      if (filter === 'active' && !r.isActive) return false;
+      if (filter === 'default' && !r.isDefault) return false;
+      if (!q) return true;
+      const haystack = [
+        r.name,
+        r.description,
+        ...r.criteria.map((c) => `${c.label} ${c.sectionName} ${c.hint}`),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [rubrics, query, filter]);
+
+  const totalCriteriaInModal = useMemo(
+    () => sections.reduce((acc, s) => acc + s.criteria.length, 0),
+    [sections]
+  );
+
   return (
     <div className="evaluation-rubrics-tab">
-      {/* Header bar */}
+      {/* Search and Action Toolbar */}
       <div className="page-bar">
-        <div className="page-bar__main">
-          <p className="page-bar__description mb-0">
-            Define customized scorecard rubrics per role with weighted criteria, evaluation guides,
-            and section groupings.
-          </p>
-        </div>
+        <search className="flex-grow-1">
+          <div className="data-toolbar">
+            <div className="search-field data-toolbar__search">
+              <Search size={15} strokeWidth={1.75} aria-hidden="true" className="search-field__icon" />
+              <Form.Control
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search scorecards by role, criterion or section…"
+                aria-label="Search evaluation rubrics"
+              />
+            </div>
+            <div className="segmented data-toolbar__end" role="group" aria-label="Filter scorecards">
+              <button
+                type="button"
+                aria-pressed={filter === 'all'}
+                className={filter === 'all' ? 'active' : ''}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                aria-pressed={filter === 'active'}
+                className={filter === 'active' ? 'active' : ''}
+                onClick={() => setFilter('active')}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                aria-pressed={filter === 'default'}
+                className={filter === 'default' ? 'active' : ''}
+                onClick={() => setFilter('default')}
+              >
+                Default
+              </button>
+            </div>
+          </div>
+        </search>
+
         <div className="page-bar__actions">
-          <Button variant="primary" onClick={openCreateModal} className="d-flex align-items-center gap-1.5">
+          <Button onClick={openCreateModal} className="d-flex align-items-center gap-1.5">
             <Plus size={15} strokeWidth={2.5} />
             <span>Add rubric scorecard</span>
           </Button>
         </div>
       </div>
 
+      {/* List content */}
       {isLoading ? (
-        <SkeletonRows rows={5} label="Loading evaluation rubrics" />
+        <SkeletonRows rows={4} label="Loading evaluation rubrics" />
       ) : isError ? (
         <EmptyState
           variant="error"
           title="Could not load evaluation rubrics"
           description="The request failed. Please refresh the page to try again."
         />
-      ) : rubrics.length === 0 ? (
+      ) : visibleRubrics.length === 0 ? (
         <EmptyState
           icon={<FileCheck2 size={24} strokeWidth={1.5} />}
-          title="No evaluation rubrics yet"
-          description="Create custom rubric scorecards to evaluate candidates with role-specific criteria."
+          title={rubrics.length === 0 ? 'No evaluation rubrics yet' : 'No rubrics match your search'}
+          description={
+            rubrics.length === 0
+              ? 'Create custom scorecard rubrics to evaluate candidates with role-specific criteria.'
+              : 'Try clearing your search query or switching filters.'
+          }
           action={
-            <Button variant="primary" onClick={openCreateModal}>
-              Create your first rubric
-            </Button>
+            rubrics.length === 0 ? (
+              <Button onClick={openCreateModal}>Create your first rubric</Button>
+            ) : (
+              <Button
+                variant="outline-secondary"
+                onClick={() => {
+                  setQuery('');
+                  setFilter('all');
+                }}
+              >
+                Clear filters
+              </Button>
+            )
           }
         />
       ) : (
-        <div className="table-wrap">
-          <Table hover className="table-cards align-middle">
-            <thead>
-              <tr>
-                <th style={{ width: '30%' }}>Rubric Name</th>
-                <th style={{ width: '25%' }}>Description</th>
-                <th style={{ width: '12%' }} className="text-center">Criteria</th>
-                <th style={{ width: '15%' }} className="text-center">Assigned Openings</th>
-                <th style={{ width: '8%' }} className="text-center">Status</th>
-                <th style={{ width: '10%' }} className="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rubrics.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fw-semibold text-truncate">{r.name}</span>
-                      {r.isDefault && (
-                        <span className="badge-pill badge-primary d-inline-flex align-items-center gap-1">
-                          <Star size={11} fill="currentColor" /> Default
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span className="text-muted small text-truncate d-block" style={{ maxWidth: 320 }}>
-                      {r.description || '—'}
+        <div className="rubric-list">
+          {visibleRubrics.map((r) => (
+            <div
+              key={r.id}
+              className={`rubric-row${r.isDefault ? ' rubric-row--default' : ''}`}
+            >
+              <div className="rubric-row__main">
+                <div className="rubric-row__title-line">
+                  <h4 className="rubric-row__name">{r.name}</h4>
+                  {r.isDefault && (
+                    <span className="badge-pill badge-warning d-inline-flex align-items-center gap-1">
+                      <Star size={11} fill="currentColor" /> System Default
                     </span>
-                  </td>
-                  <td className="text-center">
-                    <span className="badge-pill badge-neutral font-monospace">
-                      {r.criteriaCount} criteria
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    <span className="badge-pill badge-info">
-                      {r.assignedRolesCount} {r.assignedRolesCount === 1 ? 'opening' : 'openings'}
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {r.isActive ? (
-                      <span className="badge-pill badge-success">Active</span>
-                    ) : (
-                      <span className="badge-pill badge-neutral">Inactive</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="d-flex align-items-center justify-content-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="btn-icon"
-                        title="Edit rubric"
-                        aria-label={`Edit ${r.name}`}
-                        onClick={() => openEditModal(r)}
-                      >
-                        <Pencil size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="btn-icon"
-                        title="Duplicate rubric"
-                        aria-label={`Duplicate ${r.name}`}
-                        onClick={() => cloneMutation.mutate(r.id)}
-                        disabled={cloneMutation.isPending}
-                      >
-                        <Copy size={14} />
-                      </Button>
-                      {!r.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="btn-icon text-warning"
-                          title="Set as system default"
-                          aria-label={`Set ${r.name} as default`}
-                          onClick={() => setDefaultMutation.mutate(r.id)}
-                          disabled={setDefaultMutation.isPending}
-                        >
-                          <Star size={14} />
-                        </Button>
-                      )}
-                      {!r.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="btn-icon text-danger"
-                          title="Delete rubric"
-                          aria-label={`Delete ${r.name}`}
-                          onClick={() => setDeleteTarget(r)}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                  )}
+                  {r.isActive ? (
+                    <span className="badge-pill badge-success">Active</span>
+                  ) : (
+                    <span className="badge-pill badge-neutral">Inactive</span>
+                  )}
+                </div>
+
+                {r.description && (
+                  <p className="rubric-row__description">{r.description}</p>
+                )}
+
+                <div className="rubric-row__meta">
+                  <span className="rubric-row__meta-item">
+                    <FileCheck2 size={13} className="text-muted" />
+                    <strong>{r.criteriaCount}</strong> criteria
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="rubric-row__meta-item">
+                    <Briefcase size={13} className="text-muted" />
+                    <strong>{r.assignedRolesCount}</strong> {r.assignedRolesCount === 1 ? 'linked opening' : 'linked openings'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rubric-row__actions">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="d-inline-flex align-items-center gap-1"
+                  onClick={() => openEditModal(r)}
+                  aria-label={`Edit ${r.name}`}
+                >
+                  <Pencil size={13} />
+                  <span>Edit</span>
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="btn-icon"
+                  title="Duplicate scorecard rubric"
+                  aria-label={`Duplicate ${r.name}`}
+                  onClick={() => cloneMutation.mutate(r.id)}
+                  disabled={cloneMutation.isPending}
+                >
+                  <Copy size={13} />
+                </Button>
+                {!r.isDefault && (
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="btn-icon text-warning"
+                    title="Designate as system default"
+                    aria-label={`Set ${r.name} as default`}
+                    onClick={() => setDefaultMutation.mutate(r.id)}
+                    disabled={setDefaultMutation.isPending}
+                  >
+                    <Star size={13} />
+                  </Button>
+                )}
+                {!r.isDefault && (
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    className="btn-icon"
+                    title="Delete rubric"
+                    aria-label={`Delete ${r.name}`}
+                    onClick={() => setDeleteTarget(r)}
+                  >
+                    <Trash2 size={13} />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Create / Edit Rubric Modal */}
+      {/* Professional Scorecard Builder Modal */}
       <Modal
         show={showModal}
         onHide={() => setShowModal(false)}
         size="lg"
         centered
         backdrop="static"
-        dialogClassName="rubric-editor-dialog"
       >
         <Form onSubmit={handleFormSubmit}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              {editingRubric ? `Edit Rubric: ${editingRubric.name}` : 'New Evaluation Scorecard Rubric'}
+          <Modal.Header closeButton className="border-bottom">
+            <Modal.Title className="d-flex align-items-center gap-2 fs-5 fw-bold">
+              <FileCheck2 size={20} className="text-primary" />
+              <span>{editingRubric ? `Edit Scorecard: ${editingRubric.name}` : 'New Evaluation Scorecard Rubric'}</span>
             </Modal.Title>
           </Modal.Header>
 
-          <Modal.Body style={{ maxHeight: '72vh', overflowY: 'auto' }}>
-            {errorMsg && <Alert variant="danger" className="py-2 small">{errorMsg}</Alert>}
+          <Modal.Body style={{ maxHeight: '72vh', overflowY: 'auto' }} className="p-4">
+            {errorMsg && (
+              <Alert variant="danger" className="py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+                <span>{errorMsg}</span>
+              </Alert>
+            )}
 
-            {/* Rubric Top Metadata */}
-            <div className="row g-3 mb-4">
-              <div className="col-12 col-md-8">
-                <Form.Label htmlFor="rubric-name">
-                  Rubric Name <span className="text-danger">*</span>
-                </Form.Label>
-                <Form.Control
-                  id="rubric-name"
-                  placeholder="e.g. Senior Backend Engineer Scorecard"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <div className="col-12 col-md-4 d-flex flex-column justify-content-end gap-2">
-                <Form.Check
-                  type="checkbox"
-                  id="rubric-is-default"
-                  label="System Default Rubric"
-                  checked={isDefault}
-                  onChange={(e) => setIsDefault(e.target.checked)}
-                />
-                <Form.Check
-                  type="checkbox"
-                  id="rubric-is-active"
-                  label="Active"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-              </div>
-
-              <div className="col-12">
-                <Form.Label htmlFor="rubric-desc">Description (Optional)</Form.Label>
-                <Form.Control
-                  id="rubric-desc"
-                  as="textarea"
-                  rows={2}
-                  placeholder="Briefly describe the candidate level, department, or scope this rubric targets..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Dynamic Criteria Builder Header */}
-            <div className="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom">
-              <div>
-                <h6 className="mb-0 fw-semibold">Scorecard Sections & Criteria</h6>
-                <small className="text-muted">
-                  Organize criteria into sections. Weights adjust the overall score contribution.
-                </small>
-              </div>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={addSection}
-                className="d-flex align-items-center gap-1"
-              >
-                <Plus size={13} strokeWidth={2.5} /> Add Section
-              </Button>
-            </div>
-
-            {/* Section List */}
-            <div className="d-flex flex-column gap-3">
-              {sections.map((sec, secIdx) => (
-                <div key={sec.id} className="card p-3 border rounded-3 bg-light-subtle">
-                  <div className="d-flex align-items-center justify-content-between gap-2 mb-2.5">
-                    <div className="d-flex align-items-center gap-2 flex-grow-1">
-                      <span className="badge bg-secondary-subtle text-secondary font-monospace">
-                        Section {secIdx + 1}
-                      </span>
-                      <Form.Control
-                        size="sm"
-                        className="fw-semibold"
-                        placeholder="Section Name (e.g. Technical Knowledge)"
-                        value={sec.name}
-                        onChange={(e) => updateSectionName(sec.id, e.target.value)}
-                        style={{ maxWidth: 300 }}
-                      />
-                    </div>
-                    <div className="d-flex align-items-center gap-1.5">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className="py-0.5 px-2 text-xs"
-                        onClick={() => addCriterion(sec.id)}
-                      >
-                        <Plus size={12} /> Add Criterion
-                      </Button>
-                      {sections.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="btn-icon text-danger py-0.5"
-                          title="Remove section"
-                          onClick={() => removeSection(sec.id)}
-                        >
-                          <Trash2 size={13} />
-                        </Button>
-                      )}
-                    </div>
+            <div className="rubric-builder">
+              {/* Metadata Card */}
+              <div className="rubric-builder__meta-card">
+                <div className="row g-3">
+                  <div className="col-12 col-md-8">
+                    <Form.Label htmlFor="rubric-name" className="fw-semibold small mb-1">
+                      Scorecard Name <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      id="rubric-name"
+                      placeholder="e.g. Senior Backend Engineer Scorecard"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoFocus
+                      required
+                    />
                   </div>
 
-                  {/* Criteria in Section */}
-                  <div className="d-flex flex-column gap-2 mt-1">
-                    {sec.criteria.map((crit, cIdx) => (
-                      <div
-                        key={`${sec.id}-crit-${cIdx}`}
-                        className="d-flex align-items-center gap-2 p-2 bg-body rounded border"
-                      >
-                        <GripVertical size={14} className="text-muted flex-shrink-0" />
-                        <div className="flex-grow-1 row g-2">
-                          <div className="col-12 col-md-5">
+                  <div className="col-12 col-md-4 d-flex flex-column justify-content-center gap-2 pt-md-3">
+                    <Form.Check
+                      type="switch"
+                      id="rubric-is-default"
+                      label="System Default"
+                      checked={isDefault}
+                      onChange={(e) => setIsDefault(e.target.checked)}
+                      className="small fw-medium"
+                    />
+                    <Form.Check
+                      type="switch"
+                      id="rubric-is-active"
+                      label="Active"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      className="small fw-medium"
+                    />
+                  </div>
+
+                  <div className="col-12">
+                    <Form.Label htmlFor="rubric-desc" className="fw-semibold small mb-1">
+                      Description <span className="text-muted fw-normal">(Optional)</span>
+                    </Form.Label>
+                    <Form.Control
+                      id="rubric-desc"
+                      as="textarea"
+                      rows={2}
+                      placeholder="Briefly describe the candidate level, role scope, or criteria targets for this scorecard..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sections & Criteria Header */}
+              <div className="d-flex align-items-center justify-content-between pt-2">
+                <div>
+                  <h6 className="mb-0 fw-bold">Evaluation Sections & Criteria</h6>
+                  <span className="text-muted small">
+                    {sections.length} {sections.length === 1 ? 'section' : 'sections'} · {totalCriteriaInModal} criteria total
+                  </span>
+                </div>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={addSection}
+                  className="d-flex align-items-center gap-1"
+                >
+                  <Plus size={14} strokeWidth={2.5} />
+                  <span>Add Section</span>
+                </Button>
+              </div>
+
+              {/* Section Cards */}
+              <div className="d-flex flex-column gap-3">
+                {sections.map((sec, secIdx) => (
+                  <div key={sec.id} className="rubric-section-card">
+                    {/* Section Header */}
+                    <div className="rubric-section-card__header">
+                      <div className="d-flex align-items-center gap-2 flex-grow-1">
+                        <span className="badge bg-primary-subtle text-primary fw-bold font-monospace px-2 py-1">
+                          SECTION {secIdx + 1}
+                        </span>
+                        <Form.Control
+                          size="sm"
+                          className="fw-bold flex-grow-1"
+                          placeholder="Section Title (e.g. Technical Knowledge, Communication)"
+                          value={sec.name}
+                          onChange={(e) => updateSectionName(sec.id, e.target.value)}
+                          style={{ maxWidth: 360 }}
+                        />
+                      </div>
+                      <div className="d-flex align-items-center gap-1.5">
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          className="py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => addCriterion(sec.id)}
+                        >
+                          <Plus size={13} strokeWidth={2} />
+                          <span>Add Criterion</span>
+                        </Button>
+                        {sections.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="btn-icon text-danger py-1"
+                            title="Remove entire section"
+                            onClick={() => removeSection(sec.id)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Criteria Table Body */}
+                    <div className="rubric-section-card__body">
+                      {/* Column Header for Desktop */}
+                      <div className="rubric-criterion-header">
+                        <span></span>
+                        <span>CRITERION LABEL</span>
+                        <span>EVALUATION GUIDE / HINT</span>
+                        <span className="text-center">WEIGHT</span>
+                        <span></span>
+                      </div>
+
+                      {/* Criterion Rows */}
+                      {sec.criteria.map((crit, cIdx) => (
+                        <div key={`${sec.id}-crit-${cIdx}`} className="rubric-criterion-row">
+                          <GripVertical size={14} className="text-muted flex-shrink-0" />
+                          <div>
                             <Form.Control
                               size="sm"
-                              placeholder="Criterion Label (e.g. System Design)"
+                              placeholder="e.g. System Design & Architecture"
                               value={crit.label}
                               onChange={(e) => updateCriterion(sec.id, cIdx, 'label', e.target.value)}
                               required
                             />
                           </div>
-                          <div className="col-12 col-md-5">
+                          <div>
                             <Form.Control
                               size="sm"
-                              placeholder="Evaluation guide hint / rubric standard..."
+                              placeholder="What interviewers should look for..."
                               value={crit.hint || ''}
                               onChange={(e) => updateCriterion(sec.id, cIdx, 'hint', e.target.value)}
                             />
                           </div>
-                          <div className="col-6 col-md-2 d-flex align-items-center gap-1">
-                            <span className="text-xs text-muted">Weight:</span>
-                            <Form.Control
-                              size="sm"
-                              type="number"
-                              step="0.1"
-                              min="0.1"
-                              max="10"
-                              value={crit.weight ?? 1}
-                              onChange={(e) => updateCriterion(sec.id, cIdx, 'weight', parseFloat(e.target.value) || 1)}
-                              style={{ width: 64 }}
-                            />
+                          <div>
+                            <div className="input-group input-group-sm">
+                              <Form.Control
+                                type="number"
+                                step="0.5"
+                                min="0.5"
+                                max="10"
+                                className="text-center px-1"
+                                value={crit.weight ?? 1.0}
+                                onChange={(e) =>
+                                  updateCriterion(sec.id, cIdx, 'weight', parseFloat(e.target.value) || 1.0)
+                                }
+                              />
+                              <span className="input-group-text px-1.5 text-muted">x</span>
+                            </div>
+                          </div>
+                          <div className="text-end">
+                            {sec.criteria.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="btn-icon text-muted hover-danger"
+                                title="Remove criterion"
+                                onClick={() => removeCriterion(sec.id, cIdx)}
+                              >
+                                <X size={14} strokeWidth={2.5} />
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        {sec.criteria.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="btn-icon text-muted hover-danger flex-shrink-0"
-                            onClick={() => removeCriterion(sec.id, cIdx)}
-                          >
-                            <X size={13} strokeWidth={2.5} />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </Modal.Body>
 
-          <Modal.Footer>
+          <Modal.Footer className="border-top px-4 py-3">
+            <div className="me-auto text-muted small">
+              {totalCriteriaInModal} total criteria across {sections.length} sections
+            </div>
             <Button variant="outline-secondary" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
