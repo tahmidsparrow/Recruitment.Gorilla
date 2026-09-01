@@ -371,7 +371,7 @@ export default function AnalyticsPage() {
                   </div>
                 ) : (
                   <div className="velocity-list">
-                    {summary.stageVelocities.slice(0, 7).map((v) => {
+                    {summary.stageVelocities.map((v) => {
                       const maxDays = Math.max(
                         ...summary.stageVelocities.map((x) => x.averageDays),
                         1

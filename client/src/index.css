@@ -5178,7 +5178,7 @@ a.hero-chip--accent:hover {
 
 .velocity-row {
   display: grid;
-  grid-template-columns: minmax(130px, 160px) 1fr 100px;
+  grid-template-columns: minmax(180px, 220px) 1fr 75px;
   align-items: center;
   gap: 10px;
   padding: 6px 10px;
