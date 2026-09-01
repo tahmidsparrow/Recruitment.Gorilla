@@ -288,34 +288,18 @@ export default function AnalyticsPage() {
                         : null;
 
                     const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
-                    const stepTaperFactor = 1 - idx * 0.07;
-                    const visualWidth = Math.max(
-                      10,
-                      Math.round(stage.conversionFromStartPercent * stepTaperFactor)
-                    );
 
                     return (
                       <div key={stage.stageKey} className="funnel-step-item">
                         <div className="funnel-step-item__header">
                           <div className="funnel-step-item__left">
                             <div className="funnel-step-item__badge">{idx + 1}</div>
-                            <div className="d-flex align-items-center gap-1.5 min-w-0">
-                              <span
-                                className="funnel-step-item__name text-nowrap"
-                                title={stageDescriptions[stage.stageKey]}
-                              >
-                                {cleanStageName}
-                              </span>
-                              {idx > 0 && passRate != null && (
-                                <span
-                                  className="badge-pill badge-neutral text-muted flex-shrink-0"
-                                  style={{ fontSize: '10px', padding: '1px 6px' }}
-                                  title={`${passRate}% step pass-through from previous stage`}
-                                >
-                                  {passRate}% pass
-                                </span>
-                              )}
-                            </div>
+                            <span
+                              className="funnel-step-item__name text-nowrap"
+                              title={stageDescriptions[stage.stageKey]}
+                            >
+                              {cleanStageName}
+                            </span>
                           </div>
                           <div className="funnel-step-item__metrics flex-shrink-0">
                             <span className="funnel-step-item__count">
@@ -324,8 +308,15 @@ export default function AnalyticsPage() {
                                 {stage.totalEntered === 1 ? 'candidate' : 'candidates'}
                               </span>
                             </span>
-                            <span className="badge-pill badge-primary">
-                              {stage.conversionFromStartPercent}% from top
+                            <span
+                              className="badge-pill badge-primary"
+                              title={
+                                idx > 0 && passRate != null
+                                  ? `${stage.conversionFromStartPercent}% of total applicants reached this stage (${passRate}% step pass-through).`
+                                  : `${stage.conversionFromStartPercent}% conversion rate from applied candidates.`
+                              }
+                            >
+                              {stage.conversionFromStartPercent}% conversion
                             </span>
                             {idx > 0 && stage.dropoffCount > 0 && (
                               <span className="badge-pill badge-danger">
@@ -339,7 +330,7 @@ export default function AnalyticsPage() {
                           <div
                             className="funnel-progress-fill"
                             style={{
-                              width: `${visualWidth}%`,
+                              width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
                             }}
                           />
                         </div>
@@ -365,7 +356,7 @@ export default function AnalyticsPage() {
                         style={{ fontSize: '10px', padding: '1px 6px' }}
                         title="One or more stages exceed the 7-day dwell threshold"
                       >
-                        ▲ Bottleneck
+                        Bottleneck
                       </span>
                     )}
                     <span className="text-muted small fw-medium">Average days per candidate</span>
@@ -396,19 +387,27 @@ export default function AnalyticsPage() {
                           key={v.stageName}
                           className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
                         >
-                          <div className="d-flex align-items-center gap-1.5 overflow-hidden">
-                            <span className="velocity-row__name" title={formattedName}>
-                              {formattedName}
-                            </span>
-                            {isSlow && (
-                              <span
-                                className="badge-pill badge-warning flex-shrink-0"
-                                style={{ fontSize: '10px', padding: '1px 6px' }}
-                                title="Stage dwell exceeds 7 days threshold"
-                              >
-                                ▲ Bottleneck
+                          <div className="velocity-row__header">
+                            <div className="d-flex align-items-center gap-1.5 min-w-0">
+                              <span className="velocity-row__name" title={formattedName}>
+                                {formattedName}
                               </span>
-                            )}
+                              {isSlow && (
+                                <span
+                                  className="badge-pill badge-warning flex-shrink-0"
+                                  style={{ fontSize: '9.5px', padding: '1px 6px' }}
+                                  title="Stage dwell exceeds 7 days threshold"
+                                >
+                                  Bottleneck
+                                </span>
+                              )}
+                            </div>
+                            <div className="velocity-row__value">
+                              <strong>{v.averageDays}d</strong>{' '}
+                              <span className="text-muted fw-normal small">
+                                ({v.candidatesCount})
+                              </span>
+                            </div>
                           </div>
                           <div className="velocity-row__bar-track">
                             <div
@@ -419,14 +418,8 @@ export default function AnalyticsPage() {
                                   ? 'velocity-row__bar-fill--fast'
                                   : 'velocity-row__bar-fill--steady'
                               }`}
-                              style={{ width: `${Math.max(6, pct)}%` }}
+                              style={{ width: `${Math.max(4, pct)}%` }}
                             />
-                          </div>
-                          <div className="velocity-row__value">
-                            <strong>{v.averageDays}d</strong>{' '}
-                            <span className="text-muted fw-normal small">
-                              ({v.candidatesCount})
-                            </span>
                           </div>
                         </div>
                       );

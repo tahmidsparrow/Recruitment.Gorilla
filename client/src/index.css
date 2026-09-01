@@ -5162,11 +5162,10 @@ a.hero-chip--accent:hover {
 }
 
 .velocity-row {
-  display: grid;
-  grid-template-columns: minmax(180px, 220px) 1fr 75px;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 12px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -5183,6 +5182,13 @@ a.hero-chip--accent:hover {
   background: rgba(245, 158, 11, 0.04);
 }
 
+.velocity-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .velocity-row__name {
   font-size: 12.5px;
   font-weight: 600;
@@ -5192,11 +5198,21 @@ a.hero-chip--accent:hover {
   text-overflow: ellipsis;
 }
 
+.velocity-row__value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .velocity-row__bar-track {
-  height: 6px;
+  height: 5px;
   background: var(--border);
   border-radius: 999px;
   overflow: hidden;
+  width: 100%;
 }
 
 .velocity-row__bar-fill {
@@ -5216,18 +5232,6 @@ a.hero-chip--accent:hover {
 
 .velocity-row__bar-fill--slow {
   background: linear-gradient(90deg, #f59e0b, #fbbf24);
-}
-
-.velocity-row__value {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
 }
 
 /* Analytics Table */
