@@ -200,8 +200,8 @@ public class AnalyticsService(AppDbContext db)
         periodHireDays.Sort();
         var avg = Math.Round(periodHireDays.Average(), 1);
         var median = Math.Round(periodHireDays[periodHireDays.Count / 2], 1);
-        var fastest = (int)Math.Round(periodHireDays.First());
-        var longest = (int)Math.Round(periodHireDays.Last());
+        var fastest = Math.Round(periodHireDays.First(), 1);
+        var longest = Math.Round(periodHireDays.Last(), 1);
 
         double? pctChange = null;
         if (prevHireDays.Count > 0)
