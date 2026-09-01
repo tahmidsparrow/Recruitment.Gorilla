@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import {
   ArrowDownRight,
   ArrowUpRight,
   Briefcase,
   Clock,
   Filter,
+  Info,
   Layers,
   Printer,
   Sparkles,
@@ -208,19 +209,47 @@ export default function AnalyticsPage() {
             {/* Active Pipeline Candidates */}
             <div className="analytics-card analytics-card--kpi analytics-card--kpi-pipeline">
               <div className="analytics-card__header">
-                <h4 className="analytics-card__title">Active Pipeline</h4>
+                <div className="d-flex align-items-center gap-1.5">
+                  <h4 className="analytics-card__title">Active Pipeline</h4>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={
+                      <Tooltip id="active-pipeline-info-tooltip">
+                        Candidates advancing through screening, assessments, interviews or offers
+                      </Tooltip>
+                    }
+                  >
+                    <span
+                      tabIndex={0}
+                      role="button"
+                      aria-label="Active pipeline info"
+                      style={{ cursor: 'help', display: 'inline-flex' }}
+                    >
+                      <Info size={13} className="text-muted" />
+                    </span>
+                  </OverlayTrigger>
+                </div>
                 <div className="analytics-card__icon-badge analytics-card__icon-badge--pipeline">
                   <Users size={17} />
                 </div>
               </div>
-              <div className="analytics-card__value-wrap">
-                <p className="analytics-card__value">{summary.activeCandidates}</p>
-                <span className="analytics-card__unit">in progress</span>
-              </div>
+              <p className="analytics-card__value">{summary.activeCandidates}</p>
               <div className="analytics-card__subtext">
-                <span>
-                  Candidates advancing through screening, assessments, interviews or offers
-                </span>
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={
+                    <Tooltip id="active-pipeline-sub-tooltip">
+                      Candidates advancing through screening, assessments, interviews or offers
+                    </Tooltip>
+                  }
+                >
+                  <span
+                    style={{ cursor: 'help' }}
+                    title="Candidates advancing through screening, assessments, interviews or offers"
+                  >
+                    Across active hiring stages
+                  </span>
+                </OverlayTrigger>
               </div>
             </div>
           </div>
