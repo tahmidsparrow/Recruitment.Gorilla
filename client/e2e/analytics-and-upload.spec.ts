@@ -42,13 +42,21 @@ test.describe('Analytics & Real-time Bulk Upload E2E (Issues #20 & #19)', () => 
       fullPage: true,
     });
 
-    // 6. Navigate to Upload CVs page (Issue #19)
+    // 6. Navigate to Candidate #1 detail page to verify clean timeline & status
+    await page.goto('/candidates/1');
+    await expect(page.getByRole('heading', { name: 'Md Rifat Hossen' })).toBeVisible();
+    await page.screenshot({
+      path: 'C:/Users/user/.gemini/antigravity-ide/brain/4655deb6-8ac0-42bb-8a60-04a998094da6/02_candidate_detail_cleaned.png',
+      fullPage: true,
+    });
+
+    // 7. Navigate to Upload CVs page (Issue #19)
     const uploadLink = page.getByRole('link', { name: 'Upload CVs' }).first();
     await expect(uploadLink).toBeVisible();
     await uploadLink.click();
     await expect(page).toHaveURL(/\/upload$/);
 
-    // 7. Verify Dropzone & background parser instructions
+    // 8. Verify Dropzone & background parser instructions
     await expect(page.getByText(/Drag & drop CVs here, or click to browse/i)).toBeVisible();
     await expect(page.getByText(/PDF or Word \(\.docx\)/i)).toBeVisible();
   });

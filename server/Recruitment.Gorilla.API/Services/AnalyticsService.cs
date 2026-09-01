@@ -225,7 +225,8 @@ public class AnalyticsService(AppDbContext db)
 
     private static List<StageVelocityDto> CalculateStageVelocities(List<Candidate> candidates, DateTime now)
     {
-        var stageDurations = new Dictionary<string, List<double>>();
+        var stageDurations = new Dictionary<string, List<double>>(StringComparer.OrdinalIgnoreCase);
+        var stageCandidateIds = new Dictionary<string, HashSet<int>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var c in candidates)
         {
@@ -233,7 +234,7 @@ public class AnalyticsService(AppDbContext db)
             if (histories.Count == 0)
             {
                 var dwell = (now - c.CreatedAt).TotalDays;
-                AddDwell(stageDurations, c.CurrentStatus, dwell);
+                AddDwell(stageDurations, stageCandidateIds, c.CurrentStatus, dwell, c.Id);
                 continue;
             }
 
@@ -266,7 +267,7 @@ public class AnalyticsService(AppDbContext db)
 
                 if (duration > 0)
                 {
-                    AddDwell(stageDurations, current.Status, duration);
+                    AddDwell(stageDurations, stageCandidateIds, current.Status, duration, c.Id);
                 }
             }
         }
@@ -279,13 +280,14 @@ public class AnalyticsService(AppDbContext db)
             list.Sort();
             var avg = Math.Round(list.Average(), 1);
             var median = Math.Round(list[list.Count / 2], 1);
-            result.Add(new StageVelocityDto(stage, sort++, avg, median, list.Count));
+            var candidateCount = stageCandidateIds.TryGetValue(stage, out var cSet) ? cSet.Count : list.Count;
+            result.Add(new StageVelocityDto(stage, sort++, avg, median, candidateCount));
         }
 
         return result.OrderByDescending(s => s.AverageDays).ToList();
     }
 
-    private static void AddDwell(Dictionary<string, List<double>> dict, string stage, double days)
+    private static void AddDwell(Dictionary<string, List<double>> dict, Dictionary<string, HashSet<int>> candidateMap, string stage, double days, int candidateId)
     {
         if (!dict.TryGetValue(stage, out var list))
         {
@@ -293,6 +295,13 @@ public class AnalyticsService(AppDbContext db)
             dict[stage] = list;
         }
         list.Add(Math.Max(0.1, days));
+
+        if (!candidateMap.TryGetValue(stage, out var set))
+        {
+            set = [];
+            candidateMap[stage] = set;
+        }
+        set.Add(candidateId);
     }
 
     private static List<FunnelStageDto> CalculateFunnelStages(List<Candidate> candidates)

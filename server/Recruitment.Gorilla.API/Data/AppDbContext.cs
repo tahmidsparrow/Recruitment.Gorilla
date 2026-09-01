@@ -163,7 +163,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new StatusOption { Id = 11, Name = "Not Recommended", SortOrder = 13, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 12, Name = "Discontinued", SortOrder = 15, IsInitial = true, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 13, Name = "Uploaded", SortOrder = 1, IsInitial = true, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
-                new StatusOption { Id = 14, Name = "Ask for Assesment", SortOrder = 2, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
+                new StatusOption { Id = 14, Name = "Ask for Assessment", SortOrder = 2, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 15, Name = "Offer Preparation", SortOrder = 12, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 16, Name = "Offer Extended", SortOrder = 13, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
                 new StatusOption { Id = 17, Name = "Offer Accepted", SortOrder = 14, IsInitial = false, IsActive = true, CreatedAt = new DateTime(2026, 06, 29, 0, 0, 0, DateTimeKind.Utc) },
