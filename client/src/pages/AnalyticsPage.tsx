@@ -349,18 +349,7 @@ export default function AnalyticsPage() {
                     <Clock size={16} className="text-primary" />
                     <h5 className="mb-0 fw-bold fs-6">Stage Dwell Time & Velocity</h5>
                   </div>
-                  <div className="d-flex align-items-center gap-2">
-                    {summary.stageVelocities.some((x) => x.averageDays > 7.0) && (
-                      <span
-                        className="badge-pill badge-warning"
-                        style={{ fontSize: '10px', padding: '1px 6px' }}
-                        title="One or more stages exceed the 7-day dwell threshold"
-                      >
-                        Bottleneck
-                      </span>
-                    )}
-                    <span className="text-muted small fw-medium">Average days per candidate</span>
-                  </div>
+                  <span className="text-muted small fw-medium">Average days per candidate</span>
                 </div>
 
                 {summary.stageVelocities.length === 0 ? (
