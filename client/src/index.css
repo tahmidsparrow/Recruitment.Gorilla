@@ -4922,88 +4922,174 @@ a.hero-chip--accent:hover {
 .analytics-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .analytics-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
+@media (max-width: 1200px) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .analytics-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Glassmorphism / Elevated Analytics Card Surface */
 .analytics-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   position: relative;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .analytics-card:hover {
-  border-color: var(--primary);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border-color: var(--border-strong, var(--primary));
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* KPI Card Specifics */
+.analytics-card--kpi {
+  overflow: hidden;
+}
+
+.analytics-card--kpi::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--info, #38bdf8));
+  opacity: 0.85;
+}
+
+.analytics-card--kpi-velocity::before {
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+}
+
+.analytics-card--kpi-conversion::before {
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+}
+
+.analytics-card--kpi-pipeline::before {
+  background: linear-gradient(90deg, #f59e0b, #ec4899);
 }
 
 .analytics-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
 
 .analytics-card__title {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted-light);
+  color: var(--text-soft, var(--muted-light));
   margin: 0;
 }
 
+.analytics-card__icon-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-tint);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.analytics-card__icon-badge--velocity {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.analytics-card__icon-badge--conversion {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+
+.analytics-card__icon-badge--pipeline {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.analytics-card__value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .analytics-card__value {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
   color: var(--text);
   line-height: 1.1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   margin: 0;
 }
 
+.analytics-card__unit {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-soft, var(--muted));
+}
+
 .analytics-card__subtext {
   font-size: var(--text-xs);
-  color: var(--muted);
+  color: var(--text-soft, var(--muted));
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  line-height: 1.4;
 }
 
 /* Stepped Funnel Visualization */
 .analytics-funnel-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .funnel-step-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 14px 16px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
+  position: relative;
 }
 
 .funnel-step-item:hover {
   border-color: var(--primary);
   background: var(--surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .funnel-step-item__header {
@@ -5014,21 +5100,49 @@ a.hero-chip--accent:hover {
   flex-wrap: wrap;
 }
 
+.funnel-step-item__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.funnel-step-item__badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .funnel-step-item__name {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+}
+
+.funnel-step-item__desc {
+  font-size: 11.5px;
+  color: var(--text-soft, var(--muted));
+  margin-left: 2px;
 }
 
 .funnel-step-item__metrics {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
+}
+
+.funnel-step-item__count {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .funnel-progress-track {
@@ -5042,29 +5156,59 @@ a.hero-chip--accent:hover {
 .funnel-progress-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--primary), #4ade80);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--primary), #38bdf8);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.funnel-step-item:last-child .funnel-progress-fill {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+/* Inter-stage conversion connector */
+.funnel-step-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft, var(--muted));
+}
+
+.funnel-step-connector__line {
+  height: 12px;
+  width: 1px;
+  background: var(--border-strong, var(--border));
 }
 
 /* Stage Velocity Duration Bars */
 .velocity-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .velocity-row {
   display: grid;
-  grid-template-columns: minmax(140px, 180px) 1fr 100px;
+  grid-template-columns: minmax(140px, 170px) 1fr 110px;
   align-items: center;
   gap: 14px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  transition: background-color 0.15s ease;
+  padding: 10px 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
 }
 
 .velocity-row:hover {
-  background: var(--surface-muted);
+  background: var(--surface);
+  border-color: var(--border-strong, var(--border));
+}
+
+.velocity-row--slow {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.04);
 }
 
 .velocity-row__name {
@@ -5077,7 +5221,7 @@ a.hero-chip--accent:hover {
 }
 
 .velocity-row__bar-track {
-  height: 7px;
+  height: 8px;
   background: var(--border);
   border-radius: 999px;
   overflow: hidden;
@@ -5086,12 +5230,20 @@ a.hero-chip--accent:hover {
 .velocity-row__bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--primary);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--primary), #38bdf8);
+  transition: width 0.4s ease;
+}
+
+.velocity-row__bar-fill--fast {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.velocity-row__bar-fill--steady {
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
 }
 
 .velocity-row__bar-fill--slow {
-  background: var(--warning);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
 .velocity-row__value {
@@ -5100,6 +5252,10 @@ a.hero-chip--accent:hover {
   color: var(--text);
   text-align: right;
   font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 /* Analytics Table */
@@ -5117,19 +5273,19 @@ a.hero-chip--accent:hover {
 }
 
 .analytics-table th {
-  padding: 10px 14px;
+  padding: 11px 16px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--muted-light);
+  color: var(--text-soft, var(--muted-light));
   background: var(--surface-muted);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .analytics-table td {
-  padding: 12px 14px;
+  padding: 12px 16px;
   font-size: 13px;
   color: var(--text);
   border-bottom: 1px solid var(--border);

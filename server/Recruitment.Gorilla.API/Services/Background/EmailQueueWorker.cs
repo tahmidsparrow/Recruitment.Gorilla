@@ -11,37 +11,44 @@ public class EmailQueueWorker(
     {
         logger.LogInformation("Email background queue worker started.");
 
-        await foreach (var job in queue.ReadAllAsync(stoppingToken))
+        try
         {
-            try
+            await foreach (var job in queue.ReadAllAsync(stoppingToken))
             {
-                using var scope = scopeFactory.CreateScope();
-                var emailService = scope.ServiceProvider.GetRequiredService<EmailService>();
-
-                await emailService.SendDirectAsync(job.ToEmail, job.ToName, job.Subject, job.HtmlBody, job.Calendar);
-                logger.LogInformation("Successfully sent email to {ToEmail} for subject '{Subject}'.", job.ToEmail, job.Subject);
-            }
-            catch (Exception ex)
-            {
-                if (job.RetryCount < MaxRetries && !stoppingToken.IsCancellationRequested)
+                try
                 {
-                    var nextRetry = job.RetryCount + 1;
-                    var delay = TimeSpan.FromSeconds(Math.Pow(2, job.RetryCount));
-                    logger.LogWarning(ex, "Failed to send email to {ToEmail}. Retrying ({Retry}/{Max}) in {Delay}s...",
-                        job.ToEmail, nextRetry, MaxRetries, delay.TotalSeconds);
+                    using var scope = scopeFactory.CreateScope();
+                    var emailService = scope.ServiceProvider.GetRequiredService<EmailService>();
 
-                    _ = Task.Run(async () =>
+                    await emailService.SendDirectAsync(job.ToEmail, job.ToName, job.Subject, job.HtmlBody, job.Calendar);
+                    logger.LogInformation("Successfully sent email to {ToEmail} for subject '{Subject}'.", job.ToEmail, job.Subject);
+                }
+                catch (Exception ex)
+                {
+                    if (job.RetryCount < MaxRetries && !stoppingToken.IsCancellationRequested)
                     {
-                        await Task.Delay(delay, stoppingToken);
-                        await queue.QueueAsync(job with { RetryCount = nextRetry }, stoppingToken);
-                    }, stoppingToken);
-                }
-                else
-                {
-                    logger.LogError(ex, "Permanent failure sending email to {ToEmail} for subject '{Subject}'.",
-                        job.ToEmail, job.Subject);
+                        var nextRetry = job.RetryCount + 1;
+                        var delay = TimeSpan.FromSeconds(Math.Pow(2, job.RetryCount));
+                        logger.LogWarning(ex, "Failed to send email to {ToEmail}. Retrying ({Retry}/{Max}) in {Delay}s...",
+                            job.ToEmail, nextRetry, MaxRetries, delay.TotalSeconds);
+
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(delay, stoppingToken);
+                            await queue.QueueAsync(job with { RetryCount = nextRetry }, stoppingToken);
+                        }, stoppingToken);
+                    }
+                    else
+                    {
+                        logger.LogError(ex, "Permanent failure sending email to {ToEmail} for subject '{Subject}'.",
+                            job.ToEmail, job.Subject);
+                    }
                 }
             }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown
         }
 
         logger.LogInformation("Email background queue worker stopped.");

@@ -240,6 +240,13 @@ public class AnalyticsService(AppDbContext db)
             for (var i = 0; i < histories.Count; i++)
             {
                 var current = histories[i];
+
+                // Skip terminal statuses from pipeline dwell calculation
+                if (HiredStatuses.Contains(current.Status) || NegativeTerminal.Contains(current.Status))
+                {
+                    continue;
+                }
+
                 double duration;
                 if (i < histories.Count - 1)
                 {
@@ -247,7 +254,6 @@ public class AnalyticsService(AppDbContext db)
                 }
                 else
                 {
-                    // If terminal, dwell is 0; otherwise time spent in current status
                     if (PositiveTerminal.Contains(current.Status) || NegativeTerminal.Contains(current.Status))
                     {
                         duration = 0;

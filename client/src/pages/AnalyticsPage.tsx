@@ -126,10 +126,12 @@ export default function AnalyticsPage() {
           {/* KPI Ribbon */}
           <div className="analytics-kpi-grid">
             {/* Avg Time to Hire */}
-            <div className="analytics-card">
+            <div className="analytics-card analytics-card--kpi">
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Avg Time to Hire</h4>
-                <Clock size={16} className="text-primary" />
+                <div className="analytics-card__icon-badge">
+                  <Clock size={17} />
+                </div>
               </div>
               <p className="analytics-card__value">
                 {summary.timeToHire.totalHires > 0
@@ -165,10 +167,12 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Pipeline Velocity */}
-            <div className="analytics-card">
+            <div className="analytics-card analytics-card--kpi analytics-card--kpi-velocity">
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Pipeline Velocity</h4>
-                <TrendingUp size={16} className="text-primary" />
+                <div className="analytics-card__icon-badge analytics-card__icon-badge--velocity">
+                  <TrendingUp size={17} />
+                </div>
               </div>
               <p className="analytics-card__value">
                 {summary.averagePipelineDays > 0
@@ -181,14 +185,18 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Overall Funnel Conversion */}
-            <div className="analytics-card">
+            <div className="analytics-card analytics-card--kpi analytics-card--kpi-conversion">
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Funnel Conversion Rate</h4>
-                <Sparkles size={16} className="text-primary" />
+                <div className="analytics-card__icon-badge analytics-card__icon-badge--conversion">
+                  <Sparkles size={17} />
+                </div>
               </div>
-              <p className="analytics-card__value">
-                {summary.overallFunnelConversionRate}%
-              </p>
+              <div className="analytics-card__value-wrap">
+                <p className="analytics-card__value">
+                  {summary.overallFunnelConversionRate}%
+                </p>
+              </div>
               <div className="analytics-card__subtext">
                 <span>
                   <strong>{summary.timeToHire.totalHires}</strong> hires from{' '}
@@ -198,15 +206,20 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Active Pipeline Candidates */}
-            <div className="analytics-card">
+            <div className="analytics-card analytics-card--kpi analytics-card--kpi-pipeline">
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Active Pipeline</h4>
-                <Users size={16} className="text-primary" />
+                <div className="analytics-card__icon-badge analytics-card__icon-badge--pipeline">
+                  <Users size={17} />
+                </div>
               </div>
-              <p className="analytics-card__value">{summary.activeCandidates}</p>
+              <div className="analytics-card__value-wrap">
+                <p className="analytics-card__value">{summary.activeCandidates}</p>
+                <span className="analytics-card__unit">in progress</span>
+              </div>
               <div className="analytics-card__subtext">
                 <span>
-                  Candidates currently advancing through screening, interviews or offers
+                  Candidates advancing through screening, assessments, interviews or offers
                 </span>
               </div>
             </div>
@@ -219,46 +232,86 @@ export default function AnalyticsPage() {
               <div className="analytics-card h-100">
                 <div className="analytics-card__header">
                   <div className="d-flex align-items-center gap-2">
-                    <Layers size={16} className="text-primary" />
+                    <Layers size={18} className="text-primary" />
                     <h5 className="mb-0 fw-bold fs-6">Pipeline Funnel & Conversion</h5>
                   </div>
-                  <span className="text-muted small">
+                  <span className="text-muted small fw-medium">
                     {summary.totalCandidatesInPeriod} applicants entered
                   </span>
                 </div>
 
                 <div className="analytics-funnel-list">
-                  {summary.funnelStages.map((stage, idx) => (
-                    <div key={stage.stageKey} className="funnel-step-item">
-                      <div className="funnel-step-item__header">
-                        <span className="funnel-step-item__name">
-                          <span>{stage.stageName}</span>
-                        </span>
-                        <div className="funnel-step-item__metrics">
-                          <span>
-                            <strong>{stage.totalEntered}</strong> candidates
-                          </span>
-                          <span className="badge-pill badge-primary">
-                            {stage.conversionFromStartPercent}% from top
-                          </span>
-                          {idx > 0 && stage.dropoffCount > 0 && (
-                            <span className="text-danger small">
-                              -{stage.dropoffCount} drop-off
+                  {summary.funnelStages.map((stage, idx) => {
+                    const stageDescriptions: Record<string, string> = {
+                      applied: 'Initial ingestion & parsing',
+                      screening: 'Reviews & technical assessments',
+                      interview: 'Evaluations & scheduled interviews',
+                      offer: 'Formal offers extended',
+                      hired: 'Accepted placements',
+                    };
+
+                    const prevStage = idx > 0 ? summary.funnelStages[idx - 1] : null;
+                    const passRate =
+                      prevStage && prevStage.totalEntered > 0
+                        ? Math.round((stage.totalEntered / prevStage.totalEntered) * 100)
+                        : null;
+
+                    return (
+                      <div key={stage.stageKey}>
+                        {idx > 0 && (
+                          <div className="funnel-step-connector">
+                            <span className="funnel-step-connector__line" />
+                            <span>
+                              {passRate != null ? `${passRate}% step pass-through` : '↓'}
                             </span>
-                          )}
+                            <span className="funnel-step-connector__line" />
+                          </div>
+                        )}
+                        <div className="funnel-step-item">
+                          <div className="funnel-step-item__header">
+                            <div className="funnel-step-item__left">
+                              <div className="funnel-step-item__badge">{idx + 1}</div>
+                              <div>
+                                <span className="funnel-step-item__name">
+                                  {stage.stageName}
+                                </span>
+                                {stageDescriptions[stage.stageKey] && (
+                                  <span className="funnel-step-item__desc">
+                                    · {stageDescriptions[stage.stageKey]}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="funnel-step-item__metrics">
+                              <span className="funnel-step-item__count">
+                                {stage.totalEntered}{' '}
+                                <span className="text-muted fw-normal">
+                                  {stage.totalEntered === 1 ? 'candidate' : 'candidates'}
+                                </span>
+                              </span>
+                              <span className="badge-pill badge-primary">
+                                {stage.conversionFromStartPercent}% from top
+                              </span>
+                              {idx > 0 && stage.dropoffCount > 0 && (
+                                <span className="badge-pill badge-danger">
+                                  -{stage.dropoffCount} drop-off
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="funnel-progress-track">
+                            <div
+                              className="funnel-progress-fill"
+                              style={{
+                                width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
-
-                      <div className="funnel-progress-track">
-                        <div
-                          className="funnel-progress-fill"
-                          style={{
-                            width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -268,15 +321,15 @@ export default function AnalyticsPage() {
               <div className="analytics-card h-100">
                 <div className="analytics-card__header">
                   <div className="d-flex align-items-center gap-2">
-                    <Clock size={16} className="text-primary" />
+                    <Clock size={18} className="text-primary" />
                     <h5 className="mb-0 fw-bold fs-6">Stage Dwell Time & Velocity</h5>
                   </div>
-                  <span className="text-muted small">Average days per candidate</span>
+                  <span className="text-muted small fw-medium">Average days per candidate</span>
                 </div>
 
                 {summary.stageVelocities.length === 0 ? (
-                  <div className="text-center text-muted py-4 small">
-                    No status transition history available in this period.
+                  <div className="text-center text-muted py-5 small">
+                    No active status transition history available in this period.
                   </div>
                 ) : (
                   <div className="velocity-list">
@@ -287,26 +340,44 @@ export default function AnalyticsPage() {
                       );
                       const pct = Math.round((v.averageDays / maxDays) * 100);
                       const isSlow = v.averageDays > 7.0;
+                      const isFast = v.averageDays < 3.0;
 
                       return (
-                        <div key={v.stageName} className="velocity-row">
+                        <div
+                          key={v.stageName}
+                          className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
+                        >
                           <span className="velocity-row__name" title={v.stageName}>
                             {v.stageName}
                           </span>
                           <div className="velocity-row__bar-track">
                             <div
-                              className={`velocity-row__bar-fill${
-                                isSlow ? ' velocity-row__bar-fill--slow' : ''
+                              className={`velocity-row__bar-fill ${
+                                isSlow
+                                  ? 'velocity-row__bar-fill--slow'
+                                  : isFast
+                                  ? 'velocity-row__bar-fill--fast'
+                                  : 'velocity-row__bar-fill--steady'
                               }`}
-                              style={{ width: `${Math.max(5, pct)}%` }}
+                              style={{ width: `${Math.max(6, pct)}%` }}
                             />
                           </div>
-                          <span className="velocity-row__value">
-                            {v.averageDays}d{' '}
-                            <span className="text-muted fw-normal small">
-                              ({v.candidatesCount})
+                          <div className="velocity-row__value">
+                            <span>
+                              <strong>{v.averageDays}d</strong>{' '}
+                              <span className="text-muted fw-normal small">
+                                ({v.candidatesCount})
+                              </span>
                             </span>
-                          </span>
+                            {isSlow && (
+                              <span
+                                className="badge-pill badge-warning"
+                                title="Stage dwell exceeds 7 days threshold"
+                              >
+                                Bottleneck
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -320,10 +391,10 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <Briefcase size={16} className="text-primary" />
+                <Briefcase size={18} className="text-primary" />
                 <h5 className="mb-0 fw-bold fs-6">Sourcing Channel Performance & ROI</h5>
               </div>
-              <span className="text-muted small">
+              <span className="text-muted small fw-medium">
                 {summary.sourcingChannels.length} sourcing channels tracked
               </span>
             </div>
@@ -352,7 +423,13 @@ export default function AnalyticsPage() {
                   ) : (
                     summary.sourcingChannels.map((s) => (
                       <tr key={s.sourceName}>
-                        <td className="fw-semibold">{s.sourceName}</td>
+                        <td className="fw-semibold">
+                          <div className="d-flex align-items-center gap-2">
+                            <span className="badge-pill badge-neutral">
+                              {s.sourceName}
+                            </span>
+                          </div>
+                        </td>
                         <td className="text-center">{s.totalApplicants}</td>
                         <td className="text-center">{s.screenedCount}</td>
                         <td className="text-center">{s.interviewedCount}</td>
@@ -382,10 +459,10 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <UserCheck size={16} className="text-primary" />
+                <UserCheck size={18} className="text-primary" />
                 <h5 className="mb-0 fw-bold fs-6">Recruiter Productivity & Pipeline Workload</h5>
               </div>
-              <span className="text-muted small">
+              <span className="text-muted small fw-medium">
                 {summary.recruiterWorkloads.length} active recruiters
               </span>
             </div>

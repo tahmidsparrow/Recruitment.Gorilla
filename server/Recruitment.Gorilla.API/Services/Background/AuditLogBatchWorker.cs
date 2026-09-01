@@ -17,41 +17,48 @@ public class AuditLogBatchWorker(
 
         var buffer = new List<AuditLog>(BatchSize);
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            try
+            while (!stoppingToken.IsCancellationRequested)
             {
-                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timeoutCts.Token);
-
                 try
                 {
-                    if (await queue.WaitToReadAsync(linkedCts.Token))
-                    {
-                        while (buffer.Count < BatchSize && queue.TryRead(out var item))
-                        {
-                            buffer.Add(item);
-                        }
+                    using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timeoutCts.Token);
 
+                    try
+                    {
+                        if (await queue.WaitToReadAsync(linkedCts.Token))
+                        {
+                            while (buffer.Count < BatchSize && queue.TryRead(out var item))
+                            {
+                                buffer.Add(item);
+                            }
+
+                            if (buffer.Count > 0)
+                            {
+                                await FlushBatchAsync(buffer);
+                            }
+                        }
+                    }
+                    catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !stoppingToken.IsCancellationRequested)
+                    {
                         if (buffer.Count > 0)
                         {
                             await FlushBatchAsync(buffer);
                         }
                     }
                 }
-                catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !stoppingToken.IsCancellationRequested)
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
                 {
-                    if (buffer.Count > 0)
-                    {
-                        await FlushBatchAsync(buffer);
-                    }
+                    logger.LogWarning(ex, "Error occurred in audit log batch worker loop.");
+                    await Task.Delay(50, stoppingToken);
                 }
             }
-            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
-            {
-                logger.LogWarning(ex, "Error occurred in audit log batch worker loop.");
-                await Task.Delay(50, stoppingToken);
-            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown
         }
 
         // Final graceful flush on shutdown: drain remaining items from queue and buffer

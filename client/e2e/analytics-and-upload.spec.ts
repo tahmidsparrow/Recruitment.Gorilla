@@ -7,9 +7,11 @@ test.describe('Analytics & Real-time Bulk Upload E2E (Issues #20 & #19)', () => 
   test('login → analytics dashboard → presets & charts → upload queue', async ({ page }) => {
     // 1. Log in
     await page.goto('/login');
-    await page.locator('input[type="email"]').fill(email);
-    await page.locator('input[type="password"]').fill(password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.waitForSelector('input[type="email"], input[name="email"]');
+    await page.fill('input[type="email"], input[name="email"]', email);
+    await page.fill('input[type="password"], input[name="password"]', password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 10000 });
 
     // 2. Navigate to Analytics page
     const analyticsLink = page.getByRole('link', { name: 'Analytics' }).first();
@@ -33,6 +35,12 @@ test.describe('Analytics & Real-time Bulk Upload E2E (Issues #20 & #19)', () => 
     await expect(page.getByRole('heading', { name: 'Pipeline Funnel & Conversion' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Sourcing Channel Performance & ROI' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Recruiter Productivity & Pipeline Workload' })).toBeVisible();
+
+    // Screenshot polished analytics dashboard
+    await page.screenshot({
+      path: 'C:/Users/user/.gemini/antigravity-ide/brain/4655deb6-8ac0-42bb-8a60-04a998094da6/analytics_polished_dashboard.png',
+      fullPage: true,
+    });
 
     // 6. Navigate to Upload CVs page (Issue #19)
     const uploadLink = page.getByRole('link', { name: 'Upload CVs' }).first();
