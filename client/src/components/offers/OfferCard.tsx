@@ -128,33 +128,35 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               </Badge>
             )}
           </div>
-          <div className="d-flex gap-1">
-            {latestOffer ? (
-              <Button
-                variant="outline-primary"
-                size="sm"
-                className="d-flex align-items-center gap-1 py-1 px-2.5"
-                onClick={() => {
-                  setEditingOffer(null);
-                  setShowCreateModal(true);
-                }}
-              >
-                <Plus size={14} /> New Version
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                className="d-flex align-items-center gap-1 py-1 px-2.5"
-                onClick={() => {
-                  setEditingOffer(null);
-                  setShowCreateModal(true);
-                }}
-              >
-                <Plus size={14} /> Draft Offer
-              </Button>
-            )}
-          </div>
+          {candidate.currentStatus !== 'Hired' && (
+            <div className="d-flex gap-1">
+              {latestOffer ? (
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="d-flex align-items-center gap-1 py-1 px-2.5"
+                  onClick={() => {
+                    setEditingOffer(null);
+                    setShowCreateModal(true);
+                  }}
+                >
+                  <Plus size={14} /> New Version
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="d-flex align-items-center gap-1 py-1 px-2.5"
+                  onClick={() => {
+                    setEditingOffer(null);
+                    setShowCreateModal(true);
+                  }}
+                >
+                  <Plus size={14} /> Draft Offer
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-3">

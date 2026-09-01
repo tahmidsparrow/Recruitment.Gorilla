@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
@@ -52,6 +53,14 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route
+              path="/analytics"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <AnalyticsPage />
+                </RequireRole>
+              }
+            />
             <Route
               path="/upload"
               element={

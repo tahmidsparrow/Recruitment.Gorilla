@@ -8,8 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.Authorization;
 using Recruitment.Gorilla.API.Data;
+using Recruitment.Gorilla.API.Hubs;
 using Recruitment.Gorilla.API.Models;
 using Recruitment.Gorilla.API.Services;
+using Recruitment.Gorilla.API.Services.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +49,14 @@ builder.Services.AddScoped<InterviewService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<EvaluationRubricService>();
+builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+builder.Services.AddHostedService<EmailQueueWorker>();
+builder.Services.AddSingleton<IAuditLogQueue, AuditLogQueue>();
+builder.Services.AddHostedService<AuditLogBatchWorker>();
+builder.Services.AddScoped<ICVUploadProgressNotifier, CVUploadProgressNotifier>();
+builder.Services.AddSignalR();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<ISmtpTransport, MailKitSmtpTransport>();
 builder.Services.AddSingleton<SecretProtector>();
@@ -89,6 +98,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero,
             NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = ClaimTypes.Role,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 

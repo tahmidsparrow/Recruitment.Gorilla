@@ -47,6 +47,8 @@ import type {
   ReviewOfferApprovalPayload,
   OfferDecisionPayload,
   OfferMetrics,
+  AnalyticsFilterParams,
+  RecruitingAnalyticsSummary,
 } from '../types';
 
 // Same-origin path, built from import.meta.env.BASE_URL ("/" locally, where the
@@ -185,9 +187,17 @@ export type CreateCandidateResult =
   | { kind: 'created'; candidate: CandidateDetail }
   | { kind: 'duplicate'; duplicate: DuplicateCandidate };
 
-export const uploadCV = async (file: File): Promise<CVDraft> => {
+export const uploadCV = async (
+  file: File,
+  batchId?: string,
+  fileIndex?: number,
+  totalFiles?: number
+): Promise<CVDraft> => {
   const form = new FormData();
   form.append('file', file);
+  if (batchId) form.append('batchId', batchId);
+  if (fileIndex != null) form.append('fileIndex', fileIndex.toString());
+  if (totalFiles != null) form.append('totalFiles', totalFiles.toString());
   const { data } = await api.post<CVDraft>('/cvupload', form);
   return data;
 };
@@ -620,3 +630,12 @@ export const cloneEvaluationRubric = async (id: number): Promise<EvaluationRubri
 export const setDefaultEvaluationRubric = async (id: number): Promise<void> => {
   await api.post(`/evaluation-rubrics/${id}/default`);
 };
+
+// ----- Recruiting Operational Analytics -----
+export const getRecruitingAnalytics = async (
+  params?: AnalyticsFilterParams
+): Promise<RecruitingAnalyticsSummary> => {
+  const { data } = await api.get<RecruitingAnalyticsSummary>('/analytics', { params });
+  return data;
+};
+

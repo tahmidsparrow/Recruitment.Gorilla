@@ -4917,6 +4917,411 @@ a.hero-chip--accent:hover {
 }
 
 /* ============================================================
+   Recruiting Operational Analytics (Prism Design)
+   ============================================================ */
+.analytics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analytics-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .analytics-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .analytics-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Glassmorphism / Elevated Analytics Card Surface */
+.analytics-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.analytics-card:hover {
+  border-color: var(--border-strong, var(--primary));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* KPI Card Specifics */
+.analytics-card--kpi {
+  overflow: hidden;
+}
+
+.analytics-card--kpi::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--primary), var(--info, #38bdf8));
+  opacity: 0.85;
+}
+
+.analytics-card--kpi-velocity::before {
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+}
+
+.analytics-card--kpi-conversion::before {
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+}
+
+.analytics-card--kpi-pipeline::before {
+  background: linear-gradient(90deg, #f59e0b, #ec4899);
+}
+
+.analytics-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.analytics-card__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-soft, var(--muted-light));
+  margin: 0;
+}
+
+.analytics-card__icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-tint);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.analytics-card__icon-badge--velocity {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.analytics-card__icon-badge--conversion {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+
+.analytics-card__icon-badge--pipeline {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.analytics-card__value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.analytics-card__subtext {
+  font-size: var(--text-xs);
+  color: var(--text-soft, var(--muted));
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  line-height: 1.3;
+}
+
+/* Horizontal Stepped Funnel Pipeline */
+.stepped-funnel {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.stepped-funnel__node {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.stepped-funnel__node:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stepped-funnel__node--hired {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.stepped-funnel__node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stepped-funnel__node-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: 10.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepped-funnel__node--hired .stepped-funnel__node-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.stepped-funnel__node-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepped-funnel__node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepped-funnel__node-count {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stepped-funnel__node-sub {
+  font-size: 10.5px;
+  color: var(--text-soft, var(--muted));
+  font-weight: 500;
+}
+
+.stepped-funnel__node-bar {
+  height: 4px;
+  width: 100%;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.stepped-funnel__node-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.stepped-funnel__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  min-width: 38px;
+  flex-shrink: 0;
+}
+
+.stepped-funnel__connector-rate {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  background: var(--primary-tint);
+  padding: 1px 4px;
+  border-radius: 999px;
+}
+
+.stepped-funnel__connector-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--border-strong, var(--border));
+  margin-top: 2px;
+}
+
+/* Stage Velocity Duration Bars */
+.velocity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .velocity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.velocity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.velocity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 12px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.velocity-row:hover {
+  background: var(--surface);
+  border-color: var(--border-strong, var(--border));
+}
+
+.velocity-row--slow {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.velocity-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.velocity-row__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.velocity-row__value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.velocity-row__bar-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.velocity-row__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), #38bdf8);
+  transition: width 0.4s ease;
+}
+
+.velocity-row__bar-fill--fast {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.velocity-row__bar-fill--steady {
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+}
+
+.velocity-row__bar-fill--slow {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* Analytics Table */
+.analytics-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  background: var(--surface);
+}
+
+.analytics-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.analytics-table th {
+  padding: 8px 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-soft, var(--muted-light));
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.analytics-table td {
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.analytics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.analytics-table tbody tr:hover td {
+  background: var(--surface-muted);
+}
+
+/* ============================================================
    4. Print
    ============================================================
    Only one screen is meant to leave the app on paper: the candidate
