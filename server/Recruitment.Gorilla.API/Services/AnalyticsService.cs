@@ -17,7 +17,7 @@ public class AnalyticsService(AppDbContext db)
         ["Hired", "Offer Accepted"];
 
     private static readonly HashSet<string> AssessmentStatuses =
-        ["Ask for Assesment", "Technical Assessment", "Submission Received", "Code Review", "Call for Interview"];
+        ["Ask for Assessment", "Technical Assessment", "Submission Received", "Code Review", "Call for Interview"];
 
     private static readonly HashSet<string> InterviewStatuses =
         ["Interview Scheduled", "Interview Completed"];

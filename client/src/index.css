@@ -5053,54 +5053,55 @@ a.hero-chip--accent:hover {
   line-height: 1.3;
 }
 
-/* Stepped Funnel Visualization */
-.analytics-funnel-list {
+/* Horizontal Stepped Funnel Pipeline */
+.stepped-funnel {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  padding: 4px 0;
 }
 
-.funnel-step-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 12px;
+.stepped-funnel__node {
+  flex: 1 1 0;
+  min-width: 0;
   background: var(--surface-muted);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
   position: relative;
+  transition: all 0.15s ease;
 }
 
-.funnel-step-item:hover {
-  border-color: var(--primary);
+.stepped-funnel__node:hover {
   background: var(--surface);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.funnel-step-item__header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 12px;
+.stepped-funnel__node--hired {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.03);
 }
 
-.funnel-step-item__left {
+.stepped-funnel__node-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  overflow: hidden;
 }
 
-.funnel-step-item__badge {
+.stepped-funnel__node-badge {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: var(--primary-tint);
   color: var(--primary);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -5108,55 +5109,97 @@ a.hero-chip--accent:hover {
   flex-shrink: 0;
 }
 
-.funnel-step-item__name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
+.stepped-funnel__node--hired .stepped-funnel__node-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
 }
 
-.funnel-step-item__desc {
-  font-size: 11px;
-  color: var(--text-soft, var(--muted));
+.stepped-funnel__node-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
   line-height: 1.2;
-}
-
-.funnel-step-item__metrics {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.funnel-step-item__count {
-  font-weight: 700;
+.stepped-funnel__node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepped-funnel__node-count {
+  font-size: 20px;
+  font-weight: 800;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.funnel-progress-track {
-  height: 5px;
+.stepped-funnel__node-sub {
+  font-size: 10.5px;
+  color: var(--text-soft, var(--muted));
+  font-weight: 500;
+}
+
+.stepped-funnel__node-bar {
+  height: 4px;
   width: 100%;
   background: var(--border);
   border-radius: 999px;
   overflow: hidden;
+  margin-top: 4px;
 }
 
-.funnel-progress-fill {
+.stepped-funnel__node-bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--primary), #38bdf8);
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.4s ease;
 }
 
-.funnel-progress-fill--stage-1 { background: linear-gradient(90deg, #2563eb, #38bdf8); }
-.funnel-progress-fill--stage-2 { background: linear-gradient(90deg, #0284c7, #06b6d4); }
-.funnel-progress-fill--stage-3 { background: linear-gradient(90deg, #6366f1, #818cf8); }
-.funnel-progress-fill--stage-4 { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.funnel-progress-fill--stage-5 { background: linear-gradient(90deg, #10b981, #34d399); }
+.stepped-funnel__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  min-width: 38px;
+  flex-shrink: 0;
+}
+
+.stepped-funnel__connector-rate {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  background: var(--primary-tint);
+  padding: 1px 4px;
+  border-radius: 999px;
+}
+
+.stepped-funnel__connector-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--border-strong, var(--border));
+  margin-top: 2px;
+}
 
 /* Stage Velocity Duration Bars */
+.velocity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .velocity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .velocity-list {
   display: flex;
   flex-direction: column;

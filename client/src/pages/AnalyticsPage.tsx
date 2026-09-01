@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Form, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import {
-  ArrowDownRight,
-  ArrowUpRight,
   Briefcase,
+  ChevronRight,
   Clock,
   Filter,
-  Info,
   Layers,
   Printer,
   Sparkles,
@@ -56,8 +54,6 @@ export default function AnalyticsPage() {
     queryKey: ['analytics', 'summary', filterParams],
     queryFn: () => getRecruitingAnalytics(filterParams),
   });
-
-  const timeToHireChange = summary?.timeToHire?.changeVsPreviousPeriodPercent;
 
   return (
     <div className="analytics-page">
@@ -210,171 +206,163 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Stepped Funnel and Stage Velocity Analysis */}
-          <div className="row g-3">
-            {/* Stepped Pipeline Funnel */}
-            <div className="col-12 col-lg-6">
-              <div className="analytics-card h-100">
-                <div className="analytics-card__header">
-                  <div className="d-flex align-items-center gap-2">
-                    <Layers size={18} className="text-primary" />
-                    <h5 className="mb-0 fw-bold fs-6">Pipeline Funnel & Conversion</h5>
-                  </div>
-                  <span className="text-muted small fw-medium">
-                    {summary.totalCandidatesInPeriod} applicants entered
-                  </span>
-                </div>
+          {/* Horizontal Stepped Pipeline Funnel */}
+          <div className="analytics-card">
+            <div className="analytics-card__header">
+              <div className="d-flex align-items-center gap-2">
+                <Layers size={18} className="text-primary" />
+                <h5 className="mb-0 fw-bold fs-6">Pipeline Funnel & Conversion</h5>
+              </div>
+              <span className="text-muted small fw-medium">
+                {summary.totalCandidatesInPeriod}{' '}
+                {summary.totalCandidatesInPeriod === 1 ? 'applicant' : 'applicants'} entered pipeline
+              </span>
+            </div>
 
-                <div className="analytics-funnel-list">
-                  {summary.funnelStages.map((stage, idx) => {
-                    const stageDescriptions: Record<string, string> = {
-                      applied: 'Initial ingestion & parsing',
-                      screening: 'Reviews & technical assessments',
-                      interview: 'Evaluations & scheduled interviews',
-                      offer: 'Formal offers extended',
-                      hired: 'Accepted placements',
-                    };
+            <div className="stepped-funnel">
+              {summary.funnelStages.map((stage, idx) => {
+                const prevStage = idx > 0 ? summary.funnelStages[idx - 1] : null;
+                const passRate =
+                  prevStage && prevStage.totalEntered > 0
+                    ? Math.round((stage.totalEntered / prevStage.totalEntered) * 100)
+                    : null;
 
-                    const prevStage = idx > 0 ? summary.funnelStages[idx - 1] : null;
-                    const passRate =
-                      prevStage && prevStage.totalEntered > 0
-                        ? Math.round((stage.totalEntered / prevStage.totalEntered) * 100)
-                        : null;
+                const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
+                const isHired = stage.stageKey === 'hired';
 
-                    const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
+                const stageGradients = [
+                  'linear-gradient(90deg, #2563eb, #38bdf8)',
+                  'linear-gradient(90deg, #0284c7, #06b6d4)',
+                  'linear-gradient(90deg, #6366f1, #818cf8)',
+                  'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                  'linear-gradient(90deg, #10b981, #34d399)',
+                ];
 
-                    return (
-                      <div key={stage.stageKey} className="funnel-step-item">
-                        <div className="funnel-step-item__header">
-                          <div className="funnel-step-item__left">
-                            <div className="funnel-step-item__badge">{idx + 1}</div>
-                            <div>
-                              <span className="funnel-step-item__name">
-                                {cleanStageName}
-                              </span>
-                              {stageDescriptions[stage.stageKey] && (
-                                <span className="funnel-step-item__desc d-block">
-                                  {stageDescriptions[stage.stageKey]}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="funnel-step-item__metrics flex-shrink-0">
-                            <span className="funnel-step-item__count">
-                              {stage.totalEntered}{' '}
-                              <span className="text-muted fw-normal">
-                                {stage.totalEntered === 1 ? 'candidate' : 'candidates'}
-                              </span>
-                            </span>
-                            <span
-                              className="badge-pill badge-primary"
-                              title={
-                                idx > 0 && passRate != null
-                                  ? `${stage.conversionFromStartPercent}% of total applicants reached this stage (${passRate}% step pass-through).`
-                                  : `${stage.conversionFromStartPercent}% conversion rate from applied candidates.`
-                              }
-                            >
-                              {stage.conversionFromStartPercent}% conversion
-                            </span>
-                            {idx > 0 && stage.dropoffCount > 0 && (
-                              <span className="badge-pill badge-danger">
-                                -{stage.dropoffCount} drop-off
-                              </span>
-                            )}
-                          </div>
+                return (
+                  <div key={stage.stageKey} className="d-flex align-items-stretch flex-grow-1 min-w-0">
+                    {idx > 0 && (
+                      <div className="stepped-funnel__connector">
+                        <span
+                          className="stepped-funnel__connector-rate"
+                          title={`${passRate}% step pass-through from previous stage`}
+                        >
+                          {passRate}%
+                        </span>
+                        <div className="stepped-funnel__connector-arrow">
+                          <ChevronRight size={15} />
                         </div>
+                      </div>
+                    )}
 
-                        <div className="funnel-progress-track">
+                    <div
+                      className={`stepped-funnel__node ${
+                        isHired ? 'stepped-funnel__node--hired' : ''
+                      }`}
+                    >
+                      <div className="stepped-funnel__node-header">
+                        <div className="stepped-funnel__node-badge">{idx + 1}</div>
+                        <span className="stepped-funnel__node-title text-truncate">
+                          {cleanStageName}
+                        </span>
+                      </div>
+
+                      <div className="stepped-funnel__node-body">
+                        <span className="stepped-funnel__node-count">
+                          {stage.totalEntered}
+                        </span>
+                        <span className="stepped-funnel__node-sub">
+                          {stage.conversionFromStartPercent}% conversion
+                        </span>
+                        <div className="stepped-funnel__node-bar">
                           <div
-                            className={`funnel-progress-fill funnel-progress-fill--stage-${idx + 1}`}
+                            className="stepped-funnel__node-bar-fill"
                             style={{
                               width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
+                              background: stageGradients[idx] ?? stageGradients[0],
                             }}
                           />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stage Dwell Time & Velocity Bottlenecks */}
+          <div className="analytics-card">
+            <div className="analytics-card__header">
+              <div className="d-flex align-items-center gap-2">
+                <Clock size={16} className="text-primary" />
+                <h5 className="mb-0 fw-bold fs-6">Stage Dwell Time & Velocity</h5>
               </div>
+              <span className="text-muted small fw-medium">Average days per candidate</span>
             </div>
 
-            {/* Stage Dwell Time & Velocity Bottlenecks */}
-            <div className="col-12 col-lg-6">
-              <div className="analytics-card h-100">
-                <div className="analytics-card__header">
-                  <div className="d-flex align-items-center gap-2">
-                    <Clock size={16} className="text-primary" />
-                    <h5 className="mb-0 fw-bold fs-6">Stage Dwell Time & Velocity</h5>
-                  </div>
-                  <span className="text-muted small fw-medium">Average days per candidate</span>
-                </div>
+            {summary.stageVelocities.length === 0 ? (
+              <div className="text-center text-muted py-5 small">
+                No active status transition history available in this period.
+              </div>
+            ) : (
+              <div className="velocity-grid">
+                {summary.stageVelocities.map((v) => {
+                  const maxDays = Math.max(
+                    ...summary.stageVelocities.map((x) => x.averageDays),
+                    1
+                  );
+                  const pct = Math.round((v.averageDays / maxDays) * 100);
+                  const isSlow = v.averageDays > 7.0;
+                  const isFast = v.averageDays < 3.0;
+                  const formattedName = v.stageName.replace(
+                    'Ask for Assesment',
+                    'Ask for Assessment'
+                  );
 
-                {summary.stageVelocities.length === 0 ? (
-                  <div className="text-center text-muted py-5 small">
-                    No active status transition history available in this period.
-                  </div>
-                ) : (
-                  <div className="velocity-list">
-                    {summary.stageVelocities.map((v) => {
-                      const maxDays = Math.max(
-                        ...summary.stageVelocities.map((x) => x.averageDays),
-                        1
-                      );
-                      const pct = Math.round((v.averageDays / maxDays) * 100);
-                      const isSlow = v.averageDays > 7.0;
-                      const isFast = v.averageDays < 3.0;
-                      const formattedName = v.stageName.replace(
-                        'Ask for Assesment',
-                        'Ask for Assessment'
-                      );
-
-                      return (
-                        <div
-                          key={v.stageName}
-                          className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
-                        >
-                          <div className="velocity-row__header">
-                            <div className="d-flex align-items-center gap-1.5 min-w-0">
-                              <span className="velocity-row__name" title={formattedName}>
-                                {formattedName}
-                              </span>
-                              {isSlow && (
-                                <span
-                                  className="badge-pill badge-warning flex-shrink-0"
-                                  style={{ fontSize: '9.5px', padding: '1px 6px' }}
-                                  title="Stage dwell exceeds 7 days threshold"
-                                >
-                                  Bottleneck
-                                </span>
-                              )}
-                            </div>
-                            <div className="velocity-row__value">
-                              <strong>{v.averageDays}d</strong>{' '}
-                              <span className="text-muted fw-normal small">
-                                ({v.candidatesCount})
-                              </span>
-                            </div>
-                          </div>
-                          <div className="velocity-row__bar-track">
-                            <div
-                              className={`velocity-row__bar-fill ${
-                                isSlow
-                                  ? 'velocity-row__bar-fill--slow'
-                                  : isFast
-                                  ? 'velocity-row__bar-fill--fast'
-                                  : 'velocity-row__bar-fill--steady'
-                              }`}
-                              style={{ width: `${Math.max(4, pct)}%` }}
-                            />
-                          </div>
+                  return (
+                    <div
+                      key={v.stageName}
+                      className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
+                    >
+                      <div className="velocity-row__header">
+                        <div className="d-flex align-items-center gap-1.5 min-w-0">
+                          <span className="velocity-row__name" title={formattedName}>
+                            {formattedName}
+                          </span>
+                          {isSlow && (
+                            <span
+                              className="badge-pill badge-warning flex-shrink-0"
+                              style={{ fontSize: '9.5px', padding: '1px 6px' }}
+                              title="Stage dwell exceeds 7 days threshold"
+                            >
+                              Bottleneck
+                            </span>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        <div className="velocity-row__value">
+                          <strong>{v.averageDays}d</strong>{' '}
+                          <span className="text-muted fw-normal small">
+                            ({v.candidatesCount})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="velocity-row__bar-track">
+                        <div
+                          className={`velocity-row__bar-fill ${
+                            isSlow
+                              ? 'velocity-row__bar-fill--slow'
+                              : isFast
+                              ? 'velocity-row__bar-fill--fast'
+                              : 'velocity-row__bar-fill--steady'
+                          }`}
+                          style={{ width: `${Math.max(4, pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sourcing Channel ROI Table */}
