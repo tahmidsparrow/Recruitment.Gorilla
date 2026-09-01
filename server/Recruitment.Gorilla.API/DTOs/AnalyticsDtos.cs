@@ -10,8 +10,8 @@ public record AnalyticsFilterQuery(
 public record TimeToHireMetricsDto(
     double AverageDays,
     double MedianDays,
-    int FastestDays,
-    int LongestDays,
+    double FastestDays,
+    double LongestDays,
     int TotalHires,
     double? ChangeVsPreviousPeriodPercent
 );
