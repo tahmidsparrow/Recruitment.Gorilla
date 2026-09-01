@@ -200,8 +200,10 @@ export default function AnalyticsPage() {
               </div>
               <div className="analytics-card__subtext">
                 <span>
-                  <strong>{summary.timeToHire.totalHires}</strong> hires from{' '}
-                  <strong>{summary.totalCandidatesInPeriod}</strong> applicants
+                  <strong>{summary.timeToHire.totalHires}</strong>{' '}
+                  {summary.timeToHire.totalHires === 1 ? 'hire' : 'hires'} from{' '}
+                  <strong>{summary.totalCandidatesInPeriod}</strong>{' '}
+                  {summary.totalCandidatesInPeriod === 1 ? 'applicant' : 'applicants'}
                 </span>
               </div>
             </div>
@@ -286,6 +288,11 @@ export default function AnalyticsPage() {
                         : null;
 
                     const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
+                    const stepTaperFactor = 1 - idx * 0.07;
+                    const visualWidth = Math.max(
+                      10,
+                      Math.round(stage.conversionFromStartPercent * stepTaperFactor)
+                    );
 
                     return (
                       <div key={stage.stageKey}>
@@ -335,7 +342,7 @@ export default function AnalyticsPage() {
                             <div
                               className="funnel-progress-fill"
                               style={{
-                                width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
+                                width: `${visualWidth}%`,
                               }}
                             />
                           </div>
@@ -372,15 +379,30 @@ export default function AnalyticsPage() {
                       const pct = Math.round((v.averageDays / maxDays) * 100);
                       const isSlow = v.averageDays > 7.0;
                       const isFast = v.averageDays < 3.0;
+                      const formattedName = v.stageName.replace(
+                        'Ask for Assesment',
+                        'Ask for Assessment'
+                      );
 
                       return (
                         <div
                           key={v.stageName}
                           className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
                         >
-                          <span className="velocity-row__name" title={v.stageName}>
-                            {v.stageName}
-                          </span>
+                          <div className="d-flex align-items-center gap-1.5 overflow-hidden">
+                            <span className="velocity-row__name" title={formattedName}>
+                              {formattedName}
+                            </span>
+                            {isSlow && (
+                              <span
+                                className="badge-pill badge-warning flex-shrink-0"
+                                style={{ fontSize: '10px', padding: '1px 6px' }}
+                                title="Stage dwell exceeds 7 days threshold"
+                              >
+                                Bottleneck
+                              </span>
+                            )}
+                          </div>
                           <div className="velocity-row__bar-track">
                             <div
                               className={`velocity-row__bar-fill ${
@@ -394,20 +416,10 @@ export default function AnalyticsPage() {
                             />
                           </div>
                           <div className="velocity-row__value">
-                            <span>
-                              <strong>{v.averageDays}d</strong>{' '}
-                              <span className="text-muted fw-normal small">
-                                ({v.candidatesCount})
-                              </span>
+                            <strong>{v.averageDays}d</strong>{' '}
+                            <span className="text-muted fw-normal small">
+                              ({v.candidatesCount})
                             </span>
-                            {isSlow && (
-                              <span
-                                className="badge-pill badge-warning"
-                                title="Stage dwell exceeds 7 days threshold"
-                              >
-                                Bottleneck
-                              </span>
-                            )}
                           </div>
                         </div>
                       );
