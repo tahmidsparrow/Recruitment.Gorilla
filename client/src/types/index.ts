@@ -628,3 +628,75 @@ export interface UpsertEvaluationRubricPayload {
   criteria: UpsertRubricCriterionPayload[];
 }
 
+// ----- Recruiting Operational Analytics -----
+export interface AnalyticsFilterParams {
+  preset?: string;
+  from?: string;
+  to?: string;
+  roleId?: number;
+}
+
+export interface TimeToHireMetrics {
+  averageDays: number;
+  medianDays: number;
+  fastestDays: number;
+  longestDays: number;
+  totalHires: number;
+  changeVsPreviousPeriodPercent: number | null;
+}
+
+export interface StageVelocity {
+  stageName: string;
+  sortOrder: number;
+  averageDays: number;
+  medianDays: number;
+  candidatesCount: number;
+}
+
+export interface FunnelStage {
+  stageKey: string;
+  stageName: string;
+  stepNumber: number;
+  totalEntered: number;
+  conversionFromStartPercent: number;
+  conversionFromPreviousPercent: number;
+  dropoffCount: number;
+}
+
+export interface SourcePerformance {
+  sourceId: number | null;
+  sourceName: string;
+  totalApplicants: number;
+  screenedCount: number;
+  interviewedCount: number;
+  offeredCount: number;
+  hiredCount: number;
+  conversionToHirePercent: number;
+  shareOfTotalHiresPercent: number;
+}
+
+export interface RecruiterWorkload {
+  recruiterUserId: number;
+  recruiterName: string;
+  activeCandidates: number;
+  totalAssigned: number;
+  transitionsLogged: number;
+  interviewsParticipated: number;
+  hiresMade: number;
+}
+
+export interface RecruitingAnalyticsSummary {
+  timeToHire: TimeToHireMetrics;
+  averagePipelineDays: number;
+  overallFunnelConversionRate: number;
+  totalCandidatesInPeriod: number;
+  activeCandidates: number;
+  funnelStages: FunnelStage[];
+  stageVelocities: StageVelocity[];
+  sourcingChannels: SourcePerformance[];
+  recruiterWorkloads: RecruiterWorkload[];
+  periodStart: string;
+  periodEnd: string;
+}
+
+

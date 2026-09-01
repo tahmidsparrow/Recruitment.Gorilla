@@ -47,6 +47,8 @@ import type {
   ReviewOfferApprovalPayload,
   OfferDecisionPayload,
   OfferMetrics,
+  AnalyticsFilterParams,
+  RecruitingAnalyticsSummary,
 } from '../types';
 
 // Same-origin path, built from import.meta.env.BASE_URL ("/" locally, where the
@@ -628,3 +630,12 @@ export const cloneEvaluationRubric = async (id: number): Promise<EvaluationRubri
 export const setDefaultEvaluationRubric = async (id: number): Promise<void> => {
   await api.post(`/evaluation-rubrics/${id}/default`);
 };
+
+// ----- Recruiting Operational Analytics -----
+export const getRecruitingAnalytics = async (
+  params?: AnalyticsFilterParams
+): Promise<RecruitingAnalyticsSummary> => {
+  const { data } = await api.get<RecruitingAnalyticsSummary>('/analytics', { params });
+  return data;
+};
+
