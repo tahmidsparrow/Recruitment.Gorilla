@@ -256,6 +256,8 @@ export default function AnalyticsPage() {
                         ? Math.round((stage.totalEntered / prevStage.totalEntered) * 100)
                         : null;
 
+                    const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
+
                     return (
                       <div key={stage.stageKey}>
                         {idx > 0 && (
@@ -273,7 +275,7 @@ export default function AnalyticsPage() {
                               <div className="funnel-step-item__badge">{idx + 1}</div>
                               <div>
                                 <span className="funnel-step-item__name">
-                                  {stage.stageName}
+                                  {cleanStageName}
                                 </span>
                                 {stageDescriptions[stage.stageKey] && (
                                   <span className="funnel-step-item__desc">
