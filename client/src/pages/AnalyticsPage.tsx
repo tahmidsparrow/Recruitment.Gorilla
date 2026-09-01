@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Avg Time to Hire</h4>
                 <div className="analytics-card__icon-badge">
-                  <Clock size={17} />
+                  <Clock size={16} />
                 </div>
               </div>
               <p className="analytics-card__value">
@@ -141,26 +141,10 @@ export default function AnalyticsPage() {
               </p>
               <div className="analytics-card__subtext">
                 {summary.timeToHire.totalHires > 0 ? (
-                  <>
-                    <span>
-                      Fastest: <strong>{summary.timeToHire.fastestDays}d</strong> · Longest:{' '}
-                      <strong>{summary.timeToHire.longestDays}d</strong>
-                    </span>
-                    {timeToHireChange != null && (
-                      <span
-                        className={`badge-pill ${
-                          timeToHireChange <= 0 ? 'badge-success' : 'badge-warning'
-                        } d-inline-flex align-items-center gap-0.5 ms-auto`}
-                      >
-                        {timeToHireChange <= 0 ? (
-                          <ArrowDownRight size={12} />
-                        ) : (
-                          <ArrowUpRight size={12} />
-                        )}
-                        {Math.abs(timeToHireChange)}% vs prior
-                      </span>
-                    )}
-                  </>
+                  <span>
+                    Fastest: <strong>{summary.timeToHire.fastestDays}d</strong> · Longest:{' '}
+                    <strong>{summary.timeToHire.longestDays}d</strong>
+                  </span>
                 ) : (
                   <span>No hires recorded in this period</span>
                 )}
@@ -172,7 +156,7 @@ export default function AnalyticsPage() {
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Pipeline Velocity</h4>
                 <div className="analytics-card__icon-badge analytics-card__icon-badge--velocity">
-                  <TrendingUp size={17} />
+                  <TrendingUp size={16} />
                 </div>
               </div>
               <p className="analytics-card__value">
@@ -181,7 +165,7 @@ export default function AnalyticsPage() {
                   : '—'}
               </p>
               <div className="analytics-card__subtext">
-                <span>Average dwell time across all active status stages</span>
+                <span>Average dwell across active stages</span>
               </div>
             </div>
 
@@ -190,7 +174,7 @@ export default function AnalyticsPage() {
               <div className="analytics-card__header">
                 <h4 className="analytics-card__title">Funnel Conversion Rate</h4>
                 <div className="analytics-card__icon-badge analytics-card__icon-badge--conversion">
-                  <Sparkles size={17} />
+                  <Sparkles size={16} />
                 </div>
               </div>
               <div className="analytics-card__value-wrap">
@@ -209,49 +193,19 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Active Pipeline Candidates */}
-            <div className="analytics-card analytics-card--kpi analytics-card--kpi-pipeline">
+            <div
+              className="analytics-card analytics-card--kpi analytics-card--kpi-pipeline"
+              title="Candidates advancing through screening, assessments, interviews or offers"
+            >
               <div className="analytics-card__header">
-                <div className="d-flex align-items-center gap-1.5">
-                  <h4 className="analytics-card__title">Active Pipeline</h4>
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={
-                      <Tooltip id="active-pipeline-info-tooltip">
-                        Candidates advancing through screening, assessments, interviews or offers
-                      </Tooltip>
-                    }
-                  >
-                    <span
-                      tabIndex={0}
-                      role="button"
-                      aria-label="Active pipeline info"
-                      style={{ cursor: 'help', display: 'inline-flex' }}
-                    >
-                      <Info size={13} className="text-muted" />
-                    </span>
-                  </OverlayTrigger>
-                </div>
+                <h4 className="analytics-card__title">Active Pipeline</h4>
                 <div className="analytics-card__icon-badge analytics-card__icon-badge--pipeline">
-                  <Users size={17} />
+                  <Users size={16} />
                 </div>
               </div>
               <p className="analytics-card__value">{summary.activeCandidates}</p>
               <div className="analytics-card__subtext">
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={
-                    <Tooltip id="active-pipeline-sub-tooltip">
-                      Candidates advancing through screening, assessments, interviews or offers
-                    </Tooltip>
-                  }
-                >
-                  <span
-                    style={{ cursor: 'help' }}
-                    title="Candidates advancing through screening, assessments, interviews or offers"
-                  >
-                    Across active hiring stages
-                  </span>
-                </OverlayTrigger>
+                <span>In active consideration</span>
               </div>
             </div>
           </div>
@@ -294,12 +248,16 @@ export default function AnalyticsPage() {
                         <div className="funnel-step-item__header">
                           <div className="funnel-step-item__left">
                             <div className="funnel-step-item__badge">{idx + 1}</div>
-                            <span
-                              className="funnel-step-item__name text-nowrap"
-                              title={stageDescriptions[stage.stageKey]}
-                            >
-                              {cleanStageName}
-                            </span>
+                            <div>
+                              <span className="funnel-step-item__name">
+                                {cleanStageName}
+                              </span>
+                              {stageDescriptions[stage.stageKey] && (
+                                <span className="funnel-step-item__desc d-block">
+                                  {stageDescriptions[stage.stageKey]}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="funnel-step-item__metrics flex-shrink-0">
                             <span className="funnel-step-item__count">
@@ -328,7 +286,7 @@ export default function AnalyticsPage() {
 
                         <div className="funnel-progress-track">
                           <div
-                            className="funnel-progress-fill"
+                            className={`funnel-progress-fill funnel-progress-fill--stage-${idx + 1}`}
                             style={{
                               width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
                             }}
