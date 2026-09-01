@@ -295,57 +295,53 @@ export default function AnalyticsPage() {
                     );
 
                     return (
-                      <div key={stage.stageKey}>
-                        {idx > 0 && (
-                          <div className="funnel-step-connector">
-                            <span className="funnel-step-connector__line" />
-                            <span>
-                              {passRate != null ? `${passRate}% step pass-through` : '↓'}
-                            </span>
-                            <span className="funnel-step-connector__line" />
-                          </div>
-                        )}
-                        <div className="funnel-step-item">
-                          <div className="funnel-step-item__header">
-                            <div className="funnel-step-item__left">
-                              <div className="funnel-step-item__badge">{idx + 1}</div>
-                              <div>
-                                <span className="funnel-step-item__name">
-                                  {cleanStageName}
-                                </span>
-                                {stageDescriptions[stage.stageKey] && (
-                                  <span className="funnel-step-item__desc">
-                                    · {stageDescriptions[stage.stageKey]}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="funnel-step-item__metrics">
-                              <span className="funnel-step-item__count">
-                                {stage.totalEntered}{' '}
-                                <span className="text-muted fw-normal">
-                                  {stage.totalEntered === 1 ? 'candidate' : 'candidates'}
-                                </span>
+                      <div key={stage.stageKey} className="funnel-step-item">
+                        <div className="funnel-step-item__header">
+                          <div className="funnel-step-item__left">
+                            <div className="funnel-step-item__badge">{idx + 1}</div>
+                            <div className="d-flex align-items-center gap-1.5 min-w-0">
+                              <span
+                                className="funnel-step-item__name text-nowrap"
+                                title={stageDescriptions[stage.stageKey]}
+                              >
+                                {cleanStageName}
                               </span>
-                              <span className="badge-pill badge-primary">
-                                {stage.conversionFromStartPercent}% from top
-                              </span>
-                              {idx > 0 && stage.dropoffCount > 0 && (
-                                <span className="badge-pill badge-danger">
-                                  -{stage.dropoffCount} drop-off
+                              {idx > 0 && passRate != null && (
+                                <span
+                                  className="badge-pill badge-neutral text-muted flex-shrink-0"
+                                  style={{ fontSize: '10px', padding: '1px 6px' }}
+                                  title={`${passRate}% step pass-through from previous stage`}
+                                >
+                                  {passRate}% pass
                                 </span>
                               )}
                             </div>
                           </div>
-
-                          <div className="funnel-progress-track">
-                            <div
-                              className="funnel-progress-fill"
-                              style={{
-                                width: `${visualWidth}%`,
-                              }}
-                            />
+                          <div className="funnel-step-item__metrics flex-shrink-0">
+                            <span className="funnel-step-item__count">
+                              {stage.totalEntered}{' '}
+                              <span className="text-muted fw-normal">
+                                {stage.totalEntered === 1 ? 'candidate' : 'candidates'}
+                              </span>
+                            </span>
+                            <span className="badge-pill badge-primary">
+                              {stage.conversionFromStartPercent}% from top
+                            </span>
+                            {idx > 0 && stage.dropoffCount > 0 && (
+                              <span className="badge-pill badge-danger">
+                                -{stage.dropoffCount} drop-off
+                              </span>
+                            )}
                           </div>
+                        </div>
+
+                        <div className="funnel-progress-track">
+                          <div
+                            className="funnel-progress-fill"
+                            style={{
+                              width: `${visualWidth}%`,
+                            }}
+                          />
                         </div>
                       </div>
                     );
