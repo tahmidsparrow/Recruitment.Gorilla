@@ -50,6 +50,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<OfferService>();
 builder.Services.AddScoped<EvaluationRubricService>();
 builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddScoped<CandidateDraftService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddHostedService<EmailQueueWorker>();

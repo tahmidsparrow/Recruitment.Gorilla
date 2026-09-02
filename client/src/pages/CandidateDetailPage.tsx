@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Button, Col, Form, Row, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -572,14 +572,25 @@ function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFil
 
         {error && <div className="alert-danger-soft" role="alert">{error}</div>}
 
-        {preview &&
-          (isPdf ? (
-            <iframe title="CV preview" src={preview.url} className="cv-preview-frame" />
-          ) : (
-            <div className="alert-info-soft">
-              In-app preview isn't available for this file type. Use Download to open it.
-            </div>
-          ))}
+        {preview && (
+          <Modal show={true} onHide={() => setPreview(null)} dialogClassName="cv-viewer-modal" centered>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                <FileText size={18} className="text-muted" />
+                {preview.contentType.includes('pdf') ? 'PDF Preview' : 'Document Preview'}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="d-flex flex-column" style={{ height: isPdf ? '100%' : 'auto' }}>
+              {isPdf ? (
+                <iframe title="CV preview" src={preview.url} style={{ width: '100%', flexGrow: 1, border: 'none' }} />
+              ) : (
+                <div className="p-5 text-center text-muted mt-5">
+                  In-app preview isn't available for this file type. Please use Download to open it.
+                </div>
+              )}
+            </Modal.Body>
+          </Modal>
+        )}
       </div>
     </SectionCard>
   );

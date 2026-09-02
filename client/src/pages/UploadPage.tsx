@@ -1,81 +1,103 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { UploadCloud, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import BulkUploader from '../components/BulkUploader';
-import CandidateForm from '../components/CandidateForm';
+import DraftReviewWorkspace from '../components/drafts/DraftReviewWorkspace';
 import Page from '../components/ui/Page';
 import SectionCard from '../components/ui/SectionCard';
+import { getCandidateDrafts } from '../services/api';
 import type { CVDraft } from '../types';
 
-/**
- * Bulk CV intake: drop files, then review each extracted draft in turn.
- *
- * The page has two modes and now says which one it is in. Previously the drop
- * zone, the queue counter, the review form and the success notice were four
- * unlabelled siblings with no spacing between them, so a full queue read as
- * one undifferentiated block and it was not obvious that the form below the
- * drop zone belonged to the first file of several.
- */
 export default function UploadPage() {
-  const queryClient = useQueryClient();
-  const [queue, setQueue] = useState<CVDraft[]>([]);
-  const [savedCount, setSavedCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'upload' | 'review'>('upload');
+  const [lastUploadedBatchId, setLastUploadedBatchId] = useState<string | null>(null);
+  const [lastBatchCount, setLastBatchCount] = useState<number>(0);
 
-  const handleParsed = (drafts: CVDraft[]) => {
-    setQueue((q) => [...q, ...drafts]);
-    setSavedCount(0);
+  // Fetch pending drafts count for tab pill
+  const { data: draftsSummary, refetch: refetchDrafts } = useQuery({
+    queryKey: ['candidate-drafts', 'Pending', '', undefined, ''],
+    queryFn: () => getCandidateDrafts({ status: 'Pending', pageSize: 1 }),
+  });
+
+  const pendingCount = draftsSummary?.totalPending ?? 0;
+
+  const handleParsed = (drafts: CVDraft[], batchId?: string) => {
+    if (batchId) setLastUploadedBatchId(batchId);
+    setLastBatchCount(drafts.length);
+    void refetchDrafts();
   };
-
-  const advance = (saved: boolean) => {
-    setQueue((q) => q.slice(1));
-    if (saved) {
-      setSavedCount((c) => c + 1);
-      void queryClient.invalidateQueries({ queryKey: ['candidates'] });
-    }
-  };
-
-  const current = queue[0];
 
   return (
     <Page>
-      {/* No <h2> — the topbar owns the page title. */}
-      <BulkUploader onDraftsParsed={handleParsed} />
+      {/* Workspace Sub-Nav Tab Bar */}
+      <div className="d-flex align-items-center justify-content-between border-bottom pb-3">
+        <div className="segmented">
+          <button
+            type="button"
+            className={`segmented__item ${activeTab === 'upload' ? 'segmented__item--active active' : ''}`}
+            onClick={() => setActiveTab('upload')}
+          >
+            <UploadCloud size={15} className="me-1.5" />
+            Upload &amp; Intake
+          </button>
+          <button
+            type="button"
+            className={`segmented__item ${activeTab === 'review' ? 'segmented__item--active active' : ''}`}
+            onClick={() => setActiveTab('review')}
+          >
+            <Layers size={15} className="me-1.5" />
+            Review Staging Workspace
+            {pendingCount > 0 && (
+              <span className="draft-badge--pending ms-2">
+                {pendingCount} Pending
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
 
-      {current && (
-        <SectionCard
-          title="Review extracted details"
-          description={
-            queue.length > 1
-              ? `Checking what was read from ${current.originalFileName}. ${queue.length - 1} more after this one.`
-              : `Checking what was read from ${current.originalFileName}.`
-          }
-          actions={
-            <span className="badge-pill badge-neutral">
-              {queue.length} to review
-            </span>
-          }
-        >
-          <CandidateForm
-            key={current.storedFileName}
-            draft={current}
-            onSaved={() => advance(true)}
-            onCancel={() => advance(false)}
-          />
-        </SectionCard>
+      {/* Tab 1: Upload & Intake */}
+      {activeTab === 'upload' && (
+        <div className="page-stack">
+          <SectionCard title="Bulk CV Upload &amp; Document Intake">
+            <BulkUploader onDraftsParsed={handleParsed} />
+          </SectionCard>
+
+          {/* Staging Handoff Banner */}
+          {lastBatchCount > 0 && (
+            <div className="alert-success-soft d-flex flex-wrap align-items-center justify-content-between gap-3" role="status">
+              <div className="d-inline-flex align-items-center gap-2.5">
+                <CheckCircle2 size={20} className="text-success flex-shrink-0" />
+                <div>
+                  <div className="fw-semibold">
+                    Successfully staged {lastBatchCount} resume{lastBatchCount === 1 ? '' : 's'} to database!
+                  </div>
+                  <div className="text-muted small">
+                    All candidates have been saved as pending drafts. You can review them now or come back anytime.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5"
+                onClick={() => setActiveTab('review')}
+              >
+                <span>Open Review Workspace</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
-      {queue.length === 0 && savedCount > 0 && (
-        <div className="alert-success-soft d-flex flex-wrap align-items-center gap-3" role="status">
-          <span className="d-inline-flex align-items-center gap-2">
-            <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden="true" />
-            Saved {savedCount} candidate{savedCount === 1 ? '' : 's'}. Drop more CVs above to
-            continue.
-          </span>
-          <Link to="/candidates" className="btn btn-sm btn-outline-secondary ms-auto">
-            View candidates
-          </Link>
-        </div>
+      {/* Tab 2: Staging & Review Studio Workspace */}
+      {activeTab === 'review' && (
+        <DraftReviewWorkspace
+          initialBatchId={lastUploadedBatchId}
+          onCandidateCreated={() => {
+            void refetchDrafts();
+          }}
+        />
       )}
     </Page>
   );

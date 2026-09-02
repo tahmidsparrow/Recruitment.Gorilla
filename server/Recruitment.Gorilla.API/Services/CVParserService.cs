@@ -152,6 +152,19 @@ public class CVParserService
         return lines.FirstOrDefault(l => l.Length is > 2 and <= 40 && !l.Contains('@') && !l.Any(char.IsDigit));
     }
 
+    public static (string Name, string? Title) ParseNameAndTitleFromFileName(string fileName)
+    {
+        var baseName = Path.GetFileNameWithoutExtension(fileName);
+        var parts = baseName.Split(['_', '-'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2)
+        {
+            var name = $"{parts[0]} {parts[1]}";
+            var title = parts.Length > 2 ? string.Join(' ', parts.Skip(2)) : null;
+            return (name, title);
+        }
+        return (baseName.Replace('_', ' '), null);
+    }
+
     private static bool IsHeading(string line) =>
         line.Length < 50 && line == line.ToUpper();
 }

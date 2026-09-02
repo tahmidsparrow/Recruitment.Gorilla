@@ -11,6 +11,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [Route("api/cvupload")]
 public class CVUploadController(
     CVParserService parser,
+    CandidateDraftService draftService,
     IWebHostEnvironment env,
     ICVUploadProgressNotifier progressNotifier,
     CurrentUser currentUser,
@@ -23,6 +24,7 @@ public class CVUploadController(
     public async Task<IActionResult> Upload(
         IFormFile file,
         [FromForm] string? batchId = null,
+        [FromForm] string? batchName = null,
         [FromForm] int? fileIndex = null,
         [FromForm] int? totalFiles = null)
     {
@@ -69,13 +71,32 @@ public class CVUploadController(
 
         var (name, email, phone, linkedin, github, skills, summary) = parser.Parse(fullPath, fileType);
 
+        var (fallbackName, fallbackTitle) = CVParserService.ParseNameAndTitleFromFileName(file.FileName);
+        if (string.IsNullOrWhiteSpace(name)) name = fallbackName;
+
+        // Persist draft to MySQL database for long-term review
+        var draftEntity = await draftService.CreateDraftAsync(
+            file.FileName, storedName, fileType, file.Length,
+            bId, batchName, name, email, phone, linkedin, github, skills, summary);
+
+        if (draftEntity.CurrentTitle == null && fallbackTitle != null)
+        {
+            draftEntity.CurrentTitle = fallbackTitle;
+            await draftService.UpdateDraftAsync(draftEntity.Id, new UpdateCandidateDraftDto(
+                draftEntity.FullName, draftEntity.Email, draftEntity.Phone, fallbackTitle,
+                draftEntity.RelevantExperience, draftEntity.Skills, draftEntity.Summary,
+                draftEntity.LinkedInUrl, draftEntity.GithubUrl, draftEntity.PortfolioUrl,
+                draftEntity.RoleAppliedOptionId, draftEntity.SourceOptionId, draftEntity.SourceDetail));
+        }
+
         var draft = new CVDraftDto(
-            name, email, phone, null, skills, summary, linkedin, github,
-            file.FileName, storedName, fileType, file.Length);
+            name, email, phone, fallbackTitle, skills, summary, linkedin, github,
+            file.FileName, storedName, fileType, file.Length,
+            draftEntity.Id, bId, batchName);
 
         logger.LogInformation(
-            "Parsed CV '{FileName}' ({FileType}, {Size} bytes) stored as {StoredName}.",
-            file.FileName, fileType, file.Length, storedName);
+            "Parsed & persisted CV '{FileName}' ({FileType}, {Size} bytes) as Draft #{DraftId} stored as {StoredName}.",
+            file.FileName, fileType, file.Length, draftEntity.Id, storedName);
 
         // Broadcast successful extraction via SignalR
         await progressNotifier.NotifyProgressAsync(currentUser.UserId?.ToString(), bId, new CVUploadProgressEvent(

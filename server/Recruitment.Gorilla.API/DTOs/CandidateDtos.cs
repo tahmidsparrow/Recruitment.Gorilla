@@ -12,7 +12,10 @@ public record CVDraftDto(
     string OriginalFileName,
     string StoredFileName,
     string FileType,
-    long FileSizeBytes
+    long FileSizeBytes,
+    int? Id = null,
+    string? BatchId = null,
+    string? BatchName = null
 );
 
 public record CreateCandidateDto(

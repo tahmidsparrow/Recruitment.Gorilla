@@ -1,4 +1,5 @@
 export interface CVDraft {
+  id?: number;
   fullName: string | null;
   email: string | null;
   phone: string | null;
@@ -11,6 +12,138 @@ export interface CVDraft {
   storedFileName: string;
   fileType: string;
   fileSizeBytes: number;
+  batchId?: string;
+  batchName?: string;
+}
+
+export interface CandidateDraft {
+  id: number;
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  currentTitle: string | null;
+  relevantExperience: string | null;
+  skills: string | null;
+  summary: string | null;
+  linkedInUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  roleAppliedOptionId: number | null;
+  roleAppliedOptionName: string | null;
+  sourceOptionId: number | null;
+  sourceOptionName: string | null;
+  sourceDetail: string | null;
+  originalFileName: string;
+  storedFileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  status: 'Pending' | 'Approved' | 'Discarded' | string;
+  batchId: string | null;
+  batchName: string | null;
+  uploadedByUserId: number | null;
+  uploadedByUserName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CandidateDraftListItem {
+  id: number;
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  currentTitle: string | null;
+  relevantExperience: string | null;
+  skills: string | null;
+  roleAppliedOptionId: number | null;
+  roleAppliedOptionName: string | null;
+  originalFileName: string;
+  storedFileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  status: 'Pending' | 'Approved' | 'Discarded' | string;
+  batchId: string | null;
+  batchName: string | null;
+  createdAt: string;
+}
+
+export interface UpdateCandidateDraftRequest {
+  fullName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  currentTitle?: string | null;
+  relevantExperience?: string | null;
+  skills?: string | null;
+  summary?: string | null;
+  linkedInUrl?: string | null;
+  githubUrl?: string | null;
+  portfolioUrl?: string | null;
+  roleAppliedOptionId?: number | null;
+  sourceOptionId?: number | null;
+  sourceDetail?: string | null;
+}
+
+export interface ApproveCandidateDraftRequest {
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  currentTitle?: string | null;
+  relevantExperience?: string;
+  skills?: string | null;
+  summary?: string | null;
+  linkedInUrl?: string | null;
+  githubUrl?: string | null;
+  portfolioUrl?: string | null;
+  roleAppliedOptionId: number;
+  sourceOptionId?: number | null;
+  sourceDetail?: string | null;
+  skillOptionIds?: number[];
+  isReferred?: boolean;
+  referenceName?: string | null;
+  referenceEmail?: string | null;
+  referenceEmployeeId?: string | null;
+}
+
+export interface BulkApproveDraftsRequest {
+  draftIds: number[];
+  defaultRoleAppliedOptionId?: number;
+  defaultSourceOptionId?: number;
+  defaultRelevantExperience?: string;
+}
+
+export interface BulkDiscardDraftsRequest {
+  draftIds: number[];
+}
+
+export interface DraftBatchSummary {
+  batchId: string;
+  batchName: string;
+  totalDrafts: number;
+  pendingDrafts: number;
+  approvedDrafts: number;
+  discardedDrafts: number;
+  createdAt: string;
+}
+
+export interface DraftsFilterParams {
+  status?: string;
+  batchId?: string;
+  roleId?: number;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  cursor?: number;
+}
+
+export interface PagedDraftsResult {
+  items: CandidateDraftListItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalPending: number;
+  totalApproved: number;
+  totalDiscarded: number;
+  nextCursor: number | null;
 }
 
 export interface CreateCandidatePayload {

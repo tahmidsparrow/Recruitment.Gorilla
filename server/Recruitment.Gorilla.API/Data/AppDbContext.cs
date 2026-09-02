@@ -31,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<OfferApproval> OfferApprovals => Set<OfferApproval>();
     public DbSet<EvaluationRubric> EvaluationRubrics => Set<EvaluationRubric>();
     public DbSet<RubricCriterion> RubricCriteria => Set<RubricCriterion>();
+    public DbSet<CandidateDraft> CandidateDrafts => Set<CandidateDraft>();
 
     /// <summary>
     /// Marks every DateTime coming out of MySQL as UTC — see <see cref="UtcDateTimeConverter"/>.
@@ -552,6 +553,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 new RubricCriterion { Id = 11, EvaluationRubricId = 1, SectionName = "Cultural Fit & Motivation", Key = "MotivationEnthusiasm", Label = "Motivation & Enthusiasm", Hint = "Interest in the role/company", Weight = 1.0, SortOrder = 11 },
                 new RubricCriterion { Id = 12, EvaluationRubricId = 1, SectionName = "Cultural Fit & Motivation", Key = "TeamDynamics", Label = "Team Dynamics", Hint = "Collaborative vs. independent style", Weight = 1.0, SortOrder = 12 }
             );
+        });
+
+        modelBuilder.Entity<CandidateDraft>(e =>
+        {
+            e.HasKey(d => d.Id);
+            e.Property(d => d.FullName).HasMaxLength(200);
+            e.Property(d => d.Email).HasMaxLength(200);
+            e.Property(d => d.Phone).HasMaxLength(50);
+            e.Property(d => d.CurrentTitle).HasMaxLength(200);
+            e.Property(d => d.RelevantExperience).HasMaxLength(100);
+            e.Property(d => d.LinkedInUrl).HasMaxLength(500);
+            e.Property(d => d.GithubUrl).HasMaxLength(500);
+            e.Property(d => d.PortfolioUrl).HasMaxLength(500);
+            e.Property(d => d.OriginalFileName).HasMaxLength(255).IsRequired();
+            e.Property(d => d.StoredFileName).HasMaxLength(255).IsRequired();
+            e.Property(d => d.FileType).HasMaxLength(20).HasDefaultValue("PDF");
+            e.Property(d => d.Status).HasMaxLength(50).HasDefaultValue("Pending");
+            e.Property(d => d.BatchId).HasMaxLength(100);
+            e.Property(d => d.BatchName).HasMaxLength(200);
+
+            e.HasIndex(d => d.Status);
+            e.HasIndex(d => d.BatchId);
+            e.HasIndex(d => d.UploadedByUserId);
+            e.HasIndex(d => d.CreatedAt);
+
+            e.HasOne(d => d.RoleAppliedOption)
+             .WithMany()
+             .HasForeignKey(d => d.RoleAppliedOptionId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(d => d.SourceOption)
+             .WithMany()
+             .HasForeignKey(d => d.SourceOptionId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(d => d.UploadedByUser)
+             .WithMany()
+             .HasForeignKey(d => d.UploadedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

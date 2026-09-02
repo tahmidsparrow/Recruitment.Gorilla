@@ -49,6 +49,14 @@ import type {
   OfferMetrics,
   AnalyticsFilterParams,
   RecruitingAnalyticsSummary,
+  CandidateDraft,
+  DraftBatchSummary,
+  DraftsFilterParams,
+  PagedDraftsResult,
+  UpdateCandidateDraftRequest,
+  ApproveCandidateDraftRequest,
+  BulkApproveDraftsRequest,
+  BulkDiscardDraftsRequest,
 } from '../types';
 
 // Same-origin path, built from import.meta.env.BASE_URL ("/" locally, where the
@@ -191,14 +199,76 @@ export const uploadCV = async (
   file: File,
   batchId?: string,
   fileIndex?: number,
-  totalFiles?: number
+  totalFiles?: number,
+  batchName?: string
 ): Promise<CVDraft> => {
   const form = new FormData();
   form.append('file', file);
   if (batchId) form.append('batchId', batchId);
+  if (batchName) form.append('batchName', batchName);
   if (fileIndex != null) form.append('fileIndex', fileIndex.toString());
   if (totalFiles != null) form.append('totalFiles', totalFiles.toString());
   const { data } = await api.post<CVDraft>('/cvupload', form);
+  return data;
+};
+
+// Candidate Drafts Staging & Review API
+export const getCandidateDrafts = async (params?: DraftsFilterParams): Promise<PagedDraftsResult> => {
+  const { data } = await api.get<PagedDraftsResult>('/candidate-drafts', { params });
+  return data;
+};
+
+export const getCandidateDraft = async (id: number): Promise<CandidateDraft> => {
+  const { data } = await api.get<CandidateDraft>(`/candidate-drafts/${id}`);
+  return data;
+};
+
+export const getDraftBatches = async (): Promise<DraftBatchSummary[]> => {
+  const { data } = await api.get<DraftBatchSummary[]>('/candidate-drafts/batches');
+  return data;
+};
+
+export const updateCandidateDraft = async (
+  id: number,
+  payload: UpdateCandidateDraftRequest
+): Promise<CandidateDraft> => {
+  const { data } = await api.put<CandidateDraft>(`/candidate-drafts/${id}`, payload);
+  return data;
+};
+
+export const approveCandidateDraft = async (
+  id: number,
+  payload: ApproveCandidateDraftRequest
+): Promise<{ candidateId: number; message: string }> => {
+  const { data } = await api.post<{ candidateId: number; message: string }>(
+    `/candidate-drafts/${id}/approve`,
+    payload
+  );
+  return data;
+};
+
+export const bulkApproveCandidateDrafts = async (
+  payload: BulkApproveDraftsRequest
+): Promise<{ approvedCount: number; candidateIds: number[] }> => {
+  const { data } = await api.post<{ approvedCount: number; candidateIds: number[] }>(
+    '/candidate-drafts/bulk-approve',
+    payload
+  );
+  return data;
+};
+
+export const discardCandidateDraft = async (id: number): Promise<{ message: string }> => {
+  const { data } = await api.post<{ message: string }>(`/candidate-drafts/${id}/discard`);
+  return data;
+};
+
+export const bulkDiscardCandidateDrafts = async (
+  payload: BulkDiscardDraftsRequest
+): Promise<{ discardedCount: number }> => {
+  const { data } = await api.post<{ discardedCount: number }>(
+    '/candidate-drafts/bulk-discard',
+    payload
+  );
   return data;
 };
 
