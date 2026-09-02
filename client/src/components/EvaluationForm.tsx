@@ -532,7 +532,7 @@ export default function EvaluationForm({
         show={confirmSubmit}
         title="Submit evaluation?"
         confirmLabel="Yes, submit"
-        confirmVariant="primary"
+        confirmVariant="default"
         onConfirm={() => mutation.mutate(true)}
         onCancel={() => setConfirmSubmit(false)}
         pending={mutation.isPending}

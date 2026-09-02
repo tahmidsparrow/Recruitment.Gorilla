@@ -1,12 +1,29 @@
 import type { ReactNode } from 'react';
-import { Alert, Button, Modal } from 'react-bootstrap';
+
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 /**
  * Confirmation dialog for a destructive action. Replaces the near-identical
- * delete modal in CandidatesPage, UsersPage and ConfigurationPage.
+ * delete modal that CandidatesPage, UsersPage and ConfigurationPage each had
+ * their own copy of.
  *
- * `show` is derived from the caller's "what am I deleting" state rather than a
- * separate boolean, so the two can't drift out of step.
+ * `show` is derived from the caller's "what am I deleting" state rather than
+ * a separate boolean, so the two can't drift out of step.
+ *
+ * This is the ONE place `variant="destructive"` is used — a filled red button.
+ * Everywhere else a delete is offered (a row's overflow menu, a page header)
+ * it is a ghost that only turns red on hover, so the alarm is spent at the
+ * moment of danger rather than on every row of every list.
  */
 export default function ConfirmModal({
   show,
@@ -14,7 +31,7 @@ export default function ConfirmModal({
   children,
   confirmLabel = 'Delete',
   pendingLabel,
-  confirmVariant = 'danger',
+  confirmVariant = 'destructive',
   pending = false,
   error,
   onConfirm,
@@ -31,7 +48,7 @@ export default function ConfirmModal({
    * explicitly whenever the label is more than one word.
    */
   pendingLabel?: string;
-  confirmVariant?: 'danger' | 'primary';
+  confirmVariant?: 'destructive' | 'default';
   pending?: boolean;
   /** Shown inside the dialog, so the failure appears where the action was taken. */
   error?: ReactNode;
@@ -41,28 +58,30 @@ export default function ConfirmModal({
   const busyLabel = pendingLabel ?? `${confirmLabel.replace(/e$/, '')}ing…`;
 
   return (
-    <Modal show={show} onHide={onCancel} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="form-stack">
-          <div>{children}</div>
-          {error && (
-            <Alert variant="danger" className="mb-0">
-              {error}
-            </Alert>
-          )}
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button variant={confirmVariant} disabled={pending} onClick={onConfirm}>
-          {pending ? busyLabel : confirmLabel}
-        </Button>
-      </Modal.Footer>
-    </Modal>
+    <Dialog open={show} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="flex flex-col gap-3">
+          {/* The body IS the description, so it is announced with the title
+              rather than being an unlabelled region after it. */}
+          <DialogDescription asChild>
+            <div className="text-[length:var(--text-md)] leading-[var(--leading-normal)] text-text-soft">
+              {children}
+            </div>
+          </DialogDescription>
+          {error && <Alert variant="danger">{error}</Alert>}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant={confirmVariant} disabled={pending} onClick={onConfirm}>
+            {pending ? busyLabel : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

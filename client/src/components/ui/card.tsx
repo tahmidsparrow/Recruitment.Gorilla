@@ -1,4 +1,5 @@
 import type * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
 /**
@@ -37,9 +38,16 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
+/** `asChild` so a section can render a real <h2>/<h3> — the heading LEVEL is
+ *  the caller's semantic choice, the size is this component's visual one. */
+function CardTitle({
+  className,
+  asChild = false,
+  ...props
+}: React.ComponentProps<'div'> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : 'div';
   return (
-    <div
+    <Comp
       data-slot="card-title"
       className={cn(
         'text-[length:var(--text-lg)] font-bold tracking-[var(--tracking-tight)] leading-[var(--leading-tight)]',

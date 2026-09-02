@@ -1,4 +1,13 @@
 import type { ReactNode } from 'react';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 /**
  * A titled section on a card surface — the workhorse of the dashboard, the
@@ -6,12 +15,12 @@ import type { ReactNode } from 'react';
  *
  * This replaces the `<Card><Card.Body><div className="metric-label mb-3">…`
  * block that appeared eleven times across the app. Beyond the duplication,
- * that pattern used `.metric-label` (a 13px muted micro-label, meant for
- * naming a single figure) as the title of a whole section, so the heading over
- * a chart looked exactly like the caption under a number. `.section-title` is
- * a real heading and restores the page → section → content hierarchy.
+ * that pattern used `.metric-label` (a small muted caption, meant for naming a
+ * single figure) as the title of a whole section, so the heading over a chart
+ * looked exactly like the caption under a number. A real heading restores the
+ * page → section → content hierarchy.
  *
- * `flush` is for a section whose content is a table or a list that should meet
+ * `flush` is for a section whose content is a table or list that should meet
  * the card's border rather than sit inside its padding.
  */
 export default function SectionCard({
@@ -35,17 +44,23 @@ export default function SectionCard({
   const hasHead = Boolean(title || description || actions);
 
   return (
-    <section className={`pulse-card${flush ? ' pulse-card--flush' : ''} ${className}`.trim()}>
+    <Card className={cn(flush && 'overflow-hidden', className)}>
       {hasHead && (
-        <div className="pulse-card__head">
+        <CardHeader>
           <div className="min-w-0">
-            {title && <Heading className="section-title">{title}</Heading>}
-            {description && <p className="section-description">{description}</p>}
+            {title && (
+              <CardTitle asChild>
+                <Heading>{title}</Heading>
+              </CardTitle>
+            )}
+            {description && <CardDescription className="mt-0.5">{description}</CardDescription>}
           </div>
-          {actions && <div className="section-head__actions">{actions}</div>}
-        </div>
+          {actions && <CardAction>{actions}</CardAction>}
+        </CardHeader>
       )}
-      <div className="pulse-card__body">{children}</div>
-    </section>
+      <CardContent className={cn(flush && 'px-0 pb-0', !hasHead && 'pt-[var(--card-pad)]')}>
+        {children}
+      </CardContent>
+    </Card>
   );
 }

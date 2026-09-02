@@ -1,14 +1,16 @@
-import { initialsOf } from '../../utils/initials';
-import { avatarTone } from '../../utils/avatarTone';
-import { useTheme } from '../../theme/ThemeContext';
+import { Avatar as AvatarRoot, AvatarFallback } from '@/components/ui/avatar';
+import { initialsOf } from '@/utils/initials';
+import { avatarTone } from '@/utils/avatarTone';
+import { useTheme } from '@/theme/ThemeContext';
+import { cn } from '@/lib/utils';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'hero';
 
 const SIZE_CLASS: Record<AvatarSize, string> = {
-  sm: 'avatar avatar--sm',
-  md: 'avatar',
-  lg: 'avatar avatar--lg',
-  hero: 'avatar avatar--hero',
+  sm: 'size-6 [&_[data-slot=avatar-fallback]]:text-[length:var(--text-2xs)]',
+  md: 'size-7',
+  lg: 'size-9 [&_[data-slot=avatar-fallback]]:text-[length:var(--text-sm)]',
+  hero: 'size-11 [&_[data-slot=avatar-fallback]]:text-[length:var(--text-lg)]',
 };
 
 /**
@@ -16,11 +18,10 @@ const SIZE_CLASS: Record<AvatarSize, string> = {
  *
  * This replaces the four hand-rolled copies that existed — the status
  * timeline, the interview page, the sidebar user card and the job-opening
- * recruiter stack each built their own `<span className="avatar">` with their
- * own initials call — and, more importantly, it is what puts a face on the
- * candidate list. The old table was six columns of grey text; the identity
- * column now leads with a coloured disc, which is what makes a 56px row worth
- * its height.
+ * recruiter stack each built their own — and, more importantly, it is what
+ * puts a face on the candidate list. The old table was six columns of grey
+ * text; the identity column now leads with a coloured disc, which is what
+ * makes a 44px row worth more than a bare one.
  *
  * `name` is both the label and the tone seed, so the same person is the same
  * colour on every screen.
@@ -41,12 +42,12 @@ export default function Avatar({
   const label = name || email || '';
 
   return (
-    <span
-      className={`${SIZE_CLASS[size]} ${className}`.trim()}
+    <AvatarRoot
+      className={cn(SIZE_CLASS[size], className)}
       style={avatarTone(label, theme === 'dark')}
       aria-hidden="true"
     >
-      {initialsOf(name, email)}
-    </span>
+      <AvatarFallback>{initialsOf(name, email)}</AvatarFallback>
+    </AvatarRoot>
   );
 }

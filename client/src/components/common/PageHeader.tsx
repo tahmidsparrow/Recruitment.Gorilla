@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 type PageHeaderProps = {
   /**
@@ -15,31 +16,46 @@ type PageHeaderProps = {
 };
 
 /**
- * The band above a page's content. Replaces the
- * `d-flex justify-content-between align-items-center mb-4` + `<h2>` block that
- * was copy-pasted across six pages.
+ * The band above a page's content.
  *
- * Note the `--actions-only` case: most pages pass actions and no title,
- * because the topbar owns the title. Rendering an empty left-hand `<div>` to
- * push the buttons right leaves a zero-width flex child that still takes part
- * in wrapping, so the buttons could drop to their own line while the empty div
- * held the first. Switching the justification instead is what actually keeps
- * a lone action cluster on the right.
+ * Note the actions-only case: most pages pass actions and no title, because
+ * the topbar owns the title. Rendering an empty left-hand div to push the
+ * buttons right leaves a zero-width flex child that still takes part in
+ * wrapping, so the buttons could drop to their own line while the empty div
+ * held the first. Switching the justification instead is what actually keeps a
+ * lone action cluster on the right.
  */
 export default function PageHeader({ title, eyebrow, description, actions }: PageHeaderProps) {
   const hasText = Boolean(title || eyebrow || description);
   if (!hasText && !actions) return null;
 
   return (
-    <div className={`page-header${!hasText ? ' page-header--actions-only' : ''}`}>
+    <div
+      className={cn(
+        'flex min-h-[var(--control-h)] flex-wrap items-center gap-4',
+        hasText ? 'justify-between' : 'justify-end',
+      )}
+    >
       {hasText && (
-        <div className="page-header__text">
-          {eyebrow && <span className="page-eyebrow">{eyebrow}</span>}
-          {title && <h2>{title}</h2>}
-          {description && <p>{description}</p>}
+        <div className="min-w-0">
+          {eyebrow && (
+            <span className="block text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-caps)] text-muted-foreground">
+              {eyebrow}
+            </span>
+          )}
+          {title && (
+            <h2 className="text-[length:var(--text-2xl)] font-bold leading-[var(--leading-tight)] tracking-[var(--tracking-display)] [overflow-wrap:anywhere]">
+              {title}
+            </h2>
+          )}
+          {description && (
+            <p className="mt-0.5 max-w-[70ch] text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
+              {description}
+            </p>
+          )}
         </div>
       )}
-      {actions && <div className="page-header__actions">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }

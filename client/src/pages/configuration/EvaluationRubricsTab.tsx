@@ -702,7 +702,7 @@ export default function EvaluationRubricsTab() {
           show={!!deleteTarget}
           title={`Delete Rubric: ${deleteTarget.name}?`}
           confirmLabel="Delete Rubric"
-          confirmVariant="danger"
+          confirmVariant="destructive"
           onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
           onCancel={() => setDeleteTarget(null)}
           pending={deleteMutation.isPending}
