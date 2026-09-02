@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Col, Form, Modal, Row } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   addStatus,
   getActiveInterviewTypes,
@@ -161,14 +169,15 @@ export default function AddStatusModal({
   };
 
   return (
-    <Modal show={show} onHide={handleHide} centered size="lg">
+    <Dialog open={show} onOpenChange={(open) => { if (!open) { (handleHide)(); } }}>
+<DialogContent className="sm:max-w-2xl">
       <form onSubmit={handleSubmit} noValidate>
-        <Modal.Header closeButton>
-          <Modal.Title>
+        <DialogHeader>
+          <DialogTitle>
             {candidateName ? `Advance Status — ${candidateName}` : 'Add a status'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
           <p className="form-help mb-4">
             Moves the candidate to the next stage and records who changed it.
           </p>
@@ -177,8 +186,8 @@ export default function AddStatusModal({
               No next status is available from the candidate&apos;s current status.
             </div>
           )}
-          <Row className="g-3">
-            <Col md={12}>
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12 md:col-span-12">
               <Label className="mb-1">
                 New status <Req />
               </Label>
@@ -201,10 +210,10 @@ export default function AddStatusModal({
                 )}
               </Form.Select>
               {fieldErrors.status ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.status}</p> : null}
-            </Col>
+            </div>
 
             {requiresTaskDetails && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">
                   Task details <Req />
                 </Label>
@@ -218,11 +227,11 @@ export default function AddStatusModal({
                   aria-invalid={!!fieldErrors.taskDetails || undefined}
                 />
                 {fieldErrors.taskDetails ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.taskDetails}</p> : null}
-              </Col>
+              </div>
             )}
 
             {requiresSubmissionUrl && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">
                   Submission link <Req />
                 </Label>
@@ -236,11 +245,11 @@ export default function AddStatusModal({
                   aria-invalid={!!fieldErrors.submissionUrl || undefined}
                 />
                 {fieldErrors.submissionUrl ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.submissionUrl}</p> : null}
-              </Col>
+              </div>
             )}
 
             {requiresInterviewAt && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">
                   Interview date/time <Req />
                 </Label>
@@ -254,11 +263,11 @@ export default function AddStatusModal({
                   aria-invalid={!!fieldErrors.interviewAt || undefined}
                 />
                 {fieldErrors.interviewAt ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.interviewAt}</p> : null}
-              </Col>
+              </div>
             )}
 
             {requiresInterviewAt && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">Duration</Label>
                 <Form.Select
                   value={durationMinutes}
@@ -272,11 +281,11 @@ export default function AddStatusModal({
                   ))}
                 </Form.Select>
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Sets the end time on the calendar invite sent to interviewers.</p>
-              </Col>
+              </div>
             )}
 
             {requiresInterviewers && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">Interview types</Label>
                 <SearchableMultiSelect
                   options={interviewTypes.map((t) => ({ id: t.id, name: t.name }))}
@@ -285,11 +294,11 @@ export default function AddStatusModal({
                   placeholder="Tag this interview (Technical, HR, 1st Level…)"
                 />
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Optional tags shown on the status history and interview page.</p>
-              </Col>
+              </div>
             )}
 
             {requiresInterviewers && (
-              <Col md={12}>
+              <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">
                   Interviewers <Req />
                 </Label>
@@ -306,10 +315,10 @@ export default function AddStatusModal({
                   <div className="text-danger small mt-1">{fieldErrors.interviewers}</div>
                 )}
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Assigned users are notified and can fill the evaluation form.</p>
-              </Col>
+              </div>
             )}
 
-            <Col md={12}>
+            <div className="col-span-12 md:col-span-12">
               {requiresComment ? (
                 <Label className="mb-1">
                   Comment <Req />
@@ -331,10 +340,10 @@ export default function AddStatusModal({
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Shared with the assigned interviewers on the interview page.</p>
               )}
               {fieldErrors.comment ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.comment}</p> : null}
-            </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
           <Button variant="outline" onClick={handleHide}>
             Cancel
           </Button>
@@ -347,8 +356,9 @@ export default function AddStatusModal({
               'Save status'
             )}
           </Button>
-        </Modal.Footer>
+        </DialogFooter>
       </form>
-    </Modal>
+    </DialogContent>
+</Dialog>
   );
 }

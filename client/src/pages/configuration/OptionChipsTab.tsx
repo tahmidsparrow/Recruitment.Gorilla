@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Tags, X } from 'lucide-react';
 import { useToast } from '../../components/ToastStack';
@@ -14,6 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export interface OptionApi {
   list: (includeInactive: boolean) => Promise<Opt[]>;
@@ -215,7 +222,8 @@ export default function OptionChipsTab({
         deactivated instead — hidden from new forms but kept on existing records.
       </ConfirmModal>
 
-      <Modal show={editing !== null} onHide={() => setEditing(null)} centered>
+      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) { (() => setEditing(null))(); } }}>
+<DialogContent>
         <form
           noValidate
           onSubmit={(e) => {
@@ -224,10 +232,10 @@ export default function OptionChipsTab({
             updateMutation.mutate();
           }}
         >
-          <Modal.Header closeButton>
-            <Modal.Title>Edit {noun}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+          <DialogHeader>
+            <DialogTitle>Edit {noun}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             <div className="form-stack">
               <div className="flex flex-col gap-1.5">
                 <Label>Name <span className="required-star" aria-hidden="true">*</span></Label>
@@ -241,15 +249,16 @@ export default function OptionChipsTab({
               </div>
               <CheckboxField id={`${queryKey}-active`} label="Active — shown in candidate forms" checked={editActive} onCheckedChange={(checked) => setEditActive(checked)} />
             </div>
-          </Modal.Body>
-          <Modal.Footer>
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
             <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
-          </Modal.Footer>
+          </DialogFooter>
         </form>
-      </Modal>
+      </DialogContent>
+</Dialog>
     </>
   );
 }

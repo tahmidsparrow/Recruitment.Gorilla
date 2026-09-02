@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Col, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -195,8 +194,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         </div>
       )}
 
-      <Row className="g-3">
-        <Col md={6}>
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-6">
           <Label>Full name <Req /></Label>
           <Input
             value={fullName}
@@ -204,8 +203,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             aria-invalid={!!fieldErrors.fullName || undefined}
           />
           {fieldErrors.fullName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.fullName}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Email <Req /></Label>
           <Input
             type="email"
@@ -214,16 +213,16 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             aria-invalid={!!fieldErrors.email || undefined}
           />
           {fieldErrors.email ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.email}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Phone</Label>
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Current title</Label>
           <Input value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Relevant Experience <Req /></Label>
           <Input
             value={relevantExperience}
@@ -232,20 +231,20 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             aria-invalid={!!fieldErrors.relevantExperience || undefined}
           />
           {fieldErrors.relevantExperience ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.relevantExperience}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>LinkedIn URL</Label>
           <Input value={linkedInUrl} onChange={(e) => setLinkedInUrl(e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>GitHub URL</Label>
           <Input value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Portfolio website</Label>
           <Input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Role applied for <Req /></Label>
           <SearchableSelect
             options={roleOptions}
@@ -257,8 +256,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Source</Label>
           <SearchableSelect
             options={sourceOptions}
@@ -266,16 +265,16 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             onChange={setSourceOptionId}
             placeholder="Where did this candidate come from?"
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Source detail</Label>
           <Input
             value={sourceDetail}
             onChange={(e) => setSourceDetail(e.target.value)}
             placeholder="Agency, campaign or board name"
           />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Skills</Label>
           <SearchableMultiSelect
             options={skillOptions}
@@ -283,22 +282,22 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             onChange={setSkillOptionIds}
             placeholder="Search skills…"
           />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Skills summary (from CV)</Label>
           <Textarea rows={2} value={skills} onChange={(e) => setSkills(e.target.value)} />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Summary</Label>
           <Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <div className="field-divider" />
           <CheckboxField id="is-referred" label="This candidate has been referred" checked={isReferred} onCheckedChange={(checked) => setIsReferred(checked)} />
-        </Col>
+        </div>
         {isReferred && (
           <>
-            <Col md={6}>
+            <div className="col-span-12 md:col-span-6">
               <Label>Reference name <Req /></Label>
               <Input
                 value={referenceName}
@@ -306,8 +305,8 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
                 aria-invalid={!!fieldErrors.referenceName || undefined}
               />
               {fieldErrors.referenceName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceName}</p> : null}
-            </Col>
-            <Col md={6}>
+            </div>
+            <div className="col-span-12 md:col-span-6">
               <Label>Reference email <Req /></Label>
               <Input
                 type="email"
@@ -316,17 +315,17 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
                 aria-invalid={!!fieldErrors.referenceEmail || undefined}
               />
               {fieldErrors.referenceEmail ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceEmail}</p> : null}
-            </Col>
-            <Col md={6}>
+            </div>
+            <div className="col-span-12 md:col-span-6">
               <Label>Employee ID</Label>
               <Input
                 value={referenceEmployeeId}
                 onChange={(e) => setReferenceEmployeeId(e.target.value)}
               />
-            </Col>
+            </div>
           </>
         )}
-      </Row>
+      </div>
 
       <div className="form-actions">
         <Button type="submit" disabled={saving}>

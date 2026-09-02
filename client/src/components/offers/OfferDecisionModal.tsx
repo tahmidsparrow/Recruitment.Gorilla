@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Modal } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { recordOfferDecision } from '../../services/api';
@@ -7,6 +7,14 @@ import type { Offer } from '../../types';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface OfferDecisionModalProps {
   candidateId: number;
@@ -59,13 +67,14 @@ export default function OfferDecisionModal({
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered backdrop="static">
+    <Dialog open={show} onOpenChange={(open) => { if (!open) { (onHide)(); } }}>
+<DialogContent>
       <form onSubmit={handleSubmit}>
-        <Modal.Header closeButton>
-          <Modal.Title>Record Candidate Offer Decision</Modal.Title>
-        </Modal.Header>
+        <DialogHeader>
+          <DialogTitle>Record Candidate Offer Decision</DialogTitle>
+        </DialogHeader>
 
-        <Modal.Body className="p-3">
+        <DialogBody>
           {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
 
           <div className="mb-3">
@@ -108,9 +117,9 @@ export default function OfferDecisionModal({
               ? 'This will update the candidate status to "Offer Accepted". You can subsequently confirm their start and transition them to "Hired".'
               : 'This will update the candidate status to "Offer Declined" and record the reason in their timeline history.'}
           </p>
-        </Modal.Body>
+        </DialogBody>
 
-        <Modal.Footer>
+        <DialogFooter>
           <Button variant="secondary" onClick={onHide} disabled={mutation.isPending}>
             Cancel
           </Button>
@@ -121,8 +130,9 @@ export default function OfferDecisionModal({
             >
             {mutation.isPending ? 'Recording...' : `Confirm ${decision}`}
           </Button>
-        </Modal.Footer>
+        </DialogFooter>
       </form>
-    </Modal>
+    </DialogContent>
+</Dialog>
   );
 }

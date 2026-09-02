@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Col, Row, Modal, Offcanvas } from 'react-bootstrap';
+import { Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ClipboardList, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -34,6 +34,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 
@@ -256,18 +263,13 @@ export default function CandidateDetailPage() {
 
       {/* Full CV Preview Modal */}
       {cvPreview && (
-        <Modal
-          show={true}
-          onHide={() => setCvPreview(null)}
-          dialogClassName="cv-viewer-modal"
-          size="lg"
-          centered
-        >
-          <Modal.Header closeButton className="d-flex justify-content-between align-items-center">
-            <Modal.Title className="h6 d-flex align-items-center gap-2 mb-0">
+        <Dialog open={true} onOpenChange={(open) => { if (!open) { (() => setCvPreview(null))(); } }}>
+<DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
               <FileText size={16} className="text-primary" />
               <span className="text-truncate">{cvPreview.fileName}</span>
-            </Modal.Title>
+            </DialogTitle>
             <Button
               size="sm"
               variant="outline"
@@ -276,8 +278,8 @@ export default function CandidateDetailPage() {
             >
               Download
             </Button>
-          </Modal.Header>
-          <Modal.Body className="p-0 d-flex flex-column" style={{ height: '75vh' }}>
+          </DialogHeader>
+          <DialogBody>
             {cvPreview.contentType.includes('pdf') ? (
               <iframe
                 title="CV Preview"
@@ -297,8 +299,9 @@ export default function CandidateDetailPage() {
                 </Button>
               </div>
             )}
-          </Modal.Body>
-        </Modal>
+          </DialogBody>
+        </DialogContent>
+</Dialog>
       )}
 
       {/* Status History Slide-over Offcanvas Drawer */}
@@ -467,8 +470,8 @@ function ProfileEditor({
   return (
     <form onSubmit={handleSubmit} noValidate>
       <fieldset className="border-0 p-0 m-0">
-      <Row className="g-3">
-        <Col md={6}>
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-6">
           <Label>Full name <Req /></Label>
           <Input
             value={form.fullName}
@@ -476,8 +479,8 @@ function ProfileEditor({
             aria-invalid={!!fieldErrors.fullName || undefined}
           />
           {fieldErrors.fullName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.fullName}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Email <Req /></Label>
           <Input
             value={form.email}
@@ -485,27 +488,27 @@ function ProfileEditor({
             aria-invalid={!!fieldErrors.email || undefined}
           />
           {fieldErrors.email ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.email}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Phone</Label>
           <Input value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Location</Label>
           <Input
             value={form.location ?? ''}
             placeholder="e.g. Dhaka, Bangladesh"
             onChange={(e) => set('location', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Current title</Label>
           <Input
             value={form.currentTitle ?? ''}
             onChange={(e) => set('currentTitle', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Relevant Experience <Req /></Label>
           <Input
             value={form.relevantExperience ?? ''}
@@ -514,60 +517,60 @@ function ProfileEditor({
             aria-invalid={!!fieldErrors.relevantExperience || undefined}
           />
           {fieldErrors.relevantExperience ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.relevantExperience}</p> : null}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>LinkedIn URL</Label>
           <Input
             value={form.linkedInUrl ?? ''}
             onChange={(e) => set('linkedInUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>GitHub URL</Label>
           <Input
             value={form.githubUrl ?? ''}
             onChange={(e) => set('githubUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>GitLab URL</Label>
           <Input
             value={form.gitLabUrl ?? ''}
             onChange={(e) => set('gitLabUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>LeetCode Profile</Label>
           <Input
             value={form.leetCodeUrl ?? ''}
             placeholder="https://leetcode.com/u/..."
             onChange={(e) => set('leetCodeUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Codeforces Profile</Label>
           <Input
             value={form.codeforcesUrl ?? ''}
             placeholder="https://codeforces.com/profile/..."
             onChange={(e) => set('codeforcesUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>HackerRank Profile</Label>
           <Input
             value={form.hackerRankUrl ?? ''}
             placeholder="https://hackerrank.com/profile/..."
             onChange={(e) => set('hackerRankUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Portfolio website</Label>
           <Input
             value={form.portfolioUrl ?? ''}
             onChange={(e) => set('portfolioUrl', e.target.value)}
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Role applied for <Req /></Label>
           <SearchableSelect
             options={roleOptions}
@@ -579,8 +582,8 @@ function ProfileEditor({
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Source</Label>
           <SearchableSelect
             options={sourceOptions}
@@ -588,16 +591,16 @@ function ProfileEditor({
             onChange={(sourceOptionId) => setForm((f) => ({ ...f, sourceOptionId }))}
             placeholder="Where did this candidate come from?"
           />
-        </Col>
-        <Col md={6}>
+        </div>
+        <div className="col-span-12 md:col-span-6">
           <Label>Source detail</Label>
           <Input
             value={form.sourceDetail ?? ''}
             onChange={(e) => set('sourceDetail', e.target.value)}
             placeholder="Agency, campaign or board name"
           />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Skills</Label>
           <SearchableMultiSelect
             options={skillOptions}
@@ -605,31 +608,31 @@ function ProfileEditor({
             onChange={setSkillIds}
             placeholder="Search skills…"
           />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Skills summary (from CV)</Label>
           <Textarea
             rows={2}
             value={form.skills ?? ''}
             onChange={(e) => set('skills', e.target.value)}
           />
-        </Col>
-        <Col md={12}>
+        </div>
+        <div className="col-span-12 md:col-span-12">
           <Label>Summary</Label>
           <Textarea
             rows={3}
             value={form.summary ?? ''}
             onChange={(e) => set('summary', e.target.value)}
           />
-        </Col>
+        </div>
 
-        <Col md={12}>
+        <div className="col-span-12 md:col-span-12">
           <hr className="mb-2" />
           <CheckboxField id="is-referred-edit" label="This candidate has been referred" checked={form.isReferred} onCheckedChange={(checked) => setForm((f) => ({ ...f, isReferred: checked }))} />
-        </Col>
+        </div>
         {form.isReferred && (
           <>
-            <Col md={6}>
+            <div className="col-span-12 md:col-span-6">
               <Label>Reference name <Req /></Label>
               <Input
                 value={form.referenceName ?? ''}
@@ -637,8 +640,8 @@ function ProfileEditor({
                 aria-invalid={!!fieldErrors.referenceName || undefined}
               />
               {fieldErrors.referenceName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceName}</p> : null}
-            </Col>
-            <Col md={6}>
+            </div>
+            <div className="col-span-12 md:col-span-6">
               <Label>Reference email <Req /></Label>
               <Input
                 type="email"
@@ -647,17 +650,17 @@ function ProfileEditor({
                 aria-invalid={!!fieldErrors.referenceEmail || undefined}
               />
               {fieldErrors.referenceEmail ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceEmail}</p> : null}
-            </Col>
-            <Col md={6}>
+            </div>
+            <div className="col-span-12 md:col-span-6">
               <Label>Employee ID</Label>
               <Input
                 value={form.referenceEmployeeId ?? ''}
                 onChange={(e) => set('referenceEmployeeId', e.target.value)}
               />
-            </Col>
+            </div>
           </>
         )}
-      </Row>
+      </div>
       </fieldset>
 
       <div className="form-actions">

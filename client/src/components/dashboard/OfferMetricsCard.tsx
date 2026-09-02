@@ -1,4 +1,4 @@
-import { Card, Row, Col, ProgressBar } from 'react-bootstrap';
+import { Card, ProgressBar } from 'react-bootstrap';
 import { Award, CheckCircle, FileSignature } from 'lucide-react';
 import type { OfferMetrics } from '../../types';
 import { Badge } from '@/components/ui/badge';
@@ -21,36 +21,36 @@ export default function OfferMetricsCard({ metrics }: OfferMetricsCardProps) {
       </Card.Header>
 
       <Card.Body className="p-3">
-        <Row className="g-3 text-center mb-3">
-          <Col xs={6} sm={3}>
+        <div className="grid grid-cols-12 gap-4 text-center mb-3">
+          <div className="col-span-12 col-span-6 sm:col-span-3">
             <div className="p-2 border rounded">
               <div className="text-muted small mb-1">Total Offers</div>
               <div className="fs-5 fw-bold text-primary">{metrics.totalOffers}</div>
             </div>
-          </Col>
-          <Col xs={6} sm={3}>
+          </div>
+          <div className="col-span-12 col-span-6 sm:col-span-3">
             <div className="p-2 border rounded">
               <div className="text-muted small mb-1">Active Offers</div>
               <div className="fs-5 fw-bold text-info">{metrics.activeOffers}</div>
             </div>
-          </Col>
-          <Col xs={6} sm={3}>
+          </div>
+          <div className="col-span-12 col-span-6 sm:col-span-3">
             <div className="p-2 border rounded">
               <div className="text-muted small mb-1">Accepted</div>
               <div className="fs-5 fw-bold text-success d-flex align-items-center justify-content-center gap-1">
                 <CheckCircle size={16} /> {metrics.acceptedOffers}
               </div>
             </div>
-          </Col>
-          <Col xs={6} sm={3}>
+          </div>
+          <div className="col-span-12 col-span-6 sm:col-span-3">
             <div className="p-2 border rounded">
               <div className="text-muted small mb-1">Total Hired</div>
               <div className="fs-5 fw-bold text-success d-flex align-items-center justify-content-center gap-1">
                 <Award size={16} /> {metrics.totalHired}
               </div>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
 
         <div className="mt-2">
           <div className="d-flex justify-content-between align-items-center small mb-1">

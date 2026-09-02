@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Modal } from 'react-bootstrap';
 import {
   Copy,
   FileCheck2,
@@ -28,6 +27,14 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckboxField } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type {
   EvaluationRubric,
   UpsertEvaluationRubricPayload,
@@ -510,22 +517,16 @@ export default function EvaluationRubricsTab() {
       )}
 
       {/* Create / Edit Rubric Modal */}
-      <Modal
-        show={showModal}
-        onHide={() => setShowModal(false)}
-        size="lg"
-        centered
-        backdrop="static"
-        dialogClassName="rubric-editor-dialog"
-      >
+      <Dialog open={showModal} onOpenChange={(open) => { if (!open) { (() => setShowModal(false))(); } }}>
+<DialogContent className="sm:max-w-2xl">
         <form onSubmit={handleFormSubmit}>
-          <Modal.Header closeButton>
-            <Modal.Title>
+          <DialogHeader>
+            <DialogTitle>
               {editingRubric ? `Edit Rubric: ${editingRubric.name}` : 'New Evaluation Scorecard Rubric'}
-            </Modal.Title>
-          </Modal.Header>
+            </DialogTitle>
+          </DialogHeader>
 
-          <Modal.Body style={{ maxHeight: '72vh', overflowY: 'auto' }}>
+          <DialogBody>
             {errorMsg && <Alert variant="danger" className="py-2 small">{errorMsg}</Alert>}
 
             {/* Rubric Top Metadata */}
@@ -672,18 +673,19 @@ export default function EvaluationRubricsTab() {
                 </div>
               ))}
             </div>
-          </Modal.Body>
+          </DialogBody>
 
-          <Modal.Footer>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving...' : 'Save Rubric Scorecard'}
             </Button>
-          </Modal.Footer>
+          </DialogFooter>
         </form>
-      </Modal>
+      </DialogContent>
+</Dialog>
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (

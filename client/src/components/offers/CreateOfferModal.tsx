@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, Modal, Row, Col, InputGroup } from 'react-bootstrap';
+import { Form, InputGroup } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { createOffer, updateOffer } from '../../services/api';
@@ -8,6 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'];
 
@@ -111,13 +119,14 @@ export default function CreateOfferModal({
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered backdrop="static">
+    <Dialog open={show} onOpenChange={(open) => { if (!open) { (onHide)(); } }}>
+<DialogContent>
       <form onSubmit={handleSubmit}>
-        <Modal.Header closeButton>
-          <Modal.Title>{existingOffer ? 'Edit Offer Terms' : 'Draft New Employment Offer'}</Modal.Title>
-        </Modal.Header>
+        <DialogHeader>
+          <DialogTitle>{existingOffer ? 'Edit Offer Terms' : 'Draft New Employment Offer'}</DialogTitle>
+        </DialogHeader>
 
-        <Modal.Body className="p-3">
+        <DialogBody>
           {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
 
           <div className="flex flex-col gap-1.5 mb-3">
@@ -131,8 +140,8 @@ export default function CreateOfferModal({
             />
           </div>
 
-          <Row className="g-2 mb-3">
-            <Col sm={8}>
+          <div className="grid grid-cols-12 gap-2 mb-3">
+            <div className="col-span-12 sm:col-span-8">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Annual Base Salary</Label>
                 <InputGroup>
@@ -147,8 +156,8 @@ export default function CreateOfferModal({
                   />
                 </InputGroup>
               </div>
-            </Col>
-            <Col sm={4}>
+            </div>
+            <div className="col-span-12 sm:col-span-4">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Currency</Label>
                 <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
@@ -159,11 +168,11 @@ export default function CreateOfferModal({
                   ))}
                 </Form.Select>
               </div>
-            </Col>
-          </Row>
+            </div>
+          </div>
 
-          <Row className="g-2 mb-3">
-            <Col sm={6}>
+          <div className="grid grid-cols-12 gap-2 mb-3">
+            <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Signing / Annual Bonus (Optional)</Label>
                 <Input
@@ -175,8 +184,8 @@ export default function CreateOfferModal({
                   onChange={(e) => setBonus(e.target.value)}
                 />
               </div>
-            </Col>
-            <Col sm={6}>
+            </div>
+            <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Equity / Options (Optional)</Label>
                 <Input
@@ -186,11 +195,11 @@ export default function CreateOfferModal({
                   onChange={(e) => setEquity(e.target.value)}
                 />
               </div>
-            </Col>
-          </Row>
+            </div>
+          </div>
 
-          <Row className="g-2 mb-3">
-            <Col sm={6}>
+          <div className="grid grid-cols-12 gap-2 mb-3">
+            <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Proposed Start Date</Label>
                 <Input
@@ -199,8 +208,8 @@ export default function CreateOfferModal({
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-            </Col>
-            <Col sm={6}>
+            </div>
+            <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Offer Expiration Date</Label>
                 <Input
@@ -209,8 +218,8 @@ export default function CreateOfferModal({
                   onChange={(e) => setExpirationDate(e.target.value)}
                 />
               </div>
-            </Col>
-          </Row>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <Label className="small fw-semibold">Additional Terms & Notes</Label>
@@ -221,17 +230,18 @@ export default function CreateOfferModal({
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
-        </Modal.Body>
+        </DialogBody>
 
-        <Modal.Footer>
+        <DialogFooter>
           <Button variant="secondary" onClick={onHide} disabled={mutation.isPending}>
             Cancel
           </Button>
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving...' : existingOffer ? 'Save Changes' : 'Create Offer'}
           </Button>
-        </Modal.Footer>
+        </DialogFooter>
       </form>
-    </Modal>
+    </DialogContent>
+</Dialog>
   );
 }

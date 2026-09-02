@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Col, Row } from 'react-bootstrap';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
@@ -82,8 +81,8 @@ export default function AuditLogPage() {
           height. */}
       <div className="pulse-card">
         <form onSubmit={applyFilters}>
-          <Row className="g-3 align-items-end">
-            <Col xs={12} md={6} lg={3}>
+          <div className="grid grid-cols-12 gap-4 align-items-end">
+            <div className="col-span-12 col-span-12 md:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-entity">Entity type</Label>
               <SearchableDropdown<string>
                 id="audit-entity"
@@ -94,24 +93,24 @@ export default function AuditLogPage() {
                 emptyMessage="No entity type found"
                 clearable
               />
-            </Col>
-            <Col xs={12} md={6} lg={3}>
+            </div>
+            <div className="col-span-12 col-span-12 md:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-action">Action contains</Label>
               <Input id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
-            </Col>
-            <Col xs={12} sm={6} lg={2}>
+            </div>
+            <div className="col-span-12 col-span-12 sm:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-from">From</Label>
               <Input id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </Col>
-            <Col xs={12} sm={6} lg={2}>
+            </div>
+            <div className="col-span-12 col-span-12 sm:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-to">To</Label>
               <Input id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
-            </Col>
-            <Col xs={12} lg={2} className="d-flex gap-2">
+            </div>
+            <div className="col-span-12 col-span-12 lg:col-span-2 d-flex gap-2">
               <Button type="submit" className="flex-grow-1">Filter</Button>
               <Button type="button" variant="outline" onClick={reset}>Reset</Button>
-            </Col>
-          </Row>
+            </div>
+          </div>
         </form>
       </div>
 

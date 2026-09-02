@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { KeyRound, Pencil, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
@@ -21,6 +20,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 /**
  * Roles as pill badges rather than raw Bootstrap `<Badge bg="…">`, which
@@ -290,12 +297,13 @@ export default function UsersPage() {
       )}
 
       {/* Create / edit modal */}
-      <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
+      <Dialog open={showEdit} onOpenChange={(open) => { if (!open) { (() => setShowEdit(false))(); } }}>
+<DialogContent>
         <form onSubmit={submitForm}>
-          <Modal.Header closeButton>
-            <Modal.Title>{editing ? 'Edit user' : 'Add user'}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Edit user' : 'Add user'}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             <div className="form-stack">
               {formError && (
                 <div className="alert-danger-soft" role="alert">
@@ -343,25 +351,27 @@ export default function UsersPage() {
                 <CheckboxField id="user-active" label="Active — can sign in" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               )}
             </div>
-          </Modal.Body>
-          <Modal.Footer>
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setShowEdit(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
-          </Modal.Footer>
+          </DialogFooter>
         </form>
-      </Modal>
+      </DialogContent>
+</Dialog>
 
       {/* Reset password modal */}
-      <Modal show={resetTarget !== null} onHide={() => setResetTarget(null)} centered>
+      <Dialog open={resetTarget !== null} onOpenChange={(open) => { if (!open) { (() => setResetTarget(null))(); } }}>
+<DialogContent>
         <form onSubmit={submitReset}>
-          <Modal.Header closeButton>
-            <Modal.Title>Reset password</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+          <DialogHeader>
+            <DialogTitle>Reset password</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             <div className="form-stack">
               {resetError && (
                 <div className="alert-danger-soft" role="alert">
@@ -383,17 +393,18 @@ export default function UsersPage() {
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">At least 8 characters.</p>
               </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setResetTarget(null)}>
               Cancel
             </Button>
             <Button type="submit" disabled={resetMutation.isPending}>
               {resetMutation.isPending ? 'Saving…' : 'Reset password'}
             </Button>
-          </Modal.Footer>
+          </DialogFooter>
         </form>
-      </Modal>
+      </DialogContent>
+</Dialog>
     </Page>
   );
 }

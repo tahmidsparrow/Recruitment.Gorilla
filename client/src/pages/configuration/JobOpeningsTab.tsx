@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Form, Modal } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Briefcase, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
@@ -31,6 +31,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const LOCATIONS = ['Remote', 'Office', 'Hybrid', 'Contractual'];
@@ -282,7 +290,8 @@ export default function JobOpeningsTab() {
         </div>
       )}
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+      <Dialog open={showModal} onOpenChange={(open) => { if (!open) { (() => setShowModal(false))(); } }}>
+<DialogContent className="sm:max-w-2xl">
         <form
           noValidate
           onSubmit={(e) => {
@@ -294,10 +303,10 @@ export default function JobOpeningsTab() {
             saveMutation.mutate();
           }}
         >
-          <Modal.Header closeButton>
-            <Modal.Title>{editing ? 'Edit job opening' : 'Add job opening'}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Edit job opening' : 'Add job opening'}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
             {error && (
               <div className="alert-danger-soft mb-4" role="alert">
                 {error}
@@ -383,15 +392,16 @@ export default function JobOpeningsTab() {
                 <CheckboxField id="job-active" label="Active — shown in candidate forms and on the dashboard" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
+          </DialogBody>
+          <DialogFooter>
             <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
-          </Modal.Footer>
+          </DialogFooter>
         </form>
-      </Modal>
+      </DialogContent>
+</Dialog>
 
       {/* The shared confirm dialog rather than a fourth hand-rolled copy of the
           same three elements. */}
