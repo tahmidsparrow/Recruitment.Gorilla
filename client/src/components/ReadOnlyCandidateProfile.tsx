@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card } from 'react-bootstrap';
 import {
   Briefcase,
   Building2,
@@ -22,6 +21,7 @@ import { skillColorClass } from '../utils/skillColors';
 import type { CandidateDetail } from '../types';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 
@@ -282,7 +282,7 @@ export default function ReadOnlyCandidateProfile({
         )}
       </div>
 
-      <Card.Body className="d-flex flex-column gap-3.5">
+      <CardContent className="d-flex flex-column gap-3.5">
         {/* Contact Details & Metadata Grid */}
         <div className="contact-grid">
           <ContactTile
@@ -527,7 +527,7 @@ export default function ReadOnlyCandidateProfile({
             )}
           </div>
         )}
-      </Card.Body>
+      </CardContent>
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Form, InputGroup } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
@@ -26,6 +26,7 @@ import type { CandidateListItem } from '../types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import { InputGroup } from '@/components/ui/input-group';
 
 const PAGE_SIZE = 20;
 

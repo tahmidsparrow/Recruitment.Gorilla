@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, InputGroup } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { createOffer, updateOffer } from '../../services/api';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { InputGroup } from '@/components/ui/input-group';
 import {
   Dialog,
   DialogBody,

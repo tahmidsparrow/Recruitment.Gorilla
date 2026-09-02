@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { ProgressBar } from 'react-bootstrap';
 import { CheckCircle2, FileText, Loader2, UploadCloud, XCircle } from 'lucide-react';
 import { uploadCV } from '../services/api';
 import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent } from '../services/signalr';
 import type { CVDraft } from '../types';
 import { Alert } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
+import { Progress } from '@/components/ui/progress';
 
 interface Props {
   onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;
@@ -178,9 +178,9 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
             <div className="empty-state-description">
               {done} of {total} read
             </div>
-            <ProgressBar
+            <Progress
               className="dropzone__bar"
-              now={total ? (done / total) * 100 : 0}
+              value={total ? (done / total) * 100 : 0}
               aria-label={`Parsed ${done} of ${total} files`}
             />
           </div>

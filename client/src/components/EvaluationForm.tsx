@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Collapse, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getInterviewEvaluationRubric, saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
@@ -366,7 +366,7 @@ export default function EvaluationForm({
                   <ChevronIcon open={open} />
                 </span>
               </button>
-              <Collapse in={open}>
+              {open && (
                 <div id={`eval-body-${section.id}`}>
                   <div className="eval-panel__body">
                     {section.criteria.map((c) => {
@@ -415,7 +415,7 @@ export default function EvaluationForm({
                     })}
                   </div>
                 </div>
-              </Collapse>
+              )}
             </div>
           );
         })}
