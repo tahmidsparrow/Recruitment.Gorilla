@@ -5953,17 +5953,6 @@ a.hero-chip--accent:hover {
   background: var(--surface);
   overflow: hidden;
 }
-@media (max-width: 900px) {
-  .stepped-funnel {
-    flex-wrap: wrap;
-  }
-  .stepped-funnel__node {
-    flex: 1 1 45%;
-  }
-  .stepped-funnel__connector {
-    display: none;
-  }
-}
 
 /* A funnel is a sequence, so it is drawn as one continuous band divided by
    rules — not as five bordered cards with arrow glyphs between them. The old
@@ -6094,6 +6083,39 @@ a.hero-chip--accent:hover {
 
 .stepped-funnel__connector-arrow {
   display: none;
+}
+
+/* Below 900px four stages on one line compress to about 80px each, which is
+   narrower than the word "Screening". They wrap two-up instead, and the
+   step-to-step rate goes with the single-line reading it belonged to.
+
+   Two things this rule got wrong the first time, both silent:
+     - it was declared BEFORE `.stepped-funnel__node { flex: 1 1 0 }`, so at
+       equal specificity the later rule won and nothing wrapped;
+     - it targeted the node, but the page wraps each node in a flex div so the
+       connector can sit beside it — the node is a grandchild, and flex on it
+       has no say in how the row wraps. Hence `> *`. */
+@media (max-width: 900px) {
+  .stepped-funnel {
+    flex-wrap: wrap;
+  }
+  .stepped-funnel > * {
+    flex: 1 1 45%;
+    min-width: 0;
+    border-top: 1px solid var(--line-soft);
+  }
+  .stepped-funnel__node {
+    flex: 1 1 auto;
+  }
+  .stepped-funnel__connector {
+    display: none;
+  }
+  /* Two per row: the first of each row must not carry the column divider, and
+     the first row must not carry a top rule. */
+  .stepped-funnel > *:first-child,
+  .stepped-funnel > *:nth-child(2) {
+    border-top: 0;
+  }
 }
 
 /* Stage Velocity Duration Bars */
