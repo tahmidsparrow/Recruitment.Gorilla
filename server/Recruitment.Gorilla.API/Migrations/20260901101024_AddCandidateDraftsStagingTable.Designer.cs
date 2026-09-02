@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Recruitment.Gorilla.API.Data;
 
@@ -11,9 +12,11 @@ using Recruitment.Gorilla.API.Data;
 namespace Recruitment.Gorilla.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260901101024_AddCandidateDraftsStagingTable")]
+    partial class AddCandidateDraftsStagingTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -123,10 +126,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
-                    b.Property<string>("CodeforcesUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -149,32 +148,16 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("GitLabUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<string>("GithubUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("HackerRankUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
                     b.Property<bool>("IsReferred")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("LeetCodeUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<string>("LinkedInUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
 
                     b.Property<int?>("OwnerUserId")
                         .HasColumnType("int");
@@ -250,10 +233,6 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("CodeforcesUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -261,15 +240,9 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("EducationJson")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("Email")
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
-
-                    b.Property<string>("ExperienceJson")
-                        .HasColumnType("longtext");
 
                     b.Property<long>("FileSizeBytes")
                         .HasColumnType("bigint");
@@ -285,29 +258,13 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<string>("GitLabUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<string>("GithubUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("HackerRankUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("LeetCodeUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
                     b.Property<string>("LinkedInUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("OriginalFileName")
                         .IsRequired()
@@ -374,83 +331,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.HasIndex("UploadedByUserId");
 
                     b.ToTable("CandidateDrafts");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateEducation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Cgpa")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Degree")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<string>("GraduationYear")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("Institution")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.ToTable("CandidateEducations");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateExperience", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CandidateId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Company")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Duration")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("JobTitle")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CandidateId");
-
-                    b.ToTable("CandidateExperiences");
                 });
 
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSkill", b =>
@@ -2360,28 +2240,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateEducation", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
-                        .WithMany("Educations")
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-                });
-
-            modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateExperience", b =>
-                {
-                    b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
-                        .WithMany("Experiences")
-                        .HasForeignKey("CandidateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Candidate");
-                });
-
             modelBuilder.Entity("Recruitment.Gorilla.API.Models.CandidateSkill", b =>
                 {
                     b.HasOne("Recruitment.Gorilla.API.Models.Candidate", "Candidate")
@@ -2636,10 +2494,6 @@ namespace Recruitment.Gorilla.API.Migrations
                     b.Navigation("CVFiles");
 
                     b.Navigation("CandidateSkills");
-
-                    b.Navigation("Educations");
-
-                    b.Navigation("Experiences");
 
                     b.Navigation("Interviews");
 

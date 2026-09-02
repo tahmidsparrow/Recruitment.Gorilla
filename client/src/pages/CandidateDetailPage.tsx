@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Button, Col, Form, Row, Modal, Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, FileText, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   deleteCandidate,
   downloadCvFile,
@@ -29,10 +29,9 @@ import { useAuth } from '../auth/AuthContext';
 // The role-filter branch added a local copy of this; develop had already
 // extracted the same function to utils, so use the shared one.
 import { initials } from '../utils/initials';
-import type { CVFileInfo, CandidateDetail } from '../types';
+import type { CandidateDetail } from '../types';
 
-const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
-const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 
 function Req() {
   return <span className="required-star" aria-hidden="true">*</span>;
@@ -47,6 +46,32 @@ export default function CandidateDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [addingStatus, setAddingStatus] = useState(false);
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
+  const [cvPreview, setCvPreview] = useState<{ url: string; contentType: string; fileName: string; fileId: number } | null>(null);
+  const [loadingCvId, setLoadingCvId] = useState<number | null>(null);
+  const cvUrlRef = useRef<string | null>(null);
+
+  const revokeCvUrl = () => {
+    if (cvUrlRef.current) {
+      URL.revokeObjectURL(cvUrlRef.current);
+      cvUrlRef.current = null;
+    }
+  };
+  useEffect(() => revokeCvUrl, []);
+
+  const openCvPreview = async (fileId: number, fileName: string) => {
+    setLoadingCvId(fileId);
+    try {
+      revokeCvUrl();
+      const { url, contentType } = await previewCvFile(candidateId, fileId);
+      cvUrlRef.current = url;
+      setCvPreview({ url, contentType, fileName, fileId });
+    } catch {
+      // preview error handled gracefully
+    } finally {
+      setLoadingCvId(null);
+    }
+  };
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['candidate', candidateId],
@@ -83,45 +108,90 @@ export default function CandidateDetailPage() {
   const canWrite = canWriteCandidates && !data.roleClosed;
 
   return (
-    <Page>
-      {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
-      <Link to="/candidates" className="back-link">
-        <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
-        Back to candidates
-      </Link>
+    <Page tight>
+      <div className="d-flex flex-column gap-1.5">
+        {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
+        <Link to="/candidates" className="back-link">
+          <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
+          Back to candidates
+        </Link>
 
-      {/* Prism's flat page header, carrying the actions the role-filter branch
-          added (explicit Edit, evaluation report) rather than its gradient hero. */}
-      <div className="page-header">
+        {/* Prism's page header with polished hero styling and action group */}
+        <div className="page-header candidate-hero-header">
         <div className="who-cell">
-          <span className="avatar avatar--lg" aria-hidden="true">{initials(data.fullName) || '?'}</span>
+          <span className="avatar avatar--lg avatar--hero" aria-hidden="true">{initials(data.fullName) || '?'}</span>
           <div className="min-w-0">
-            <h2>{data.fullName}</h2>
-            <div className="d-flex align-items-center gap-2 flex-wrap mt-1">
+            <h2 className="candidate-hero-name mb-1">{data.fullName}</h2>
+            <div className="d-flex align-items-center gap-2 flex-wrap">
               <StatusBadge status={data.currentStatus} />
-              {role && <span className="form-help">{role}</span>}
+              {role && <span className="badge-role-pill">{role}</span>}
             </div>
           </div>
         </div>
-        <div className="page-header__actions">
-          {canWrite && !editing && (
-            <Button onClick={() => setEditing(true)}>
-              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1">Edit</span>
+        <div className="page-header__actions d-flex align-items-center gap-2 flex-wrap">
+          {/* CV File Action Button beside Status History */}
+          {data.cvFiles.length > 0 && (
+            <Button
+              variant="outline-secondary"
+              className="btn-action-cv d-inline-flex align-items-center"
+              disabled={loadingCvId !== null}
+              onClick={() => openCvPreview(data.cvFiles[0].id, data.cvFiles[0].originalFileName)}
+              title={`Preview original CV (${data.cvFiles[0].originalFileName})`}
+            >
+              <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1.5">{loadingCvId !== null ? 'Loading…' : 'CV File'}</span>
+              {data.cvFiles.length > 1 && (
+                <span className="badge bg-secondary-subtle text-secondary ms-1.5 px-1.5 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
+                  {data.cvFiles.length}
+                </span>
+              )}
             </Button>
           )}
-          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary">
+
+          {/* Status History Slide-over Trigger */}
+          <Button
+            variant="outline-secondary"
+            className="btn-action-history d-inline-flex align-items-center"
+            onClick={() => setShowHistoryDrawer(true)}
+            title="View status change history & timeline"
+          >
+            <History size={14} strokeWidth={1.75} aria-hidden="true" />
+            <span className="ms-1.5">Status history</span>
+            {data.statusHistory.length > 0 && (
+              <span className="badge bg-secondary-subtle text-secondary ms-1.5 px-1.5 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
+                {data.statusHistory.length}
+              </span>
+            )}
+          </Button>
+
+          {canWrite && !editing && (
+            <Button variant="primary" className="btn-action-advance d-inline-flex align-items-center" onClick={() => setAddingStatus(true)}>
+              <Plus size={14} strokeWidth={2} aria-hidden="true" />
+              <span className="ms-1.5">Add status</span>
+            </Button>
+          )}
+
+          {canWrite && !editing && (
+            <Button variant="outline-secondary" className="btn-action-edit" onClick={() => setEditing(true)}>
+              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
+              <span className="ms-1.5">Edit</span>
+            </Button>
+          )}
+
+          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary btn-action-eval">
             <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
-            <span className="ms-1">Evaluation report</span>
+            <span className="ms-1.5">Evaluation report</span>
           </Link>
+
           {isAdminOrAbove && (
-            <Button variant="outline-danger" onClick={() => setConfirmDelete(true)}>
+            <Button variant="outline-danger" className="btn-action-delete" onClick={() => setConfirmDelete(true)}>
               <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1">Delete candidate</span>
+              <span className="ms-1.5">Delete candidate</span>
             </Button>
           )}
         </div>
       </div>
+    </div>
 
       {data.roleClosed && (
         <div className="alert-warning-soft">
@@ -144,12 +214,9 @@ export default function CandidateDetailPage() {
         status history? This cannot be undone.
       </ConfirmModal>
 
-      {/* The read/edit split comes from the role-filter branch — the form is no
-          longer permanently open — rendered on Prism's flat cards. Editing is a
-          single narrow column: a form is read top-to-bottom, and the status
-          panel beside it is not actionable mid-edit. */}
+      {/* Editing Mode */}
       {editing ? (
-        <div className="detail-edit-column">
+        <div className="detail-edit-column mx-auto">
           <SectionCard
             title="Edit profile"
             description="Changes are saved to the candidate record and the audit trail."
@@ -164,48 +231,108 @@ export default function CandidateDetailPage() {
               onCancel={() => setEditing(false)}
             />
           </SectionCard>
-
-          <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
         </div>
       ) : (
-        /* --panels: the two columns share one bounded height and scroll their
-           own overflow, rather than the longer one (usually the timeline)
-           stretching the page and leaving the profile stranded beside a column
-           of whitespace. Only this page opts in — the interview page uses a
-           bare .detail-grid, where the evaluation form must grow freely. */
-        <div className="detail-grid detail-grid--panels">
-          <div className="card-stack">
-            {/* showCvFiles={false}: CvFilesCard below is the CV surface for
-                this page, and rendering both listed every file twice. */}
+        /* Full-Width Focused Candidate Profile Stack */
+        <div className="candidate-detail-container w-100">
+          <div className="card-stack candidate-profile-stack w-100">
             <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} />
             {canWrite && <OfferCard candidate={data} />}
-            <CvFilesCard candidateId={candidateId} files={data.cvFiles} />
-          </div>
-
-          <div className="card-stack">
-            {/* Advancing the pipeline is a deliberate, occasional act, so it is
-                a dialog rather than a form sitting permanently open above the
-                timeline — which pushed the history (the thing you came to read)
-                down the page on every visit, and grew to five fields when
-                "Interview Scheduled" was picked. The trigger lives on the
-                history card because that is what it changes. */}
-            <SectionCard
-              title="Status history"
-              className="detail-scroll"
-              actions={
-                canWrite ? (
-                  <Button size="sm" onClick={() => setAddingStatus(true)}>
-                    <Plus size={14} strokeWidth={2} aria-hidden="true" />
-                    <span className="ms-1">Add status</span>
-                  </Button>
-                ) : undefined
-              }
-            >
-              <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
-            </SectionCard>
           </div>
         </div>
       )}
+
+      {/* Full CV Preview Modal */}
+      {cvPreview && (
+        <Modal
+          show={true}
+          onHide={() => setCvPreview(null)}
+          dialogClassName="cv-viewer-modal"
+          size="lg"
+          centered
+        >
+          <Modal.Header closeButton className="d-flex justify-content-between align-items-center">
+            <Modal.Title className="h6 d-flex align-items-center gap-2 mb-0">
+              <FileText size={16} className="text-primary" />
+              <span className="text-truncate">{cvPreview.fileName}</span>
+            </Modal.Title>
+            <Button
+              size="sm"
+              variant="outline-secondary"
+              className="me-3"
+              onClick={() => void downloadCvFile(candidateId, cvPreview.fileId)}
+            >
+              Download
+            </Button>
+          </Modal.Header>
+          <Modal.Body className="p-0 d-flex flex-column" style={{ height: '75vh' }}>
+            {cvPreview.contentType.includes('pdf') ? (
+              <iframe
+                title="CV Preview"
+                src={cvPreview.url}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            ) : (
+              <div className="p-5 text-center text-muted m-auto">
+                <FileText size={40} className="mb-2 text-muted" />
+                <p>In-app preview isn't available for this file type.</p>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => void downloadCvFile(candidateId, cvPreview.fileId)}
+                >
+                  Download File
+                </Button>
+              </div>
+            )}
+          </Modal.Body>
+        </Modal>
+      )}
+
+      {/* Status History Slide-over Offcanvas Drawer */}
+      <Offcanvas
+        show={showHistoryDrawer}
+        onHide={() => setShowHistoryDrawer(false)}
+        placement="end"
+        className="history-drawer"
+      >
+        <Offcanvas.Header closeButton className="border-bottom border-subtle px-4 py-3">
+          <Offcanvas.Title className="d-flex align-items-center gap-2 h6 mb-0">
+            <History size={18} className="text-primary" />
+            <span className="fw-semibold">Status History &amp; Timeline</span>
+            <span className="badge bg-secondary-subtle text-secondary px-2 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
+              {data.statusHistory.length} events
+            </span>
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="p-4 d-flex flex-column gap-3">
+          {canWrite && (
+            <div className="p-3 rounded-3 bg-surface-muted border border-subtle d-flex justify-content-between align-items-center">
+              <div>
+                <div className="small fw-semibold text-muted mb-1 text-uppercase" style={{ fontSize: '10.5px', letterSpacing: '0.04em' }}>
+                  Current Stage
+                </div>
+                <StatusBadge status={data.currentStatus} />
+              </div>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => {
+                  setShowHistoryDrawer(false);
+                  setAddingStatus(true);
+                }}
+              >
+                <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                <span className="ms-1">Advance Stage</span>
+              </Button>
+            </div>
+          )}
+
+          <div className="mt-1">
+            <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
 
       {canWrite && (
         <AddStatusModal
@@ -282,6 +409,13 @@ function ProfileEditor({
         linkedInUrl: form.linkedInUrl || null,
         githubUrl: form.githubUrl || null,
         portfolioUrl: form.portfolioUrl || null,
+        location: form.location || null,
+        leetCodeUrl: form.leetCodeUrl || null,
+        codeforcesUrl: form.codeforcesUrl || null,
+        hackerRankUrl: form.hackerRankUrl || null,
+        gitLabUrl: form.gitLabUrl || null,
+        educations: form.educations || null,
+        experiences: form.experiences || null,
         appliedRole: null,
         roleAppliedOptionId: form.roleAppliedOptionId,
         sourceOptionId: form.sourceOptionId,
@@ -345,6 +479,14 @@ function ProfileEditor({
           <Form.Control value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
         </Col>
         <Col md={6}>
+          <Form.Label>Location</Form.Label>
+          <Form.Control
+            value={form.location ?? ''}
+            placeholder="e.g. Dhaka, Bangladesh"
+            onChange={(e) => set('location', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
           <Form.Label>Current title</Form.Label>
           <Form.Control
             value={form.currentTitle ?? ''}
@@ -373,6 +515,37 @@ function ProfileEditor({
           <Form.Control
             value={form.githubUrl ?? ''}
             onChange={(e) => set('githubUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>GitLab URL</Form.Label>
+          <Form.Control
+            value={form.gitLabUrl ?? ''}
+            onChange={(e) => set('gitLabUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>LeetCode Profile</Form.Label>
+          <Form.Control
+            value={form.leetCodeUrl ?? ''}
+            placeholder="https://leetcode.com/u/..."
+            onChange={(e) => set('leetCodeUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Codeforces Profile</Form.Label>
+          <Form.Control
+            value={form.codeforcesUrl ?? ''}
+            placeholder="https://codeforces.com/profile/..."
+            onChange={(e) => set('codeforcesUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>HackerRank Profile</Form.Label>
+          <Form.Control
+            value={form.hackerRankUrl ?? ''}
+            placeholder="https://hackerrank.com/profile/..."
+            onChange={(e) => set('hackerRankUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
@@ -492,96 +665,6 @@ function ProfileEditor({
         </Button>
       </div>
     </Form>
-  );
-}
-
-function CvFilesCard({ candidateId, files }: { candidateId: number; files: CVFileInfo[] }) {
-  const [preview, setPreview] = useState<{ url: string; contentType: string } | null>(null);
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const urlRef = useRef<string | null>(null);
-
-  const revoke = () => {
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
-    }
-  };
-  useEffect(() => revoke, []); // revoke any object URL on unmount
-
-  const openPreview = async (fileId: number) => {
-    setError(null);
-    setLoadingId(fileId);
-    try {
-      revoke();
-      const { url, contentType } = await previewCvFile(candidateId, fileId);
-      urlRef.current = url;
-      setPreview({ url, contentType });
-    } catch {
-      setError('Could not load preview.');
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const isPdf = preview?.contentType.includes('pdf') ?? false;
-
-  return (
-    <SectionCard title="CV files">
-      <div className="page-stack page-stack--tight">
-        {files.length === 0 ? (
-          <EmptyState
-            icon={<FileText size={20} strokeWidth={1.75} aria-hidden="true" />}
-            title="No CV on file"
-            description="Files uploaded for this candidate will be listed here."
-          />
-        ) : (
-          <div>
-            {files.map((f) => (
-              <div key={f.id} className="cv-file-item">
-                <span className="cv-file-item__icon">
-                  <FileText size={18} strokeWidth={1.75} aria-hidden="true" />
-                </span>
-                <span className="cv-file-item__meta">
-                  <span className="cv-file-item__name text-truncate">{f.originalFileName}</span>
-                  <span className="cv-file-item__size">
-                    {f.fileType} · {formatSize(f.fileSizeBytes)}
-                  </span>
-                </span>
-                <span className="row-actions">
-                  <Button
-                    size="sm"
-                    variant="outline-primary"
-                    disabled={loadingId === f.id}
-                    onClick={() => openPreview(f.id)}
-                  >
-                    {loadingId === f.id ? 'Loading…' : 'Preview'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline-secondary"
-                    onClick={() => downloadCvFile(candidateId, f.id)}
-                  >
-                    Download
-                  </Button>
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {error && <div className="alert-danger-soft" role="alert">{error}</div>}
-
-        {preview &&
-          (isPdf ? (
-            <iframe title="CV preview" src={preview.url} className="cv-preview-frame" />
-          ) : (
-            <div className="alert-info-soft">
-              In-app preview isn't available for this file type. Use Download to open it.
-            </div>
-          ))}
-      </div>
-    </SectionCard>
   );
 }
 

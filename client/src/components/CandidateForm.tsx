@@ -19,7 +19,7 @@ interface Props {
   onCancel: () => void;
 }
 
-const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'relevantExperience' | 'referenceName' | 'referenceEmail';
 type FieldErrors = Partial<Record<FieldKey, string>>;
 
@@ -121,6 +121,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         initialStatus,
         initialStatusComment: null,
         allowDuplicate,
+        location: draft.location ?? null,
+        leetCodeUrl: draft.leetCodeUrl ?? null,
+        codeforcesUrl: draft.codeforcesUrl ?? null,
+        hackerRankUrl: draft.hackerRankUrl ?? null,
+        gitLabUrl: draft.gitLabUrl ?? null,
+        educations: draft.educations ?? null,
+        experiences: draft.experiences ?? null,
       });
 
       if (result.kind === 'duplicate') {

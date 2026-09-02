@@ -7,7 +7,7 @@ import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent 
 import type { CVDraft } from '../types';
 
 interface Props {
-  onDraftsParsed: (drafts: CVDraft[]) => void;
+  onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;
 }
 
 interface FileProgressState {
@@ -22,6 +22,7 @@ const ACCEPTED = {
 };
 
 export default function BulkUploader({ onDraftsParsed }: Props) {
+  const [batchName, setBatchName] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
@@ -101,7 +102,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
         });
 
         try {
-          const draft = await uploadCV(file, batchId, i, files.length);
+          const draft = await uploadCV(file, batchId, i, files.length, batchName.trim() || undefined);
           drafts.push(draft);
           setFileProgresses((prev) => {
             const next = [...prev];
@@ -127,9 +128,9 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
       setErrors(failures);
       setBusy(false);
-      if (drafts.length > 0) onDraftsParsed(drafts);
+      if (drafts.length > 0) onDraftsParsed(drafts, batchId);
     },
-    [onDraftsParsed]
+    [batchName, onDraftsParsed]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -149,6 +150,23 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
   return (
     <div className="page-stack page-stack--tight">
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-1">
+        <div className="d-flex align-items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
+          <label htmlFor="batch-name-input" className="small fw-semibold text-muted text-nowrap">
+            Batch Label:
+          </label>
+          <input
+            id="batch-name-input"
+            type="text"
+            className="form-control form-control-sm"
+            placeholder="e.g. Q3 Senior Engineering Intake"
+            value={batchName}
+            disabled={busy}
+            onChange={(e) => setBatchName(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div {...getRootProps()} className={className}>
         <input {...getInputProps()} />
         {busy ? (
