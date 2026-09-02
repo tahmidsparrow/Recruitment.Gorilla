@@ -175,11 +175,11 @@ using (var scope = app.Services.CreateScope())
             app.Logger.LogInformation("Seeded initial Super Admin '{Email}'.", email);
         }
     }
-    else if (!string.IsNullOrWhiteSpace(passwordHash) && app.Environment.IsDevelopment())
+    else if (!string.IsNullOrWhiteSpace(passwordHash) && adminUser.PasswordHash != passwordHash)
     {
         adminUser.PasswordHash = passwordHash;
-        adminUser.IsActive = true;
         await db.SaveChangesAsync();
+        app.Logger.LogInformation("Updated Super Admin '{Email}' password hash from configuration.", email);
     }
 }
 

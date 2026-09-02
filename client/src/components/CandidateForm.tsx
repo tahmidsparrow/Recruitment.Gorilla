@@ -19,7 +19,7 @@ interface Props {
   onCancel: () => void;
 }
 
-const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 type FieldKey = 'fullName' | 'email' | 'roleApplied' | 'relevantExperience' | 'referenceName' | 'referenceEmail';
 type FieldErrors = Partial<Record<FieldKey, string>>;
 

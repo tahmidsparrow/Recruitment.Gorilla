@@ -89,16 +89,7 @@ public class CVParserService
             "TXT" => File.ReadAllText(filePath),
             _ => ExtractWordText(filePath)
         };
-        var res = ExtractFields(text, hyperlinks);
-        if (string.IsNullOrWhiteSpace(res.Name) && !string.IsNullOrWhiteSpace(filePath))
-        {
-            var (fallbackName, _) = ParseNameAndTitleFromFileName(Path.GetFileName(filePath));
-            if (!string.IsNullOrWhiteSpace(fallbackName))
-            {
-                res = res with { Name = fallbackName };
-            }
-        }
-        return res;
+        return ExtractFields(text, hyperlinks);
     }
 
     private static string ExtractPdfText(string filePath, List<string> hyperlinks)
@@ -107,7 +98,27 @@ public class CVParserService
         using var doc = PdfDocument.Open(filePath);
         foreach (Page page in doc.GetPages())
         {
-            sb.AppendLine(NormalizeText(page.Text));
+            try
+            {
+                var words = page.GetWords().ToList();
+                if (words.Count > 0)
+                {
+                    // Group words by Y-baseline coordinate to preserve line breaks accurately
+                    var lines = words
+                        .GroupBy(w => (int)Math.Round(w.BoundingBox.Bottom / 3.0) * 3)
+                        .OrderByDescending(g => g.Key)
+                        .Select(g => string.Join(" ", g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
+                    sb.AppendLine(NormalizeText(string.Join("\n", lines)));
+                }
+                else
+                {
+                    sb.AppendLine(NormalizeText(page.Text));
+                }
+            }
+            catch
+            {
+                sb.AppendLine(NormalizeText(page.Text));
+            }
 
             try
             {
@@ -266,6 +277,22 @@ public class CVParserService
         {
             if (!string.IsNullOrWhiteSpace(currentDegree) || !string.IsNullOrWhiteSpace(currentInst))
             {
+                if (!string.IsNullOrWhiteSpace(currentDegree) && string.IsNullOrWhiteSpace(currentInst))
+                {
+                    var parts = Regex.Split(currentDegree, @"\s*(?:—|–|[-|]|(?<=\s)at(?=\s))\s*", RegexOptions.IgnoreCase);
+                    if (parts.Length >= 2)
+                    {
+                        currentDegree = parts[0].Trim();
+                        currentInst = parts[1].Trim();
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(currentYear))
+                {
+                    if (currentInst != null) currentInst = currentInst.Replace($"({currentYear})", "").Replace(currentYear, "").Trim(' ', '(', ')', '-', '—');
+                    if (currentDegree != null) currentDegree = currentDegree.Replace($"({currentYear})", "").Replace(currentYear, "").Trim(' ', '(', ')', '-', '—');
+                }
+
                 list.Add(new ParsedEducation(
                     currentDegree ?? "Bachelor of Science",
                     currentInst ?? "University",

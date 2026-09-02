@@ -182,6 +182,15 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
     }
   }, [activeDraft, roles]);
 
+  useEffect(() => {
+    if (roles.length > 0 && !editForm.roleAppliedOptionId) {
+      setEditForm((prev) => ({
+        ...prev,
+        roleAppliedOptionId: prev.roleAppliedOptionId ?? roles[0].id,
+      }));
+    }
+  }, [roles, editForm.roleAppliedOptionId]);
+
   // Next / Previous navigation in queue
   const currentIndex = drafts.findIndex((d) => d.id === selectedDraftId);
   const hasPrev = currentIndex > 0;
@@ -317,7 +326,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
     if (!editForm.fullName?.trim()) errors.fullName = 'Full name is required.';
     if (!editForm.email?.trim()) {
       errors.email = 'Email address is required.';
-    } else if (!/^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i.test(editForm.email.trim())) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(editForm.email.trim())) {
       errors.email = 'Enter a valid email address.';
     }
     if (!editForm.roleAppliedOptionId) {
