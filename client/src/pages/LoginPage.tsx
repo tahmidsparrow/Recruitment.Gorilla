@@ -87,7 +87,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-100" disabled={busy}>
               {busy ? (
                 <>
-                  <Spinner animation="border" size="sm" className="me-2" aria-hidden="true" />
+                  <Spinner className="me-2" aria-hidden="true" />
                   Signing in…
                 </>
               ) : (

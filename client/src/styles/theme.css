@@ -134,3 +134,19 @@
     border-color: var(--border);
   }
 }
+
+/* Radix reports a collapsible's measured height on this variable; the keyframes
+   read it so an accordion animates to its real height instead of a guess. */
+@theme {
+  --animate-accordion-down: accordion-down var(--dur) var(--ease);
+  --animate-accordion-up: accordion-up var(--dur) var(--ease);
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}

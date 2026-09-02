@@ -109,7 +109,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
     return (
       <div className="offer-card p-3">
         <div className="d-flex align-items-center gap-2 text-muted small">
-          <Spinner size="sm" /> Loading compensation details...
+          <Spinner /> Loading compensation details...
         </div>
       </div>
     );
@@ -132,7 +132,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
             <div className="d-flex gap-1">
               {latestOffer ? (
                 <Button
-                  variant="outline-primary"
+                  variant="outline"
                   size="sm"
                   className="d-flex align-items-center gap-1 py-1 px-2.5"
                   onClick={() => {
@@ -144,7 +144,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                 </Button>
               ) : (
                 <Button
-                  variant="primary"
+ 
                   size="sm"
                   className="d-flex align-items-center gap-1 py-1 px-2.5"
                   onClick={() => {
@@ -241,20 +241,20 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               {/* Action Toolbar */}
               <div className="offer-toolbar">
                 <Button
-                  variant="outline-secondary"
+                  variant="outline"
                   size="sm"
                   className="d-flex align-items-center gap-1.5"
                   disabled={isDownloadingPdf}
                   onClick={() => handleDownloadPdf(latestOffer)}
                 >
-                  {isDownloadingPdf ? <Spinner size="sm" /> : <Download size={14} />}
+                  {isDownloadingPdf ? <Spinner /> : <Download size={14} />}
                   Download PDF
                 </Button>
 
                 {latestOffer.status === 'Draft' && (
                   <>
                     <Button
-                      variant="outline-secondary"
+                      variant="outline"
                       size="sm"
                       className="d-flex align-items-center gap-1.5"
                       onClick={() => {
@@ -265,7 +265,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                       <Edit3 size={14} /> Edit
                     </Button>
                     <Button
-                      variant="outline-primary"
+                      variant="outline"
                       size="sm"
                       className="d-flex align-items-center gap-1.5"
                       disabled={submitApprovalMutation.isPending}
@@ -274,7 +274,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                       <Send size={14} /> Request Approval
                     </Button>
                     <Button
-                      variant="primary"
+ 
                       size="sm"
                       className="d-flex align-items-center gap-1.5"
                       disabled={extendMutation.isPending}
@@ -288,7 +288,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                 {latestOffer.status === 'PendingApproval' && isAdminOrAbove && (
                   <>
                     <Button
-                      variant="outline-danger"
+                      variant="outlineDestructive"
                       size="sm"
                       className="d-flex align-items-center gap-1.5"
                       disabled={reviewMutation.isPending}
@@ -310,7 +310,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
                 {latestOffer.status === 'Approved' && (
                   <Button
-                    variant="primary"
+ 
                     size="sm"
                     className="d-flex align-items-center gap-1.5"
                     disabled={extendMutation.isPending}
@@ -322,7 +322,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
                 {latestOffer.status === 'Extended' && (
                   <Button
-                    variant="primary"
+ 
                     size="sm"
                     className="d-flex align-items-center gap-1.5"
                     onClick={() => {

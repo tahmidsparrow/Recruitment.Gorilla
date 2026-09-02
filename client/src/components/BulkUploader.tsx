@@ -171,7 +171,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
         <input {...getInputProps()} />
         {busy ? (
           <div className="dropzone__progress" role="status" aria-live="polite">
-            <Spinner animation="border" size="sm" aria-hidden="true" />
+            <Spinner aria-hidden="true" />
             <div className="empty-state-title">Parsing CVs in background…</div>
             <div className="empty-state-description">
               {done} of {total} read

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Form, Modal, Table } from 'react-bootstrap';
+import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import {
   Copy,
   FileCheck2,
@@ -372,7 +372,7 @@ export default function EvaluationRubricsTab() {
           </p>
         </div>
         <div className="page-bar__actions">
-          <Button variant="primary" onClick={openCreateModal} className="d-flex align-items-center gap-1.5">
+          <Button onClick={openCreateModal} className="d-flex align-items-center gap-1.5">
             <Plus size={15} strokeWidth={2.5} />
             <span>Add rubric scorecard</span>
           </Button>
@@ -393,14 +393,14 @@ export default function EvaluationRubricsTab() {
           title="No evaluation rubrics yet"
           description="Create custom rubric scorecards to evaluate candidates with role-specific criteria."
           action={
-            <Button variant="primary" onClick={openCreateModal}>
+            <Button onClick={openCreateModal}>
               Create your first rubric
             </Button>
           }
         />
       ) : (
         <div className="table-wrap">
-          <Table hover className="table-cards align-middle">
+          <table className="table table-cards align-middle">
             <thead>
               <tr>
                 <th style={{ width: '30%' }}>Rubric Name</th>
@@ -499,7 +499,7 @@ export default function EvaluationRubricsTab() {
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         </div>
       )}
 
@@ -577,11 +577,11 @@ export default function EvaluationRubricsTab() {
                 </small>
               </div>
               <Button
-                variant="outline-primary"
+                variant="outline"
                 size="sm"
                 onClick={addSection}
                 className="d-flex align-items-center gap-1"
-              >
+                >
                 <Plus size={13} strokeWidth={2.5} /> Add Section
               </Button>
             </div>
@@ -606,7 +606,7 @@ export default function EvaluationRubricsTab() {
                     </div>
                     <div className="d-flex align-items-center gap-1.5">
                       <Button
-                        variant="outline-primary"
+                        variant="outline"
                         size="sm"
                         className="py-0.5 px-2 text-xs"
                         onClick={() => addCriterion(sec.id)}
@@ -686,10 +686,10 @@ export default function EvaluationRubricsTab() {
           </Modal.Body>
 
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setShowModal(false)}>
+            <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={saveMutation.isPending}>
+            <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving...' : 'Save Rubric Scorecard'}
             </Button>
           </Modal.Footer>

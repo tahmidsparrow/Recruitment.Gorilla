@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Button, Form, InputGroup, Table } from 'react-bootstrap';
+import { Button, Form, InputGroup } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
@@ -218,7 +218,7 @@ export default function CandidatesPage() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 aria-label="Search candidates"
               />
-              <Button type="submit" variant="outline-secondary" aria-label="Search">
+              <Button type="submit" variant="outline" aria-label="Search">
                 <Search size={15} strokeWidth={1.75} aria-hidden="true" />
               </Button>
             </InputGroup>
@@ -299,7 +299,7 @@ export default function CandidatesPage() {
 
             {/* Rendered only when something is filtered */}
             {hasFilters && (
-              <Button variant="outline-secondary" size="sm" onClick={clearFilters}>
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             )}
@@ -360,7 +360,7 @@ export default function CandidatesPage() {
           }
           action={
             hasFilters ? (
-              <Button variant="outline-secondary" onClick={clearFilters}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
               </Button>
             ) : canWriteCandidates ? (
@@ -381,7 +381,7 @@ export default function CandidatesPage() {
           {/* .table-cards reflows each row into a labelled card below md, so no
               column is hidden on small screens — see index.css. */}
           <div className="table-wrap table-wrap--attached">
-            <Table hover className="table-cards align-middle">
+            <table className="table table-cards align-middle">
               <thead>
                 <tr>
                   <th><SortHeader col="name" /></th>
@@ -444,7 +444,7 @@ export default function CandidatesPage() {
                   </tr>
                 ))}
               </tbody>
-            </Table>
+            </table>
           </div>
 
           <Pagination

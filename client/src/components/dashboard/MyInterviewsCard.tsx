@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ListGroup } from 'react-bootstrap';
+
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck } from 'lucide-react';
 import { getMyInterviews } from '../../services/api';
@@ -48,11 +48,11 @@ export default function MyInterviewsCard() {
           description="Interviews you're scheduled for will appear here."
         />
       ) : (
-        <ListGroup variant="flush">
+        <ul className="list-group-flush">
           {data.map((i) => {
             const badge = stateBadge[i.evaluationState];
             return (
-              <ListGroup.Item key={i.id} className="list-row">
+              <li key={i.id} className="list-row">
                 <div className="list-row__main">
                   <Link to={`/interviews/${i.id}`} className="list-row__title">
                     {i.candidateName}
@@ -70,10 +70,10 @@ export default function MyInterviewsCard() {
                   </div>
                   <span className={badge.cls}>{badge.label}</span>
                 </div>
-              </ListGroup.Item>
+              </li>
             );
           })}
-        </ListGroup>
+        </ul>
       )}
     </SectionCard>
   );

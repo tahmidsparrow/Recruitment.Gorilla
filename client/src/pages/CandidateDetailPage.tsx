@@ -179,7 +179,7 @@ export default function CandidateDetailPage() {
           )}
 
           {canWrite && !editing && (
-            <Button variant="primary" className="btn-action-advance" onClick={() => setAddingStatus(true)}>
+            <Button className="btn-action-advance" onClick={() => setAddingStatus(true)}>
               <Plus size={15} strokeWidth={2.25} aria-hidden="true" />
               Add status
             </Button>
@@ -265,7 +265,7 @@ export default function CandidateDetailPage() {
             </Modal.Title>
             <Button
               size="sm"
-              variant="outline-secondary"
+              variant="outline"
               className="me-3"
               onClick={() => void downloadCvFile(candidateId, cvPreview.fileId)}
             >
@@ -284,7 +284,7 @@ export default function CandidateDetailPage() {
                 <FileText size={40} className="mb-2 text-muted" />
                 <p>In-app preview isn't available for this file type.</p>
                 <Button
-                  variant="primary"
+ 
                   size="sm"
                   onClick={() => void downloadCvFile(candidateId, cvPreview.fileId)}
                 >
@@ -323,7 +323,7 @@ export default function CandidateDetailPage() {
               </div>
               <Button
                 size="sm"
-                variant="primary"
+ 
                 onClick={() => {
                   setShowHistoryDrawer(false);
                   setAddingStatus(true);
@@ -667,7 +667,7 @@ function ProfileEditor({
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save changes'}
         </Button>
-        <Button variant="outline-secondary" type="button" disabled={mutation.isPending} onClick={handleCancel}>
+        <Button variant="outline" type="button" disabled={mutation.isPending} onClick={handleCancel}>
           Cancel
         </Button>
       </div>

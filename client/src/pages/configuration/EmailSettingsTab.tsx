@@ -188,7 +188,7 @@ export default function EmailSettingsTab() {
             style={{ minWidth: 200, maxWidth: 320 }}
           />
           <Button
-            variant="outline-secondary"
+            variant="outline"
             disabled={testMutation.isPending || !testTo.trim()}
             onClick={() => testMutation.mutate()}
           >

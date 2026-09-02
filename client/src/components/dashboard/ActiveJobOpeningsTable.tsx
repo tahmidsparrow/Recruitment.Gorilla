@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Table } from 'react-bootstrap';
+
 import { Briefcase, Calendar, MapPin, User, type LucideProps } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import SectionCard from '../common/SectionCard';
@@ -64,7 +64,7 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
         />
       ) : (
         <div className="table-wrap table-wrap--seamless">
-          <Table hover className="job-openings-table table-cards align-middle mb-0">
+          <table className="table job-openings-table table-cards align-middle mb-0">
             <thead>
               <tr>
                 <th>Job ID</th>
@@ -123,7 +123,7 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         </div>
       )}
     </SectionCard>

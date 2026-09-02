@@ -116,7 +116,7 @@ export default function OfferDecisionModal({
             variant={decision === 'Accepted' ? 'success' : 'danger'}
             type="submit"
             disabled={mutation.isPending}
-          >
+            >
             {mutation.isPending ? 'Recording...' : `Confirm ${decision}`}
           </Button>
         </Modal.Footer>

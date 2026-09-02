@@ -256,7 +256,7 @@ export default function JobOpeningsTab() {
               <Button onClick={() => resetForm(null)}>Add job opening</Button>
             ) : (
               <Button
-                variant="outline-secondary"
+                variant="outline"
                 onClick={() => { setQuery(''); setStatusFilter('all'); }}
               >
                 Clear filters
@@ -387,7 +387,7 @@ export default function JobOpeningsTab() {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
@@ -537,7 +537,7 @@ function JobRow({
         {canDelete && (
           <Button
             size="sm"
-            variant="ghost-danger"
+            variant="ghostDestructive"
             className="btn-icon"
             onClick={(e) => {
               e.stopPropagation();

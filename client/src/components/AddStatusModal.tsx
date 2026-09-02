@@ -332,13 +332,13 @@ export default function AddStatusModal({
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={handleHide}>
+          <Button variant="outline" onClick={handleHide}>
             Cancel
           </Button>
           <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? (
               <>
-                <Spinner size="sm" aria-hidden="true" /> Saving…
+                <Spinner aria-hidden="true" /> Saving…
               </>
             ) : (
               'Save status'

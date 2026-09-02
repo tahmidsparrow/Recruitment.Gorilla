@@ -512,17 +512,17 @@ export default function EvaluationForm({
         </div>
         <div className="eval-form-actions__buttons">
           <Button
-            variant="outline-secondary"
+            variant="outline"
             disabled={mutation.isPending}
             onClick={() => mutation.mutate(false)}
           >
             Save draft
           </Button>
           <Button
-            variant="primary"
+ 
             disabled={mutation.isPending}
             onClick={onSubmitClick}
-          >
+            >
             Submit evaluation
           </Button>
         </div>

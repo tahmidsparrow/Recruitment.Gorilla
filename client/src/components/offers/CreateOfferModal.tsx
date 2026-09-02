@@ -224,7 +224,7 @@ export default function CreateOfferModal({
           <Button variant="secondary" onClick={onHide} disabled={mutation.isPending}>
             Cancel
           </Button>
-          <Button variant="primary" type="submit" disabled={mutation.isPending}>
+          <Button type="submit" disabled={mutation.isPending}>
             {mutation.isPending ? 'Saving...' : existingOffer ? 'Save Changes' : 'Create Offer'}
           </Button>
         </Modal.Footer>

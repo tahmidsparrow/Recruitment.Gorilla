@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form, Modal, Table } from 'react-bootstrap';
+import { Button, Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { KeyRound, Pencil, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
@@ -197,7 +197,7 @@ export default function UsersPage() {
         />
       ) : (
         <div className="table-wrap">
-          <Table hover className="table-cards align-middle">
+          <table className="table table-cards align-middle">
             <thead>
               <tr>
                 <th>Name</th>
@@ -281,7 +281,7 @@ export default function UsersPage() {
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         </div>
       )}
 
@@ -354,7 +354,7 @@ export default function UsersPage() {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setShowEdit(false)}>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
@@ -394,7 +394,7 @@ export default function UsersPage() {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setResetTarget(null)}>
+            <Button variant="outline" onClick={() => setResetTarget(null)}>
               Cancel
             </Button>
             <Button type="submit" disabled={resetMutation.isPending}>

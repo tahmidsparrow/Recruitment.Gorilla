@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Form, ListGroup } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import {
   getActiveRoleOptions,
@@ -53,7 +53,7 @@ const TREND_RANGES = [7, 30, 90] as const;
 
 function InterviewRow({ item }: { item: UpcomingInterview }) {
   return (
-    <ListGroup.Item className="list-row">
+    <li className="list-row">
       <div className="list-row__main">
         <Link to={`/candidates/${item.candidateId}`} className="list-row__title">
           {item.fullName}
@@ -71,13 +71,13 @@ function InterviewRow({ item }: { item: UpcomingInterview }) {
         </div>
         <StatusBadge status={item.currentStatus} />
       </div>
-    </ListGroup.Item>
+    </li>
   );
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
   return (
-    <ListGroup.Item className="list-row">
+    <li className="list-row">
       <div className="list-row__main">
         <div className="d-flex align-items-center gap-2 flex-wrap">
           <Link to={`/candidates/${item.candidateId}`} className="list-row__title">
@@ -88,7 +88,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         <div className="list-row__meta">by {item.changedBy}</div>
       </div>
       <span className="list-row__meta flex-shrink-0">{relativeTime(item.changedAt)}</span>
-    </ListGroup.Item>
+    </li>
   );
 }
 
@@ -264,11 +264,11 @@ export default function DashboardPage() {
                   description="Scheduling an interview from a candidate's status history will list it here."
                 />
               ) : (
-                <ListGroup variant="flush">
+                <ul className="list-group-flush">
                   {scoped!.upcomingInterviews.map((i, idx) => (
                     <InterviewRow key={`${i.candidateId}-${idx}`} item={i} />
                   ))}
-                </ListGroup>
+                </ul>
               )}
             </SectionCard>
 
@@ -279,11 +279,11 @@ export default function DashboardPage() {
                   description="Status changes on your candidates will show up here."
                 />
               ) : (
-                <ListGroup variant="flush">
+                <ul className="list-group-flush">
                   {scoped!.recentActivity.map((a, idx) => (
                     <ActivityRow key={`${a.candidateId}-${idx}`} item={a} />
                   ))}
-                </ListGroup>
+                </ul>
               )}
             </SectionCard>
           </div>

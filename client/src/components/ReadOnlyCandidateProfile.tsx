@@ -501,7 +501,7 @@ export default function ReadOnlyCandidateProfile({
                     <span className="cv-file-item__size">{formatSize(f.fileSizeBytes)}</span>
                   </span>
                   <span className="d-flex gap-2 flex-shrink-0">
-                    <Button size="sm" variant="outline-primary" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
+                    <Button size="sm" variant="outline" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
                     <button type="button" className="btn btn-sm btn-cv-download" onClick={() => void downloadCvFile(candidate.id, f.id)}>
                       <DownloadIcon /> Download
                     </button>

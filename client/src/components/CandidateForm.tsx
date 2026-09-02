@@ -180,7 +180,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           <div className="mt-3">
             <Button
               size="sm"
-              variant="outline-secondary"
+              variant="outline"
               disabled={saving}
               onClick={() => void save(true)}
             >
@@ -330,10 +330,10 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
       </Row>
 
       <div className="form-actions">
-        <Button type="submit" variant="primary" disabled={saving}>
+        <Button type="submit" disabled={saving}>
           {saving ? 'Saving…' : 'Save candidate'}
         </Button>
-        <Button type="button" variant="outline-secondary" disabled={saving} onClick={onCancel}>
+        <Button type="button" variant="outline" disabled={saving} onClick={onCancel}>
           Skip this CV
         </Button>
       </div>

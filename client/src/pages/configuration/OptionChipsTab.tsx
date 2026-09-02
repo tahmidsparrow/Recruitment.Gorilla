@@ -174,13 +174,13 @@ export default function OptionChipsTab({
                 />
                 <Button
                   size="sm"
-                  variant="outline-secondary"
+                  variant="outline"
                   onClick={submitDraft}
                   disabled={!draft.trim() || createMutation.isPending}
                   aria-label={`Add ${noun}`}
                   title={`Add ${noun}`}
                   className="chip-add__btn"
-                >
+                  >
                   <Plus size={14} strokeWidth={2} aria-hidden="true" />
                 </Button>
               </span>
@@ -245,7 +245,7 @@ export default function OptionChipsTab({
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
             <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? 'Saving…' : 'Save'}
             </Button>

@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
 
         <div className="page-bar__actions">
           <Button
-            variant="outline-secondary"
+            variant="outline"
             className="d-flex align-items-center gap-1.5"
             onClick={() => window.print()}
           >
@@ -228,7 +228,6 @@ export default function AnalyticsPage() {
 
                 const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
                 const isHired = stage.stageKey === 'hired';
-
 
                 return (
                   <div key={stage.stageKey} className="d-flex align-items-stretch flex-grow-1 min-w-0">

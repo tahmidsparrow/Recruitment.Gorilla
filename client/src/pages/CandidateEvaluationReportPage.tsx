@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Button, Table } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { CalendarDays, ChevronLeft, ClipboardList, Printer } from 'lucide-react';
@@ -103,7 +103,7 @@ export default function CandidateEvaluationReportPage() {
         title="Evaluation report"
         description={`${data.fullName}${data.roleApplied ? ` · ${data.roleApplied}` : ''}`}
         actions={
-          <Button variant="outline-secondary" className="d-print-none" onClick={() => window.print()}>
+          <Button variant="outline" className="d-print-none" onClick={() => window.print()}>
             <Printer size={14} strokeWidth={1.75} aria-hidden="true" />
             <span className="ms-1">Print</span>
           </Button>
@@ -150,7 +150,7 @@ export default function CandidateEvaluationReportPage() {
 
               <div>
                 <span className="field-label">Average by criterion</span>
-                <Table size="sm" className="mb-0 align-middle">
+                <table className="table table-sm mb-0 align-middle">
                   <tbody>
                     {CRITERION_ORDER
                       .map((key) => summary.criterionAverages.find((c) => c.criterionKey === key))
@@ -164,7 +164,7 @@ export default function CandidateEvaluationReportPage() {
                         </tr>
                       ))}
                   </tbody>
-                </Table>
+                </table>
               </div>
             </div>
           </SectionCard>

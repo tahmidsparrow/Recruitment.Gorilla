@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Button, Col, Form, Row, Table } from 'react-bootstrap';
+import { Button, Col, Form, Row } from 'react-bootstrap';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
@@ -106,7 +106,7 @@ export default function AuditLogPage() {
             </Col>
             <Col xs={12} lg={2} className="d-flex gap-2">
               <Button type="submit" className="flex-grow-1">Filter</Button>
-              <Button type="button" variant="outline-secondary" onClick={reset}>Reset</Button>
+              <Button type="button" variant="outline" onClick={reset}>Reset</Button>
             </Col>
           </Row>
         </Form>
@@ -131,7 +131,7 @@ export default function AuditLogPage() {
           }
           action={
             hasFilters ? (
-              <Button variant="outline-secondary" onClick={reset}>
+              <Button variant="outline" onClick={reset}>
                 Reset filters
               </Button>
             ) : undefined
@@ -149,7 +149,7 @@ export default function AuditLogPage() {
           )}
 
           <div className="table-wrap">
-            <Table hover className="table-cards align-middle">
+            <table className="table table-cards align-middle">
               <thead>
                 <tr>
                   <th>Time</th>
@@ -174,7 +174,7 @@ export default function AuditLogPage() {
                   </tr>
                 ))}
               </tbody>
-            </Table>
+            </table>
           </div>
 
           <Pagination
