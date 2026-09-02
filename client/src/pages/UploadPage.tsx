@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { UploadCloud, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import BulkUploader from '../components/BulkUploader';
 import DraftReviewWorkspace from '../components/drafts/DraftReviewWorkspace';
-import Page from '../components/ui/Page';
-import SectionCard from '../components/ui/SectionCard';
+import Page from '../components/common/Page';
+import SectionCard from '../components/common/SectionCard';
 import { getCandidateDrafts } from '../services/api';
 import type { CVDraft } from '../types';
 

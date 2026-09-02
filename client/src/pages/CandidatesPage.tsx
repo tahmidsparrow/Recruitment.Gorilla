@@ -14,13 +14,13 @@ import SearchableDropdown, { SearchableMultiSelect, type DropdownOption } from '
 import { StatusBadge } from '../components/StatusBadge';
 import { getStatusSolidColor } from '../utils/statusColors';
 import KanbanBoard from '../components/kanban/KanbanBoard';
-import Avatar from '../components/ui/Avatar';
-import ConfirmModal from '../components/ui/ConfirmModal';
-import EmptyState from '../components/ui/EmptyState';
-import Page from '../components/ui/Page';
-import Pagination from '../components/ui/Pagination';
-import RowActions, { RowAction } from '../components/ui/RowActions';
-import { SkeletonRows } from '../components/ui/Loading';
+import Avatar from '../components/common/Avatar';
+import ConfirmModal from '../components/common/ConfirmModal';
+import EmptyState from '../components/common/EmptyState';
+import Page from '../components/common/Page';
+import Pagination from '../components/common/Pagination';
+import RowActions, { RowAction } from '../components/common/RowActions';
+import { SkeletonRows } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 

@@ -36,8 +36,8 @@ import {
 import { SearchableSelect } from '../SearchableSelect';
 import { useToast } from '../ToastStack';
 import { initials } from '../../utils/initials';
-import EmptyState from '../ui/EmptyState';
-import LoadingPanel from '../ui/Loading';
+import EmptyState from '../common/EmptyState';
+import LoadingPanel from '../common/Loading';
 import type {
   CandidateDraft,
   ApproveCandidateDraftRequest,

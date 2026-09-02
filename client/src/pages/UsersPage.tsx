@@ -10,12 +10,12 @@ import {
   updateUser,
 } from '../services/api';
 import { useToast } from '../components/ToastStack';
-import Avatar from '../components/ui/Avatar';
-import EmptyState from '../components/ui/EmptyState';
-import Page from '../components/ui/Page';
-import PageHeader from '../components/ui/PageHeader';
-import RowActions, { RowAction } from '../components/ui/RowActions';
-import { SkeletonRows } from '../components/ui/Loading';
+import Avatar from '../components/common/Avatar';
+import EmptyState from '../components/common/EmptyState';
+import Page from '../components/common/Page';
+import PageHeader from '../components/common/PageHeader';
+import RowActions, { RowAction } from '../components/common/RowActions';
+import { SkeletonRows } from '../components/common/Loading';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
 
 /**

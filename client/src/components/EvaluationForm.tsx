@@ -3,8 +3,8 @@ import { Button, Collapse, Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getInterviewEvaluationRubric, saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
-import ConfirmModal from './ui/ConfirmModal';
-import SectionCard from './ui/SectionCard';
+import ConfirmModal from './common/ConfirmModal';
+import SectionCard from './common/SectionCard';
 import {
   ALL_CRITERION_KEYS,
   EVALUATION_SECTIONS,

@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEmailSettings, saveEmailSettings, sendTestEmail } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
-import PasswordInput from '../../components/ui/PasswordInput';
-import SectionCard from '../../components/ui/SectionCard';
-import { SkeletonRows } from '../../components/ui/Loading';
+import PasswordInput from '../../components/common/PasswordInput';
+import SectionCard from '../../components/common/SectionCard';
+import { SkeletonRows } from '../../components/common/Loading';
 
 /**
  * SMTP configuration, grouped into Server / Credentials / Sender rather than

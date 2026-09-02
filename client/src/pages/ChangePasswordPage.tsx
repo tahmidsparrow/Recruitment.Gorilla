@@ -4,9 +4,9 @@ import { Button, Form, Spinner } from 'react-bootstrap';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../auth/AuthContext';
 import { changePassword } from '../services/api';
-import Page from '../components/ui/Page';
-import PasswordInput from '../components/ui/PasswordInput';
-import SectionCard from '../components/ui/SectionCard';
+import Page from '../components/common/Page';
+import PasswordInput from '../components/common/PasswordInput';
+import SectionCard from '../components/common/SectionCard';
 
 const MIN_LENGTH = 8;
 

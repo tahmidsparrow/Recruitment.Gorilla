@@ -14,9 +14,9 @@ import {
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/ToastStack';
 import SearchableDropdown, { SearchableMultiSelect } from '../../components/SearchableSelect';
-import ConfirmModal from '../../components/ui/ConfirmModal';
-import EmptyState from '../../components/ui/EmptyState';
-import { SkeletonRows } from '../../components/ui/Loading';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import EmptyState from '../../components/common/EmptyState';
+import { SkeletonRows } from '../../components/common/Loading';
 import { skillColorModifier } from '../../utils/skillColors';
 import {
   JOB_STATUS_BADGE,

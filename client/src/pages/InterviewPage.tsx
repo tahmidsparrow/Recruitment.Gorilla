@@ -7,9 +7,9 @@ import { getInterview, getInterviewEvaluationRubric } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
 import { skillColorClass } from '../utils/skillColors';
-import EmptyState from '../components/ui/EmptyState';
-import Page from '../components/ui/Page';
-import LoadingPanel from '../components/ui/Loading';
+import EmptyState from '../components/common/EmptyState';
+import Page from '../components/common/Page';
+import LoadingPanel from '../components/common/Loading';
 import { initials } from '../utils/initials';
 
 const CalendarIcon = () => (

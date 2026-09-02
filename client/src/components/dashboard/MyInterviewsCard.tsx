@@ -3,9 +3,9 @@ import { ListGroup } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck } from 'lucide-react';
 import { getMyInterviews } from '../../services/api';
-import EmptyState from '../ui/EmptyState';
-import SectionCard from '../ui/SectionCard';
-import { SkeletonRows } from '../ui/Loading';
+import EmptyState from '../common/EmptyState';
+import SectionCard from '../common/SectionCard';
+import { SkeletonRows } from '../common/Loading';
 import type { EvaluationState } from '../../types';
 
 // Prism's glyph-carrying pill badges — status is never colour-alone.

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { History } from 'lucide-react';
 import { StatusBadge, StatusDot } from './StatusBadge';
-import EmptyState from './ui/EmptyState';
+import EmptyState from './common/EmptyState';
 import { skillColorClass } from '../utils/skillColors';
 import { initials } from '../utils/initials';
 import type { EvaluationSummary, StatusHistoryEntry } from '../types';

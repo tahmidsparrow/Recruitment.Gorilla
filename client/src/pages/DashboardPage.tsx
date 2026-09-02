@@ -28,10 +28,10 @@ import CountBarChart from '../components/dashboard/CountBarChart';
 import ActiveJobOpeningsTable from '../components/dashboard/ActiveJobOpeningsTable';
 import MyInterviewsCard from '../components/dashboard/MyInterviewsCard';
 import DashboardHero from '../components/dashboard/DashboardHero';
-import EmptyState from '../components/ui/EmptyState';
-import Page from '../components/ui/Page';
-import SectionCard from '../components/ui/SectionCard';
-import { SkeletonCards } from '../components/ui/Loading';
+import EmptyState from '../components/common/EmptyState';
+import Page from '../components/common/Page';
+import SectionCard from '../components/common/SectionCard';
+import { SkeletonCards } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { ActivityItem, UpcomingInterview } from '../types';
 

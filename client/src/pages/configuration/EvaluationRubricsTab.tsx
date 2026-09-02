@@ -19,9 +19,9 @@ import {
   setDefaultEvaluationRubric,
   updateEvaluationRubric,
 } from '../../services/api';
-import ConfirmModal from '../../components/ui/ConfirmModal';
-import EmptyState from '../../components/ui/EmptyState';
-import { SkeletonRows } from '../../components/ui/Loading';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import EmptyState from '../../components/common/EmptyState';
+import { SkeletonRows } from '../../components/common/Loading';
 import type {
   EvaluationRubric,
   UpsertEvaluationRubricPayload,

@@ -13,9 +13,9 @@ import {
   updateSourceOption,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
-import Page from '../components/ui/Page';
-import Tabs, { TabPanel, type TabDef } from '../components/ui/Tabs';
-import { useTabs } from '../components/ui/useTabs';
+import Page from '../components/common/Page';
+import Tabs, { TabPanel, type TabDef } from '../components/common/Tabs';
+import { useTabs } from '../components/common/useTabs';
 import JobOpeningsTab from './configuration/JobOpeningsTab';
 import OptionChipsTab, { type OptionApi } from './configuration/OptionChipsTab';
 import EmailSettingsTab from './configuration/EmailSettingsTab';

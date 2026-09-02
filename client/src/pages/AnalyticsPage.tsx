@@ -13,8 +13,8 @@ import {
   Users,
 } from 'lucide-react';
 import { getCandidateFilterRoleOptions, getRecruitingAnalytics } from '../services/api';
-import EmptyState from '../components/ui/EmptyState';
-import { SkeletonRows } from '../components/ui/Loading';
+import EmptyState from '../components/common/EmptyState';
+import { SkeletonRows } from '../components/common/Loading';
 import type { AnalyticsFilterParams, RoleAppliedOption } from '../types';
 
 const PRESETS = [

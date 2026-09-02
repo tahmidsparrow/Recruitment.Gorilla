@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Button, Form, Spinner } from 'react-bootstrap';
 import { isAxiosError } from 'axios';
 import { useAuth } from '../auth/AuthContext';
-import PasswordInput from '../components/ui/PasswordInput';
+import PasswordInput from '../components/common/PasswordInput';
 import BrandLogo from '../components/BrandLogo';
 import ThemeMenu from '../components/ThemeMenu';
 

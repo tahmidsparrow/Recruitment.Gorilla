@@ -164,26 +164,30 @@
   /* Layout. --space-page is the page gutter and is re-declared per breakpoint
      in index.css; --stack-gap is the vertical rhythm between the sections of
      one page and tracks it. */
-  --space-page: 24px;
-  --stack-gap: var(--space-5);
-  --topbar-height: 64px;
-  --sidebar-width: 244px;
-  --sidebar-width-collapsed: 68px;
+  --space-page: 20px;
+  --stack-gap: var(--space-4);
+  --topbar-height: 54px;
+  --sidebar-width: 228px;
+  --sidebar-width-collapsed: 60px;
 
   /* Padding inside a card. One value so a chart card, a form card and a table
      card all have the same inset. */
-  --card-pad: var(--space-5);
-  --card-pad-tight: var(--space-4);
+  --card-pad: var(--space-4);
+  --card-pad-tight: var(--space-3);
 
-  /* Control geometry. Harbor's rows are roomy: a 56px table row fits a
-     32px avatar with a two-line identity beside it, which is what lets the
-     candidate list drop its separate "Title" column on narrow screens
-     without hiding information. */
-  --control-h: 36px;
-  --control-h-sm: 30px;
-  --control-h-lg: 42px;
-  --row-h: 56px;
-  --row-h-compact: 44px;
+  /* Control geometry — COMPACT.
+     A 44px row still fits a 28px avatar beside a two-line identity cell (name
+     at 13px/1.35 over a 11.5px caption is 33px of type), which is what lets
+     the candidate list keep the second line of context. Below 44 the caption
+     has to go, and the row stops being worth more than a plain one.
+
+     Every control on a row shares --control-h so a button, an input and a
+     select on the same line sit on one rail. */
+  --control-h: 32px;
+  --control-h-sm: 28px;
+  --control-h-lg: 38px;
+  --row-h: 44px;
+  --row-h-compact: 36px;
 
   /* ---- Typography ----
      Plus Jakarta Sans, self-hosted via @fontsource-variable, imported in
@@ -204,18 +208,18 @@
      and the steps between sizes are smaller, because Harbor separates levels
      with weight and colour first and size second — a heading that is both
      much bigger and much bolder than its body reads as shouting. */
-  --text-2xs: 10.5px;
-  --text-xs: 11.5px;
-  --text-sm: 12.5px;
-  --text-md: 13.5px;
-  --text-lg: 15px;
-  --text-xl: 18px;
-  --text-2xl: 22px;
-  --text-3xl: 28px;
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 14.5px;
+  --text-xl: 17px;
+  --text-2xl: 21px;
+  --text-3xl: 26px;
   /* A single headline figure on a stat tile. Bigger than any heading — on a
      dashboard the number IS the content. */
-  --text-metric: 30px;
-  --text-metric-lg: 34px;
+  --text-metric: 26px;
+  --text-metric-lg: 30px;
 
   /* Line heights. Paired with the sizes above rather than left to a global
      1.5: display type at 1.5 looks slack, and an 11px label at 1.5 wastes

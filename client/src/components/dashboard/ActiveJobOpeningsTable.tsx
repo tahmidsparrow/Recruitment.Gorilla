@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { Briefcase, Calendar, MapPin, User, type LucideProps } from 'lucide-react';
-import EmptyState from '../ui/EmptyState';
-import SectionCard from '../ui/SectionCard';
+import EmptyState from '../common/EmptyState';
+import SectionCard from '../common/SectionCard';
 import type { JobOpening } from '../../types';
 
 const iconProps: LucideProps = {

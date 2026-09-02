@@ -4,10 +4,10 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
 import SearchableDropdown, { type DropdownOption } from '../components/SearchableSelect';
-import EmptyState from '../components/ui/EmptyState';
-import Page from '../components/ui/Page';
-import Pagination from '../components/ui/Pagination';
-import { SkeletonRows } from '../components/ui/Loading';
+import EmptyState from '../components/common/EmptyState';
+import Page from '../components/common/Page';
+import Pagination from '../components/common/Pagination';
+import { SkeletonRows } from '../components/common/Loading';
 import type { AuditQuery } from '../types';
 
 const ENTITY_TYPES = ['Candidate', 'Interview', 'Role', 'Skill', 'InterviewType', 'User'];
