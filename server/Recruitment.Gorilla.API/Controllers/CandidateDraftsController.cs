@@ -9,9 +9,7 @@ namespace Recruitment.Gorilla.API.Controllers;
 [ApiController]
 [Authorize(Roles = Roles.CanWriteCandidate)]
 [Route("api/candidate-drafts")]
-public class CandidateDraftsController(
-    CandidateDraftService draftService,
-    ILogger<CandidateDraftsController> logger) : ControllerBase
+public class CandidateDraftsController(CandidateDraftService draftService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PagedDraftsResultDto>> GetDrafts([FromQuery] DraftsFilterQuery query)
