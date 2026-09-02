@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEmailSettings, saveEmailSettings, sendTestEmail } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
@@ -10,6 +9,7 @@ import { SkeletonRows } from '../../components/common/Loading';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 /**
  * SMTP configuration, grouped into Server / Credentials / Sender rather than
@@ -106,13 +106,7 @@ export default function EmailSettingsTab() {
                 <Input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
               </div>
               <div className="col-12">
-                <Form.Check
-                  type="checkbox"
-                  id="smtp-starttls"
-                  label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)."
-                  checked={useStartTls}
-                  onChange={(e) => setUseStartTls(e.target.checked)}
-                />
+                <CheckboxField id="smtp-starttls" label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)." checked={useStartTls} onCheckedChange={(checked) => setUseStartTls(checked)} />
               </div>
             </div>
           </div>
@@ -159,13 +153,7 @@ export default function EmailSettingsTab() {
           </div>
 
           <div className="form-section">
-            <Form.Check
-              type="checkbox"
-              id="smtp-enabled"
-              label="Enabled — actually send email. When off, notifications stay in-app only."
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-            />
+            <CheckboxField id="smtp-enabled" label="Enabled — actually send email. When off, notifications stay in-app only." checked={enabled} onCheckedChange={(checked) => setEnabled(checked)} />
           </div>
 
           <div className="form-actions">

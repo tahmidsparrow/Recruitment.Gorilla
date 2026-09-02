@@ -30,6 +30,7 @@ import type { Opt } from './types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const LOCATIONS = ['Remote', 'Office', 'Hybrid', 'Contractual'];
@@ -379,13 +380,7 @@ export default function JobOpeningsTab() {
                 </p>
               </div>
               <div className="col-12">
-                <Form.Check
-                  type="checkbox"
-                  id="job-active"
-                  label="Active — shown in candidate forms and on the dashboard"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
+                <CheckboxField id="job-active" label="Active — shown in candidate forms and on the dashboard" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               </div>
             </div>
           </Modal.Body>

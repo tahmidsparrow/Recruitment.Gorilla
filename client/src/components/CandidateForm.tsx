@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Col, Form, Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 interface Props {
   draft: CVDraft;
@@ -293,13 +294,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         </Col>
         <Col md={12}>
           <div className="field-divider" />
-          <Form.Check
-            type="checkbox"
-            id="is-referred"
-            label="This candidate has been referred"
-            checked={isReferred}
-            onChange={(e) => setIsReferred(e.target.checked)}
-          />
+          <CheckboxField id="is-referred" label="This candidate has been referred" checked={isReferred} onCheckedChange={(checked) => setIsReferred(checked)} />
         </Col>
         {isReferred && (
           <>

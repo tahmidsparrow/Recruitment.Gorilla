@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { KeyRound, Pencil, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
@@ -20,6 +20,7 @@ import { ALL_ROLES, type Role, type UserListItem } from '../types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 /**
  * Roles as pill badges rather than raw Bootstrap `<Badge bg="…">`, which
@@ -321,14 +322,7 @@ export default function UsersPage() {
                 </legend>
                 <div className="check-grid">
                   {ALL_ROLES.map((r) => (
-                    <Form.Check
-                      key={r}
-                      type="checkbox"
-                      id={`role-${r}`}
-                      label={r}
-                      checked={roles.includes(r)}
-                      onChange={() => toggleRole(r)}
-                    />
+                    <CheckboxField id={`role-${r}`} label={r} checked={roles.includes(r)} onCheckedChange={() => toggleRole(r)} />
                   ))}
                 </div>
               </div>
@@ -346,13 +340,7 @@ export default function UsersPage() {
                 </div>
               )}
               {editing && (
-                <Form.Check
-                  type="checkbox"
-                  id="user-active"
-                  label="Active — can sign in"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
+                <CheckboxField id="user-active" label="Active — can sign in" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               )}
             </div>
           </Modal.Body>

@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -150,5 +151,65 @@ export function FormSection({
       )}
       {children}
     </section>
+  );
+}
+
+/**
+ * A checkbox with its label on one line.
+ *
+ * The label is a real `<Label htmlFor>` rather than text beside the box, so
+ * clicking the words toggles the control — which Bootstrap's Form.Check gave
+ * us for free and is the single easiest thing to lose in a hand-rolled
+ * replacement.
+ */
+export function CheckboxField({
+  id,
+  label,
+  description,
+  checked,
+  onCheckedChange,
+  disabled,
+  className,
+}: {
+  id: string;
+  label: ReactNode;
+  description?: ReactNode;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex min-h-[var(--control-h-sm)] items-start gap-2', className)}>
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(v === true)}
+        disabled={disabled}
+        className="mt-0.5"
+      />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <Label htmlFor={id} className="font-medium">
+          {label}
+        </Label>
+        {description && (
+          <p className="text-[length:var(--text-sm)] text-muted-foreground">{description}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A set of related checkboxes (roles, options). Auto-fit columns rather than a
+ * flex row, so the boxes line up in a grid instead of ragging wherever the
+ * previous label happened to end.
+ */
+export function CheckGrid({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn('grid gap-x-4 gap-y-2 [grid-template-columns:repeat(auto-fit,minmax(9rem,1fr))]', className)}
+      {...props}
+    />
   );
 }

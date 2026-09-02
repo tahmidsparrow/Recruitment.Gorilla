@@ -25,6 +25,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 const PAGE_SIZE = 20;
 
@@ -277,13 +278,7 @@ export default function CandidatesPage() {
               ))}
             </Form.Select>
 
-            <Form.Check
-              type="checkbox"
-              id="filter-referred"
-              label="Referred only"
-              checked={referred}
-              onChange={(e) => setParams({ referred: e.target.checked ? '1' : null })}
-            />
+            <CheckboxField id="filter-referred" label="Referred only" checked={referred} onCheckedChange={(checked) => setParams({ referred: checked ? '1' : null })} />
 
             {BUCKET_LABELS[bucket] && (
               <span className="filter-chip">

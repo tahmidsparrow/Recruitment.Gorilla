@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Form, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import {
   Copy,
   FileCheck2,
@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
+import { CheckboxField } from '@/components/ui/field';
 import type {
   EvaluationRubric,
   UpsertEvaluationRubricPayload,
@@ -544,20 +545,8 @@ export default function EvaluationRubricsTab() {
               </div>
 
               <div className="col-12 col-md-4 d-flex flex-column justify-content-end gap-2">
-                <Form.Check
-                  type="checkbox"
-                  id="rubric-is-default"
-                  label="System Default Rubric"
-                  checked={isDefault}
-                  onChange={(e) => setIsDefault(e.target.checked)}
-                />
-                <Form.Check
-                  type="checkbox"
-                  id="rubric-is-active"
-                  label="Active"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
+                <CheckboxField id="rubric-is-default" label="System Default Rubric" checked={isDefault} onCheckedChange={(checked) => setIsDefault(checked)} />
+                <CheckboxField id="rubric-is-active" label="Active" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               </div>
 
               <div className="col-12">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Col, Form, Row, Modal, Offcanvas } from 'react-bootstrap';
+import { Col, Row, Modal, Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ClipboardList, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -33,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 
@@ -624,13 +625,7 @@ function ProfileEditor({
 
         <Col md={12}>
           <hr className="mb-2" />
-          <Form.Check
-            type="checkbox"
-            id="is-referred-edit"
-            label="This candidate has been referred"
-            checked={form.isReferred}
-            onChange={(e) => setForm((f) => ({ ...f, isReferred: e.target.checked }))}
-          />
+          <CheckboxField id="is-referred-edit" label="This candidate has been referred" checked={form.isReferred} onCheckedChange={(checked) => setForm((f) => ({ ...f, isReferred: checked }))} />
         </Col>
         {form.isReferred && (
           <>

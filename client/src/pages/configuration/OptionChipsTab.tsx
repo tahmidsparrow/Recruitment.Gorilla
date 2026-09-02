@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Tags, X } from 'lucide-react';
 import { useToast } from '../../components/ToastStack';
@@ -13,6 +13,7 @@ import type { Opt } from './types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { CheckboxField } from '@/components/ui/field';
 
 export interface OptionApi {
   list: (includeInactive: boolean) => Promise<Opt[]>;
@@ -238,13 +239,7 @@ export default function OptionChipsTab({
                 />
                 <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Name is required.</p>
               </div>
-              <Form.Check
-                type="checkbox"
-                id={`${queryKey}-active`}
-                label="Active — shown in candidate forms"
-                checked={editActive}
-                onChange={(e) => setEditActive(e.target.checked)}
-              />
+              <CheckboxField id={`${queryKey}-active`} label="Active — shown in candidate forms" checked={editActive} onCheckedChange={(checked) => setEditActive(checked)} />
             </div>
           </Modal.Body>
           <Modal.Footer>
