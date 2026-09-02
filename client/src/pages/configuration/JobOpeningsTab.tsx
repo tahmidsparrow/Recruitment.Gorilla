@@ -531,10 +531,14 @@ function JobRow({
       </div>
 
       <div className="job-row__actions">
+        {/* Ghost, not outline-danger: a red-outlined button on every row made
+            "delete this opening" the most emphatic control on the page. It
+            turns red under the pointer, which is when the warning is useful. */}
         {canDelete && (
           <Button
             size="sm"
-            variant="outline-danger"
+            variant="ghost-danger"
+            className="btn-icon"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
@@ -542,7 +546,7 @@ function JobRow({
             title="Delete"
             aria-label={`Delete ${job.name}`}
           >
-            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+            <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
           </Button>
         )}
         <ChevronRight size={18} strokeWidth={1.75} aria-hidden="true" className="job-row__chevron" />

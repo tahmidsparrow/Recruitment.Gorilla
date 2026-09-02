@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Form } from 'react-bootstrap';
 import {
   Briefcase,
-  ChevronRight,
   Clock,
   Filter,
   Layers,
@@ -125,7 +124,7 @@ export default function AnalyticsPage() {
             {/* Avg Time to Hire */}
             <div className="analytics-card analytics-card--kpi">
               <div className="analytics-card__header">
-                <h4 className="analytics-card__title">Avg Time to Hire</h4>
+                <h4 className="analytics-card__title">Average time to hire</h4>
                 <div className="analytics-card__icon-badge">
                   <Clock size={16} />
                 </div>
@@ -148,10 +147,10 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Pipeline Velocity */}
-            <div className="analytics-card analytics-card--kpi analytics-card--kpi-velocity">
+            <div className="analytics-card analytics-card--kpi">
               <div className="analytics-card__header">
-                <h4 className="analytics-card__title">Pipeline Velocity</h4>
-                <div className="analytics-card__icon-badge analytics-card__icon-badge--velocity">
+                <h4 className="analytics-card__title">Pipeline velocity</h4>
+                <div className="analytics-card__icon-badge">
                   <TrendingUp size={16} />
                 </div>
               </div>
@@ -166,10 +165,10 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Overall Funnel Conversion */}
-            <div className="analytics-card analytics-card--kpi analytics-card--kpi-conversion">
+            <div className="analytics-card analytics-card--kpi">
               <div className="analytics-card__header">
-                <h4 className="analytics-card__title">Funnel Conversion Rate</h4>
-                <div className="analytics-card__icon-badge analytics-card__icon-badge--conversion">
+                <h4 className="analytics-card__title">Funnel conversion</h4>
+                <div className="analytics-card__icon-badge">
                   <Sparkles size={16} />
                 </div>
               </div>
@@ -190,12 +189,12 @@ export default function AnalyticsPage() {
 
             {/* Active Pipeline Candidates */}
             <div
-              className="analytics-card analytics-card--kpi analytics-card--kpi-pipeline"
+              className="analytics-card analytics-card--kpi"
               title="Candidates advancing through screening, assessments, interviews or offers"
             >
               <div className="analytics-card__header">
-                <h4 className="analytics-card__title">Active Pipeline</h4>
-                <div className="analytics-card__icon-badge analytics-card__icon-badge--pipeline">
+                <h4 className="analytics-card__title">Active pipeline</h4>
+                <div className="analytics-card__icon-badge">
                   <Users size={16} />
                 </div>
               </div>
@@ -210,8 +209,8 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <Layers size={18} className="text-primary" />
-                <h5 className="mb-0 fw-bold fs-6">Pipeline Funnel & Conversion</h5>
+                <Layers size={18} className="text-muted" />
+                <h3 className="section-title">Pipeline funnel</h3>
               </div>
               <span className="text-muted small fw-medium">
                 {summary.totalCandidatesInPeriod}{' '}
@@ -230,13 +229,6 @@ export default function AnalyticsPage() {
                 const cleanStageName = stage.stageName.replace(/^\d+\.\s*/, '');
                 const isHired = stage.stageKey === 'hired';
 
-                const stageGradients = [
-                  'linear-gradient(90deg, #2563eb, #38bdf8)',
-                  'linear-gradient(90deg, #0284c7, #06b6d4)',
-                  'linear-gradient(90deg, #6366f1, #818cf8)',
-                  'linear-gradient(90deg, #f59e0b, #fbbf24)',
-                  'linear-gradient(90deg, #10b981, #34d399)',
-                ];
 
                 return (
                   <div key={stage.stageKey} className="d-flex align-items-stretch flex-grow-1 min-w-0">
@@ -248,9 +240,6 @@ export default function AnalyticsPage() {
                         >
                           {passRate}%
                         </span>
-                        <div className="stepped-funnel__connector-arrow">
-                          <ChevronRight size={15} />
-                        </div>
                       </div>
                     )}
 
@@ -276,9 +265,16 @@ export default function AnalyticsPage() {
                         <div className="stepped-funnel__node-bar">
                           <div
                             className="stepped-funnel__node-bar-fill"
+                            /* One flat fill for every stage but the last.
+                               Five two-stop gradients on a 4px track read as
+                               five arbitrary colours, and they implied the
+                               stages differ in kind when they only differ in
+                               position — which the bar's length already says.
+                               "Hired" is the one stage with an outcome, so it
+                               is the one that gets a colour of its own. */
                             style={{
                               width: `${Math.max(4, stage.conversionFromStartPercent)}%`,
-                              background: stageGradients[idx] ?? stageGradients[0],
+                              background: isHired ? 'var(--success)' : 'var(--primary)',
                             }}
                           />
                         </div>
@@ -294,8 +290,8 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <Clock size={16} className="text-primary" />
-                <h5 className="mb-0 fw-bold fs-6">Stage Dwell Time & Velocity</h5>
+                <Clock size={16} className="text-muted" />
+                <h3 className="section-title">Stage dwell time</h3>
               </div>
               <span className="text-muted small fw-medium">Average days per candidate</span>
             </div>
@@ -369,7 +365,7 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <Briefcase size={18} className="text-primary" />
+                <Briefcase size={18} className="text-muted" />
                 <h5 className="mb-0 fw-bold fs-6">Sourcing Channel Performance & ROI</h5>
               </div>
               <span className="text-muted small fw-medium">
@@ -437,7 +433,7 @@ export default function AnalyticsPage() {
           <div className="analytics-card">
             <div className="analytics-card__header">
               <div className="d-flex align-items-center gap-2">
-                <UserCheck size={18} className="text-primary" />
+                <UserCheck size={18} className="text-muted" />
                 <h5 className="mb-0 fw-bold fs-6">Recruiter Productivity & Pipeline Workload</h5>
               </div>
               <span className="text-muted small fw-medium">

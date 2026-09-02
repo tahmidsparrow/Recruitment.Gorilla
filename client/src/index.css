@@ -1769,9 +1769,9 @@ a.list-row__title:hover {
   flex: 0 0 auto;
   text-align: left;
   font-size: var(--text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-weight: var(--weight-normal);
+  text-transform: none;
+  letter-spacing: 0;
   color: var(--muted);
 }
 /* The first cell is the record's identity, so it reads as a heading rather
@@ -2468,27 +2468,33 @@ a.list-row__title:hover {
    and each gets a distinct treatment so the user can tell them apart at a
    glance: dashed + neutral for empty, a shimmer of the shape that is coming
    for loading, and a tinted danger border for error. */
+/* A solid, quiet surface rather than a dashed outline. A dashed border is the
+   convention for "drop something here" — which is exactly what the CV dropzone
+   below IS, and using the same treatment for "no candidates match this filter"
+   made an ordinary result look like an interactive target. The dropzone keeps
+   the dashed border; every other empty state loses it. */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: var(--space-7) var(--space-5);
+  padding: var(--space-9) var(--space-5);
   text-align: center;
-  background: var(--surface-muted);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 .empty-state__icon {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
   border-radius: var(--radius-pill);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--muted);
+  background: var(--surface-muted);
+  border: 0;
+  color: var(--muted-light);
 }
 .empty-state-title {
   color: var(--text);
@@ -2512,13 +2518,14 @@ a.list-row__title:hover {
 }
 /* A failure is not an absence — it gets the danger border so it isn't read as
    "there is simply nothing here". */
+/* A failure is not an absence — it gets the danger treatment so it isn't read
+   as "there is genuinely nothing here". */
 .empty-state--error {
-  border-style: solid;
-  border-color: var(--danger);
+  border-color: var(--danger-border);
   background: var(--danger-tint);
+  box-shadow: none;
 }
 .empty-state--error .empty-state__icon {
-  border-color: var(--danger);
   color: var(--danger);
   background: var(--surface);
 }
@@ -2608,14 +2615,21 @@ a.list-row__title:hover {
 }
 
 /* The CV drop zone is an .empty-state that accepts a drop. */
+/* The one place the dashed border earns its keep: it is the universal cue for
+   a drop target, and this is the app's only one. */
 .dropzone {
-  padding: var(--space-9) var(--space-5);
+  padding: var(--space-10) var(--space-5);
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+  box-shadow: none;
+  transition: border-color var(--dur) var(--ease-out),
+    background-color var(--dur) var(--ease-out);
 }
 .dropzone:hover {
   border-color: var(--primary);
-  background: var(--surface);
+  background: var(--primary-tint);
 }
 .dropzone--busy {
   cursor: default;
@@ -3015,16 +3029,21 @@ a.list-row__title:hover {
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  padding: 16px;
+  padding: var(--space-4);
   text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
   color: inherit;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease);
 }
 .job-row:hover {
-  border-color: var(--primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 /* Closed or deactivated openings stay listed but recede. */
 .job-row--dim {
@@ -3039,8 +3058,9 @@ a.list-row__title:hover {
   min-width: 0;
 }
 .job-row__name {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
   line-height: 1.25;
   color: var(--text);
   overflow-wrap: anywhere;
@@ -3056,14 +3076,19 @@ a.list-row__title:hover {
 }
 /* Department as coloured uppercase text. Two classes deep so it wins over the
    .skill-badge--N background it borrows its hue from. */
+/* Department reads as one more fact in the meta line, not as a label shouting
+   over the job title above it. The hashed hue is gone with the skill palette;
+   the `.skill-badge--N` class the call site still passes now resolves to
+   nothing, which is the intended result. */
 .job-row .dept-tag {
   background: none;
   border: 0;
   padding: 0;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .job-row__metrics {
@@ -3088,8 +3113,8 @@ a.list-row__title:hover {
   white-space: nowrap;
 }
 .job-row__gauge-value {
-  font-size: var(--text-lg);
-  font-weight: 700;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -3099,12 +3124,12 @@ a.list-row__title:hover {
 }
 .job-row__meta-label {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted-light);
-  margin-bottom: 3px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  margin-bottom: 2px;
 }
 .job-row__closes-value {
   font-size: var(--text-sm);
@@ -3119,11 +3144,11 @@ a.list-row__title:hover {
 }
 .job-row__bar {
   flex: 1 1 auto;
-  height: 6px;
+  height: 4px;
   min-width: 80px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface-muted);
-  border: 1px solid var(--border);
+  border: 0;
   overflow: hidden;
 }
 .job-row--dim .job-row__bar {
@@ -3202,14 +3227,17 @@ a.list-row__title:hover {
 .job-card {
   display: flex;
   flex-direction: column;
-  padding: 14px 16px;
+  padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  transition: border-color 0.15s ease;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
 }
 .job-card:hover {
-  border-color: var(--primary);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
 }
 /* A closed or deactivated opening is still listed, but recedes. */
 .job-card--dim {
@@ -3262,12 +3290,12 @@ a.list-row__title:hover {
 }
 .job-card__meta-label {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted-light);
-  margin-bottom: 4px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  margin-bottom: 2px;
 }
 .job-card__meta-value {
   font-size: var(--text-sm);
@@ -3481,11 +3509,11 @@ a.list-row__title:hover {
   border-top: 1px solid var(--border);
 }
 .form-section__title {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--muted-light);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
   margin-bottom: var(--space-3);
 }
 
@@ -3589,9 +3617,11 @@ a.list-row__title:hover {
   width: min(100%, 420px);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: none;
-  padding: 2rem;
+  border-radius: var(--radius-2xl);
+  /* The one place in the app where a card floats on an otherwise empty page,
+     so it takes dialog-level elevation rather than the resting card shadow. */
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-8) var(--space-7);
 }
 .login-logo {
   justify-content: center;
@@ -3600,16 +3630,17 @@ a.list-row__title:hover {
 }
 .login-title {
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-display);
   color: var(--secondary);
-  margin-bottom: 0.15rem;
+  margin-bottom: var(--space-1);
   text-align: center;
 }
 .login-subtitle {
   color: var(--muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 /* ---------- Brand logo ----------
@@ -3637,16 +3668,17 @@ a.list-row__title:hover {
 
      Fixed values rather than token-derived: --primary brightens in dark mode to
      stay legible as *text*, which would flatten the fur/face separation. */
-  --brand-mark-accent: #4a97a0;
-  --brand-mark-deep: #2b5a61;
-  --brand-mark-soft: #cbe8ec;
+  --brand-mark-accent: #2563eb;
+  --brand-mark-deep: #1e3a8a;
+  --brand-mark-soft: #dbeafe;
 }
 [data-bs-theme='dark'] .brand {
-  /* Fur lifts to clear the darker page ground; the face lifts further to keep
-     the gap between them; the features stay dark against that pale face. */
-  --brand-mark-accent: #4f9aa4;
-  --brand-mark-deep: #1e4249;
-  --brand-mark-soft: #d3ecef;
+  /* Fur lifts to clear the darker page ground (#3b82f6 is 4.4:1 on --bg); the
+     face stays pale so the brow overhang survives (3.4:1 against the fur); the
+     features stay dark against that pale face. */
+  --brand-mark-accent: #3b82f6;
+  --brand-mark-deep: #172554;
+  --brand-mark-soft: #dbeafe;
 }
 .brand__mark {
   display: block;
@@ -3898,9 +3930,9 @@ a.list-row__title:hover {
   border-radius: var(--radius-full);
   background: var(--surface-muted);
   border: 1px solid var(--border);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* Floating Popover */
@@ -4534,11 +4566,11 @@ a.hero-chip--accent:hover {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--muted-light);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
   margin-bottom: var(--space-1);
 }
 .eval-briefing__body {
@@ -4736,13 +4768,13 @@ a.hero-chip--accent:hover {
 }
 .timeline__current {
   color: var(--primary);
-  font-size: 11px;
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
   background: var(--primary-tint);
-  padding: 1px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
 }
 .timeline__meta {
   margin-top: var(--space-1);
@@ -4789,13 +4821,13 @@ a.hero-chip--accent:hover {
 .eval-summary__head {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--primary);
-  margin-bottom: 0.55rem;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  margin-bottom: var(--space-3);
 }
 .eval-summary__count {
   margin-left: auto;
@@ -5142,14 +5174,22 @@ a.hero-chip--accent:hover {
   background: var(--primary-dark);
   box-shadow: none;
 }
-.profile-title { font-weight: 600; font-size: 1.02rem; color: var(--text); }
+.profile-title {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+}
+/* "CURRENT POSITION" above the job title. It is a caption for the line under
+   it, not a heading — at 700 weight in tracked uppercase it was competing
+   with the position itself. */
 .profile-field-label {
-  color: var(--text-soft);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 0.15rem;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0;
+  text-transform: none;
+  margin-bottom: 2px;
 }
 .profile-grid {
   display: grid;
@@ -5385,10 +5425,10 @@ a.hero-chip--accent:hover {
 }
 
 .offer-meta-tile__label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-caps);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-normal);
+  text-transform: none;
+  letter-spacing: 0;
   color: var(--muted);
   line-height: 1.2;
 }
@@ -6169,14 +6209,16 @@ a.hero-chip--accent:hover {
   border-collapse: collapse;
 }
 
+/* Matched to `.table > thead th` so the analytics table and every other table
+   in the app are the same object. */
 .analytics-table th {
-  padding: 8px 12px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-soft, var(--muted-light));
-  background: var(--surface-muted);
+  padding: 10px var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+  background: transparent;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
