@@ -36,6 +36,13 @@ const DownloadIcon = () => (
   </svg>
 );
 
+const CodeIcon = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <polyline points="16 18 22 12 16 6" />
+    <polyline points="8 6 2 12 8 18" />
+  </svg>
+);
+
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === '') return null;
   return (
@@ -63,13 +70,6 @@ const SUMMARY_COLLAPSE_THRESHOLD = 260;
 
 /**
  * Non-editable candidate profile shown alongside the evaluation form.
- *
- * `showCvFiles` exists because the candidate detail page renders this card
- * *and* its own `CvFilesCard`, which meant every candidate profile listed its
- * CVs twice, in two different designs, each with its own Preview and Download
- * buttons. The detail page keeps the richer card (it has the inline PDF
- * viewer) and turns this list off; the interview page, where there is no
- * second card, keeps it.
  */
 export default function ReadOnlyCandidateProfile({
   candidate,
@@ -92,7 +92,8 @@ export default function ReadOnlyCandidateProfile({
     setPreviewName(name);
   };
 
-  const hasLinks = candidate.linkedInUrl || candidate.githubUrl || candidate.portfolioUrl;
+  const hasLinks = candidate.linkedInUrl || candidate.githubUrl || candidate.portfolioUrl ||
+    candidate.leetCodeUrl || candidate.codeforcesUrl || candidate.hackerRankUrl || candidate.gitLabUrl;
   const summaryIsLong = (candidate.summary?.length ?? 0) > SUMMARY_COLLAPSE_THRESHOLD;
   const summaryCollapsed = summaryIsLong && !summaryExpanded;
 
@@ -101,15 +102,13 @@ export default function ReadOnlyCandidateProfile({
       <div className="profile-header">
         <div className="d-flex justify-content-between align-items-start gap-2">
           <div>
-            {/* Was "Position on Last Organization" — the most prominent label on
-                the card, and not grammatical. The field is `currentTitle`. */}
             <div className="profile-field-label">Current position</div>
             <div className="profile-title">{candidate.currentTitle || '—'}</div>
           </div>
           <StatusBadge status={candidate.currentStatus} />
         </div>
         {hasLinks && (
-          <div className="profile-links mt-3">
+          <div className="profile-links mt-3 d-flex flex-wrap gap-2">
             {candidate.linkedInUrl && (
               <a href={candidate.linkedInUrl} target="_blank" rel="noreferrer" className="profile-link">
                 <LinkedInIcon /> LinkedIn
@@ -118,6 +117,26 @@ export default function ReadOnlyCandidateProfile({
             {candidate.githubUrl && (
               <a href={candidate.githubUrl} target="_blank" rel="noreferrer" className="profile-link">
                 <GitHubIcon /> GitHub
+              </a>
+            )}
+            {candidate.gitLabUrl && (
+              <a href={candidate.gitLabUrl} target="_blank" rel="noreferrer" className="profile-link">
+                <CodeIcon /> GitLab
+              </a>
+            )}
+            {candidate.leetCodeUrl && (
+              <a href={candidate.leetCodeUrl} target="_blank" rel="noreferrer" className="profile-link">
+                <CodeIcon /> LeetCode
+              </a>
+            )}
+            {candidate.codeforcesUrl && (
+              <a href={candidate.codeforcesUrl} target="_blank" rel="noreferrer" className="profile-link">
+                <CodeIcon /> Codeforces
+              </a>
+            )}
+            {candidate.hackerRankUrl && (
+              <a href={candidate.hackerRankUrl} target="_blank" rel="noreferrer" className="profile-link">
+                <CodeIcon /> HackerRank
               </a>
             )}
             {candidate.portfolioUrl && (
@@ -133,6 +152,7 @@ export default function ReadOnlyCandidateProfile({
         <div className="profile-grid mb-3">
           <Tile label="Email" value={candidate.email} />
           <Tile label="Phone" value={candidate.phone} />
+          <Tile label="Location" value={candidate.location} />
           <Tile label="Relevant Experience" value={candidate.relevantExperience} />
           <Tile
             label="Source"
@@ -170,6 +190,65 @@ export default function ReadOnlyCandidateProfile({
             )}
           </div>
         )}
+
+        {/* Education Section */}
+        {candidate.educations && candidate.educations.length > 0 && (
+          <div className="mb-3">
+            <div className="profile-field-label">Education & Academics</div>
+            <div className="d-flex flex-column gap-2 mt-1">
+              {candidate.educations.map((edu, idx) => (
+                <div key={edu.id ?? idx} className="p-2.5 rounded border border-subtle bg-surface-muted">
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <span className="fw-semibold text-body" style={{ fontSize: '13px' }}>
+                      {edu.degree}
+                    </span>
+                    {edu.cgpa && (
+                      <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5" style={{ fontSize: '11px' }}>
+                        CGPA {edu.cgpa}
+                      </span>
+                    )}
+                  </div>
+                  <div className="d-flex justify-content-between align-items-center text-muted mt-1" style={{ fontSize: '12px' }}>
+                    <span>{edu.institution}</span>
+                    {edu.graduationYear && <span>{edu.graduationYear}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Employment History Section */}
+        {candidate.experiences && candidate.experiences.length > 0 && (
+          <div className="mb-3">
+            <div className="profile-field-label">Work Experience</div>
+            <div className="d-flex flex-column gap-2.5 mt-1">
+              {candidate.experiences.map((exp, idx) => (
+                <div key={exp.id ?? idx} className="p-2.5 rounded border border-subtle bg-surface-muted">
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <span className="fw-semibold text-body" style={{ fontSize: '13px' }}>
+                      {exp.jobTitle}
+                    </span>
+                    {exp.duration && (
+                      <span className="badge bg-secondary-subtle text-secondary px-2 py-0.5" style={{ fontSize: '11px' }}>
+                        {exp.duration}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-primary-emphasis fw-medium mt-0.5" style={{ fontSize: '12.5px' }}>
+                    {exp.company}
+                  </div>
+                  {exp.description && (
+                    <div className="text-muted mt-1.5" style={{ fontSize: '12px', whiteSpace: 'pre-line' }}>
+                      {exp.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {candidate.isReferred && (
           <Field
             label="Referred by"

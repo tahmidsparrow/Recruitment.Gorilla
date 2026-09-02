@@ -69,7 +69,8 @@ public class CVUploadController(
         using (var stream = System.IO.File.Create(fullPath))
             await file.CopyToAsync(stream);
 
-        var (name, email, phone, linkedin, github, skills, summary) = parser.Parse(fullPath, fileType);
+        var parsed = parser.Parse(fullPath, fileType);
+        var name = parsed.Name;
 
         var (fallbackName, fallbackTitle) = CVParserService.ParseNameAndTitleFromFileName(file.FileName);
         if (string.IsNullOrWhiteSpace(name)) name = fallbackName;
@@ -77,7 +78,12 @@ public class CVUploadController(
         // Persist draft to MySQL database for long-term review
         var draftEntity = await draftService.CreateDraftAsync(
             file.FileName, storedName, fileType, file.Length,
-            bId, batchName, name, email, phone, linkedin, github, skills, summary);
+            bId, batchName, name, parsed.Email, parsed.Phone, parsed.LinkedIn, parsed.Github, parsed.Skills, parsed.Summary,
+            parsed.Location, parsed.LeetCode, parsed.Codeforces, parsed.HackerRank, parsed.GitLab,
+            parsed.Educations, parsed.Experiences);
+
+        var eduDtos = parsed.Educations.Select((e, i) => new CandidateEducationDto(i + 1, e.Degree, e.Institution, e.GraduationYear, e.Cgpa)).ToList();
+        var expDtos = parsed.Experiences.Select((e, i) => new CandidateExperienceDto(i + 1, e.JobTitle, e.Company, e.Duration, e.Description)).ToList();
 
         if (draftEntity.CurrentTitle == null && fallbackTitle != null)
         {
@@ -86,13 +92,17 @@ public class CVUploadController(
                 draftEntity.FullName, draftEntity.Email, draftEntity.Phone, fallbackTitle,
                 draftEntity.RelevantExperience, draftEntity.Skills, draftEntity.Summary,
                 draftEntity.LinkedInUrl, draftEntity.GithubUrl, draftEntity.PortfolioUrl,
-                draftEntity.RoleAppliedOptionId, draftEntity.SourceOptionId, draftEntity.SourceDetail));
+                draftEntity.RoleAppliedOptionId, draftEntity.SourceOptionId, draftEntity.SourceDetail,
+                draftEntity.Location, draftEntity.LeetCodeUrl, draftEntity.CodeforcesUrl, draftEntity.HackerRankUrl, draftEntity.GitLabUrl,
+                eduDtos, expDtos));
         }
 
         var draft = new CVDraftDto(
-            name, email, phone, fallbackTitle, skills, summary, linkedin, github,
+            name, parsed.Email, parsed.Phone, fallbackTitle, parsed.Skills, parsed.Summary, parsed.LinkedIn, parsed.Github,
             file.FileName, storedName, fileType, file.Length,
-            draftEntity.Id, bId, batchName);
+            draftEntity.Id, bId, batchName,
+            parsed.Location, parsed.LeetCode, parsed.Codeforces, parsed.HackerRank, parsed.GitLab,
+            eduDtos, expDtos);
 
         logger.LogInformation(
             "Parsed & persisted CV '{FileName}' ({FileType}, {Size} bytes) as Draft #{DraftId} stored as {StoredName}.",

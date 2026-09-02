@@ -1,3 +1,19 @@
+export interface CandidateEducation {
+  id?: number;
+  degree: string;
+  institution: string;
+  graduationYear?: string | null;
+  cgpa?: string | null;
+}
+
+export interface CandidateExperience {
+  id?: number;
+  jobTitle: string;
+  company: string;
+  duration?: string | null;
+  description?: string | null;
+}
+
 export interface CVDraft {
   id?: number;
   fullName: string | null;
@@ -14,6 +30,13 @@ export interface CVDraft {
   fileSizeBytes: number;
   batchId?: string;
   batchName?: string;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface CandidateDraft {
@@ -44,6 +67,13 @@ export interface CandidateDraft {
   uploadedByUserName: string | null;
   createdAt: string;
   updatedAt: string;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface CandidateDraftListItem {
@@ -64,6 +94,7 @@ export interface CandidateDraftListItem {
   batchId: string | null;
   batchName: string | null;
   createdAt: string;
+  location?: string | null;
 }
 
 export interface UpdateCandidateDraftRequest {
@@ -80,6 +111,13 @@ export interface UpdateCandidateDraftRequest {
   roleAppliedOptionId?: number | null;
   sourceOptionId?: number | null;
   sourceDetail?: string | null;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface ApproveCandidateDraftRequest {
@@ -101,6 +139,13 @@ export interface ApproveCandidateDraftRequest {
   referenceName?: string | null;
   referenceEmail?: string | null;
   referenceEmployeeId?: string | null;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface BulkApproveDraftsRequest {
@@ -173,6 +218,13 @@ export interface CreateCandidatePayload {
   allowDuplicate?: boolean;
   sourceOptionId: number | null;
   sourceDetail: string | null;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface DuplicateCandidate {
@@ -198,8 +250,15 @@ export interface UpdateCandidatePayload {
   referenceEmployeeId: string | null;
   roleAppliedOptionId: number | null;
   skillOptionIds: number[];
-  sourceOptionId: number | null;
-  sourceDetail: string | null;
+  sourceOptionId?: number | null;
+  sourceDetail?: string | null;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface CandidateSourceOption {
@@ -354,6 +413,13 @@ export interface CandidateDetail {
   sourceOptionId: number | null;
   source: string | null;
   sourceDetail: string | null;
+  location?: string | null;
+  leetCodeUrl?: string | null;
+  codeforcesUrl?: string | null;
+  hackerRankUrl?: string | null;
+  gitLabUrl?: string | null;
+  educations?: CandidateEducation[] | null;
+  experiences?: CandidateExperience[] | null;
 }
 
 export interface PagedResult<T> {

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Recruitment.Gorilla.API.Auth;
 using Recruitment.Gorilla.API.Data;
@@ -12,6 +13,11 @@ public class CandidateDraftService(
     CurrentUser currentUser,
     ILogger<CandidateDraftService> logger)
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task<PagedDraftsResultDto> GetDraftsAsync(DraftsFilterQuery query)
     {
         var baseQuery = db.CandidateDrafts.AsQueryable();
@@ -46,7 +52,7 @@ public class CandidateDraftService(
             baseQuery = baseQuery.Where(d => d.RoleAppliedOptionId == query.RoleId.Value);
         }
 
-        // Search text (Name, Email, Skills, Filename)
+        // Search text (Name, Email, Skills, Filename, Location)
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim().ToLower();
@@ -54,6 +60,7 @@ public class CandidateDraftService(
                 (d.FullName != null && d.FullName.ToLower().Contains(search)) ||
                 (d.Email != null && d.Email.ToLower().Contains(search)) ||
                 (d.Skills != null && d.Skills.ToLower().Contains(search)) ||
+                (d.Location != null && d.Location.ToLower().Contains(search)) ||
                 d.OriginalFileName.ToLower().Contains(search));
         }
 
@@ -70,7 +77,7 @@ public class CandidateDraftService(
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         var items = await baseQuery
-            .OrderByDescending(d => d.Id) // Ensure deterministic ordering by Id for cursor pagination
+            .OrderByDescending(d => d.Id)
             .Skip(query.Cursor.HasValue ? 0 : (page - 1) * pageSize)
             .Take(pageSize)
             .Include(d => d.RoleAppliedOption)
@@ -91,7 +98,8 @@ public class CandidateDraftService(
                 d.Status,
                 d.BatchId,
                 d.BatchName,
-                d.CreatedAt
+                d.CreatedAt,
+                d.Location
             ))
             .ToListAsync();
 
@@ -120,6 +128,18 @@ public class CandidateDraftService(
 
         if (d == null) return null;
 
+        List<CandidateEducationDto>? educations = null;
+        if (!string.IsNullOrWhiteSpace(d.EducationJson))
+        {
+            try { educations = JsonSerializer.Deserialize<List<CandidateEducationDto>>(d.EducationJson, JsonOpts); } catch { }
+        }
+
+        List<CandidateExperienceDto>? experiences = null;
+        if (!string.IsNullOrWhiteSpace(d.ExperienceJson))
+        {
+            try { experiences = JsonSerializer.Deserialize<List<CandidateExperienceDto>>(d.ExperienceJson, JsonOpts); } catch { }
+        }
+
         return new CandidateDraftDto(
             d.Id,
             d.FullName,
@@ -147,7 +167,14 @@ public class CandidateDraftService(
             d.UploadedByUserId,
             d.UploadedByUser?.Name,
             d.CreatedAt,
-            d.UpdatedAt
+            d.UpdatedAt,
+            d.Location,
+            d.LeetCodeUrl,
+            d.CodeforcesUrl,
+            d.HackerRankUrl,
+            d.GitLabUrl,
+            educations,
+            experiences
         );
     }
 
@@ -196,8 +223,18 @@ public class CandidateDraftService(
         string? linkedIn,
         string? github,
         string? skills,
-        string? summary)
+        string? summary,
+        string? location = null,
+        string? leetCode = null,
+        string? codeforces = null,
+        string? hackerRank = null,
+        string? gitLab = null,
+        List<ParsedEducation>? educations = null,
+        List<ParsedExperience>? experiences = null)
     {
+        var eduDtos = educations?.Select((e, idx) => new CandidateEducationDto(idx + 1, e.Degree, e.Institution, e.GraduationYear, e.Cgpa)).ToList();
+        var expDtos = experiences?.Select((e, idx) => new CandidateExperienceDto(idx + 1, e.JobTitle, e.Company, e.Duration, e.Description)).ToList();
+
         var draft = new CandidateDraft
         {
             OriginalFileName = originalFileName,
@@ -213,6 +250,13 @@ public class CandidateDraftService(
             GithubUrl = github,
             Skills = skills,
             Summary = summary,
+            Location = location,
+            LeetCodeUrl = leetCode,
+            CodeforcesUrl = codeforces,
+            HackerRankUrl = hackerRank,
+            GitLabUrl = gitLab,
+            EducationJson = eduDtos is { Count: > 0 } ? JsonSerializer.Serialize(eduDtos) : null,
+            ExperienceJson = expDtos is { Count: > 0 } ? JsonSerializer.Serialize(expDtos) : null,
             Status = "Pending",
             UploadedByUserId = currentUser.UserId,
             CreatedAt = DateTime.UtcNow,
@@ -247,6 +291,22 @@ public class CandidateDraftService(
         draft.RoleAppliedOptionId = dto.RoleAppliedOptionId;
         draft.SourceOptionId = dto.SourceOptionId;
         draft.SourceDetail = dto.SourceDetail?.Trim();
+        draft.Location = dto.Location?.Trim();
+        draft.LeetCodeUrl = dto.LeetCodeUrl?.Trim();
+        draft.CodeforcesUrl = dto.CodeforcesUrl?.Trim();
+        draft.HackerRankUrl = dto.HackerRankUrl?.Trim();
+        draft.GitLabUrl = dto.GitLabUrl?.Trim();
+
+        if (dto.Educations != null)
+        {
+            draft.EducationJson = dto.Educations.Count > 0 ? JsonSerializer.Serialize(dto.Educations) : null;
+        }
+
+        if (dto.Experiences != null)
+        {
+            draft.ExperienceJson = dto.Experiences.Count > 0 ? JsonSerializer.Serialize(dto.Experiences) : null;
+        }
+
         draft.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
@@ -287,6 +347,11 @@ public class CandidateDraftService(
             LinkedInUrl = (dto.LinkedInUrl ?? draft.LinkedInUrl)?.Trim(),
             GithubUrl = (dto.GithubUrl ?? draft.GithubUrl)?.Trim(),
             PortfolioUrl = (dto.PortfolioUrl ?? draft.PortfolioUrl)?.Trim(),
+            Location = (dto.Location ?? draft.Location)?.Trim(),
+            LeetCodeUrl = (dto.LeetCodeUrl ?? draft.LeetCodeUrl)?.Trim(),
+            CodeforcesUrl = (dto.CodeforcesUrl ?? draft.CodeforcesUrl)?.Trim(),
+            HackerRankUrl = (dto.HackerRankUrl ?? draft.HackerRankUrl)?.Trim(),
+            GitLabUrl = (dto.GitLabUrl ?? draft.GitLabUrl)?.Trim(),
             RoleAppliedOptionId = roleId,
             SourceOptionId = dto.SourceOptionId ?? draft.SourceOptionId,
             SourceDetail = (dto.SourceDetail ?? draft.SourceDetail)?.Trim(),
@@ -299,6 +364,48 @@ public class CandidateDraftService(
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        // Attach Educations
+        var eduList = dto.Educations;
+        if (eduList == null && !string.IsNullOrWhiteSpace(draft.EducationJson))
+        {
+            try { eduList = JsonSerializer.Deserialize<List<CandidateEducationDto>>(draft.EducationJson, JsonOpts); } catch { }
+        }
+
+        if (eduList is { Count: > 0 })
+        {
+            foreach (var ed in eduList)
+            {
+                candidate.Educations.Add(new CandidateEducation
+                {
+                    Degree = ed.Degree,
+                    Institution = ed.Institution,
+                    GraduationYear = ed.GraduationYear,
+                    Cgpa = ed.Cgpa
+                });
+            }
+        }
+
+        // Attach Experiences
+        var expList = dto.Experiences;
+        if (expList == null && !string.IsNullOrWhiteSpace(draft.ExperienceJson))
+        {
+            try { expList = JsonSerializer.Deserialize<List<CandidateExperienceDto>>(draft.ExperienceJson, JsonOpts); } catch { }
+        }
+
+        if (expList is { Count: > 0 })
+        {
+            foreach (var ex in expList)
+            {
+                candidate.Experiences.Add(new CandidateExperience
+                {
+                    JobTitle = ex.JobTitle,
+                    Company = ex.Company,
+                    Duration = ex.Duration,
+                    Description = ex.Description
+                });
+            }
+        }
 
         db.Candidates.Add(candidate);
         await db.SaveChangesAsync();
@@ -390,7 +497,17 @@ public class CandidateDraftService(
                 draft.PortfolioUrl,
                 roleId,
                 draft.SourceOptionId ?? dto.DefaultSourceOptionId,
-                draft.SourceDetail
+                draft.SourceDetail,
+                null,
+                false,
+                null,
+                null,
+                null,
+                draft.Location,
+                draft.LeetCodeUrl,
+                draft.CodeforcesUrl,
+                draft.HackerRankUrl,
+                draft.GitLabUrl
             );
 
             var (candidate, err) = await ApproveDraftAsync(draft.Id, approveDto);

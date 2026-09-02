@@ -121,6 +121,13 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         initialStatus,
         initialStatusComment: null,
         allowDuplicate,
+        location: draft.location ?? null,
+        leetCodeUrl: draft.leetCodeUrl ?? null,
+        codeforcesUrl: draft.codeforcesUrl ?? null,
+        hackerRankUrl: draft.hackerRankUrl ?? null,
+        gitLabUrl: draft.gitLabUrl ?? null,
+        educations: draft.educations ?? null,
+        experiences: draft.experiences ?? null,
       });
 
       if (result.kind === 'duplicate') {

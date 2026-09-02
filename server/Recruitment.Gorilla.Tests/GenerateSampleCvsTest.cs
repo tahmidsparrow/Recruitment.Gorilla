@@ -143,8 +143,9 @@ public class GenerateSampleCvsTest
 
                         col.Item().Text(name).FontSize(24).Bold().FontColor(Colors.Blue.Darken3);
                         col.Item().Text(role).FontSize(14).SemiBold().FontColor(Colors.Grey.Darken2);
-                        col.Item().Text($"Email: {email}   |   Phone: {phone}");
+                        col.Item().Text($"Email: {email}   |   Phone: {phone}   |   Location: Dhaka, Bangladesh");
                         col.Item().Text($"LinkedIn: {linkedin}   |   GitHub: {github}");
+                        col.Item().Text($"LeetCode: https://leetcode.com/u/{safeName.ToLower()}   |   Codeforces: https://codeforces.com/profile/{safeName.ToLower()}");
 
                         col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
@@ -158,14 +159,15 @@ public class GenerateSampleCvsTest
 
                         // Experience Section
                         col.Item().Text("Professional Experience").FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
-                        col.Item().Text($"{role} — Tech Global Inc. (2020 – Present)");
+                        col.Item().Text($"{role} — Brain Station 23 (2020 – Present)");
                         col.Item().Text("• Led key architectural initiatives resulting in high scalability and reliability.");
                         col.Item().Text("• Collaborated with engineering teams to build modern cloud native systems.");
                         col.Item().Text("• Mentored team members and maintained high code quality standards.");
 
                         // Education
                         col.Item().Text("Education").FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
-                        col.Item().Text("B.S. in Computer Science — University of Technology");
+                        col.Item().Text("BSc in Computer Science & Engineering — Bangladesh University of Engineering and Technology (2020)");
+                        col.Item().Text("CGPA: 3.85 / 4.00");
                     });
                 });
             });

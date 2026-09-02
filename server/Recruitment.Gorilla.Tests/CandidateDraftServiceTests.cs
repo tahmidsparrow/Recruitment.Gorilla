@@ -87,6 +87,72 @@ public class CandidateDraftServiceTests(MySqlDatabaseFixture fixture) : DbTestBa
     }
 
     [Fact]
+    public async Task Create_and_ApproveDraft_transfers_Education_Experience_and_Profiles()
+    {
+        var service = CandidateDrafts();
+        var role = Data.AddRole("Full Stack Engineer BD Test");
+
+        var educations = new List<ParsedEducation>
+        {
+            new("BSc in Computer Science & Engineering", "Bangladesh University of Engineering and Technology (BUET)", "2023", "3.85")
+        };
+
+        var experiences = new List<ParsedExperience>
+        {
+            new("Software Engineer", "Brain Station 23", "Jan 2023 - Present", "Built .NET & React microservices.")
+        };
+
+        var draft = await service.CreateDraftAsync(
+            "tahmid_cv.pdf", "stored_tahmid.pdf", "PDF", 75000,
+            "batch_bd_01", "Dhaka CSE Batch",
+            "Tahmid Rahman", "tahmid@test.com", "+880 1711-223344",
+            "https://linkedin.com/in/tahmid-r", "https://github.com/tahmid-r",
+            "C#, .NET, React, TypeScript, SQL", "Full stack engineer in Dhaka.",
+            "Dhaka, Bangladesh",
+            "https://leetcode.com/u/tahmid_code",
+            "https://codeforces.com/profile/tahmid_cf",
+            "https://hackerrank.com/profile/tahmid_hr",
+            "https://gitlab.com/tahmid_gl",
+            educations,
+            experiences
+        );
+
+        Assert.NotNull(draft.EducationJson);
+        Assert.NotNull(draft.ExperienceJson);
+        Assert.Equal("Dhaka, Bangladesh", draft.Location);
+        Assert.Equal("https://leetcode.com/u/tahmid_code", draft.LeetCodeUrl);
+
+        var (candidate, error) = await service.ApproveDraftAsync(draft.Id, new ApproveCandidateDraftDto(
+            draft.FullName, draft.Email, draft.Phone, "Full Stack Engineer",
+            "2 Years", draft.Skills, draft.Summary, draft.LinkedInUrl, draft.GithubUrl, draft.PortfolioUrl,
+            role.Id, null, null, null, false, null, null, null,
+            draft.Location, draft.LeetCodeUrl, draft.CodeforcesUrl, draft.HackerRankUrl, draft.GitLabUrl
+        ));
+
+        Assert.Null(error);
+        Assert.NotNull(candidate);
+
+        // Fetch candidate detail via CandidateService to verify eager loading
+        var candidateDetail = await Candidates().GetByIdAsync(candidate.Id);
+        Assert.NotNull(candidateDetail);
+        Assert.Equal("Dhaka, Bangladesh", candidateDetail.Location);
+        Assert.Equal("https://leetcode.com/u/tahmid_code", candidateDetail.LeetCodeUrl);
+        Assert.Equal("https://codeforces.com/profile/tahmid_cf", candidateDetail.CodeforcesUrl);
+        Assert.Equal("https://hackerrank.com/profile/tahmid_hr", candidateDetail.HackerRankUrl);
+        Assert.Equal("https://gitlab.com/tahmid_gl", candidateDetail.GitLabUrl);
+
+        Assert.NotNull(candidateDetail.Educations);
+        Assert.Single(candidateDetail.Educations);
+        Assert.Equal("BSc in Computer Science & Engineering", candidateDetail.Educations[0].Degree);
+        Assert.Equal("3.85", candidateDetail.Educations[0].Cgpa);
+
+        Assert.NotNull(candidateDetail.Experiences);
+        Assert.Single(candidateDetail.Experiences);
+        Assert.Equal("Software Engineer", candidateDetail.Experiences[0].JobTitle);
+        Assert.Equal("Brain Station 23", candidateDetail.Experiences[0].Company);
+    }
+
+    [Fact]
     public async Task DiscardDraft_marks_status_as_discarded()
     {
         var service = CandidateDrafts();

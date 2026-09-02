@@ -32,6 +32,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<EvaluationRubric> EvaluationRubrics => Set<EvaluationRubric>();
     public DbSet<RubricCriterion> RubricCriteria => Set<RubricCriterion>();
     public DbSet<CandidateDraft> CandidateDrafts => Set<CandidateDraft>();
+    public DbSet<CandidateEducation> CandidateEducations => Set<CandidateEducation>();
+    public DbSet<CandidateExperience> CandidateExperiences => Set<CandidateExperience>();
 
     /// <summary>
     /// Marks every DateTime coming out of MySQL as UTC — see <see cref="UtcDateTimeConverter"/>.
@@ -57,6 +59,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.LinkedInUrl).HasMaxLength(500);
             e.Property(c => c.GithubUrl).HasMaxLength(500);
             e.Property(c => c.PortfolioUrl).HasMaxLength(500);
+            e.Property(c => c.Location).HasMaxLength(200);
+            e.Property(c => c.LeetCodeUrl).HasMaxLength(500);
+            e.Property(c => c.CodeforcesUrl).HasMaxLength(500);
+            e.Property(c => c.HackerRankUrl).HasMaxLength(500);
+            e.Property(c => c.GitLabUrl).HasMaxLength(500);
             e.Property(c => c.AppliedRole).HasMaxLength(150);
             e.Property(c => c.ReferenceName).HasMaxLength(200);
             e.Property(c => c.ReferenceEmail).HasMaxLength(200);
@@ -76,6 +83,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(c => c.OwnerUserId)
              .OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(c => c.Educations)
+             .WithOne(ed => ed.Candidate)
+             .HasForeignKey(ed => ed.CandidateId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(c => c.Experiences)
+             .WithOne(ex => ex.Candidate)
+             .HasForeignKey(ex => ex.CandidateId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<CVFile>(e =>
@@ -566,6 +581,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(d => d.LinkedInUrl).HasMaxLength(500);
             e.Property(d => d.GithubUrl).HasMaxLength(500);
             e.Property(d => d.PortfolioUrl).HasMaxLength(500);
+            e.Property(d => d.Location).HasMaxLength(200);
+            e.Property(d => d.LeetCodeUrl).HasMaxLength(500);
+            e.Property(d => d.CodeforcesUrl).HasMaxLength(500);
+            e.Property(d => d.HackerRankUrl).HasMaxLength(500);
+            e.Property(d => d.GitLabUrl).HasMaxLength(500);
             e.Property(d => d.OriginalFileName).HasMaxLength(255).IsRequired();
             e.Property(d => d.StoredFileName).HasMaxLength(255).IsRequired();
             e.Property(d => d.FileType).HasMaxLength(20).HasDefaultValue("PDF");
@@ -592,6 +612,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .WithMany()
              .HasForeignKey(d => d.UploadedByUserId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CandidateEducation>(e =>
+        {
+            e.HasKey(ed => ed.Id);
+            e.Property(ed => ed.Degree).HasMaxLength(200).IsRequired();
+            e.Property(ed => ed.Institution).HasMaxLength(200).IsRequired();
+            e.Property(ed => ed.GraduationYear).HasMaxLength(50);
+            e.Property(ed => ed.Cgpa).HasMaxLength(50);
+            e.HasIndex(ed => ed.CandidateId);
+        });
+
+        modelBuilder.Entity<CandidateExperience>(e =>
+        {
+            e.HasKey(ex => ex.Id);
+            e.Property(ex => ex.JobTitle).HasMaxLength(200).IsRequired();
+            e.Property(ex => ex.Company).HasMaxLength(200).IsRequired();
+            e.Property(ex => ex.Duration).HasMaxLength(100);
+            e.Property(ex => ex.Description).HasColumnType("text");
+            e.HasIndex(ex => ex.CandidateId);
         });
     }
 }

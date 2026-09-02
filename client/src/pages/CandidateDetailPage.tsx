@@ -282,6 +282,13 @@ function ProfileEditor({
         linkedInUrl: form.linkedInUrl || null,
         githubUrl: form.githubUrl || null,
         portfolioUrl: form.portfolioUrl || null,
+        location: form.location || null,
+        leetCodeUrl: form.leetCodeUrl || null,
+        codeforcesUrl: form.codeforcesUrl || null,
+        hackerRankUrl: form.hackerRankUrl || null,
+        gitLabUrl: form.gitLabUrl || null,
+        educations: form.educations || null,
+        experiences: form.experiences || null,
         appliedRole: null,
         roleAppliedOptionId: form.roleAppliedOptionId,
         sourceOptionId: form.sourceOptionId,
@@ -345,6 +352,14 @@ function ProfileEditor({
           <Form.Control value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
         </Col>
         <Col md={6}>
+          <Form.Label>Location</Form.Label>
+          <Form.Control
+            value={form.location ?? ''}
+            placeholder="e.g. Dhaka, Bangladesh"
+            onChange={(e) => set('location', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
           <Form.Label>Current title</Form.Label>
           <Form.Control
             value={form.currentTitle ?? ''}
@@ -373,6 +388,37 @@ function ProfileEditor({
           <Form.Control
             value={form.githubUrl ?? ''}
             onChange={(e) => set('githubUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>GitLab URL</Form.Label>
+          <Form.Control
+            value={form.gitLabUrl ?? ''}
+            onChange={(e) => set('gitLabUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>LeetCode Profile</Form.Label>
+          <Form.Control
+            value={form.leetCodeUrl ?? ''}
+            placeholder="https://leetcode.com/u/..."
+            onChange={(e) => set('leetCodeUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>Codeforces Profile</Form.Label>
+          <Form.Control
+            value={form.codeforcesUrl ?? ''}
+            placeholder="https://codeforces.com/profile/..."
+            onChange={(e) => set('codeforcesUrl', e.target.value)}
+          />
+        </Col>
+        <Col md={6}>
+          <Form.Label>HackerRank Profile</Form.Label>
+          <Form.Control
+            value={form.hackerRankUrl ?? ''}
+            placeholder="https://hackerrank.com/profile/..."
+            onChange={(e) => set('hackerRankUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>

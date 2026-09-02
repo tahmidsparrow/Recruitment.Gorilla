@@ -27,7 +27,14 @@ public record CandidateDraftDto(
     int? UploadedByUserId,
     string? UploadedByUserName,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string? Location = null,
+    string? LeetCodeUrl = null,
+    string? CodeforcesUrl = null,
+    string? HackerRankUrl = null,
+    string? GitLabUrl = null,
+    List<CandidateEducationDto>? Educations = null,
+    List<CandidateExperienceDto>? Experiences = null
 );
 
 public record CandidateDraftListItemDto(
@@ -47,7 +54,8 @@ public record CandidateDraftListItemDto(
     string Status,
     string? BatchId,
     string? BatchName,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string? Location = null
 );
 
 public record UpdateCandidateDraftDto(
@@ -63,7 +71,14 @@ public record UpdateCandidateDraftDto(
     string? PortfolioUrl,
     int? RoleAppliedOptionId,
     int? SourceOptionId,
-    string? SourceDetail
+    string? SourceDetail,
+    string? Location = null,
+    string? LeetCodeUrl = null,
+    string? CodeforcesUrl = null,
+    string? HackerRankUrl = null,
+    string? GitLabUrl = null,
+    List<CandidateEducationDto>? Educations = null,
+    List<CandidateExperienceDto>? Experiences = null
 );
 
 public record ApproveCandidateDraftDto(
@@ -84,7 +99,14 @@ public record ApproveCandidateDraftDto(
     bool IsReferred = false,
     string? ReferenceName = null,
     string? ReferenceEmail = null,
-    string? ReferenceEmployeeId = null
+    string? ReferenceEmployeeId = null,
+    string? Location = null,
+    string? LeetCodeUrl = null,
+    string? CodeforcesUrl = null,
+    string? HackerRankUrl = null,
+    string? GitLabUrl = null,
+    List<CandidateEducationDto>? Educations = null,
+    List<CandidateExperienceDto>? Experiences = null
 );
 
 public record BulkApproveDraftsDto(

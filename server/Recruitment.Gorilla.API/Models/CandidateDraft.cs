@@ -13,6 +13,13 @@ public class CandidateDraft
     public string? LinkedInUrl { get; set; }
     public string? GithubUrl { get; set; }
     public string? PortfolioUrl { get; set; }
+    public string? Location { get; set; }
+    public string? LeetCodeUrl { get; set; }
+    public string? CodeforcesUrl { get; set; }
+    public string? HackerRankUrl { get; set; }
+    public string? GitLabUrl { get; set; }
+    public string? EducationJson { get; set; }
+    public string? ExperienceJson { get; set; }
 
     public int? RoleAppliedOptionId { get; set; }
     public RoleAppliedOption? RoleAppliedOption { get; set; }

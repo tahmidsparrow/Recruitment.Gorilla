@@ -167,6 +167,13 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
         linkedInUrl: activeDraft.linkedInUrl || '',
         githubUrl: activeDraft.githubUrl || '',
         portfolioUrl: activeDraft.portfolioUrl || '',
+        location: activeDraft.location || '',
+        leetCodeUrl: activeDraft.leetCodeUrl || '',
+        codeforcesUrl: activeDraft.codeforcesUrl || '',
+        hackerRankUrl: activeDraft.hackerRankUrl || '',
+        gitLabUrl: activeDraft.gitLabUrl || '',
+        educations: activeDraft.educations || [],
+        experiences: activeDraft.experiences || [],
         roleAppliedOptionId: activeDraft.roleAppliedOptionId ?? (roles.length > 0 ? roles[0].id : null),
         sourceOptionId: activeDraft.sourceOptionId,
         sourceDetail: activeDraft.sourceDetail || '',
@@ -336,6 +343,13 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
         linkedInUrl: editForm.linkedInUrl?.trim() || null,
         githubUrl: editForm.githubUrl?.trim() || null,
         portfolioUrl: editForm.portfolioUrl?.trim() || null,
+        location: editForm.location?.trim() || null,
+        leetCodeUrl: editForm.leetCodeUrl?.trim() || null,
+        codeforcesUrl: editForm.codeforcesUrl?.trim() || null,
+        hackerRankUrl: editForm.hackerRankUrl?.trim() || null,
+        gitLabUrl: editForm.gitLabUrl?.trim() || null,
+        educations: editForm.educations || [],
+        experiences: editForm.experiences || [],
         roleAppliedOptionId: editForm.roleAppliedOptionId!,
         sourceOptionId: editForm.sourceOptionId || null,
         sourceDetail: editForm.sourceDetail?.trim() || null,
@@ -754,13 +768,27 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         <input
                           type="text"
                           className="form-control"
-                          placeholder="+1 (555) 000-0000"
+                          placeholder="+880 1700-000000"
                           value={editForm.phone || ''}
                           onChange={(e) =>
                             setEditForm((prev) => ({ ...prev, phone: e.target.value }))
                           }
                         />
                       </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="col-12 col-md-6">
+                      <label className="form-label small fw-semibold">Location (City/Area)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="e.g. Dhaka, Bangladesh"
+                        value={editForm.location || ''}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, location: e.target.value }))
+                        }
+                      />
                     </div>
                   </div>
                 </div>
@@ -892,7 +920,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       )}
                     </div>
 
-                    {/* Social Profiles */}
+                    {/* Social & Dev Profiles */}
                     <div className="col-12 col-md-4">
                       <label className="form-label small fw-semibold">LinkedIn Profile</label>
                       <input
@@ -920,7 +948,59 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Portfolio / Website</label>
+                      <label className="form-label small fw-semibold">GitLab Profile</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="gitlab.com/..."
+                        value={editForm.gitLabUrl || ''}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, gitLabUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-4">
+                      <label className="form-label small fw-semibold">LeetCode Profile</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="leetcode.com/u/..."
+                        value={editForm.leetCodeUrl || ''}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, leetCodeUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-4">
+                      <label className="form-label small fw-semibold">Codeforces Profile</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="codeforces.com/profile/..."
+                        value={editForm.codeforcesUrl || ''}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, codeforcesUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-4">
+                      <label className="form-label small fw-semibold">HackerRank Profile</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="hackerrank.com/profile/..."
+                        value={editForm.hackerRankUrl || ''}
+                        onChange={(e) =>
+                          setEditForm((prev) => ({ ...prev, hackerRankUrl: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                      <label className="form-label small fw-semibold">Portfolio / Personal Website</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -946,6 +1026,254 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Education Section */}
+                <div className="draft-form-section mt-4">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="draft-form-section__title mb-0 border-0 pb-0">
+                      <FileText size={14} className="text-primary me-1.5" />
+                      Education &amp; Academic Qualifications
+                    </h6>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-outline-primary"
+                      onClick={() =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          educations: [
+                            ...(prev.educations || []),
+                            { degree: 'BSc in CSE', institution: 'University', graduationYear: '2024', cgpa: '' },
+                          ],
+                        }))
+                      }
+                    >
+                      + Add Education
+                    </button>
+                  </div>
+
+                  {(editForm.educations || []).length === 0 ? (
+                    <div className="text-muted small py-2">No education records extracted. Click &quot;+ Add Education&quot; to add one.</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3 mt-2">
+                      {(editForm.educations || []).map((edu, idx) => (
+                        <div key={idx} className="p-3 rounded border border-subtle bg-surface-muted position-relative">
+                          <button
+                            type="button"
+                            className="btn btn-link text-danger p-0 position-absolute"
+                            style={{ top: '8px', right: '10px' }}
+                            onClick={() =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                educations: prev.educations?.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            title="Remove Education"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                          <div className="row g-2">
+                            <div className="col-12 col-md-6">
+                              <label className="form-label text-xs fw-semibold mb-1">Degree / Major</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. BSc in Computer Science & Engineering"
+                                value={edu.degree}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    educations: prev.educations?.map((item, i) =>
+                                      i === idx ? { ...item, degree: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-12 col-md-6 pe-4">
+                              <label className="form-label text-xs fw-semibold mb-1">Institution / University</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. BUET, DU, NSU, BRAC University"
+                                value={edu.institution}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    educations: prev.educations?.map((item, i) =>
+                                      i === idx ? { ...item, institution: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-6 col-md-4">
+                              <label className="form-label text-xs fw-semibold mb-1">Graduation Year</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. 2024"
+                                value={edu.graduationYear || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    educations: prev.educations?.map((item, i) =>
+                                      i === idx ? { ...item, graduationYear: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-6 col-md-4">
+                              <label className="form-label text-xs fw-semibold mb-1">CGPA / GPA</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. 3.85 / 4.00"
+                                value={edu.cgpa || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    educations: prev.educations?.map((item, i) =>
+                                      i === idx ? { ...item, cgpa: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Work Experience Section */}
+                <div className="draft-form-section mt-4">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="draft-form-section__title mb-0 border-0 pb-0">
+                      <Briefcase size={14} className="text-primary me-1.5" />
+                      Work &amp; Employment History
+                    </h6>
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-outline-primary"
+                      onClick={() =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          experiences: [
+                            ...(prev.experiences || []),
+                            { jobTitle: 'Software Engineer', company: 'Company Name', duration: '2022 - Present', description: '' },
+                          ],
+                        }))
+                      }
+                    >
+                      + Add Experience
+                    </button>
+                  </div>
+
+                  {(editForm.experiences || []).length === 0 ? (
+                    <div className="text-muted small py-2">No work history extracted. Click &quot;+ Add Experience&quot; to add one.</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3 mt-2">
+                      {(editForm.experiences || []).map((exp, idx) => (
+                        <div key={idx} className="p-3 rounded border border-subtle bg-surface-muted position-relative">
+                          <button
+                            type="button"
+                            className="btn btn-link text-danger p-0 position-absolute"
+                            style={{ top: '8px', right: '10px' }}
+                            onClick={() =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                experiences: prev.experiences?.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            title="Remove Experience"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                          <div className="row g-2">
+                            <div className="col-12 col-md-5">
+                              <label className="form-label text-xs fw-semibold mb-1">Job Title</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. Senior Backend Engineer"
+                                value={exp.jobTitle}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    experiences: prev.experiences?.map((item, i) =>
+                                      i === idx ? { ...item, jobTitle: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-12 col-md-4">
+                              <label className="form-label text-xs fw-semibold mb-1">Company</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. Tech Innovations Ltd"
+                                value={exp.company}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    experiences: prev.experiences?.map((item, i) =>
+                                      i === idx ? { ...item, company: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-12 col-md-3 pe-4">
+                              <label className="form-label text-xs fw-semibold mb-1">Duration / Dates</label>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="e.g. Jan 2022 - Present"
+                                value={exp.duration || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    experiences: prev.experiences?.map((item, i) =>
+                                      i === idx ? { ...item, duration: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="col-12">
+                              <label className="form-label text-xs fw-semibold mb-1">Responsibilities / Highlights</label>
+                              <textarea
+                                rows={2}
+                                className="form-control form-control-sm"
+                                placeholder="Key achievements, stack used, responsibilities..."
+                                value={exp.description || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    experiences: prev.experiences?.map((item, i) =>
+                                      i === idx ? { ...item, description: val } : item
+                                    ),
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
