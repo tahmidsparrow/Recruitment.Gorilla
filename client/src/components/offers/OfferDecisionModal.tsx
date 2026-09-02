@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { recordOfferDecision } from '../../services/api';
@@ -7,6 +6,7 @@ import type { Offer } from '../../types';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioOption } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogBody,
@@ -77,27 +77,26 @@ export default function OfferDecisionModal({
         <DialogBody>
           {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
 
-          <div className="mb-3">
-            <Label className="small fw-semibold">Decision</Label>
-            <div className="d-flex gap-3">
-              <Form.Check
-                type="radio"
-                id="dec-accepted"
-                name="decision"
-                label="Offer Accepted"
-                checked={decision === 'Accepted'}
-                onChange={() => setDecision('Accepted')}
-              />
-              <Form.Check
-                type="radio"
-                id="dec-declined"
-                name="decision"
-                label="Offer Declined"
-                checked={decision === 'Declined'}
-                onChange={() => setDecision('Declined')}
-              />
-            </div>
-          </div>
+          {/* A real radio group rather than two loose inputs sharing a name:
+              Radix gives it roving focus and arrow-key movement, and announces
+              the set as one control with two options. */}
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="text-[length:var(--text-sm)] font-semibold text-text-soft">
+              Decision
+            </legend>
+            <RadioGroup
+              className="grid-flow-col justify-start gap-6"
+              value={decision}
+              onValueChange={(v) => setDecision(v as typeof decision)}
+            >
+              <RadioOption value="Accepted" id="dec-accepted">
+                Offer accepted
+              </RadioOption>
+              <RadioOption value="Declined" id="dec-declined">
+                Offer declined
+              </RadioOption>
+            </RadioGroup>
+          </fieldset>
 
           {decision === 'Declined' && (
             <div className="flex flex-col gap-1.5 mb-3">

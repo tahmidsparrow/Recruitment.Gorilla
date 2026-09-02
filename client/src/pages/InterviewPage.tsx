@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Accordion, Offcanvas } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { FileText, StickyNote } from 'lucide-react';
@@ -12,6 +11,8 @@ import EmptyState from '../components/common/EmptyState';
 import Page from '../components/common/Page';
 import LoadingPanel from '../components/common/Loading';
 import { initials } from '../utils/initials';
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -167,10 +168,10 @@ export default function InterviewPage() {
 
         {data.allEvaluations && otherEvaluations.length > 0 && (
           <div className="mt-4">
-            <Accordion>
-              <Accordion.Item eventKey="others">
-                <Accordion.Header>Other interviewers' evaluations ({otherEvaluations.length})</Accordion.Header>
-                <Accordion.Body>
+            <Accordion type="single" collapsible>
+              <AccordionItem value="others">
+                <AccordionTrigger>Other interviewers' evaluations ({otherEvaluations.length})</AccordionTrigger>
+                <AccordionContent>
                   <div className="card-stack">
                     {otherEvaluations.map((e) => (
                       <div key={e.id}>
@@ -184,31 +185,27 @@ export default function InterviewPage() {
                       </div>
                     ))}
                   </div>
-                </Accordion.Body>
-              </Accordion.Item>
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </div>
         )}
       </div>
 
       {/* Slide-over Candidate Profile & CV Drawer */}
-      <Offcanvas
-        show={showProfileDrawer}
-        onHide={() => setShowProfileDrawer(false)}
-        placement="end"
-        className="history-drawer profile-drawer"
-        style={{ width: '560px', maxWidth: '100vw' }}
-      >
-        <Offcanvas.Header closeButton className="border-bottom pb-3">
-          <Offcanvas.Title className="d-flex align-items-center gap-2 font-semibold">
+      <Sheet open={showProfileDrawer} onOpenChange={setShowProfileDrawer}>
+        <SheetContent side="right" className="w-[min(35rem,100vw)]">
+        <SheetHeader>
+          <SheetTitle className="d-flex align-items-center gap-2 font-semibold">
             <FileText size={18} className="text-primary" />
             <span>Candidate Profile & Qualifications</span>
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body className="p-3">
+          </SheetTitle>
+        </SheetHeader>
+        <SheetBody className="p-3">
           <ReadOnlyCandidateProfile candidate={data.candidate} />
-        </Offcanvas.Body>
-      </Offcanvas>
+        </SheetBody>
+      </SheetContent>
+</Sheet>
     </Page>
   );
 }

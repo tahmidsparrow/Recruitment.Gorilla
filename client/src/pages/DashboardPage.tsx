@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Form } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import {
   getActiveRoleOptions,
@@ -35,6 +34,7 @@ import { SkeletonCards } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { ActivityItem, UpcomingInterview } from '../types';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 
 const relativeTime = (iso: string): string => {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -228,10 +228,9 @@ export default function DashboardPage() {
                 <Label htmlFor="pipeline-role" className="mb-0 form-help">
                   Role
                 </Label>
-                <Form.Select
+                <NativeSelect
                   id="pipeline-role"
                   size="sm"
-                  style={{ width: 'auto' }}
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                 >
@@ -239,7 +238,7 @@ export default function DashboardPage() {
                   {assignedRoles.map((r) => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
-                </Form.Select>
+                </NativeSelect>
               </div>
             )}
           </div>

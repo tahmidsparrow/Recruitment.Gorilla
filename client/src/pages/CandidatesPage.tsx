@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Form } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
@@ -27,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
 import { InputGroup } from '@/components/ui/input-group';
+import { NativeSelect } from '@/components/ui/native-select';
 
 const PAGE_SIZE = 20;
 
@@ -263,7 +263,7 @@ export default function CandidatesPage() {
           <div className="data-toolbar__end">
             {/* Small screens hide the table header, and the sortable columns
                 with it — this select is the equivalent control there. */}
-            <Form.Select
+            <NativeSelect
               className="d-md-none data-toolbar__field"
               aria-label="Sort candidates"
               value={`${activeSort}:${activeDir}`}
@@ -277,7 +277,7 @@ export default function CandidatesPage() {
                   {s.label}
                 </option>
               ))}
-            </Form.Select>
+            </NativeSelect>
 
             <CheckboxField id="filter-referred" label="Referred only" checked={referred} onCheckedChange={(checked) => setParams({ referred: checked ? '1' : null })} />
 

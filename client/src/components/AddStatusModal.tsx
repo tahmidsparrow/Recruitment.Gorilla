@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
@@ -8,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogBody,
@@ -191,7 +191,7 @@ export default function AddStatusModal({
               <Label className="mb-1">
                 New status <Req />
               </Label>
-              <Form.Select
+              <NativeSelect
                 value={status}
                 onChange={(e) => {
                   setStatus(e.target.value);
@@ -208,7 +208,7 @@ export default function AddStatusModal({
                 {initialStatus && !statusOptions.some((o) => o.name === initialStatus) && (
                   <option value={initialStatus}>{initialStatus}</option>
                 )}
-              </Form.Select>
+              </NativeSelect>
               {fieldErrors.status ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.status}</p> : null}
             </div>
 
@@ -269,7 +269,7 @@ export default function AddStatusModal({
             {requiresInterviewAt && (
               <div className="col-span-12 md:col-span-12">
                 <Label className="mb-1">Duration</Label>
-                <Form.Select
+                <NativeSelect
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
                   aria-label="Interview duration"
@@ -279,7 +279,7 @@ export default function AddStatusModal({
                       {m} minutes
                     </option>
                   ))}
-                </Form.Select>
+                </NativeSelect>
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Sets the end time on the calendar invite sent to interviewers.</p>
               </div>
             )}

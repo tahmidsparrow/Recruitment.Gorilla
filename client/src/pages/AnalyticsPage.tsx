@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Form } from 'react-bootstrap';
 import {
   Briefcase,
   Clock,
@@ -17,6 +16,7 @@ import EmptyState from '../components/common/EmptyState';
 import { SkeletonRows } from '../components/common/Loading';
 import type { AnalyticsFilterParams, RoleAppliedOption } from '../types';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 
 const PRESETS = [
   { id: '7d', label: '7 Days' },
@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
           {/* Job Opening / Role Filter */}
           <div className="d-flex align-items-center gap-1.5" style={{ minWidth: 220 }}>
             <Filter size={14} className="text-muted flex-shrink-0" />
-            <Form.Select
+            <NativeSelect
               size="sm"
               value={roleId ?? ''}
               onChange={(e) => {
@@ -93,7 +93,7 @@ export default function AnalyticsPage() {
                   {r.name} {!r.isActive ? '(Inactive)' : ''}
                 </option>
               ))}
-            </Form.Select>
+            </NativeSelect>
           </div>
         </div>
 

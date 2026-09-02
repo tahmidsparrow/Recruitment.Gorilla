@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { createOffer, updateOffer } from '../../services/api';
@@ -9,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { InputGroup } from '@/components/ui/input-group';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogBody,
@@ -161,13 +161,13 @@ export default function CreateOfferModal({
             <div className="col-span-12 sm:col-span-4">
               <div className="flex flex-col gap-1.5">
                 <Label className="small fw-semibold">Currency</Label>
-                <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                <NativeSelect value={currency} onChange={(e) => setCurrency(e.target.value)}>
                   {CURRENCIES.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
                   ))}
-                </Form.Select>
+                </NativeSelect>
               </div>
             </div>
           </div>

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Briefcase, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
@@ -31,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogBody,
@@ -342,24 +342,24 @@ export default function JobOpeningsTab() {
               </div>
               <div className="col-12 col-md-6">
                 <Label>Priority</Label>
-                <Form.Select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <NativeSelect value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option value="">None</option>
                   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-                </Form.Select>
+                </NativeSelect>
               </div>
               <div className="col-12 col-md-6">
                 <Label>Location</Label>
-                <Form.Select value={location} onChange={(e) => setLocation(e.target.value)}>
+                <NativeSelect value={location} onChange={(e) => setLocation(e.target.value)}>
                   <option value="">None</option>
                   {LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
-                </Form.Select>
+                </NativeSelect>
               </div>
               <div className="col-12 col-md-6">
                 <Label>Department</Label>
-                <Form.Select value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <NativeSelect value={department} onChange={(e) => setDepartment(e.target.value)}>
                   <option value="">None</option>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </Form.Select>
+                </NativeSelect>
               </div>
               <div className="col-12 col-md-6">
                 <Label>Evaluation rubric</Label>

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getInterviewEvaluationRubric, saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
@@ -18,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { NativeSelect } from '@/components/ui/native-select';
 
 type ItemMap = Record<string, { rating: number | null; comment: string }>;
 
@@ -440,7 +440,7 @@ export default function EvaluationForm({
               <Label htmlFor="eval-rec">
                 Final recommendation <span className="required-star" aria-hidden="true">*</span>
               </Label>
-              <Form.Select
+              <NativeSelect
                 id="eval-rec"
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
@@ -452,7 +452,7 @@ export default function EvaluationForm({
                     {r.label}
                   </option>
                 ))}
-              </Form.Select>
+              </NativeSelect>
               <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Recommendation is required to submit.</p>
             </div>
 
@@ -460,7 +460,7 @@ export default function EvaluationForm({
               <Label htmlFor="eval-overall">
                 Overall rating <span className="required-star" aria-hidden="true">*</span>
               </Label>
-              <Form.Select
+              <NativeSelect
                 id="eval-overall"
                 value={overallRating}
                 onChange={(e) => setOverallRating(e.target.value)}
@@ -472,7 +472,7 @@ export default function EvaluationForm({
                     {r.value} — {r.label}
                   </option>
                 ))}
-              </Form.Select>
+              </NativeSelect>
               <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Overall rating is required to submit.</p>
             </div>
 

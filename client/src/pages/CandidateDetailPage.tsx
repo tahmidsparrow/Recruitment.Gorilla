@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ClipboardList, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -34,6 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   Dialog,
   DialogBody,
@@ -305,22 +305,18 @@ export default function CandidateDetailPage() {
       )}
 
       {/* Status History Slide-over Offcanvas Drawer */}
-      <Offcanvas
-        show={showHistoryDrawer}
-        onHide={() => setShowHistoryDrawer(false)}
-        placement="end"
-        className="history-drawer"
-      >
-        <Offcanvas.Header closeButton className="border-bottom border-subtle px-4 py-3">
-          <Offcanvas.Title className="d-flex align-items-center gap-2 h6 mb-0">
+      <Sheet open={showHistoryDrawer} onOpenChange={setShowHistoryDrawer}>
+        <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle className="d-flex align-items-center gap-2 h6 mb-0">
             <History size={18} className="text-primary" />
             <span className="fw-semibold">Status History &amp; Timeline</span>
             <span className="badge bg-secondary-subtle text-secondary px-2 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
               {data.statusHistory.length} events
             </span>
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body className="p-4 d-flex flex-column gap-3">
+          </SheetTitle>
+        </SheetHeader>
+        <SheetBody className="p-4 d-flex flex-column gap-3">
           {canWrite && (
             <div className="p-3 rounded-3 bg-surface-muted border border-subtle d-flex justify-content-between align-items-center">
               <div>
@@ -346,8 +342,9 @@ export default function CandidateDetailPage() {
           <div className="mt-1">
             <StatusTimeline history={data.statusHistory} canViewEvaluations={isAdminOrAbove} />
           </div>
-        </Offcanvas.Body>
-      </Offcanvas>
+        </SheetBody>
+      </SheetContent>
+</Sheet>
 
       {canWrite && (
         <AddStatusModal
