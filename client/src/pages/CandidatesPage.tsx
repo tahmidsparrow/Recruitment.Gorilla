@@ -14,10 +14,12 @@ import SearchableDropdown, { SearchableMultiSelect, type DropdownOption } from '
 import { StatusBadge } from '../components/StatusBadge';
 import { getStatusSolidColor } from '../utils/statusColors';
 import KanbanBoard from '../components/kanban/KanbanBoard';
+import Avatar from '../components/ui/Avatar';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
 import Pagination from '../components/ui/Pagination';
+import RowActions, { RowAction } from '../components/ui/RowActions';
 import { SkeletonRows } from '../components/ui/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
@@ -182,6 +184,12 @@ export default function CandidatesPage() {
     setParams({ q: searchInput.trim() || null });
   };
 
+  /* Whether the toolbar is about to be followed by the table it filters. Only
+     then does it fuse to it — above a skeleton, an error or an empty state it
+     stays a card in its own right. */
+  const showsTable =
+    viewMode === 'table' && !isLoading && !isError && !!data && data.items.length > 0;
+
   /** A sortable column header. A button, so it's reachable by keyboard. */
   const SortHeader = ({ col }: { col: SortKey }) => {
     const active = activeSort === col;
@@ -197,7 +205,10 @@ export default function CandidatesPage() {
   return (
     <Page>
       <search>
-        <div className="data-toolbar">
+        {/* Fused to the table below it in table mode: the filters and the
+            results they filter are one object, so the seam is a rule rather
+            than a 20px gap with page background showing through. */}
+        <div className={`data-toolbar${showsTable ? ' data-toolbar--attached' : ''}`}>
           <Form onSubmit={applySearch} className="data-toolbar__search" role="search">
             <InputGroup>
               <Form.Control
@@ -295,33 +306,35 @@ export default function CandidatesPage() {
 
             <div className="toolbar-divider d-none d-md-block" />
 
-            <div className="btn-group view-toggle" role="group" aria-label="Candidate view mode">
+            {/* A segmented control, not two buttons. Table/Board is one setting
+                with two values; rendering the active one as .btn-primary made
+                it look like the page's primary action, competing with the one
+                button on the row that actually is. */}
+            <div className="segmented view-toggle" role="group" aria-label="Candidate view mode">
               <button
                 type="button"
-                className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                className={viewMode === 'table' ? 'active' : ''}
+                aria-pressed={viewMode === 'table'}
                 onClick={() => handleViewModeChange('table')}
-                aria-label="Table view"
-                title="Table view (≡)"
               >
-                <List size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                <List size={14} strokeWidth={2} aria-hidden="true" />
                 Table
               </button>
               <button
                 type="button"
-                className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                className={viewMode === 'board' ? 'active' : ''}
+                aria-pressed={viewMode === 'board'}
                 onClick={() => handleViewModeChange('board')}
-                aria-label="Pipeline board view"
-                title="Pipeline board view (⊞)"
               >
-                <Kanban size={14} strokeWidth={2} className="me-1" aria-hidden="true" />
+                <Kanban size={14} strokeWidth={2} aria-hidden="true" />
                 Board
               </button>
             </div>
 
             {canWriteCandidates && (
-              <Link to="/upload" className="btn btn-primary btn-sm d-inline-flex align-items-center">
-                <Upload size={14} strokeWidth={1.75} aria-hidden="true" />
-                <span className="ms-1">Upload CVs</span>
+              <Link to="/upload" className="btn btn-primary btn-sm">
+                <Upload size={14} strokeWidth={2} aria-hidden="true" />
+                Upload CVs
               </Link>
             )}
           </div>
@@ -367,48 +380,65 @@ export default function CandidatesPage() {
         <>
           {/* .table-cards reflows each row into a labelled card below md, so no
               column is hidden on small screens — see index.css. */}
-          <div className="table-wrap">
+          <div className="table-wrap table-wrap--attached">
             <Table hover className="table-cards align-middle">
               <thead>
                 <tr>
                   <th><SortHeader col="name" /></th>
                   <th>Email</th>
-                  <th>Title</th>
+                  <th>Current title</th>
                   <th><SortHeader col="status" /></th>
                   <th><SortHeader col="added" /></th>
                   {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
-                  {isAdminOrAbove && <th className="col-actions">Actions</th>}
+                  {isAdminOrAbove && <th className="col-actions"><span className="visually-hidden">Actions</span></th>}
                 </tr>
               </thead>
               <tbody>
                 {data.items.map((c) => (
                   <tr key={c.id}>
+                    {/* Avatar + name, with the location and experience the row
+                        used to have no room for on its second line. This is
+                        what the taller row buys: a candidate is recognisable
+                        without reading, and two facts that previously required
+                        opening the profile are on the list. */}
                     <td data-label="Name">
-                      <Link to={`/candidates/${c.id}`} className="table-link">
-                        {c.fullName}
-                      </Link>
+                      <div className="cell-identity">
+                        <Avatar name={c.fullName} email={c.email} />
+                        <span className="cell-identity__text">
+                          <Link to={`/candidates/${c.id}`} className="cell-identity__name">
+                            {c.fullName}
+                          </Link>
+                          {(c.appliedRole || c.source) && (
+                            <span className="cell-identity__meta">
+                              {[c.appliedRole, c.source].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
+                        </span>
+                      </div>
                     </td>
                     <td data-label="Email" className="text-break">{c.email}</td>
-                    <td data-label="Title">{c.currentTitle ?? '—'}</td>
+                    <td data-label="Current title">{c.currentTitle ?? '—'}</td>
                     <td data-label="Status">
                       <StatusBadge status={c.currentStatus} />
                     </td>
                     <td data-label="Added" className="text-nowrap">
-                      {new Date(c.createdAt).toLocaleDateString()}
+                      {new Date(c.createdAt).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
                     </td>
                     {isAdminOrAbove && (
                       <td className="col-actions">
-                        <span className="row-actions">
-                          <Button
-                            size="sm"
-                            variant="outline-danger"
+                        <RowActions label={`Actions for ${c.fullName}`}>
+                          <RowAction
+                            icon={<Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />}
+                            tone="danger"
                             onClick={() => setToDelete(c)}
-                            aria-label={`Delete ${c.fullName}`}
                           >
-                            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-                            <span className="ms-1">Delete</span>
-                          </Button>
-                        </span>
+                            Delete candidate
+                          </RowAction>
+                        </RowActions>
                       </td>
                     )}
                   </tr>

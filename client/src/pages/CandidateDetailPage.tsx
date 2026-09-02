@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Col, Form, Row, Modal, Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ClipboardList, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   deleteCandidate,
   downloadCvFile,
@@ -19,16 +19,15 @@ import AddStatusModal from '../components/AddStatusModal';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
+import Avatar from '../components/ui/Avatar';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
 import SectionCard from '../components/ui/SectionCard';
 import LoadingPanel from '../components/ui/Loading';
+import RowActions, { RowAction } from '../components/ui/RowActions';
 import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
-// The role-filter branch added a local copy of this; develop had already
-// extracted the same function to utils, so use the shared one.
-import { initials } from '../utils/initials';
 import type { CandidateDetail } from '../types';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
@@ -116,10 +115,18 @@ export default function CandidateDetailPage() {
           Back to candidates
         </Link>
 
-        {/* Prism's page header with polished hero styling and action group */}
+        {/* The action group used to be six buttons of equal weight — CV File,
+            Status history, Add status, Edit, Evaluation report and a red
+            Delete candidate — so nothing on the page said what to do next, and
+            the most emphatic thing on a candidate's profile was the control
+            that destroys it.
+
+            One primary (Add status: the action this page exists for), the
+            rest as ghosts, and the two rare-and-irreversible ones (delete)
+            behind the overflow menu. */}
         <div className="page-header candidate-hero-header">
         <div className="who-cell">
-          <span className="avatar avatar--lg avatar--hero" aria-hidden="true">{initials(data.fullName) || '?'}</span>
+          <Avatar name={data.fullName} email={data.email} size="hero" />
           <div className="min-w-0">
             <h2 className="candidate-hero-name mb-1">{data.fullName}</h2>
             <div className="d-flex align-items-center gap-2 flex-wrap">
@@ -128,66 +135,66 @@ export default function CandidateDetailPage() {
             </div>
           </div>
         </div>
-        <div className="page-header__actions d-flex align-items-center gap-2 flex-wrap">
-          {/* CV File Action Button beside Status History */}
+        <div className="page-header__actions">
           {data.cvFiles.length > 0 && (
             <Button
-              variant="outline-secondary"
-              className="btn-action-cv d-inline-flex align-items-center"
+              variant="ghost"
+              className="btn-action-cv"
               disabled={loadingCvId !== null}
               onClick={() => openCvPreview(data.cvFiles[0].id, data.cvFiles[0].originalFileName)}
               title={`Preview original CV (${data.cvFiles[0].originalFileName})`}
             >
-              <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1.5">{loadingCvId !== null ? 'Loading…' : 'CV File'}</span>
+              <FileText size={15} strokeWidth={1.75} aria-hidden="true" />
+              {loadingCvId !== null ? 'Loading…' : 'CV File'}
               {data.cvFiles.length > 1 && (
-                <span className="badge bg-secondary-subtle text-secondary ms-1.5 px-1.5 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
-                  {data.cvFiles.length}
-                </span>
+                <span className="count-chip">{data.cvFiles.length}</span>
               )}
             </Button>
           )}
 
           {/* Status History Slide-over Trigger */}
           <Button
-            variant="outline-secondary"
-            className="btn-action-history d-inline-flex align-items-center"
+            variant="ghost"
+            className="btn-action-history"
             onClick={() => setShowHistoryDrawer(true)}
             title="View status change history & timeline"
           >
-            <History size={14} strokeWidth={1.75} aria-hidden="true" />
-            <span className="ms-1.5">Status history</span>
+            <History size={15} strokeWidth={1.75} aria-hidden="true" />
+            Status history
             {data.statusHistory.length > 0 && (
-              <span className="badge bg-secondary-subtle text-secondary ms-1.5 px-1.5 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
-                {data.statusHistory.length}
-              </span>
+              <span className="count-chip">{data.statusHistory.length}</span>
             )}
           </Button>
 
-          {canWrite && !editing && (
-            <Button variant="primary" className="btn-action-advance d-inline-flex align-items-center" onClick={() => setAddingStatus(true)}>
-              <Plus size={14} strokeWidth={2} aria-hidden="true" />
-              <span className="ms-1.5">Add status</span>
-            </Button>
-          )}
-
-          {canWrite && !editing && (
-            <Button variant="outline-secondary" className="btn-action-edit" onClick={() => setEditing(true)}>
-              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1.5">Edit</span>
-            </Button>
-          )}
-
-          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-outline-secondary btn-action-eval">
-            <FileText size={14} strokeWidth={1.75} aria-hidden="true" />
-            <span className="ms-1.5">Evaluation report</span>
+          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-ghost btn-action-eval">
+            <ClipboardList size={15} strokeWidth={1.75} aria-hidden="true" />
+            Evaluation report
           </Link>
 
-          {isAdminOrAbove && (
-            <Button variant="outline-danger" className="btn-action-delete" onClick={() => setConfirmDelete(true)}>
-              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className="ms-1.5">Delete candidate</span>
+          {canWrite && !editing && (
+            <Button variant="ghost" className="btn-action-edit" onClick={() => setEditing(true)}>
+              <Pencil size={15} strokeWidth={1.75} aria-hidden="true" />
+              Edit
             </Button>
+          )}
+
+          {canWrite && !editing && (
+            <Button variant="primary" className="btn-action-advance" onClick={() => setAddingStatus(true)}>
+              <Plus size={15} strokeWidth={2.25} aria-hidden="true" />
+              Add status
+            </Button>
+          )}
+
+          {isAdminOrAbove && (
+            <RowActions label={`More actions for ${data.fullName}`}>
+              <RowAction
+                icon={<Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />}
+                tone="danger"
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete candidate
+              </RowAction>
+            </RowActions>
           )}
         </div>
       </div>

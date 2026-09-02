@@ -164,12 +164,17 @@ export default function DashboardPage() {
            the API resolves with the same definitions the dashboard uses (see
            CandidateBuckets), so a tile and its list can't disagree. */
         <div className="kpi-grid">
-          <KpiCard tone="orange" icon={<IdCardIcon />} label="Total" value={total} sub="All candidates" percent={100} to={to('/candidates')} />
-          <KpiCard tone="teal" icon={<HourglassIcon />} label="In process" value={kpis.inProcess} sub="Of total" percent={pct(kpis.inProcess)} to={to('/candidates?bucket=in-process')} />
-          <KpiCard tone="green" icon={<PersonCheckIcon />} label="Recommended" value={kpis.recommended} sub="Of total" percent={pct(kpis.recommended)} to={to('/candidates?bucket=recommended')} />
-          <KpiCard tone="red" icon={<PersonXIcon />} label="Rejected" value={kpis.rejected} sub="Of total" percent={pct(kpis.rejected)} to={to('/candidates?bucket=rejected')} />
-          <KpiCard tone="blue" icon={<CalendarPlusIcon />} label="New this week" value={kpis.newThisWeek} sub="Of total" percent={pct(kpis.newThisWeek)} to={to('/candidates?bucket=new-this-week')} />
-          <KpiCard tone="purple" icon={<ShareIcon />} label="Referred" value={kpis.referredCount} sub="Of total" percent={kpis.referredPercent} to={to('/candidates?referred=1')} />
+          {/* Only the two figures that carry a judgement are coloured. "Total"
+              and "New this week" are neither good nor bad, so tinting them
+              would be asserting something the number doesn't say. The share
+              moves into the caption instead of being printed as a percentage
+              AND drawn as a bar AND tinted — one number, one encoding. */}
+          <KpiCard icon={<IdCardIcon />} label="Total" value={total} sub="all candidates" to={to('/candidates')} />
+          <KpiCard icon={<HourglassIcon />} label="In process" value={kpis.inProcess} sub={`${pct(kpis.inProcess)}% of total`} percent={pct(kpis.inProcess)} to={to('/candidates?bucket=in-process')} />
+          <KpiCard tone="green" icon={<PersonCheckIcon />} label="Recommended" value={kpis.recommended} sub={`${pct(kpis.recommended)}% of total`} percent={pct(kpis.recommended)} to={to('/candidates?bucket=recommended')} />
+          <KpiCard tone="red" icon={<PersonXIcon />} label="Rejected" value={kpis.rejected} sub={`${pct(kpis.rejected)}% of total`} percent={pct(kpis.rejected)} to={to('/candidates?bucket=rejected')} />
+          <KpiCard icon={<CalendarPlusIcon />} label="New this week" value={kpis.newThisWeek} sub={`${pct(kpis.newThisWeek)}% of total`} percent={pct(kpis.newThisWeek)} to={to('/candidates?bucket=new-this-week')} />
+          <KpiCard icon={<ShareIcon />} label="Referred" value={kpis.referredCount} sub={`${kpis.referredPercent}% of total`} percent={kpis.referredPercent} to={to('/candidates?referred=1')} />
         </div>
       )}
 

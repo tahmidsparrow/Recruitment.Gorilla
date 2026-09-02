@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Form, Modal, Table } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { UserCog, UserPlus } from 'lucide-react';
+import { KeyRound, Pencil, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
 import {
   createUser,
   getUsers,
@@ -10,9 +10,11 @@ import {
   updateUser,
 } from '../services/api';
 import { useToast } from '../components/ToastStack';
+import Avatar from '../components/ui/Avatar';
 import EmptyState from '../components/ui/EmptyState';
 import Page from '../components/ui/Page';
 import PageHeader from '../components/ui/PageHeader';
+import RowActions, { RowAction } from '../components/ui/RowActions';
 import { SkeletonRows } from '../components/ui/Loading';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
 
@@ -203,19 +205,33 @@ export default function UsersPage() {
                 <th>Roles</th>
                 <th style={{ width: 110 }}>Status</th>
                 <th style={{ width: 180 }}>Last login</th>
-                <th className="col-actions" style={{ width: 300 }}>Actions</th>
+                {/* Was 300px, to fit three full-width buttons. That is what
+                    pushed this table past the viewport and put a horizontal
+                    scrollbar on the page — the "Add user" button in the header
+                    was clipped off the right edge as a result. One overflow
+                    trigger needs 52. */}
+                <th className="col-actions" style={{ width: 52 }}>
+                  <span className="visually-hidden">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
                   <td data-label="Name">
-                    <span className="d-inline-flex align-items-center gap-2 flex-wrap">
-                      <span className="fw-semibold">{u.name}</span>
-                      {u.mustChangePassword && (
-                        <span className="badge-pill badge-warning">Pending password</span>
-                      )}
-                    </span>
+                    <div className="cell-identity">
+                      <Avatar name={u.name} email={u.email} />
+                      <span className="cell-identity__text">
+                        <span className="cell-identity__name">{u.name}</span>
+                        {/* Demoted from a warning badge to a caption. It is a
+                            fact about the account, not a problem needing
+                            attention, and a yellow pill beside a name reads as
+                            the latter. */}
+                        {u.mustChangePassword && (
+                          <span className="cell-identity__meta">Must change password</span>
+                        )}
+                      </span>
+                    </div>
                   </td>
                   <td data-label="Email" className="text-break">{u.email}</td>
                   <td data-label="Roles">
@@ -234,22 +250,33 @@ export default function UsersPage() {
                   </td>
                   <td data-label="Last login" className="table-muted">{formatDate(u.lastLoginAt)}</td>
                   <td className="col-actions">
-                    <span className="row-actions">
-                      <Button size="sm" variant="outline-secondary" onClick={() => openEdit(u)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="outline-secondary" onClick={() => openReset(u)}>
+                    <RowActions label={`Actions for ${u.name}`}>
+                      <RowAction
+                        icon={<Pencil size={15} strokeWidth={1.75} aria-hidden="true" />}
+                        onClick={() => openEdit(u)}
+                      >
+                        Edit user
+                      </RowAction>
+                      <RowAction
+                        icon={<KeyRound size={15} strokeWidth={1.75} aria-hidden="true" />}
+                        onClick={() => openReset(u)}
+                      >
                         Reset password
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={u.isActive ? 'outline-danger' : 'outline-success'}
+                      </RowAction>
+                      <div className="menu-panel__divider" />
+                      <RowAction
+                        icon={
+                          u.isActive
+                            ? <UserX size={15} strokeWidth={1.75} aria-hidden="true" />
+                            : <UserCheck size={15} strokeWidth={1.75} aria-hidden="true" />
+                        }
+                        tone={u.isActive ? 'danger' : 'default'}
                         disabled={toggleActiveMutation.isPending}
                         onClick={() => toggleActiveMutation.mutate(u)}
                       >
                         {u.isActive ? 'Deactivate' : 'Activate'}
-                      </Button>
-                    </span>
+                      </RowAction>
+                    </RowActions>
                   </td>
                 </tr>
               ))}
