@@ -192,7 +192,7 @@ export default function UsersPage() {
         actions={
           <Button onClick={openAdd}>
             <UserPlus size={15} strokeWidth={1.75} aria-hidden="true" />
-            <span className="ms-1">Add user</span>
+            <span className="ml-1">Add user</span>
           </Button>
         }
       />
@@ -222,7 +222,7 @@ export default function UsersPage() {
                     was clipped off the right edge as a result. One overflow
                     trigger needs 52. */}
                 <th className="col-actions" style={{ width: 52 }}>
-                  <span className="visually-hidden">Actions</span>
+                  <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
@@ -244,7 +244,7 @@ export default function UsersPage() {
                       </span>
                     </div>
                   </td>
-                  <td data-label="Email" className="text-break">{u.email}</td>
+                  <td data-label="Email" className="[overflow-wrap:anywhere]">{u.email}</td>
                   <td data-label="Roles">
                     <span className="badge-row">
                       {u.roles.map((r) => (

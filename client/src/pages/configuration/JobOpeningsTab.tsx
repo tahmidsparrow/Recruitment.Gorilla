@@ -212,7 +212,7 @@ export default function JobOpeningsTab() {
       {/* The action shares the filter row rather than taking one of its own
           — see .page-bar. */}
       <div className="page-bar">
-        <search className="flex-grow-1">
+        <search className="grow">
           <div className="data-toolbar">
           <div className="search-field data-toolbar__search">
             <Search size={15} strokeWidth={1.75} aria-hidden="true" className="search-field__icon" />
@@ -247,7 +247,7 @@ export default function JobOpeningsTab() {
         <div className="page-bar__actions">
           <Button onClick={() => resetForm(null)}>
             <Plus size={15} strokeWidth={2} aria-hidden="true" />
-            <span className="ms-1">Add job opening</span>
+            <span className="ml-1">Add job opening</span>
           </Button>
         </div>
       </div>
@@ -308,7 +308,7 @@ export default function JobOpeningsTab() {
           </DialogHeader>
           <DialogBody>
             {error && (
-              <div className="alert-danger-soft mb-4" role="alert">
+              <div className="alert-danger-soft mb-6" role="alert">
                 {error}
               </div>
             )}
@@ -316,8 +316,8 @@ export default function JobOpeningsTab() {
             {/* Title and Posted date used to sit here as readOnly plaintext
                 fields, which rendered borderless and read as broken. Both are
                 derived and both are shown on the card, so they are gone. */}
-            <div className="row g-3">
-              <div className="col-12">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12">
                 <Label>Role name <span className="required-star" aria-hidden="true">*</span></Label>
                 <Input
                   value={name}
@@ -327,7 +327,7 @@ export default function JobOpeningsTab() {
                 />
                 <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Role name is required.</p>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Closes <span className="required-star" aria-hidden="true">*</span></Label>
                 <Input
                   type="datetime-local"
@@ -340,28 +340,28 @@ export default function JobOpeningsTab() {
                   <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Posted {formatDate(editing.createdAt)}.</p>
                 )}
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Priority</Label>
                 <NativeSelect value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option value="">None</option>
                   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
                 </NativeSelect>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Location</Label>
                 <NativeSelect value={location} onChange={(e) => setLocation(e.target.value)}>
                   <option value="">None</option>
                   {LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
                 </NativeSelect>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Department</Label>
                 <NativeSelect value={department} onChange={(e) => setDepartment(e.target.value)}>
                   <option value="">None</option>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </NativeSelect>
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Evaluation rubric</Label>
                 <SearchableDropdown<number>
                   options={rubricOptions}
@@ -375,7 +375,7 @@ export default function JobOpeningsTab() {
                   Determines the scorecard criteria and sections for candidates in this opening.
                 </p>
               </div>
-              <div className="col-12">
+              <div className="col-span-12">
                 <Label>Recruiters</Label>
                 <SearchableMultiSelect
                   options={recruiterOptions}
@@ -388,7 +388,7 @@ export default function JobOpeningsTab() {
                   the Recruiter role or higher are listed — an Interviewer would gain no access.
                 </p>
               </div>
-              <div className="col-12">
+              <div className="col-span-12">
                 <CheckboxField id="job-active" label="Active — shown in candidate forms and on the dashboard" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               </div>
             </div>
@@ -497,7 +497,7 @@ function JobRow({
           {job.evaluationRubricName && (
             <>
               <span aria-hidden="true">·</span>
-              <span className="text-muted" title="Assigned scorecard rubric">
+              <span className="text-muted-foreground" title="Assigned scorecard rubric">
                 Rubric: {job.evaluationRubricName}
               </span>
             </>

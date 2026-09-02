@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
     <div className="analytics-page">
       {/* Top Filter and Action Bar */}
       <div className="page-bar d-print-none">
-        <div className="d-flex align-items-center flex-wrap gap-2 flex-grow-1">
+        <div className="flex items-center flex-wrap gap-2 grow">
           {/* Preset Segmented Control */}
           <div className="segmented" role="group" aria-label="Select date range preset">
             {PRESETS.map((p) => (
@@ -76,8 +76,8 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Job Opening / Role Filter */}
-          <div className="d-flex align-items-center gap-1.5" style={{ minWidth: 220 }}>
-            <Filter size={14} className="text-muted flex-shrink-0" />
+          <div className="flex items-center gap-1.5" style={{ minWidth: 220 }}>
+            <Filter size={14} className="text-muted-foreground shrink-0" />
             <NativeSelect
               size="sm"
               value={roleId ?? ''}
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
         <div className="page-bar__actions">
           <Button
             variant="outline"
-            className="d-flex align-items-center gap-1.5"
+            className="flex items-center gap-1.5"
             onClick={() => window.print()}
           >
             <Printer size={15} />
@@ -209,11 +209,11 @@ export default function AnalyticsPage() {
           {/* Horizontal Stepped Pipeline Funnel */}
           <div className="analytics-card">
             <div className="analytics-card__header">
-              <div className="d-flex align-items-center gap-2">
-                <Layers size={18} className="text-muted" />
+              <div className="flex items-center gap-2">
+                <Layers size={18} className="text-muted-foreground" />
                 <h3 className="section-title">Pipeline funnel</h3>
               </div>
-              <span className="text-muted small fw-medium">
+              <span className="text-muted-foreground text-[length:var(--text-sm)] font-medium">
                 {summary.totalCandidatesInPeriod}{' '}
                 {summary.totalCandidatesInPeriod === 1 ? 'applicant' : 'applicants'} entered pipeline
               </span>
@@ -231,7 +231,7 @@ export default function AnalyticsPage() {
                 const isHired = stage.stageKey === 'hired';
 
                 return (
-                  <div key={stage.stageKey} className="d-flex align-items-stretch flex-grow-1 min-w-0">
+                  <div key={stage.stageKey} className="flex items-stretch grow min-w-0">
                     {idx > 0 && (
                       <div className="stepped-funnel__connector">
                         <span
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
                     >
                       <div className="stepped-funnel__node-header">
                         <div className="stepped-funnel__node-badge">{idx + 1}</div>
-                        <span className="stepped-funnel__node-title text-truncate">
+                        <span className="stepped-funnel__node-title truncate">
                           {cleanStageName}
                         </span>
                       </div>
@@ -289,15 +289,15 @@ export default function AnalyticsPage() {
           {/* Stage Dwell Time & Velocity Bottlenecks */}
           <div className="analytics-card">
             <div className="analytics-card__header">
-              <div className="d-flex align-items-center gap-2">
-                <Clock size={16} className="text-muted" />
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-muted-foreground" />
                 <h3 className="section-title">Stage dwell time</h3>
               </div>
-              <span className="text-muted small fw-medium">Average days per candidate</span>
+              <span className="text-muted-foreground text-[length:var(--text-sm)] font-medium">Average days per candidate</span>
             </div>
 
             {summary.stageVelocities.length === 0 ? (
-              <div className="text-center text-muted py-5 small">
+              <div className="text-center text-muted-foreground py-12 text-[length:var(--text-sm)]">
                 No active status transition history available in this period.
               </div>
             ) : (
@@ -321,13 +321,13 @@ export default function AnalyticsPage() {
                       className={`velocity-row${isSlow ? ' velocity-row--slow' : ''}`}
                     >
                       <div className="velocity-row__header">
-                        <div className="d-flex align-items-center gap-1.5 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           <span className="velocity-row__name" title={formattedName}>
                             {formattedName}
                           </span>
                           {isSlow && (
                             <span
-                              className="badge-pill badge-warning flex-shrink-0"
+                              className="badge-pill badge-warning shrink-0"
                               style={{ fontSize: '9.5px', padding: '1px 6px' }}
                               title="Stage dwell exceeds 7 days threshold"
                             >
@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
                         </div>
                         <div className="velocity-row__value">
                           <strong>{v.averageDays}d</strong>{' '}
-                          <span className="text-muted fw-normal small">
+                          <span className="text-muted-foreground font-normal text-[length:var(--text-sm)]">
                             ({v.candidatesCount})
                           </span>
                         </div>
@@ -364,11 +364,11 @@ export default function AnalyticsPage() {
           {/* Sourcing Channel ROI Table */}
           <div className="analytics-card">
             <div className="analytics-card__header">
-              <div className="d-flex align-items-center gap-2">
-                <Briefcase size={18} className="text-muted" />
-                <h5 className="mb-0 fw-bold fs-6">Sourcing Channel Performance & ROI</h5>
+              <div className="flex items-center gap-2">
+                <Briefcase size={18} className="text-muted-foreground" />
+                <h5 className="mb-0 font-bold text-[length:var(--text-lg)]">Sourcing Channel Performance & ROI</h5>
               </div>
-              <span className="text-muted small fw-medium">
+              <span className="text-muted-foreground text-[length:var(--text-sm)] font-medium">
                 {summary.sourcingChannels.length} sourcing channels tracked
               </span>
             </div>
@@ -390,15 +390,15 @@ export default function AnalyticsPage() {
                 <tbody>
                   {summary.sourcingChannels.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center text-muted py-4">
+                      <td colSpan={8} className="text-center text-muted-foreground py-6">
                         No sourcing data found in this period.
                       </td>
                     </tr>
                   ) : (
                     summary.sourcingChannels.map((s) => (
                       <tr key={s.sourceName}>
-                        <td className="fw-semibold">
-                          <div className="d-flex align-items-center gap-2">
+                        <td className="font-semibold">
+                          <div className="flex items-center gap-2">
                             <span className="badge-pill badge-neutral">
                               {s.sourceName}
                             </span>
@@ -418,7 +418,7 @@ export default function AnalyticsPage() {
                             {s.conversionToHirePercent}%
                           </span>
                         </td>
-                        <td className="text-center text-muted">
+                        <td className="text-center text-muted-foreground">
                           {s.shareOfTotalHiresPercent}%
                         </td>
                       </tr>
@@ -432,11 +432,11 @@ export default function AnalyticsPage() {
           {/* Recruiter Productivity & Workload Table */}
           <div className="analytics-card">
             <div className="analytics-card__header">
-              <div className="d-flex align-items-center gap-2">
-                <UserCheck size={18} className="text-muted" />
-                <h5 className="mb-0 fw-bold fs-6">Recruiter Productivity & Pipeline Workload</h5>
+              <div className="flex items-center gap-2">
+                <UserCheck size={18} className="text-muted-foreground" />
+                <h5 className="mb-0 font-bold text-[length:var(--text-lg)]">Recruiter Productivity & Pipeline Workload</h5>
               </div>
-              <span className="text-muted small fw-medium">
+              <span className="text-muted-foreground text-[length:var(--text-sm)] font-medium">
                 {summary.recruiterWorkloads.length} active recruiters
               </span>
             </div>
@@ -456,17 +456,17 @@ export default function AnalyticsPage() {
                 <tbody>
                   {summary.recruiterWorkloads.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center text-muted py-4">
+                      <td colSpan={6} className="text-center text-muted-foreground py-6">
                         No recruiter workload data recorded in this period.
                       </td>
                     </tr>
                   ) : (
                     summary.recruiterWorkloads.map((r) => (
                       <tr key={r.recruiterUserId}>
-                        <td className="fw-semibold">
-                          <div className="d-flex align-items-center gap-2">
+                        <td className="font-semibold">
+                          <div className="flex items-center gap-2">
                             <div
-                              className="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center"
+                              className="rounded-full bg-primary-subtle text-brand font-bold flex items-center justify-center"
                               style={{ width: 28, height: 28, fontSize: 11 }}
                             >
                               {r.recruiterName.slice(0, 2).toUpperCase()}

@@ -26,7 +26,7 @@ import {
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 const Req = () => (
-  <span className="text-danger" aria-hidden="true">
+  <span className="text-[var(--danger-text)]" aria-hidden="true">
     *
   </span>
 );
@@ -178,15 +178,15 @@ export default function AddStatusModal({
           </DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <p className="form-help mb-4">
+          <p className="form-help mb-6">
             Moves the candidate to the next stage and records who changed it.
           </p>
           {statusOptions.length === 0 && !initialStatus && (
-            <div className="alert-info-soft mb-4">
+            <div className="alert-info-soft mb-6">
               No next status is available from the candidate&apos;s current status.
             </div>
           )}
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 md:col-span-12">
               <Label className="mb-1">
                 New status <Req />
@@ -312,7 +312,7 @@ export default function AddStatusModal({
                   placeholder="Search users to assign…"
                 />
                 {fieldErrors.interviewers && (
-                  <div className="text-danger small mt-1">{fieldErrors.interviewers}</div>
+                  <div className="text-[var(--danger-text)] text-[length:var(--text-sm)] mt-1">{fieldErrors.interviewers}</div>
                 )}
                 <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Assigned users are notified and can fill the evaluation form.</p>
               </div>

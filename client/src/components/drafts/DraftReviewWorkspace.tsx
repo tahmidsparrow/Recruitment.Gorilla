@@ -406,7 +406,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               className={`segmented__item ${statusFilter === 'Pending' ? 'segmented__item--active active' : ''}`}
               onClick={() => setStatusFilter('Pending')}
             >
-              <Clock size={13} className="me-1.5 text-warning" />
+              <Clock size={13} className="me-1.5 text-warning-foreground" />
               Pending
               <span className="draft-counter-badge draft-counter-badge--pending">
                 {draftsData?.totalPending ?? 0}
@@ -417,7 +417,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               className={`segmented__item ${statusFilter === 'Approved' ? 'segmented__item--active active' : ''}`}
               onClick={() => setStatusFilter('Approved')}
             >
-              <CheckCircle2 size={13} className="me-1.5 text-success" />
+              <CheckCircle2 size={13} className="me-1.5 text-success-foreground" />
               Approved
               <span className="draft-counter-badge draft-counter-badge--success">
                 {draftsData?.totalApproved ?? 0}
@@ -428,7 +428,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               className={`segmented__item ${statusFilter === 'Discarded' ? 'segmented__item--active active' : ''}`}
               onClick={() => setStatusFilter('Discarded')}
             >
-              <XCircle size={13} className="me-1.5 text-danger" />
+              <XCircle size={13} className="me-1.5 text-[var(--danger-text)]" />
               Discarded
               <span className="draft-counter-badge draft-counter-badge--danger">
                 {draftsData?.totalDiscarded ?? 0}
@@ -469,7 +469,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
           <button
             type="button"
-            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center flex-shrink-0"
+            className="btn btn-sm btn-outline-secondary inline-flex items-center shrink-0"
             onClick={() => {
               void refetchDrafts();
               void refetchBatches();
@@ -485,26 +485,26 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
       <div className="draft-split-view">
         {/* LEFT RAIL: Queue Cards List */}
         <div className="draft-list-rail">
-          <div className="d-flex align-items-stretch justify-content-between border-bottom flex-shrink-0 bg-surface">
+          <div className="flex items-stretch justify-between border-b border-border shrink-0 bg-surface">
             <div 
-              className="d-flex align-items-center justify-content-center flex-shrink-0"
+              className="flex items-center justify-center shrink-0"
               style={{ width: '36px', borderRight: '1px solid var(--border)' }}
             >
               <button
                 type="button"
-                className="btn btn-link p-0 text-muted d-inline-flex align-items-center"
+                className="btn btn-link p-0 text-muted-foreground inline-flex items-center"
                 onClick={toggleSelectAll}
                 title={selectedIds.size === drafts.length ? 'Deselect all' : 'Select all'}
               >
                 {selectedIds.size > 0 && selectedIds.size === drafts.length ? (
-                  <CheckSquare size={16} className="text-primary" />
+                  <CheckSquare size={16} className="text-brand" />
                 ) : (
                   <Square size={16} />
                 )}
               </button>
             </div>
-            <div className="d-flex align-items-center justify-content-between flex-grow-1 pe-3 ps-2 py-2">
-              <span className="small fw-semibold text-muted">
+            <div className="flex items-center justify-between grow pr-4 pl-2 py-2">
+              <span className="text-[length:var(--text-sm)] font-semibold text-muted-foreground">
                 {drafts.length} {statusFilter === 'all' ? 'total' : statusFilter.toLowerCase()} candidate{drafts.length === 1 ? '' : 's'}
               </span>
               {drafts.length > 0 && (
@@ -547,7 +547,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   >
                     {/* Dedicated Checkbox Column */}
                     <div 
-                      className="draft-item-card__checkbox-col d-flex align-items-center justify-content-center flex-shrink-0"
+                      className="draft-item-card__checkbox-col flex items-center justify-center shrink-0"
                       style={{ 
                         width: '36px', 
                         borderRight: '1px solid var(--border)',
@@ -572,13 +572,13 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Main Card Content */}
-                    <div className="py-3 pe-3 ps-2 d-flex align-items-start gap-2.5 min-w-0 flex-grow-1">
-                      <div className="avatar flex-shrink-0">
+                    <div className="py-4 pr-4 pl-2 flex items-start gap-2.5 min-w-0 grow">
+                      <div className="avatar shrink-0">
                         {initials(displayTitle)}
                       </div>
-                      <div className="draft-item-card__content min-w-0 flex-grow-1">
-                        <div className="d-flex align-items-center justify-content-between gap-2 min-w-0">
-                          <span className="draft-item-card__name text-truncate flex-grow-1">
+                      <div className="draft-item-card__content min-w-0 grow">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="draft-item-card__name truncate grow">
                             {displayTitle}
                           </span>
                           {statusFilter === 'all' && (
@@ -596,16 +596,16 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                           )}
                         </div>
 
-                        <div className="draft-item-card__role text-truncate">
+                        <div className="draft-item-card__role truncate">
                           {d.currentTitle || d.roleAppliedOptionName || 'Unassigned Role'}
                         </div>
 
                         <div className="draft-item-card__meta min-w-0">
-                          <span className="d-flex align-items-center gap-1 min-w-0 flex-grow-1">
-                            <FileText size={11} className="flex-shrink-0" />
-                            <span className="text-truncate d-inline-block min-w-0">{d.originalFileName}</span>
+                          <span className="flex items-center gap-1 min-w-0 grow">
+                            <FileText size={11} className="shrink-0" />
+                            <span className="truncate inline-block min-w-0">{d.originalFileName}</span>
                           </span>
-                          <span className="flex-shrink-0 ms-2">
+                          <span className="shrink-0 ml-2">
                             {(d.fileSizeBytes / 1024).toFixed(0)} KB
                           </span>
                         </div>
@@ -616,9 +616,9 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               })
             )}
             {isFetchingNextPage && (
-              <div className="p-3 text-center">
-                <div className="spinner-border spinner-border-sm text-secondary" role="status">
-                  <span className="visually-hidden">Loading more...</span>
+              <div className="p-4 text-center">
+                <div className="spinner-border spinner-border-sm text-text-soft" role="status">
+                  <span className="sr-only">Loading more...</span>
                 </div>
               </div>
             )}
@@ -641,16 +641,16 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             <div className="draft-editor-studio__container">
               {/* Studio Hero Header */}
               <div className="draft-editor-studio__head">
-                <div className="d-flex align-items-center gap-3 min-w-0">
-                  <div className="avatar avatar--lg flex-shrink-0">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="avatar avatar--lg shrink-0">
                     {initials(editForm.fullName || activeDraft.originalFileName)}
                   </div>
                   <div className="min-w-0">
-                    <h5 className="mb-0 fw-bold text-truncate">
+                    <h5 className="mb-0 font-bold truncate">
                       {editForm.fullName || activeDraft.originalFileName}
                     </h5>
-                    <div className="d-flex flex-wrap align-items-center gap-2 mt-1">
-                      <span className="badge-pill badge-neutral text-xs d-inline-flex align-items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="badge-pill badge-neutral text-xs inline-flex items-center gap-1">
                         <FileText size={11} />
                         {activeDraft.originalFileName} ({(activeDraft.fileSizeBytes / 1024).toFixed(0)} KB)
                       </span>
@@ -659,7 +659,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                           {activeDraft.batchName}
                         </span>
                       )}
-                      <span className="text-muted text-xs">
+                      <span className="text-muted-foreground text-xs">
                         Added {new Date(activeDraft.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -667,28 +667,28 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 </div>
 
                 {/* Queue Stepper Buttons */}
-                <div className="d-flex align-items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                    className="btn btn-sm btn-outline-secondary inline-flex items-center gap-1"
                     disabled={!hasPrev}
                     onClick={() => navigateQueue('prev')}
                     title="Previous (Ctrl+Left)"
                   >
                     <ChevronLeft size={15} />
-                    <span className="d-none d-md-inline">Prev</span>
+                    <span className="hidden md:inline">Prev</span>
                   </button>
                   <span className="badge-pill badge-neutral text-xs px-2.5">
                     {currentIndex >= 0 ? `${currentIndex + 1} of ${drafts.length}` : ''}
                   </span>
                   <button
                     type="button"
-                    className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                    className="btn btn-sm btn-outline-secondary inline-flex items-center gap-1"
                     disabled={!hasNext}
                     onClick={() => navigateQueue('next')}
                     title="Next (Ctrl+Right)"
                   >
-                    <span className="d-none d-md-inline">Next</span>
+                    <span className="hidden md:inline">Next</span>
                     <ChevronRight size={15} />
                   </button>
                 </div>
@@ -698,14 +698,14 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               <div className="draft-editor-studio__body">
                 <div className="draft-form-section">
                   <h6 className="draft-form-section__title">
-                    <Briefcase size={14} className="text-primary me-1.5" />
+                    <Briefcase size={14} className="text-brand me-1.5" />
                     Candidate Identity &amp; Contact
                   </h6>
 
-                  <div className="row g-3">
+                  <div className="grid grid-cols-12 gap-4">
                     {/* Full Name */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
                         Full Name <span className="required-star">*</span>
                       </label>
                       <input
@@ -724,13 +724,13 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Email */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold d-flex justify-content-between align-items-center">
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold flex justify-between items-center">
                         <span>Email Address <span className="required-star">*</span></span>
                         {editForm.email && (
                           <button
                             type="button"
-                            className="btn btn-link p-0 text-muted text-xs d-inline-flex align-items-center gap-1"
+                            className="btn btn-link p-0 text-muted-foreground text-xs inline-flex items-center gap-1"
                             onClick={() => copyToClipboard(editForm.email!, 'Email')}
                           >
                             <Copy size={11} /> Copy
@@ -751,13 +751,13 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         />
                       </div>
                       {formErrors.email && (
-                        <div className="text-danger small mt-1">{formErrors.email}</div>
+                        <div className="text-[var(--danger-text)] text-[length:var(--text-sm)] mt-1">{formErrors.email}</div>
                       )}
                     </div>
 
                     {/* Current Job Title */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Current / Extracted Job Title</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Current / Extracted Job Title</label>
                       <input
                         type="text"
                         className="form-control"
@@ -770,8 +770,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Phone */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Phone Number</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Phone Number</label>
                       <div className="input-group">
                         <span className="input-group-text"><Phone size={14} /></span>
                         <input
@@ -787,8 +787,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Location */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Location (City/Area)</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Location (City/Area)</label>
                       <input
                         type="text"
                         className="form-control"
@@ -802,16 +802,16 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   </div>
                 </div>
 
-                <div className="draft-form-section mt-4">
+                <div className="draft-form-section mt-6">
                   <h6 className="draft-form-section__title">
-                    <Sparkles size={14} className="text-primary me-1.5" />
+                    <Sparkles size={14} className="text-brand me-1.5" />
                     Application &amp; Job Role Assignment
                   </h6>
 
-                  <div className="row g-3">
+                  <div className="grid grid-cols-12 gap-4">
                     {/* Role Applied For */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
                         Role Applied For <span className="required-star">*</span>
                       </label>
                       <SearchableSelect
@@ -824,16 +824,16 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         placeholder="Select position / job opening..."
                       />
                       {formErrors.role && (
-                        <div className="text-danger small mt-1">{formErrors.role}</div>
+                        <div className="text-[var(--danger-text)] text-[length:var(--text-sm)] mt-1">{formErrors.role}</div>
                       )}
                     </div>
 
                     {/* Relevant Experience */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
                         Relevant Experience <span className="required-star">*</span>
                       </label>
-                      <div className="d-flex flex-wrap gap-1.5 align-items-center">
+                      <div className="flex flex-wrap gap-1.5 items-center">
                         {EXPERIENCE_PRESETS.map((preset) => {
                           const isActive = editForm.relevantExperience === preset;
                           return (
@@ -867,8 +867,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Source Option */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Sourcing Channel</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Sourcing Channel</label>
                       <SearchableSelect
                         options={sources.map((s) => ({ id: s.id, name: s.name }))}
                         value={editForm.sourceOptionId || null}
@@ -880,8 +880,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Source Detail */}
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Source Detail / Campaign</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Source Detail / Campaign</label>
                       <input
                         type="text"
                         className="form-control"
@@ -895,16 +895,16 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   </div>
                 </div>
 
-                <div className="draft-form-section mt-4">
+                <div className="draft-form-section mt-6">
                   <h6 className="draft-form-section__title">
-                    <Globe size={14} className="text-primary me-1.5" />
+                    <Globe size={14} className="text-brand me-1.5" />
                     Skills, Profile &amp; Bio
                   </h6>
 
-                  <div className="row g-3">
+                  <div className="grid grid-cols-12 gap-4">
                     {/* Skills */}
-                    <div className="col-12">
-                      <label className="form-label small fw-semibold">Extracted Skills (Summary)</label>
+                    <div className="col-span-12">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Extracted Skills (Summary)</label>
                       <input
                         type="text"
                         className="form-control"
@@ -915,7 +915,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         }
                       />
                       {editForm.skills && (
-                        <div className="d-flex flex-wrap gap-1.5 mt-2">
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                           {editForm.skills
                             .split(/[,•|;\n]/)
                             .map((s) => s.trim())
@@ -930,8 +930,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Social & Dev Profiles */}
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">LinkedIn Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">LinkedIn Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -943,8 +943,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">GitHub Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">GitHub Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -956,8 +956,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">GitLab Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">GitLab Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -969,8 +969,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">LeetCode Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">LeetCode Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -982,8 +982,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">Codeforces Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Codeforces Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -995,8 +995,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-4">
-                      <label className="form-label small fw-semibold">HackerRank Profile</label>
+                    <div className="col-span-12 md:col-span-4">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">HackerRank Profile</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -1008,8 +1008,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       />
                     </div>
 
-                    <div className="col-12 col-md-6">
-                      <label className="form-label small fw-semibold">Portfolio / Personal Website</label>
+                    <div className="col-span-12 md:col-span-6">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Portfolio / Personal Website</label>
                       <input
                         type="text"
                         className="form-control form-control-sm"
@@ -1022,8 +1022,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                     </div>
 
                     {/* Bio / Summary */}
-                    <div className="col-12">
-                      <label className="form-label small fw-semibold">Professional Summary &amp; Bio</label>
+                    <div className="col-span-12">
+                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Professional Summary &amp; Bio</label>
                       <textarea
                         rows={3}
                         className="form-control"
@@ -1038,10 +1038,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 </div>
 
                 {/* Education Section */}
-                <div className="draft-form-section mt-4">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="draft-form-section mt-6">
+                  <div className="flex justify-between items-center mb-2">
                     <h6 className="draft-form-section__title mb-0 border-0 pb-0">
-                      <FileText size={14} className="text-primary me-1.5" />
+                      <FileText size={14} className="text-brand me-1.5" />
                       Education &amp; Academic Qualifications
                     </h6>
                     <button
@@ -1062,14 +1062,14 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   </div>
 
                   {(editForm.educations || []).length === 0 ? (
-                    <div className="text-muted small py-2">No education records extracted. Click &quot;+ Add Education&quot; to add one.</div>
+                    <div className="text-muted-foreground text-[length:var(--text-sm)] py-2">No education records extracted. Click &quot;+ Add Education&quot; to add one.</div>
                   ) : (
-                    <div className="d-flex flex-column gap-3 mt-2">
+                    <div className="flex flex-col gap-4 mt-2">
                       {(editForm.educations || []).map((edu, idx) => (
-                        <div key={idx} className="p-3 rounded border border-subtle bg-surface-muted position-relative">
+                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border border-subtle bg-surface-muted relative">
                           <button
                             type="button"
-                            className="btn btn-link text-danger p-0 position-absolute"
+                            className="btn btn-link text-[var(--danger-text)] p-0 absolute"
                             style={{ top: '8px', right: '10px' }}
                             onClick={() =>
                               setEditForm((prev) => ({
@@ -1081,9 +1081,9 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                           >
                             <Trash2 size={13} />
                           </button>
-                          <div className="row g-2">
-                            <div className="col-12 col-md-6">
-                              <label className="form-label text-xs fw-semibold mb-1">Degree / Major</label>
+                          <div className="grid grid-cols-12 gap-4 gap-2">
+                            <div className="col-span-12 md:col-span-6">
+                              <label className="form-label text-xs font-semibold mb-1">Degree / Major</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1100,8 +1100,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-12 col-md-6 pe-4">
-                              <label className="form-label text-xs fw-semibold mb-1">Institution / University</label>
+                            <div className="col-span-12 md:col-span-6 pr-6">
+                              <label className="form-label text-xs font-semibold mb-1">Institution / University</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1118,8 +1118,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-6 col-md-4">
-                              <label className="form-label text-xs fw-semibold mb-1">Graduation Year</label>
+                            <div className="col-span-6 md:col-span-4">
+                              <label className="form-label text-xs font-semibold mb-1">Graduation Year</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1136,8 +1136,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-6 col-md-4">
-                              <label className="form-label text-xs fw-semibold mb-1">CGPA / GPA</label>
+                            <div className="col-span-6 md:col-span-4">
+                              <label className="form-label text-xs font-semibold mb-1">CGPA / GPA</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1162,10 +1162,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 </div>
 
                 {/* Work Experience Section */}
-                <div className="draft-form-section mt-4">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="draft-form-section mt-6">
+                  <div className="flex justify-between items-center mb-2">
                     <h6 className="draft-form-section__title mb-0 border-0 pb-0">
-                      <Briefcase size={14} className="text-primary me-1.5" />
+                      <Briefcase size={14} className="text-brand me-1.5" />
                       Work &amp; Employment History
                     </h6>
                     <button
@@ -1186,14 +1186,14 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   </div>
 
                   {(editForm.experiences || []).length === 0 ? (
-                    <div className="text-muted small py-2">No work history extracted. Click &quot;+ Add Experience&quot; to add one.</div>
+                    <div className="text-muted-foreground text-[length:var(--text-sm)] py-2">No work history extracted. Click &quot;+ Add Experience&quot; to add one.</div>
                   ) : (
-                    <div className="d-flex flex-column gap-3 mt-2">
+                    <div className="flex flex-col gap-4 mt-2">
                       {(editForm.experiences || []).map((exp, idx) => (
-                        <div key={idx} className="p-3 rounded border border-subtle bg-surface-muted position-relative">
+                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border border-subtle bg-surface-muted relative">
                           <button
                             type="button"
-                            className="btn btn-link text-danger p-0 position-absolute"
+                            className="btn btn-link text-[var(--danger-text)] p-0 absolute"
                             style={{ top: '8px', right: '10px' }}
                             onClick={() =>
                               setEditForm((prev) => ({
@@ -1205,9 +1205,9 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                           >
                             <Trash2 size={13} />
                           </button>
-                          <div className="row g-2">
-                            <div className="col-12 col-md-5">
-                              <label className="form-label text-xs fw-semibold mb-1">Job Title</label>
+                          <div className="grid grid-cols-12 gap-4 gap-2">
+                            <div className="col-span-12 md:col-span-5">
+                              <label className="form-label text-xs font-semibold mb-1">Job Title</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1224,8 +1224,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-12 col-md-4">
-                              <label className="form-label text-xs fw-semibold mb-1">Company</label>
+                            <div className="col-span-12 md:col-span-4">
+                              <label className="form-label text-xs font-semibold mb-1">Company</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1242,8 +1242,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-12 col-md-3 pe-4">
-                              <label className="form-label text-xs fw-semibold mb-1">Duration / Dates</label>
+                            <div className="col-span-12 md:col-span-3 pr-6">
+                              <label className="form-label text-xs font-semibold mb-1">Duration / Dates</label>
                               <input
                                 type="text"
                                 className="form-control form-control-sm"
@@ -1260,8 +1260,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                 }}
                               />
                             </div>
-                            <div className="col-12">
-                              <label className="form-label text-xs fw-semibold mb-1">Responsibilities / Highlights</label>
+                            <div className="col-span-12">
+                              <label className="form-label text-xs font-semibold mb-1">Responsibilities / Highlights</label>
                               <textarea
                                 rows={2}
                                 className="form-control form-control-sm"
@@ -1290,7 +1290,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               <div className="draft-editor-studio__foot">
                 <button
                   type="button"
-                  className="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1.5"
+                  className="btn btn-outline-danger btn-sm inline-flex items-center gap-1.5"
                   disabled={discardMutation.isPending || activeDraft.status === 'Discarded'}
                   onClick={() => discardMutation.mutate(activeDraft.id)}
                 >
@@ -1298,7 +1298,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   Discard Draft
                 </button>
 
-                <div className="d-flex align-items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     className="btn btn-outline-secondary btn-sm"
@@ -1315,7 +1315,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 shadow-sm"
+                    className="btn btn-primary btn-sm inline-flex items-center gap-1.5 shadow-[var(--shadow-sm)]"
                     disabled={approveMutation.isPending || activeDraft.status === 'Approved'}
                     onClick={handleApprove}
                     title="Approve and create candidate (Ctrl+Enter)"
@@ -1334,7 +1334,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
       {selectedIds.size > 0 && (
         <div className="draft-bulk-bar">
           <div className="draft-bulk-bar__content">
-            <span className="fw-semibold small text-nowrap">
+            <span className="font-semibold text-[length:var(--text-sm)] whitespace-nowrap">
               {selectedIds.size} candidate{selectedIds.size === 1 ? '' : 's'} selected
             </span>
 
@@ -1356,7 +1356,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             {showApproveBulk && (
               <button
                 type="button"
-                className="btn btn-success btn-sm d-inline-flex align-items-center gap-1.5 text-nowrap"
+                className="btn btn-success btn-sm inline-flex items-center gap-1.5 whitespace-nowrap"
                 disabled={bulkApproveMutation.isPending}
                 onClick={() => bulkApproveMutation.mutate()}
               >
@@ -1370,7 +1370,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             {showDiscardBulk && (
               <button
                 type="button"
-                className="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1.5 text-nowrap"
+                className="btn btn-outline-danger btn-sm inline-flex items-center gap-1.5 whitespace-nowrap"
                 disabled={bulkDiscardMutation.isPending}
                 onClick={() => bulkDiscardMutation.mutate()}
               >
@@ -1381,7 +1381,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
             <button
               type="button"
-              className="btn btn-link btn-sm text-muted ms-auto text-decoration-none"
+              className="btn btn-link btn-sm text-muted-foreground ml-auto no-underline"
               onClick={() => setSelectedIds(new Set())}
             >
               Cancel

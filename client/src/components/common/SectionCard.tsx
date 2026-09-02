@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
  * A titled section on a card surface — the workhorse of the dashboard, the
  * candidate detail page and the evaluation report.
  *
- * This replaces the `<Card><Card.Body><div className="metric-label mb-3">…`
+ * This replaces the `<Card><Card.Body><div className="metric-label mb-4">…`
  * block that appeared eleven times across the app. Beyond the duplication,
  * that pattern used `.metric-label` (a small muted caption, meant for naming a
  * single figure) as the title of a whole section, so the heading over a chart

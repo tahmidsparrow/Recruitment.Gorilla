@@ -81,8 +81,8 @@ export default function AuditLogPage() {
           height. */}
       <div className="pulse-card">
         <form onSubmit={applyFilters}>
-          <div className="grid grid-cols-12 gap-4 align-items-end">
-            <div className="col-span-12 col-span-12 md:col-span-6 lg:col-span-3">
+          <div className="grid grid-cols-12 gap-6 items-end">
+            <div className="col-span-12 md:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-entity">Entity type</Label>
               <SearchableDropdown<string>
                 id="audit-entity"
@@ -94,20 +94,20 @@ export default function AuditLogPage() {
                 clearable
               />
             </div>
-            <div className="col-span-12 col-span-12 md:col-span-6 lg:col-span-3">
+            <div className="col-span-12 md:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-action">Action contains</Label>
               <Input id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
             </div>
-            <div className="col-span-12 col-span-12 sm:col-span-6 lg:col-span-2">
+            <div className="col-span-12 sm:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-from">From</Label>
               <Input id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
             </div>
-            <div className="col-span-12 col-span-12 sm:col-span-6 lg:col-span-2">
+            <div className="col-span-12 sm:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-to">To</Label>
               <Input id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
-            <div className="col-span-12 col-span-12 lg:col-span-2 d-flex gap-2">
-              <Button type="submit" className="flex-grow-1">Filter</Button>
+            <div className="col-span-12 lg:col-span-2 flex gap-2">
+              <Button type="submit" className="grow">Filter</Button>
               <Button type="button" variant="outline" onClick={reset}>Reset</Button>
             </div>
           </div>
@@ -164,12 +164,12 @@ export default function AuditLogPage() {
               <tbody>
                 {data!.items.map((e) => (
                   <tr key={e.id}>
-                    <td data-label="Time" className="text-nowrap table-muted">{fmt(e.timestamp)}</td>
-                    <td data-label="Actor" className="fw-semibold">{e.actorName}</td>
+                    <td data-label="Time" className="whitespace-nowrap table-muted">{fmt(e.timestamp)}</td>
+                    <td data-label="Actor" className="font-semibold">{e.actorName}</td>
                     <td data-label="Action">
                       <span className={actionBadge(e.action)}>{e.action}</span>
                     </td>
-                    <td data-label="Entity" className="text-nowrap col-mono">
+                    <td data-label="Entity" className="whitespace-nowrap col-mono">
                       {e.entityType ? `${e.entityType}${e.entityId != null ? ` #${e.entityId}` : ''}` : '—'}
                     </td>
                     <td data-label="Summary">{e.summary ?? '—'}</td>

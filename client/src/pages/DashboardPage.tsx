@@ -80,7 +80,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
   return (
     <li className="list-row">
       <div className="list-row__main">
-        <div className="d-flex align-items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link to={`/candidates/${item.candidateId}`} className="list-row__title">
             {item.fullName}
           </Link>
@@ -88,7 +88,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         </div>
         <div className="list-row__meta">by {item.changedBy}</div>
       </div>
-      <span className="list-row__meta flex-shrink-0">{relativeTime(item.changedAt)}</span>
+      <span className="list-row__meta shrink-0">{relativeTime(item.changedAt)}</span>
     </li>
   );
 }

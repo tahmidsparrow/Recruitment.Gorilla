@@ -152,9 +152,9 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
   return (
     <div className="page-stack page-stack--tight">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-1">
-        <div className="d-flex align-items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
-          <label htmlFor="batch-name-input" className="small fw-semibold text-muted text-nowrap">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-1">
+        <div className="flex items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
+          <label htmlFor="batch-name-input" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
             Batch Label:
           </label>
           <input
@@ -199,36 +199,36 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
       </div>
 
       {busy && fileProgresses.length > 0 && (
-        <div className="card p-3 shadow-xs border">
-          <div className="small fw-bold text-muted text-uppercase mb-2">Live Parsing Queue</div>
-          <div className="d-flex flex-column gap-2">
+        <div className="card p-4 shadow-xs border border-border">
+          <div className="text-[length:var(--text-sm)] font-bold text-muted-foreground uppercase mb-2">Live Parsing Queue</div>
+          <div className="flex flex-col gap-2">
             {fileProgresses.map((fp, i) => (
               <div
                 key={i}
-                className="d-flex align-items-center justify-content-between p-2 rounded bg-light border small"
+                className="flex items-center justify-between p-2 rounded-[var(--radius-md)] bg-muted border border-border text-[length:var(--text-sm)]"
               >
-                <div className="d-flex align-items-center gap-2 text-truncate me-2">
-                  <FileText size={14} className="text-muted flex-shrink-0" />
-                  <span className="fw-semibold text-truncate">{fp.fileName}</span>
+                <div className="flex items-center gap-2 truncate mr-2">
+                  <FileText size={14} className="text-muted-foreground shrink-0" />
+                  <span className="font-semibold truncate">{fp.fileName}</span>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   {fp.status === 'queued' && (
                     <span className="badge-pill badge-neutral">Queued</span>
                   )}
                   {fp.status === 'parsing' && (
-                    <span className="badge-pill badge-primary d-inline-flex align-items-center gap-1">
+                    <span className="badge-pill badge-primary inline-flex items-center gap-1">
                       <Loader2 size={11} className="spinner-border spinner-border-sm" />
                       Parsing
                     </span>
                   )}
                   {fp.status === 'completed' && (
-                    <span className="badge-pill badge-success d-inline-flex align-items-center gap-1">
+                    <span className="badge-pill badge-success inline-flex items-center gap-1">
                       <CheckCircle2 size={12} />
                       Extracted
                     </span>
                   )}
                   {fp.status === 'error' && (
-                    <span className="badge-pill badge-danger d-inline-flex align-items-center gap-1">
+                    <span className="badge-pill badge-danger inline-flex items-center gap-1">
                       <XCircle size={12} />
                       Failed
                     </span>

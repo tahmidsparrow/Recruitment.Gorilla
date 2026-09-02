@@ -36,7 +36,7 @@ const RatingDots = ({ rating }: { rating: number | null }) => (
     {[1, 2, 3, 4, 5].map((n) => (
       <span key={n} className={`rating-dot${rating != null && n <= rating ? ' rating-dot--filled' : ''}`} />
     ))}
-    <span className="ms-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>
+    <span className="ml-1" style={{ fontSize: 'var(--text-xs)', color: 'var(--muted)' }}>
       {rating != null ? rating.toFixed(1) : '—'}
     </span>
   </span>
@@ -105,7 +105,7 @@ export default function CandidateEvaluationReportPage() {
         actions={
           <Button variant="outline" className="d-print-none" onClick={() => window.print()}>
             <Printer size={14} strokeWidth={1.75} aria-hidden="true" />
-            <span className="ms-1">Print</span>
+            <span className="ml-1">Print</span>
           </Button>
         }
       />
@@ -134,7 +134,7 @@ export default function CandidateEvaluationReportPage() {
 
                 <div>
                   <span className="field-label">Recommendations</span>
-                  <div className="d-flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {summary.recommendationCounts.length === 0 ? (
                       <span className="table-muted">—</span>
                     ) : (
@@ -172,7 +172,7 @@ export default function CandidateEvaluationReportPage() {
           {groups.map((g) => (
             <section key={g.interviewId} className="page-stack page-stack--tight">
               <div className="section-head">
-                <h3 className="section-title d-inline-flex align-items-center gap-2">
+                <h3 className="section-title inline-flex items-center gap-2">
                   <CalendarDays size={16} strokeWidth={1.75} aria-hidden="true" />
                   {new Date(g.scheduledAt).toLocaleString(undefined, {
                     month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',

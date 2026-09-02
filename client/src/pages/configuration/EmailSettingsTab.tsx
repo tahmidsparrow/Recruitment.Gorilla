@@ -96,16 +96,16 @@ export default function EmailSettingsTab() {
         >
           <div className="form-section">
             <div className="form-section__title">Server</div>
-            <div className="row g-3">
-              <div className="col-12 col-sm-8">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 sm:col-span-8">
                 <Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Label>
                 <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
               </div>
-              <div className="col-12 col-sm-4">
+              <div className="col-span-12 sm:col-span-4">
                 <Label>Port <span className="required-star" aria-hidden="true">*</span></Label>
                 <Input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
               </div>
-              <div className="col-12">
+              <div className="col-span-12">
                 <CheckboxField id="smtp-starttls" label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)." checked={useStartTls} onCheckedChange={(checked) => setUseStartTls(checked)} />
               </div>
             </div>
@@ -113,12 +113,12 @@ export default function EmailSettingsTab() {
 
           <div className="form-section">
             <div className="form-section__title">Credentials</div>
-            <div className="row g-3">
-              <div className="col-12 col-md-6">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
                 <Label>Username</Label>
                 <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>App password</Label>
                 <PasswordInput
                   value={password}
@@ -136,8 +136,8 @@ export default function EmailSettingsTab() {
 
           <div className="form-section">
             <div className="form-section__title">Sender</div>
-            <div className="row g-3">
-              <div className="col-12 col-md-6">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
                 <Label>From address <span className="required-star" aria-hidden="true">*</span></Label>
                 <Input
                   value={fromAddress}
@@ -145,7 +145,7 @@ export default function EmailSettingsTab() {
                   placeholder="you@example.com"
                 />
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-span-12 md:col-span-6">
                 <Label>From name</Label>
                 <Input value={fromName} onChange={(e) => setFromName(e.target.value)} />
               </div>
@@ -168,14 +168,14 @@ export default function EmailSettingsTab() {
         title="Send a test email"
         description="Uses the saved configuration, so save any changes first."
       >
-        <div className="d-flex flex-wrap gap-2 align-items-start">
+        <div className="flex flex-wrap gap-2 items-start">
           <Input
             type="email"
             value={testTo}
             onChange={(e) => setTestTo(e.target.value)}
             placeholder="recipient@example.com"
             aria-label="Test email recipient"
-            className="flex-grow-1"
+            className="grow"
             style={{ minWidth: 200, maxWidth: 320 }}
           />
           <Button

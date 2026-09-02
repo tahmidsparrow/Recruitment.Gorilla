@@ -80,14 +80,14 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
               {data.map((job) => (
                 <tr key={job.id}>
                   <td data-label="Job ID" className="job-id">{jobId(job.id)}</td>
-                  <td data-label="Posted" className="text-nowrap">
-                    <span className="d-inline-flex align-items-center gap-2">
+                  <td data-label="Posted" className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
                       <CalendarIcon />
                       {formatDate(job.postedDate)}
                     </span>
                   </td>
                   <td data-label="Job title">
-                    <div className="fw-semibold">{job.title}</div>
+                    <div className="font-semibold">{job.title}</div>
                     {job.priority && (
                       <span className={`priority-badge ${priorityClass(job.priority)}`}>
                         {priorityLabel(job.priority)}
@@ -96,17 +96,17 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
                   </td>
                   <td data-label="Location">
                     {job.location ? (
-                      <span className="d-inline-flex align-items-center gap-2">
+                      <span className="inline-flex items-center gap-2">
                         <PinIcon />
                         {job.location}
                       </span>
                     ) : (
-                      <span className="text-muted">—</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td data-label="Department" className="text-muted">{job.department ?? '—'}</td>
-                  <td data-label="End date" className="text-nowrap">
-                    <span className="d-inline-flex align-items-center gap-2">
+                  <td data-label="Department" className="text-muted-foreground">{job.department ?? '—'}</td>
+                  <td data-label="End date" className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
                       <CalendarIcon />
                       {formatDate(job.endDate)}
                     </span>
@@ -115,7 +115,7 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
                     )}
                   </td>
                   <td data-label="Applicants">
-                    <span className="d-inline-flex align-items-center gap-2">
+                    <span className="inline-flex items-center gap-2">
                       <PersonIcon />
                       {job.applicants.toLocaleString()}
                     </span>

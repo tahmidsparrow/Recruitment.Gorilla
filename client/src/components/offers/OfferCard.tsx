@@ -109,8 +109,8 @@ export default function OfferCard({ candidate }: OfferCardProps) {
 
   if (isLoading) {
     return (
-      <div className="offer-card p-3">
-        <div className="d-flex align-items-center gap-2 text-muted small">
+      <div className="offer-card p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-[length:var(--text-sm)]">
           <Spinner /> Loading compensation details...
         </div>
       </div>
@@ -121,22 +121,22 @@ export default function OfferCard({ candidate }: OfferCardProps) {
     <>
       <div className="offer-card">
         <div className="offer-card__header">
-          <div className="d-flex align-items-center gap-2">
-            <DollarSign size={17} className="text-primary" />
-            <span className="fw-semibold small">Offer & Compensation</span>
+          <div className="flex items-center gap-2">
+            <DollarSign size={17} className="text-brand" />
+            <span className="font-semibold text-[length:var(--text-sm)]">Offer & Compensation</span>
             {latestOffer && (
-              <Badge variant={getStatusBadgeVariant(latestOffer.status)} className="ms-1 fw-normal">
+              <Badge variant={getStatusBadgeVariant(latestOffer.status)} className="ml-1 font-normal">
                 {latestOffer.status}
               </Badge>
             )}
           </div>
           {candidate.currentStatus !== 'Hired' && (
-            <div className="d-flex gap-1">
+            <div className="flex gap-1">
               {latestOffer ? (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="d-flex align-items-center gap-1 py-1 px-2.5"
+                  className="flex items-center gap-1 py-1 px-2.5"
                   onClick={() => {
                     setEditingOffer(null);
                     setShowCreateModal(true);
@@ -148,7 +148,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                 <Button
  
                   size="sm"
-                  className="d-flex align-items-center gap-1 py-1 px-2.5"
+                  className="flex items-center gap-1 py-1 px-2.5"
                   onClick={() => {
                     setEditingOffer(null);
                     setShowCreateModal(true);
@@ -161,10 +161,10 @@ export default function OfferCard({ candidate }: OfferCardProps) {
           )}
         </div>
 
-        <div className="p-3">
+        <div className="p-4">
           {!latestOffer ? (
-            <div className="text-center py-3 text-muted small">
-              <FileText size={28} className="mb-2 opacity-50 d-block mx-auto text-secondary" />
+            <div className="text-center py-4 text-muted-foreground text-[length:var(--text-sm)]">
+              <FileText size={28} className="mb-2 opacity-50 block mx-auto text-text-soft" />
               No employment offer drafted yet for this candidate.
             </div>
           ) : (
@@ -172,13 +172,13 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               <div className="offer-hero">
                 <div>
                   <div className="offer-hero__title">{latestOffer.jobTitle}</div>
-                  <span className="text-muted small">Created by {latestOffer.createdByName || 'Recruiter'}</span>
+                  <span className="text-muted-foreground text-[length:var(--text-sm)]">Created by {latestOffer.createdByName || 'Recruiter'}</span>
                 </div>
-                <div className="text-end">
+                <div className="text-right">
                   <div className="offer-hero__salary">
                     {latestOffer.currency} {latestOffer.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </div>
-                  <span className="text-muted small">/ year (gross)</span>
+                  <span className="text-muted-foreground text-[length:var(--text-sm)]">/ year (gross)</span>
                 </div>
               </div>
 
@@ -235,7 +235,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
               )}
 
               {latestOffer.status === 'Declined' && latestOffer.declineReason && (
-                <div className="alert alert-danger py-2 small mb-3">
+                <div className="alert alert-danger py-2 text-[length:var(--text-sm)] mb-4">
                   <strong>Decline Reason:</strong> {latestOffer.declineReason}
                 </div>
               )}
@@ -245,7 +245,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="d-flex align-items-center gap-1.5"
+                  className="flex items-center gap-1.5"
                   disabled={isDownloadingPdf}
                   onClick={() => handleDownloadPdf(latestOffer)}
                 >
@@ -258,7 +258,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="d-flex align-items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       onClick={() => {
                         setEditingOffer(latestOffer);
                         setShowCreateModal(true);
@@ -269,7 +269,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="d-flex align-items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       disabled={submitApprovalMutation.isPending}
                       onClick={() => submitApprovalMutation.mutate(latestOffer.id)}
                     >
@@ -278,7 +278,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
  
                       size="sm"
-                      className="d-flex align-items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       disabled={extendMutation.isPending}
                       onClick={() => extendMutation.mutate(latestOffer.id)}
                     >
@@ -292,7 +292,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       variant="outlineDestructive"
                       size="sm"
-                      className="d-flex align-items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       disabled={reviewMutation.isPending}
                       onClick={() => reviewMutation.mutate({ offerId: latestOffer.id, decision: 'Rejected' })}
                     >
@@ -301,7 +301,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                     <Button
                       
                       size="sm"
-                      className="d-flex align-items-center gap-1.5"
+                      className="flex items-center gap-1.5"
                       disabled={reviewMutation.isPending}
                       onClick={() => reviewMutation.mutate({ offerId: latestOffer.id, decision: 'Approved' })}
                     >
@@ -314,7 +314,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                   <Button
  
                     size="sm"
-                    className="d-flex align-items-center gap-1.5"
+                    className="flex items-center gap-1.5"
                     disabled={extendMutation.isPending}
                     onClick={() => extendMutation.mutate(latestOffer.id)}
                   >
@@ -326,7 +326,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                   <Button
  
                     size="sm"
-                    className="d-flex align-items-center gap-1.5"
+                    className="flex items-center gap-1.5"
                     onClick={() => {
                       setActiveDecisionOffer(latestOffer);
                       setShowDecisionModal(true);

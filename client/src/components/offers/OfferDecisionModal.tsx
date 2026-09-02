@@ -75,7 +75,7 @@ export default function OfferDecisionModal({
         </DialogHeader>
 
         <DialogBody>
-          {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
+          {error && <div className="alert alert-danger py-2 mb-4 text-[length:var(--text-sm)]">{error}</div>}
 
           {/* A real radio group rather than two loose inputs sharing a name:
               Radix gives it roving focus and arrow-key movement, and announces
@@ -99,8 +99,8 @@ export default function OfferDecisionModal({
           </fieldset>
 
           {decision === 'Declined' && (
-            <div className="flex flex-col gap-1.5 mb-3">
-              <Label className="small fw-semibold">Decline Reason</Label>
+            <div className="flex flex-col gap-1.5 mb-4">
+              <Label className="text-[length:var(--text-sm)] font-semibold">Decline Reason</Label>
               <Textarea
                 rows={3}
                 required
@@ -111,7 +111,7 @@ export default function OfferDecisionModal({
             </div>
           )}
 
-          <p className="small text-muted mb-0">
+          <p className="text-[length:var(--text-sm)] text-muted-foreground mb-0">
             {decision === 'Accepted'
               ? 'This will update the candidate status to "Offer Accepted". You can subsequently confirm their start and transition them to "Hired".'
               : 'This will update the candidate status to "Offer Declined" and record the reason in their timeline history.'}

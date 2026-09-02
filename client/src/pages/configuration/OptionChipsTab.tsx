@@ -198,7 +198,7 @@ export default function OptionChipsTab({
             </div>
 
             {options.length === 0 && (
-              <div className="mt-4">
+              <div className="mt-6">
                 <EmptyState
                   icon={<Tags size={20} strokeWidth={1.75} aria-hidden="true" />}
                   title={`No ${noun} values yet`}

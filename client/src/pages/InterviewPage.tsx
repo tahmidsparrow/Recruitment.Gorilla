@@ -103,21 +103,21 @@ export default function InterviewPage() {
         <div className="interview-hero__top">
           <div className="profile-avatar">{initials(data.candidate.fullName) || '?'}</div>
           <div className="interview-hero__identity">
-            <div className="d-flex align-items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="mb-0">{data.candidate.fullName}</h2>
-              {role && <span className="badge bg-primary-subtle text-primary fw-medium px-2 py-1 rounded-pill">{role}</span>}
+              {role && <span className="badge bg-primary-subtle text-brand font-medium px-2 py-1 rounded-full">{role}</span>}
               {data.interviewTags.map((tag) => (
                 <span key={tag} className={skillColorClass(tag)}>{tag}</span>
               ))}
             </div>
-            <div className="interview-hero__meta text-muted small mt-1">
+            <div className="interview-hero__meta text-muted-foreground text-[length:var(--text-sm)] mt-1">
               <span>{data.candidate.email}</span>
               {data.candidate.currentTitle && <span>• {data.candidate.currentTitle}</span>}
             </div>
           </div>
 
           <div className="interview-hero__aside">
-            <div className="d-flex align-items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
                 <CalendarIcon /> {scheduled} · {data.durationMinutes} min · {relative.label}
               </span>
@@ -125,7 +125,7 @@ export default function InterviewPage() {
               {/* View Full Candidate Profile Button */}
               <button
                 type="button"
-                className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill shadow-xs font-semibold"
+                className="btn btn-outline-primary btn-sm inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full shadow-xs font-semibold"
                 onClick={() => setShowProfileDrawer(true)}
                 title="View full candidate CV, education, experience and details"
               >
@@ -167,7 +167,7 @@ export default function InterviewPage() {
         )}
 
         {data.allEvaluations && otherEvaluations.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-6">
             <Accordion type="single" collapsible>
               <AccordionItem value="others">
                 <AccordionTrigger>Other interviewers' evaluations ({otherEvaluations.length})</AccordionTrigger>
@@ -175,7 +175,7 @@ export default function InterviewPage() {
                   <div className="card-stack">
                     {otherEvaluations.map((e) => (
                       <div key={e.id}>
-                        <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <div className="flex justify-between items-center gap-2 mb-2">
                           <strong>{e.interviewerName}</strong>
                           <span className={`badge-pill ${e.isSubmitted ? 'badge-success' : 'badge-neutral'}`}>
                             {e.isSubmitted ? 'Submitted' : 'Draft'}
@@ -196,12 +196,12 @@ export default function InterviewPage() {
       <Sheet open={showProfileDrawer} onOpenChange={setShowProfileDrawer}>
         <SheetContent side="right" className="w-[min(35rem,100vw)]">
         <SheetHeader>
-          <SheetTitle className="d-flex align-items-center gap-2 font-semibold">
-            <FileText size={18} className="text-primary" />
+          <SheetTitle className="flex items-center gap-2 font-semibold">
+            <FileText size={18} className="text-brand" />
             <span>Candidate Profile & Qualifications</span>
           </SheetTitle>
         </SheetHeader>
-        <SheetBody className="p-3">
+        <SheetBody className="p-4">
           <ReadOnlyCandidateProfile candidate={data.candidate} />
         </SheetBody>
       </SheetContent>

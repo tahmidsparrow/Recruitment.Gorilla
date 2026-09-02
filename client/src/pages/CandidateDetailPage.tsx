@@ -120,7 +120,7 @@ export default function CandidateDetailPage() {
 
   return (
     <Page tight>
-      <div className="d-flex flex-column gap-1.5">
+      <div className="flex flex-col gap-1.5">
         {/* Kept as a link with this exact text — e2e/smoke.spec.ts navigates by it. */}
         <Link to="/candidates" className="back-link">
           <ChevronLeft size={14} strokeWidth={1.75} aria-hidden="true" />
@@ -141,7 +141,7 @@ export default function CandidateDetailPage() {
           <Avatar name={data.fullName} email={data.email} size="hero" />
           <div className="min-w-0">
             <h2 className="candidate-hero-name mb-1">{data.fullName}</h2>
-            <div className="d-flex align-items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <StatusBadge status={data.currentStatus} />
               {role && <span className="badge-role-pill">{role}</span>}
             </div>
@@ -253,8 +253,8 @@ export default function CandidateDetailPage() {
         </div>
       ) : (
         /* Full-Width Focused Candidate Profile Stack */
-        <div className="candidate-detail-container w-100">
-          <div className="card-stack candidate-profile-stack w-100">
+        <div className="candidate-detail-container w-full">
+          <div className="card-stack candidate-profile-stack w-full">
             <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} />
             {canWrite && <OfferCard candidate={data} />}
           </div>
@@ -267,13 +267,13 @@ export default function CandidateDetailPage() {
 <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              <FileText size={16} className="text-primary" />
-              <span className="text-truncate">{cvPreview.fileName}</span>
+              <FileText size={16} className="text-brand" />
+              <span className="truncate">{cvPreview.fileName}</span>
             </DialogTitle>
             <Button
               size="sm"
               variant="outline"
-              className="me-3"
+              className="mr-4"
               onClick={() => void downloadCvFile(candidateId, cvPreview.fileId)}
             >
               Download
@@ -287,8 +287,8 @@ export default function CandidateDetailPage() {
                 style={{ width: '100%', height: '100%', border: 'none' }}
               />
             ) : (
-              <div className="p-5 text-center text-muted m-auto">
-                <FileText size={40} className="mb-2 text-muted" />
+              <div className="p-12 text-center text-muted-foreground m-auto">
+                <FileText size={40} className="mb-2 text-muted-foreground" />
                 <p>In-app preview isn't available for this file type.</p>
                 <Button
  
@@ -308,19 +308,19 @@ export default function CandidateDetailPage() {
       <Sheet open={showHistoryDrawer} onOpenChange={setShowHistoryDrawer}>
         <SheetContent side="right">
         <SheetHeader>
-          <SheetTitle className="d-flex align-items-center gap-2 h6 mb-0">
-            <History size={18} className="text-primary" />
-            <span className="fw-semibold">Status History &amp; Timeline</span>
-            <span className="badge bg-secondary-subtle text-secondary px-2 py-0.5 rounded-pill" style={{ fontSize: '11px' }}>
+          <SheetTitle className="flex items-center gap-2 h6 mb-0">
+            <History size={18} className="text-brand" />
+            <span className="font-semibold">Status History &amp; Timeline</span>
+            <span className="badge bg-secondary-subtle text-text-soft px-2 py-0.5 rounded-full" style={{ fontSize: '11px' }}>
               {data.statusHistory.length} events
             </span>
           </SheetTitle>
         </SheetHeader>
-        <SheetBody className="p-4 d-flex flex-column gap-3">
+        <SheetBody className="p-6 flex flex-col gap-4">
           {canWrite && (
-            <div className="p-3 rounded-3 bg-surface-muted border border-subtle d-flex justify-content-between align-items-center">
+            <div className="p-4 rounded-[var(--radius-lg)] bg-surface-muted border border-border border-subtle flex justify-between items-center">
               <div>
-                <div className="small fw-semibold text-muted mb-1 text-uppercase" style={{ fontSize: '10.5px', letterSpacing: '0.04em' }}>
+                <div className="text-[length:var(--text-sm)] font-semibold text-muted-foreground mb-1 uppercase" style={{ fontSize: '10.5px', letterSpacing: '0.04em' }}>
                   Current Stage
                 </div>
                 <StatusBadge status={data.currentStatus} />
@@ -334,7 +334,7 @@ export default function CandidateDetailPage() {
                 }}
               >
                 <Plus size={14} strokeWidth={2} aria-hidden="true" />
-                <span className="ms-1">Advance Stage</span>
+                <span className="ml-1">Advance Stage</span>
               </Button>
             </div>
           )}
@@ -467,7 +467,7 @@ function ProfileEditor({
   return (
     <form onSubmit={handleSubmit} noValidate>
       <fieldset className="border-0 p-0 m-0">
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 md:col-span-6">
           <Label>Full name <Req /></Label>
           <Input
@@ -577,7 +577,7 @@ function ProfileEditor({
             aria-invalid={!!fieldErrors.roleApplied || undefined}
           />
           {fieldErrors.roleApplied && (
-            <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
+            <div className="invalid-feedback block">{fieldErrors.roleApplied}</div>
           )}
         </div>
         <div className="col-span-12 md:col-span-6">

@@ -20,7 +20,7 @@ export default function CountBarChart({ data, emptyLabel }: { data: NameCount[];
   const accent = accentFor(theme);
 
   if (data.length === 0) {
-    return <p className="text-muted mb-0">{emptyLabel}</p>;
+    return <p className="text-muted-foreground mb-0">{emptyLabel}</p>;
   }
 
   return (

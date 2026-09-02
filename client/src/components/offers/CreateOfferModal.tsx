@@ -128,10 +128,10 @@ export default function CreateOfferModal({
         </DialogHeader>
 
         <DialogBody>
-          {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
+          {error && <div className="alert alert-danger py-2 mb-4 text-[length:var(--text-sm)]">{error}</div>}
 
-          <div className="flex flex-col gap-1.5 mb-3">
-            <Label className="small fw-semibold">Job Title / Position</Label>
+          <div className="flex flex-col gap-1.5 mb-4">
+            <Label className="text-[length:var(--text-sm)] font-semibold">Job Title / Position</Label>
             <Input
               type="text"
               required
@@ -141,10 +141,10 @@ export default function CreateOfferModal({
             />
           </div>
 
-          <div className="grid grid-cols-12 gap-2 mb-3">
+          <div className="grid grid-cols-12 gap-2 mb-4">
             <div className="col-span-12 sm:col-span-8">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Annual Base Salary</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Annual Base Salary</Label>
                 <InputGroup>
                   <Input
                     type="number"
@@ -160,7 +160,7 @@ export default function CreateOfferModal({
             </div>
             <div className="col-span-12 sm:col-span-4">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Currency</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Currency</Label>
                 <NativeSelect value={currency} onChange={(e) => setCurrency(e.target.value)}>
                   {CURRENCIES.map((c) => (
                     <option key={c} value={c}>
@@ -172,10 +172,10 @@ export default function CreateOfferModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-2 mb-3">
+          <div className="grid grid-cols-12 gap-2 mb-4">
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Signing / Annual Bonus (Optional)</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Signing / Annual Bonus (Optional)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -188,7 +188,7 @@ export default function CreateOfferModal({
             </div>
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Equity / Options (Optional)</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Equity / Options (Optional)</Label>
                 <Input
                   type="text"
                   placeholder="e.g. 10,000 RSUs or 0.25%"
@@ -199,10 +199,10 @@ export default function CreateOfferModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-2 mb-3">
+          <div className="grid grid-cols-12 gap-2 mb-4">
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Proposed Start Date</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Proposed Start Date</Label>
                 <Input
                   type="date"
                   value={startDate}
@@ -212,7 +212,7 @@ export default function CreateOfferModal({
             </div>
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
-                <Label className="small fw-semibold">Offer Expiration Date</Label>
+                <Label className="text-[length:var(--text-sm)] font-semibold">Offer Expiration Date</Label>
                 <Input
                   type="date"
                   value={expirationDate}
@@ -223,7 +223,7 @@ export default function CreateOfferModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="small fw-semibold">Additional Terms & Notes</Label>
+            <Label className="text-[length:var(--text-sm)] font-semibold">Additional Terms & Notes</Label>
             <Textarea
               rows={3}
               placeholder="e.g. Standard benefits package, 4 weeks PTO, hybrid schedule..."

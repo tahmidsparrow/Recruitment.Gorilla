@@ -139,8 +139,8 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
 
   if (isLoading) {
     return (
-      <div className="kanban-loading py-5 text-center text-muted">
-        <div className="spinner-border spinner-border-sm text-primary me-2" role="status" />
+      <div className="kanban-loading py-12 text-center text-muted-foreground">
+        <div className="spinner-border spinner-border-sm text-brand mr-2" role="status" />
         Loading recruitment pipeline board…
       </div>
     );
@@ -150,22 +150,22 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
     <div className="kanban-wrapper">
       {/* Board Summary & Bottleneck Alert Bar */}
       <div className="kanban-summary-bar">
-        <div className="d-flex align-items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-6 flex-wrap">
           <span className="kanban-summary-item">
-            <Users size={14} className="text-primary me-2 flex-shrink-0" />
+            <Users size={14} className="text-brand mr-2 shrink-0" />
             <span>
               <strong>{candidates.length}</strong> Total Candidates
             </span>
           </span>
           <span className="kanban-summary-item">
-            <Layers size={14} className="text-secondary me-2 flex-shrink-0" />
+            <Layers size={14} className="text-text-soft mr-2 shrink-0" />
             <span>
               <strong>{statusOptions.length}</strong> Stages
             </span>
           </span>
           {stagnantCount > 0 && (
             <span className="kanban-bottleneck-alert">
-              <AlertTriangle size={14} className="me-2 flex-shrink-0" />
+              <AlertTriangle size={14} className="mr-2 shrink-0" />
               <span>
                 <strong>{stagnantCount}</strong> candidates stagnant (&gt; 5 days in stage)
               </span>

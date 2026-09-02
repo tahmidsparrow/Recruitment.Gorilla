@@ -35,13 +35,13 @@ export default function KanbanCard({ candidate, onAdvanceClick, canWrite }: Kanb
       data-candidate-id={candidate.id}
     >
       <div className="kanban-card__header">
-        <div className="d-flex align-items-center gap-2 min-w-0">
-          <span className="avatar avatar--sm flex-shrink-0" aria-hidden="true">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="avatar avatar--sm shrink-0" aria-hidden="true">
             {initials(candidate.fullName) || <User size={12} />}
           </span>
           <Link
             to={`/candidates/${candidate.id}`}
-            className="kanban-card__name text-truncate"
+            className="kanban-card__name truncate"
             title={candidate.fullName}
           >
             {candidate.fullName}
@@ -51,12 +51,12 @@ export default function KanbanCard({ candidate, onAdvanceClick, canWrite }: Kanb
 
       <div className="kanban-card__meta">
         {candidate.appliedRole && (
-          <span className="kanban-card__role text-truncate" title={candidate.appliedRole}>
+          <span className="kanban-card__role truncate" title={candidate.appliedRole}>
             {candidate.appliedRole}
           </span>
         )}
         {candidate.source && (
-          <span className="kanban-card__source text-truncate" title={`Source: ${candidate.source}`}>
+          <span className="kanban-card__source truncate" title={`Source: ${candidate.source}`}>
             {candidate.source}
           </span>
         )}
@@ -69,12 +69,12 @@ export default function KanbanCard({ candidate, onAdvanceClick, canWrite }: Kanb
               className="kanban-badge kanban-badge--stagnant"
               title={`Bottleneck Warning: Candidate has been in ${candidate.currentStatus} for ${daysInStage} days (> 5 business days)`}
             >
-              <AlertTriangle size={12} className="me-1 flex-shrink-0" />
+              <AlertTriangle size={12} className="mr-1 shrink-0" />
               {formatStageAge(daysInStage)} Stagnant
             </span>
           ) : (
             <span className="kanban-badge kanban-badge--neutral" title={`Time in stage: ${formatStageAge(daysInStage)}`}>
-              <Clock size={11} className="me-1 flex-shrink-0" />
+              <Clock size={11} className="mr-1 shrink-0" />
               {formatStageAge(daysInStage)}
             </span>
           )}

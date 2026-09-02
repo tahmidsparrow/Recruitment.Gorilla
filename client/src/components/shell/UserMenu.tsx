@@ -52,7 +52,7 @@ export default function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-64">
-        <div className="flex items-center gap-3 p-2">
+        <div className="flex items-center gap-4 p-2">
           <Avatar name={user.name} email={user.email} size="lg" />
           <div className="flex min-w-0 flex-col">
             <span

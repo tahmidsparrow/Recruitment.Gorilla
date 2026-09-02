@@ -264,7 +264,7 @@ export default function CandidatesPage() {
             {/* Small screens hide the table header, and the sortable columns
                 with it — this select is the equivalent control there. */}
             <NativeSelect
-              className="d-md-none data-toolbar__field"
+              className="md:hidden data-toolbar__field"
               aria-label="Sort candidates"
               value={`${activeSort}:${activeDir}`}
               onChange={(e) => {
@@ -302,7 +302,7 @@ export default function CandidatesPage() {
               </Button>
             )}
 
-            <div className="toolbar-divider d-none d-md-block" />
+            <div className="toolbar-divider hidden md:block" />
 
             {/* A segmented control, not two buttons. Table/Board is one setting
                 with two values; rendering the active one as .btn-primary made
@@ -388,7 +388,7 @@ export default function CandidatesPage() {
                   <th><SortHeader col="status" /></th>
                   <th><SortHeader col="added" /></th>
                   {/* Delete is Admin/SuperAdmin-only (the API rejects recruiters). */}
-                  {isAdminOrAbove && <th className="col-actions"><span className="visually-hidden">Actions</span></th>}
+                  {isAdminOrAbove && <th className="col-actions"><span className="sr-only">Actions</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -414,12 +414,12 @@ export default function CandidatesPage() {
                         </span>
                       </div>
                     </td>
-                    <td data-label="Email" className="text-break">{c.email}</td>
+                    <td data-label="Email" className="[overflow-wrap:anywhere]">{c.email}</td>
                     <td data-label="Current title">{c.currentTitle ?? '—'}</td>
                     <td data-label="Status">
                       <StatusBadge status={c.currentStatus} />
                     </td>
-                    <td data-label="Added" className="text-nowrap">
+                    <td data-label="Added" className="whitespace-nowrap">
                       {new Date(c.createdAt).toLocaleDateString(undefined, {
                         day: 'numeric',
                         month: 'short',

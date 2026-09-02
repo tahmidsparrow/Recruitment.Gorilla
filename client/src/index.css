@@ -1,52 +1,214 @@
-/* ============================================================
-   Application styles.
-
-   Colours, scales and geometry come from ./styles/tokens.css — the Prism
-   (Ajentica Pulse) token layer. Nothing below should introduce a literal
-   colour; reference a token instead.
-
-   This file has three parts:
-     1. Bootstrap bridge — maps the tokens onto --bs-* so every existing
-        react-bootstrap component inherits the design with no JSX change.
-     2. Prism semantic layer — .pulse-card, .table-wrap, .badge-*, .field,
-        .empty-state and friends, ported from Prism's globals.css. Pages
-        migrate onto these.
-     3. App-specific components — status/KPI/evaluation/profile styling that
-        predates the port and has no Prism equivalent.
-   ============================================================ */
 @import './styles/tokens.css';
 
 /* ============================================================
-   1. Bootstrap bridge
+   1. Standalone component layer.
+
+   This block used to be the "Bootstrap bridge" — it mapped Harbor's tokens
+   onto Bootstrap's own custom properties so its components would inherit
+   the design without a JSX change. Bootstrap is gone, so the variables it fed
+   are gone with it, and the classes below are now self-contained.
+
+   Everything here is a class the app still writes by hand in markup — `.btn`
+   on a router <Link>, `.form-control` inside SearchableSelect and the drafts
+   workspace, `.table` on the pages that use the responsive card reflow. They
+   are styled to match the equivalent shadcn primitive exactly, so a
+   `<Button>` and a `<Link className="btn btn-primary">` are the same object.
+
+   These are a migration surface, not a parallel design system: as each call
+   site moves to the shadcn component, its rule here can go.
    ============================================================ */
-:root {
-  --bs-primary: var(--primary);
-  --bs-primary-rgb: 37, 99, 235;
-  --bs-primary-text-emphasis: var(--primary-dark);
-  --bs-primary-bg-subtle: var(--primary-tint);
-  --bs-primary-border-subtle: var(--primary-border);
-  --bs-link-color: var(--primary);
-  --bs-link-color-rgb: 37, 99, 235;
-  --bs-link-hover-color: var(--primary-hover);
-  --bs-body-bg: var(--bg);
-  --bs-body-color: var(--text);
-  --bs-border-color: var(--border);
-  --bs-secondary-color: var(--muted);
-  --bs-body-font-family: var(--font-body);
-  /* Harbor's 13.5px base. Set here rather than on <html> so Bootstrap's
-     rem-based spacing scale keeps its 16px root and only type shrinks. */
-  --bs-body-font-size: 0.84375rem;
-  --bs-border-radius: var(--radius-control);
-  --bs-border-radius-sm: var(--radius-md);
-  --bs-border-radius-lg: var(--radius-xl);
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--control-h);
+  padding-inline: 13px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.btn-sm {
+  min-height: var(--control-h-sm);
+  padding-inline: 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.btn-xs {
+  min-height: 24px;
+  padding-inline: 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+.btn-lg {
+  min-height: var(--control-h-lg);
+  padding-inline: 18px;
+}
+.btn-primary {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-accent);
+}
+.btn-primary:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-accent);
+}
+.btn-outline-secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text-soft);
+  box-shadow: var(--shadow-xs);
+}
+.btn-outline-secondary:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.btn-outline-primary {
+  background: var(--surface);
+  border-color: var(--primary-border);
+  color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+.btn-outline-primary:hover {
+  background: var(--primary-tint);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn-outline-danger {
+  background: var(--surface);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+  box-shadow: var(--shadow-xs);
+}
+.btn-outline-danger:hover {
+  background: var(--danger-tint);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: var(--danger-text);
+  border-color: var(--danger-text);
+  color: #fff;
+}
+/* No border and no fill until hovered — for an action that lives inside
+   content, where a border would draw a box around a box. */
+.btn-ghost {
+  color: var(--text-soft);
+}
+.btn-ghost:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.btn-ghost-danger:hover {
+  background: var(--danger-tint);
+  color: var(--danger-text);
+}
+.btn-link {
+  min-height: 0;
+  padding: 0;
+  color: var(--primary);
+  font-weight: var(--weight-medium);
+}
+.btn-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+.btn-icon {
+  width: var(--control-h);
+  padding-inline: 0;
+  flex-shrink: 0;
+}
+.btn-sm.btn-icon {
+  width: var(--control-h-sm);
 }
 
-[data-bs-theme='dark'] {
-  --bs-primary-rgb: 96, 165, 250;
-  --bs-primary-text-emphasis: var(--primary);
-  --bs-link-color: var(--primary);
-  --bs-link-color-rgb: 96, 165, 250;
-  --bs-link-hover-color: var(--primary-hover);
+/* ---------- Form controls ----------
+   Matched to the shadcn <Input>: same height, radius, recessed ground and
+   focus ring, so a hand-written field and a component one are the same
+   object. */
+.form-control,
+.form-select {
+  display: block;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background-color: var(--surface-muted);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.form-control:hover:not(:disabled):not(:focus),
+.form-select:hover:not(:disabled):not(:focus) {
+  border-color: var(--border-strong);
+}
+.form-control:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.form-control::placeholder {
+  color: var(--muted-light);
+}
+.form-control:disabled,
+.form-select:disabled {
+  background-color: var(--surface-sunken);
+  color: var(--muted);
+}
+.form-control-sm,
+.form-select-sm {
+  min-height: var(--control-h-sm);
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.form-control[aria-invalid='true'],
+.form-select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.form-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+.required-star {
+  color: var(--danger);
+  margin-left: 0.15em;
 }
 
 *,
@@ -708,193 +870,6 @@ a.btn:focus {
   }
 }
 
-/* ===== Buttons =====
-   Harbor geometry: 36px tall, --radius-control, semibold, 13.5px.
-
-   THREE WEIGHTS, AND ONLY THREE. Getting this wrong is what made the old
-   screens read as a prototype — a page header carrying six buttons of equal
-   loudness, one of them red, tells you nothing about what to do next.
-
-     .btn-primary            filled cobalt + tinted lift. ONE per view.
-     .btn-outline-secondary  the default. A bordered surface. Everything else.
-     .btn-ghost              no border until hovered. For actions that live
-                             *inside* content (a row, a card head, a toolbar),
-                             where a border would draw a box around a box.
-
-   Destructive actions are NOT a fourth weight. A delete is a ghost or a
-   secondary button, and it turns red on hover or inside a confirm dialog —
-   the moment of danger is the confirmation, not the discovery. `.btn-danger`
-   survives for the confirm dialog's own button and nowhere else. */
-.btn {
-  --bs-btn-border-radius: var(--radius-control);
-  --bs-btn-font-size: var(--text-md);
-  --bs-btn-padding-x: 13px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: var(--control-h);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0;
-  transition: background-color var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-.btn-sm {
-  --bs-btn-border-radius: var(--radius-md);
-  --bs-btn-font-size: var(--text-sm);
-  --bs-btn-padding-x: 10px;
-  min-height: var(--control-h-sm);
-  gap: 6px;
-}
-.btn-lg {
-  --bs-btn-font-size: var(--text-md);
-  --bs-btn-padding-x: 18px;
-  min-height: var(--control-h-lg);
-}
-/* Fills with --primary-dark rather than --primary: it carries white text, and
-   the darker shade is the one validated for that in both modes. The shadow is
-   tinted, so it reads as the button sitting above the page rather than as a
-   grey smudge under it. */
-.btn-primary {
-  --bs-btn-bg: var(--primary-dark);
-  --bs-btn-border-color: var(--primary-dark);
-  --bs-btn-color: var(--on-accent);
-  --bs-btn-hover-bg: var(--primary);
-  --bs-btn-hover-border-color: var(--primary);
-  --bs-btn-hover-color: var(--on-accent);
-  --bs-btn-active-bg: var(--primary-dark);
-  --bs-btn-active-border-color: var(--primary-dark);
-  --bs-btn-disabled-bg: var(--primary-dark);
-  --bs-btn-disabled-border-color: var(--primary-dark);
-  box-shadow: var(--shadow-accent);
-}
-.btn-primary:hover:not(:disabled) {
-  box-shadow: var(--shadow-accent);
-}
-.btn-primary:active,
-.btn-primary:disabled {
-  box-shadow: none;
-}
-.btn-outline-primary {
-  --bs-btn-color: var(--primary);
-  --bs-btn-border-color: var(--primary-border);
-  --bs-btn-bg: var(--surface);
-  --bs-btn-hover-bg: var(--primary-tint);
-  --bs-btn-hover-border-color: var(--primary);
-  --bs-btn-hover-color: var(--primary);
-  --bs-btn-active-bg: var(--primary-tint-hover);
-  --bs-btn-active-color: var(--primary);
-  --bs-btn-active-border-color: var(--primary);
-  box-shadow: var(--shadow-xs);
-}
-.btn-outline-secondary {
-  --bs-btn-color: var(--text-soft);
-  --bs-btn-border-color: var(--border-strong);
-  --bs-btn-bg: var(--surface);
-  --bs-btn-hover-bg: var(--surface-muted);
-  --bs-btn-hover-color: var(--text);
-  --bs-btn-hover-border-color: var(--border-strong);
-  --bs-btn-active-bg: var(--surface-muted);
-  --bs-btn-active-color: var(--text);
-  --bs-btn-active-border-color: var(--border-strong);
-  box-shadow: var(--shadow-xs);
-}
-.btn-outline-danger {
-  --bs-btn-color: var(--danger-text);
-  --bs-btn-border-color: var(--danger-border);
-  --bs-btn-bg: var(--surface);
-  --bs-btn-hover-bg: var(--danger-tint);
-  --bs-btn-hover-color: var(--danger-text);
-  --bs-btn-hover-border-color: var(--danger);
-  --bs-btn-active-bg: var(--danger-tint);
-  --bs-btn-active-color: var(--danger-text);
-  --bs-btn-active-border-color: var(--danger);
-  box-shadow: var(--shadow-xs);
-}
-.btn-danger {
-  --bs-btn-bg: var(--danger);
-  --bs-btn-border-color: var(--danger);
-  --bs-btn-color: #fff;
-  --bs-btn-hover-bg: var(--danger-text);
-  --bs-btn-hover-border-color: var(--danger-text);
-  --bs-btn-hover-color: #fff;
-  --bs-btn-active-bg: var(--danger-text);
-  --bs-btn-active-border-color: var(--danger-text);
-}
-
-/* The third weight: an action that belongs to the thing it sits on. No border
-   and no fill at rest, so a toolbar of six of them is six words rather than
-   six boxes; the hover fill is the whole affordance. */
-.btn-ghost {
-  --bs-btn-color: var(--text-soft);
-  --bs-btn-bg: transparent;
-  --bs-btn-border-color: transparent;
-  --bs-btn-hover-bg: var(--surface-muted);
-  --bs-btn-hover-color: var(--text);
-  --bs-btn-hover-border-color: transparent;
-  --bs-btn-active-bg: var(--surface-muted);
-  --bs-btn-active-color: var(--text);
-  --bs-btn-active-border-color: transparent;
-  --bs-btn-disabled-color: var(--muted-light);
-  --bs-btn-disabled-bg: transparent;
-  --bs-btn-disabled-border-color: transparent;
-}
-/* A ghost whose action is destructive. Neutral until the pointer is on it —
-   which is exactly when the warning is useful and not before. */
-.btn-ghost-danger {
-  --bs-btn-color: var(--text-soft);
-  --bs-btn-bg: transparent;
-  --bs-btn-border-color: transparent;
-  --bs-btn-hover-bg: var(--danger-tint);
-  --bs-btn-hover-color: var(--danger-text);
-  --bs-btn-hover-border-color: transparent;
-  --bs-btn-active-bg: var(--danger-tint);
-  --bs-btn-active-color: var(--danger-text);
-  --bs-btn-active-border-color: transparent;
-}
-
-/* A count riding inside a button's label ("Status history 4"). Replaces the
-   inline-styled Bootstrap `.badge.bg-secondary-subtle` that three call sites
-   had each written their own version of, at three different sizes. */
-.count-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  padding: 0 5px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-muted);
-  color: var(--muted);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-bold);
-  line-height: 18px;
-}
-/* On a filled button the neutral chip disappears into the fill, so it borrows
-   the button's own ink at low alpha instead. */
-.btn-primary .count-chip {
-  background: rgba(255, 255, 255, 0.22);
-  color: var(--on-accent);
-}
-
-/* A square icon-only button, at each control height. Used for row overflow
-   menus, topbar controls, and anywhere a label would be noise. */
-.btn-icon {
-  --bs-btn-padding-x: 0;
-  width: var(--control-h);
-  padding-inline: 0;
-  flex-shrink: 0;
-}
-.btn-icon.btn-sm {
-  width: var(--control-h-sm);
-}
-/* Bootstrap's Dropdown.Toggle paints a caret; an icon button has no room for
-   one and does not need it. */
-.btn-icon.dropdown-toggle::after {
-  display: none;
-}
-
 /* ===== Cards =====
    Harbor geometry: a surface lifted off the page by --shadow-sm, with a
    hairline to define its edge. Flat border-only cards were what made the old
@@ -974,8 +949,6 @@ a.btn:focus {
    muted, semibold row. The tint is gone with it, because a shaded strip
    directly under a card's own head reads as a second header. */
 .table {
-  --bs-table-hover-bg: var(--surface-muted);
-  --bs-table-bg: transparent;
   font-size: var(--text-md);
   margin-bottom: 0;
   border-color: var(--line-soft);
@@ -1002,11 +975,13 @@ a.btn:focus {
   vertical-align: middle;
   color: var(--text-soft);
 }
-/* Hover is the row's only interactive cue and must reach its full width —
-   Bootstrap paints it per cell, so a gap between cells shows the surface
-   through. */
+/* Hover is the row's only interactive cue. Painted on the row rather than
+   per cell so it reaches the full width with no seams between columns. */
 .table > tbody > tr {
   transition: background-color var(--dur-fast) var(--ease-out);
+}
+.table > tbody > tr:hover {
+  background-color: var(--surface-muted);
 }
 .table > tbody > tr:last-child > td {
   border-bottom: 0;
@@ -1182,7 +1157,7 @@ a.cell-identity__name:focus-visible {
 }
 .form-control.is-invalid:focus,
 .form-select.is-invalid:focus {
-  box-shadow: 0 0 0 3px rgba(var(--bs-danger-rgb), 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
 }
 
 /* ===== Status badge (candidates list) ===== */
@@ -4402,7 +4377,7 @@ a.list-row__title:hover {
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--bs-danger);
+  background: var(--danger);
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
@@ -4419,7 +4394,7 @@ a.list-row__title:hover {
   display: block;
   padding: 0.55rem 0.9rem;
   border: 0;
-  border-bottom: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--border);
   background: transparent;
   color: inherit;
 }
@@ -5011,7 +4986,7 @@ a.hero-chip--accent:hover {
 
 /* ===== Status History Offcanvas Drawer ===== */
 .history-drawer {
-  --bs-offcanvas-width: 450px !important;
+  width: min(28rem, 100vw);
   max-width: 100vw;
   background: var(--surface) !important;
   color: var(--text) !important;
@@ -5226,9 +5201,9 @@ a.hero-chip--accent:hover {
   gap: 0.6rem;
   align-items: center;
   padding: 0.5rem 0.6rem;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--bs-body-bg);
+  background: var(--bg);
   transition: border-color 0.15s ease;
 }
 .eval-card:hover {
@@ -5411,15 +5386,15 @@ a.hero-chip--accent:hover {
 .rating-group { display: flex; gap: 0.3rem; padding: 2px; border-radius: 10px; }
 /* Flags a required rating group left empty on a failed submit. */
 .rating-group--invalid {
-  box-shadow: 0 0 0 1px var(--bs-danger);
-  background: rgba(var(--bs-danger-rgb), 0.06);
+  box-shadow: 0 0 0 1px var(--danger);
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
 }
-.rating-group--invalid .rating-btn { border-color: rgba(var(--bs-danger-rgb), 0.5); }
+.rating-group--invalid .rating-btn { border-color: var(--danger-border); }
 .rating-btn {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-soft);
   font-size: 0.85rem;
@@ -5571,7 +5546,7 @@ a.hero-chip--accent:hover {
 .profile-tile {
   padding: 0.55rem 0.75rem;
   background: var(--surface-muted);
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   border-radius: 9px;
 }
 .profile-tile__value { color: var(--text); font-weight: 500; word-break: break-word; }
@@ -5605,7 +5580,7 @@ a.hero-chip--accent:hover {
   align-items: center;
   gap: 0.7rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -5674,7 +5649,7 @@ a.hero-chip--accent:hover {
   gap: 0.35rem;
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   font-size: 0.85rem;

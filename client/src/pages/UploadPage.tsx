@@ -30,7 +30,7 @@ export default function UploadPage() {
   return (
     <Page>
       {/* Workspace Sub-Nav Tab Bar */}
-      <div className="d-flex align-items-center justify-content-between border-bottom pb-3">
+      <div className="flex items-center justify-between border-b border-border pb-4">
         <div className="segmented">
           <button
             type="button"
@@ -48,7 +48,7 @@ export default function UploadPage() {
             <Layers size={15} className="me-1.5" />
             Review Staging Workspace
             {pendingCount > 0 && (
-              <span className="draft-badge--pending ms-2">
+              <span className="draft-badge--pending ml-2">
                 {pendingCount} Pending
               </span>
             )}
@@ -65,21 +65,21 @@ export default function UploadPage() {
 
           {/* Staging Handoff Banner */}
           {lastBatchCount > 0 && (
-            <div className="alert-success-soft d-flex flex-wrap align-items-center justify-content-between gap-3" role="status">
-              <div className="d-inline-flex align-items-center gap-2.5">
-                <CheckCircle2 size={20} className="text-success flex-shrink-0" />
+            <div className="alert-success-soft flex flex-wrap items-center justify-between gap-4" role="status">
+              <div className="inline-flex items-center gap-2.5">
+                <CheckCircle2 size={20} className="text-success-foreground shrink-0" />
                 <div>
-                  <div className="fw-semibold">
+                  <div className="font-semibold">
                     Successfully staged {lastBatchCount} resume{lastBatchCount === 1 ? '' : 's'} to database!
                   </div>
-                  <div className="text-muted small">
+                  <div className="text-muted-foreground text-[length:var(--text-sm)]">
                     All candidates have been saved as pending drafts. You can review them now or come back anytime.
                   </div>
                 </div>
               </div>
               <button
                 type="button"
-                className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5"
+                className="btn btn-sm btn-primary inline-flex items-center gap-1.5"
                 onClick={() => setActiveTab('review')}
               >
                 <span>Open Review Workspace</span>

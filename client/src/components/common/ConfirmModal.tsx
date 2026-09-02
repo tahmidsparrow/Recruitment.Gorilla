@@ -63,7 +63,7 @@ export default function ConfirmModal({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <DialogBody className="flex flex-col gap-3">
+        <DialogBody className="flex flex-col gap-4">
           {/* The body IS the description, so it is announced with the title
               rather than being an unlabelled region after it. */}
           <DialogDescription asChild>

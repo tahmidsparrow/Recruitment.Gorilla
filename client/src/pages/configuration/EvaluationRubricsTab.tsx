@@ -385,7 +385,7 @@ export default function EvaluationRubricsTab() {
           </p>
         </div>
         <div className="page-bar__actions">
-          <Button onClick={openCreateModal} className="d-flex align-items-center gap-1.5">
+          <Button onClick={openCreateModal} className="flex items-center gap-1.5">
             <Plus size={15} strokeWidth={2.5} />
             <span>Add rubric scorecard</span>
           </Button>
@@ -421,24 +421,24 @@ export default function EvaluationRubricsTab() {
                 <th style={{ width: '12%' }} className="text-center">Criteria</th>
                 <th style={{ width: '15%' }} className="text-center">Assigned Openings</th>
                 <th style={{ width: '8%' }} className="text-center">Status</th>
-                <th style={{ width: '10%' }} className="text-end">Actions</th>
+                <th style={{ width: '10%' }} className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {rubrics.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fw-semibold text-truncate">{r.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold truncate">{r.name}</span>
                       {r.isDefault && (
-                        <span className="badge-pill badge-primary d-inline-flex align-items-center gap-1">
+                        <span className="badge-pill badge-primary inline-flex items-center gap-1">
                           <Star size={11} fill="currentColor" /> Default
                         </span>
                       )}
                     </div>
                   </td>
                   <td>
-                    <span className="text-muted small text-truncate d-block" style={{ maxWidth: 320 }}>
+                    <span className="text-muted-foreground text-[length:var(--text-sm)] truncate block" style={{ maxWidth: 320 }}>
                       {r.description || '—'}
                     </span>
                   </td>
@@ -460,7 +460,7 @@ export default function EvaluationRubricsTab() {
                     )}
                   </td>
                   <td>
-                    <div className="d-flex align-items-center justify-content-end gap-1">
+                    <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -486,7 +486,7 @@ export default function EvaluationRubricsTab() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="btn-icon text-warning"
+                          className="btn-icon text-warning-foreground"
                           title="Set as system default"
                           aria-label={`Set ${r.name} as default`}
                           onClick={() => setDefaultMutation.mutate(r.id)}
@@ -499,7 +499,7 @@ export default function EvaluationRubricsTab() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="btn-icon text-danger"
+                          className="btn-icon text-[var(--danger-text)]"
                           title="Delete rubric"
                           aria-label={`Delete ${r.name}`}
                           onClick={() => setDeleteTarget(r)}
@@ -527,13 +527,13 @@ export default function EvaluationRubricsTab() {
           </DialogHeader>
 
           <DialogBody>
-            {errorMsg && <Alert variant="danger" className="py-2 small">{errorMsg}</Alert>}
+            {errorMsg && <Alert variant="danger" className="py-2 text-[length:var(--text-sm)]">{errorMsg}</Alert>}
 
             {/* Rubric Top Metadata */}
-            <div className="row g-3 mb-4">
-              <div className="col-12 col-md-8">
+            <div className="grid grid-cols-12 gap-4 mb-6">
+              <div className="col-span-12 md:col-span-8">
                 <Label htmlFor="rubric-name">
-                  Rubric Name <span className="text-danger">*</span>
+                  Rubric Name <span className="text-[var(--danger-text)]">*</span>
                 </Label>
                 <Input
                   id="rubric-name"
@@ -545,12 +545,12 @@ export default function EvaluationRubricsTab() {
                 />
               </div>
 
-              <div className="col-12 col-md-4 d-flex flex-column justify-content-end gap-2">
+              <div className="col-span-12 md:col-span-4 flex flex-col justify-end gap-2">
                 <CheckboxField id="rubric-is-default" label="System Default Rubric" checked={isDefault} onCheckedChange={(checked) => setIsDefault(checked)} />
                 <CheckboxField id="rubric-is-active" label="Active" checked={isActive} onCheckedChange={(checked) => setIsActive(checked)} />
               </div>
 
-              <div className="col-12">
+              <div className="col-span-12">
                 <Label htmlFor="rubric-desc">Description (Optional)</Label>
                 <Textarea
                   id="rubric-desc"
@@ -563,10 +563,10 @@ export default function EvaluationRubricsTab() {
             </div>
 
             {/* Dynamic Criteria Builder Header */}
-            <div className="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom">
+            <div className="flex items-center justify-between pb-2 mb-4 border-b border-border">
               <div>
-                <h6 className="mb-0 fw-semibold">Scorecard Sections & Criteria</h6>
-                <small className="text-muted">
+                <h6 className="mb-0 font-semibold">Scorecard Sections & Criteria</h6>
+                <small className="text-muted-foreground">
                   Organize criteria into sections. Weights adjust the overall score contribution.
                 </small>
               </div>
@@ -574,30 +574,30 @@ export default function EvaluationRubricsTab() {
                 variant="outline"
                 size="sm"
                 onClick={addSection}
-                className="d-flex align-items-center gap-1"
+                className="flex items-center gap-1"
                 >
                 <Plus size={13} strokeWidth={2.5} /> Add Section
               </Button>
             </div>
 
             {/* Section List */}
-            <div className="d-flex flex-column gap-3">
+            <div className="flex flex-col gap-4">
               {sections.map((sec, secIdx) => (
-                <div key={sec.id} className="card p-3 border rounded-3 bg-light-subtle">
-                  <div className="d-flex align-items-center justify-content-between gap-2 mb-2.5">
-                    <div className="d-flex align-items-center gap-2 flex-grow-1">
-                      <span className="badge bg-secondary-subtle text-secondary font-monospace">
+                <div key={sec.id} className="card p-4 border border-border rounded-[var(--radius-lg)] bg-light-subtle">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-2 grow">
+                      <span className="badge bg-secondary-subtle text-text-soft font-monospace">
                         Section {secIdx + 1}
                       </span>
                       <Input
-                        className="h-[var(--control-h-sm)] text-[length:var(--text-sm)] fw-semibold"
+                        className="h-[var(--control-h-sm)] text-[length:var(--text-sm)] font-semibold"
                         placeholder="Section Name (e.g. Technical Knowledge)"
                         value={sec.name}
                         onChange={(e) => updateSectionName(sec.id, e.target.value)}
                         style={{ maxWidth: 300 }}
                       />
                     </div>
-                    <div className="d-flex align-items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         variant="outline"
                         size="sm"
@@ -610,7 +610,7 @@ export default function EvaluationRubricsTab() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="btn-icon text-danger py-0.5"
+                          className="btn-icon text-[var(--danger-text)] py-0.5"
                           title="Remove section"
                           onClick={() => removeSection(sec.id)}
                         >
@@ -621,15 +621,15 @@ export default function EvaluationRubricsTab() {
                   </div>
 
                   {/* Criteria in Section */}
-                  <div className="d-flex flex-column gap-2 mt-1">
+                  <div className="flex flex-col gap-2 mt-1">
                     {sec.criteria.map((crit, cIdx) => (
                       <div
                         key={`${sec.id}-crit-${cIdx}`}
-                        className="d-flex align-items-center gap-2 p-2 bg-body rounded border"
+                        className="flex items-center gap-2 p-2 bg-background rounded-[var(--radius-md)] border border-border"
                       >
-                        <GripVertical size={14} className="text-muted flex-shrink-0" />
-                        <div className="flex-grow-1 row g-2">
-                          <div className="col-12 col-md-5">
+                        <GripVertical size={14} className="text-muted-foreground shrink-0" />
+                        <div className="grow grid grid-cols-12 gap-4 gap-2">
+                          <div className="col-span-12 md:col-span-5">
                             <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               placeholder="Criterion Label (e.g. System Design)"
                               value={crit.label}
@@ -637,15 +637,15 @@ export default function EvaluationRubricsTab() {
                               required
                             />
                           </div>
-                          <div className="col-12 col-md-5">
+                          <div className="col-span-12 md:col-span-5">
                             <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               placeholder="Evaluation guide hint / rubric standard..."
                               value={crit.hint || ''}
                               onChange={(e) => updateCriterion(sec.id, cIdx, 'hint', e.target.value)}
                             />
                           </div>
-                          <div className="col-6 col-md-2 d-flex align-items-center gap-1">
-                            <span className="text-xs text-muted">Weight:</span>
+                          <div className="col-span-6 md:col-span-2 flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Weight:</span>
                             <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               type="number"
                               step="0.1"
@@ -661,7 +661,7 @@ export default function EvaluationRubricsTab() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="btn-icon text-muted hover-danger flex-shrink-0"
+                            className="btn-icon text-muted-foreground hover-danger shrink-0"
                             onClick={() => removeCriterion(sec.id, cIdx)}
                           >
                             <X size={13} strokeWidth={2.5} />

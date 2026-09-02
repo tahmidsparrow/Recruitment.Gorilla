@@ -120,10 +120,10 @@ export default function ChangePasswordPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-100" disabled={busy}>
+              <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? (
                   <>
-                    <Spinner className="me-2" aria-hidden="true" />
+                    <Spinner className="mr-2" aria-hidden="true" />
                     Saving…
                   </>
                 ) : (

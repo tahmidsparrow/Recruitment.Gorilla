@@ -170,18 +170,18 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
     // the form no longer prints its own <h5> above them.
     <form onSubmit={handleSubmit} noValidate>
       {saveError && (
-        <div className="alert-danger-soft mb-4" role="alert">
+        <div className="alert-danger-soft mb-6" role="alert">
           {saveError}
         </div>
       )}
 
       {duplicate && (
-        <div className="alert-warning-soft mb-4">
+        <div className="alert-warning-soft mb-6">
           <div>
             {duplicate.message}{' '}
             <Link to={`/candidates/${duplicate.existing.id}`}>Open existing candidate</Link>.
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <Button
               size="sm"
               variant="outline"
@@ -194,7 +194,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 md:col-span-6">
           <Label>Full name <Req /></Label>
           <Input
@@ -254,7 +254,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
             aria-invalid={!!fieldErrors.roleApplied || undefined}
           />
           {fieldErrors.roleApplied && (
-            <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
+            <div className="invalid-feedback block">{fieldErrors.roleApplied}</div>
           )}
         </div>
         <div className="col-span-12 md:col-span-6">

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * The "nothing here" panel, and — via `variant="error"` — the "this failed"
- * one. Replaces the bare `<p className="text-muted">No X found.</p>` that each
+ * one. Replaces the bare `<p className="text-muted-foreground">No X found.</p>` that each
  * list page had its own version of.
  *
  * Three states are worth distinguishing and usually aren't:
@@ -77,7 +77,7 @@ export default function EmptyState({
           {description}
         </div>
       )}
-      {action && <div className="mt-4 flex flex-wrap justify-center gap-2">{action}</div>}
+      {action && <div className="mt-6 flex flex-wrap justify-center gap-2">{action}</div>}
     </div>
   );
 }

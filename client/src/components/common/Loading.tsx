@@ -106,7 +106,7 @@ export function SkeletonCards({ count = 6, label = 'Loading' }: { count?: number
 export default function LoadingPanel({ label = 'Loading…' }: { label?: string }) {
   return (
     <div
-      className="flex flex-col items-center justify-center gap-3 py-12 text-[length:var(--text-sm)] text-muted-foreground"
+      className="flex flex-col items-center justify-center gap-4 py-12 text-[length:var(--text-sm)] text-muted-foreground"
       role="status"
       aria-busy="true"
     >

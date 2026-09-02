@@ -83,7 +83,7 @@ export default function NotificationBell() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
           <span className="text-[length:var(--text-md)] font-semibold">Notifications</span>
           {unread > 0 && (
             <Button
@@ -99,7 +99,7 @@ export default function NotificationBell() {
         </div>
 
         {items.length === 0 ? (
-          <p className="px-3 py-6 text-center text-[length:var(--text-sm)] text-muted-foreground">
+          <p className="px-4 py-6 text-center text-[length:var(--text-sm)] text-muted-foreground">
             No notifications.
           </p>
         ) : (

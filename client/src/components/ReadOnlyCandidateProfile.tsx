@@ -176,7 +176,7 @@ export default function ReadOnlyCandidateProfile({
   return (
     <Card className={`profile-card ${className}`.trim()}>
       <div className="profile-header">
-        <div className="d-flex justify-content-between align-items-start gap-3">
+        <div className="flex justify-between items-start gap-4">
           <div>
             <div className="profile-field-label">Current position</div>
             <div className="profile-title">{candidate.currentTitle || '—'}</div>
@@ -186,7 +186,7 @@ export default function ReadOnlyCandidateProfile({
 
         {/* Brand Coding & Social Profile Badges */}
         {hasLinks && (
-          <div className="profile-links mt-3 d-flex flex-wrap gap-2">
+          <div className="profile-links mt-4 flex flex-wrap gap-2">
             {candidate.linkedInUrl && (
               <a
                 href={candidate.linkedInUrl}
@@ -282,7 +282,7 @@ export default function ReadOnlyCandidateProfile({
         )}
       </div>
 
-      <CardContent className="d-flex flex-column gap-3.5">
+      <CardContent className="flex flex-col gap-3.5">
         {/* Contact Details & Metadata Grid */}
         <div className="contact-grid">
           <ContactTile
@@ -325,16 +325,16 @@ export default function ReadOnlyCandidateProfile({
         {/* Technical Skills Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Code2 size={15} className="profile-section__icon text-primary" />
+            <Code2 size={15} className="profile-section__icon text-brand" />
             <span>Technical Skills</span>
             {skillsList.length > 0 && (
-              <span className="profile-section__count badge bg-secondary-subtle text-secondary">
+              <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
                 {skillsList.length}
               </span>
             )}
           </div>
           {skillsList.length > 0 ? (
-            <div className="d-flex flex-wrap gap-1.5 mt-1.5">
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
               {skillsList.map((skillName, idx) => (
                 <span key={`${skillName}-${idx}`} className={skillColorClass(skillName)}>
                   {skillName}
@@ -349,7 +349,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Professional Summary Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <FileText size={15} className="profile-section__icon text-primary" />
+            <FileText size={15} className="profile-section__icon text-brand" />
             <span>Professional Summary</span>
           </div>
           {candidate.summary && candidate.summary.trim() ? (
@@ -375,27 +375,27 @@ export default function ReadOnlyCandidateProfile({
         {/* Education & Academics Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <GraduationCap size={16} className="profile-section__icon text-primary" />
+            <GraduationCap size={16} className="profile-section__icon text-brand" />
             <span>Education & Academics</span>
             {candidate.educations && candidate.educations.length > 0 && (
-              <span className="profile-section__count badge bg-secondary-subtle text-secondary">
+              <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
                 {candidate.educations.length}
               </span>
             )}
           </div>
           {candidate.educations && candidate.educations.length > 0 ? (
-            <div className="d-flex flex-column gap-2 mt-1.5">
+            <div className="flex flex-col gap-2 mt-1.5">
               {candidate.educations.map((edu, idx) => (
                 <div key={edu.id ?? idx} className="education-card">
                   <div className="education-card__header">
-                    <div className="d-flex align-items-center gap-2 min-w-0">
-                      <GraduationCap size={15} className="education-card__icon flex-shrink-0" />
-                      <span className="education-card__degree text-truncate">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <GraduationCap size={15} className="education-card__icon shrink-0" />
+                      <span className="education-card__degree truncate">
                         {edu.degree}
                       </span>
                     </div>
                     {edu.cgpa && (
-                      <span className="badge badge-cgpa flex-shrink-0">
+                      <span className="badge badge-cgpa shrink-0">
                         CGPA {edu.cgpa}
                       </span>
                     )}
@@ -417,27 +417,27 @@ export default function ReadOnlyCandidateProfile({
         {/* Work & Employment History Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Building2 size={15} className="profile-section__icon text-primary" />
+            <Building2 size={15} className="profile-section__icon text-brand" />
             <span>Work Experience</span>
             {candidate.experiences && candidate.experiences.length > 0 && (
-              <span className="profile-section__count badge bg-secondary-subtle text-secondary">
+              <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
                 {candidate.experiences.length}
               </span>
             )}
           </div>
           {candidate.experiences && candidate.experiences.length > 0 ? (
-            <div className="d-flex flex-column gap-2.5 mt-1.5">
+            <div className="flex flex-col gap-2.5 mt-1.5">
               {candidate.experiences.map((exp, idx) => (
                 <div key={exp.id ?? idx} className="experience-card">
                   <div className="experience-card__header">
-                    <div className="d-flex align-items-center gap-2 min-w-0">
-                      <Building2 size={15} className="experience-card__icon flex-shrink-0" />
-                      <span className="experience-card__title text-truncate">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Building2 size={15} className="experience-card__icon shrink-0" />
+                      <span className="experience-card__title truncate">
                         {exp.jobTitle}
                       </span>
                     </div>
                     {exp.duration && (
-                      <span className="badge badge-duration flex-shrink-0">
+                      <span className="badge badge-duration shrink-0">
                         {exp.duration}
                       </span>
                     )}
@@ -461,23 +461,23 @@ export default function ReadOnlyCandidateProfile({
         {/* Referral & Sourcing Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Users size={15} className="profile-section__icon text-primary" />
+            <Users size={15} className="profile-section__icon text-brand" />
             <span>Referral & Sourcing</span>
           </div>
           {candidate.isReferred ? (
-            <div className="referral-card p-2.5 rounded border border-success-subtle bg-success-subtle bg-opacity-10 mt-1">
-              <div className="d-flex align-items-center gap-2">
-                <span className="badge bg-success-subtle text-success border border-success-subtle">
+            <div className="referral-card p-2.5 rounded-[var(--radius-md)] border border-border border-success-subtle bg-success-subtle bg-opacity-10 mt-1">
+              <div className="flex items-center gap-2">
+                <span className="badge bg-success-subtle text-success-foreground border border-border border-success-subtle">
                   Referred
                 </span>
-                <span className="fw-medium text-body small">
+                <span className="font-medium text-foreground text-[length:var(--text-sm)]">
                   {candidate.referenceName || 'Internal Referral'}
                 </span>
                 {candidate.referenceEmail && (
-                  <span className="text-muted small">({candidate.referenceEmail})</span>
+                  <span className="text-muted-foreground text-[length:var(--text-sm)]">({candidate.referenceEmail})</span>
                 )}
                 {candidate.referenceEmployeeId && (
-                  <span className="badge bg-secondary-subtle text-secondary small">
+                  <span className="badge bg-secondary-subtle text-text-soft text-[length:var(--text-sm)]">
                     ID: {candidate.referenceEmployeeId}
                   </span>
                 )}
@@ -491,18 +491,18 @@ export default function ReadOnlyCandidateProfile({
         {showCvFiles && candidate.cvFiles.length > 0 && (
           <div className="profile-section mt-1">
             <div className="profile-section__title">
-              <FileText size={15} className="profile-section__icon text-primary" />
+              <FileText size={15} className="profile-section__icon text-brand" />
               <span>CV Files</span>
             </div>
-            <div className="d-flex flex-column gap-2 mt-1.5">
+            <div className="flex flex-col gap-2 mt-1.5">
               {candidate.cvFiles.map((f) => (
                 <div key={f.id} className="cv-file-item">
                   <span className="cv-file-item__icon"><FileText size={18} /></span>
                   <span className="cv-file-item__meta">
-                    <span className="cv-file-item__name text-truncate">{f.originalFileName}</span>
+                    <span className="cv-file-item__name truncate">{f.originalFileName}</span>
                     <span className="cv-file-item__size">{formatSize(f.fileSizeBytes)}</span>
                   </span>
-                  <span className="d-flex gap-2 flex-shrink-0">
+                  <span className="flex gap-2 shrink-0">
                     <Button size="sm" variant="outline" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
                     <button type="button" className="btn btn-sm btn-cv-download" onClick={() => void downloadCvFile(candidate.id, f.id)}>
                       <DownloadIcon /> Download
@@ -515,9 +515,9 @@ export default function ReadOnlyCandidateProfile({
         )}
 
         {showCvFiles && preview && (
-          <div className="mt-3">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="small text-muted text-truncate">{previewName}</span>
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[length:var(--text-sm)] text-muted-foreground truncate">{previewName}</span>
               <Button size="sm" variant="link" className="p-0" onClick={() => { URL.revokeObjectURL(preview.url); setPreview(null); }}>Close</Button>
             </div>
             {preview.contentType.includes('pdf') ? (

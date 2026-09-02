@@ -5,60 +5,31 @@
    utilities — `bg-primary`, `text-muted-foreground`, `border-border`,
    `ring-ring`. Harbor's palette lives in tokens.css under its own names.
    Rather than maintaining two palettes, this maps Tailwind's colour namespace
-   onto the Harbor tokens, so a shadcn <Button> and a legacy `.btn` resolve to
-   the same cobalt and a colour is still changed in exactly one place.
+   onto the Harbor tokens, so a colour is changed in exactly one place.
 
    WHY ONLY THE COLOUR NAMESPACE IS MAPPED. Tailwind v4 derives utilities from
    token namespaces — `--text-*`, `--radius-*`, `--shadow-*`, `--spacing-*` —
-   and Harbor already uses those exact prefixes for different things
-   (`--text-sm` is a font size in both, but `--radius-sm` is Harbor geometry
-   while Tailwind would read it as its own scale). Re-declaring them here would
-   be self-referential (`--radius-sm: var(--radius-sm)`), so only `--color-*`
-   and the font stacks are bridged — those have no counterpart in tokens.css.
-   Everywhere a component needs Harbor geometry it reaches for the token
-   directly: `rounded-[var(--radius-control)]`, `shadow-[var(--shadow-sm)]`,
-   `h-[var(--control-h)]`. That is deliberate, not a shortcut.
+   and Harbor already uses those exact prefixes for different things.
+   Re-declaring them here would be self-referential
+   (`--radius-sm: var(--radius-sm)`), so only `--color-*` and the font stacks
+   are bridged. Everywhere a component needs Harbor geometry it reaches for the
+   token directly: `rounded-[var(--radius-control)]`, `h-[var(--control-h)]`.
 
-   PREFLIGHT IS DELIBERATELY OFF while react-bootstrap is still in the tree.
-   Tailwind's reset unsets borders, list styles and heading sizes that the
-   not-yet-migrated Bootstrap components depend on. Importing theme and
-   utilities without base gives us the utilities with no reset. When the last
-   react-bootstrap import is gone this becomes a plain `@import "tailwindcss";`
-   and bootstrap.min.css comes out of main.tsx.
+   BOOTSTRAP IS GONE. Both `bootstrap` and `react-bootstrap` are out of
+   package.json, so preflight is on and there is no vendor layer left to order
+   against. `index.css` stays in a `legacy` layer below Tailwind's utilities:
+   it still owns the app-specific component classes (.kpi-card, .status--*,
+   .table-cards, the kanban board, the candidate profile) that have no shadcn
+   equivalent. A Tailwind utility must still win over it on a shadcn
+   component, which is what the layer order buys.
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   CASCADE ORDER. This is the load-bearing line of the whole migration.
+@layer legacy, theme, base, components, utilities;
 
-   Unlayered CSS beats layered CSS no matter what the specificity is. Bootstrap
-   and index.css are both unlayered by default, so a Tailwind utility on a
-   shadcn component would lose to Bootstrap's reboot (`th { … }`) and to
-   index.css's element rules (`h3 { font-size: … }`) — silently, and only on
-   some components. Putting all three in an explicit order fixes it:
-
-     bootstrap  the vendor reset and components, lowest priority
-     legacy     index.css — our own component layer, still owns .btn/.card/…
-     theme      Tailwind's token layer
-     base       the one border-colour rule below
-     utilities  Tailwind utilities, so shadcn components always win on themselves
-
-   This file is therefore the single CSS entry point; main.tsx imports it and
-   nothing else. When the last react-bootstrap component is gone, the bootstrap
-   line and its layer come out; when index.css is empty, so does legacy.
-   -------------------------------------------------------------------------- */
-@layer bootstrap, legacy, theme, base, components, utilities;
-
-@import 'bootstrap/dist/css/bootstrap.min.css' layer(bootstrap);
 @import '../index.css' layer(legacy);
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* The app switches themes with `data-bs-theme` on <html> (Bootstrap 5.3's
-   attribute, which react-bootstrap, the no-flash script in index.html and
-   ThemeContext all already read). Tailwind's `dark:` variant defaults to a
-   `.dark` class, so it is redefined here rather than adding a second attribute
-   that would have to be kept in sync. */
 @custom-variant dark (&:where([data-bs-theme='dark'], [data-bs-theme='dark'] *));
 
 @theme inline {
@@ -124,14 +95,28 @@
   --font-mono: var(--font-mono);
 }
 
-/* The one preflight rule shadcn components genuinely need. Without Tailwind's
-   base layer, `border` with no colour resolves to `currentColor`, which paints
-   borders in the text colour. Scoped to `[data-slot]` — the attribute every
-   shadcn component sets on its root — so it cannot reach a Bootstrap
-   component that is still relying on Bootstrap's own reset. */
+/* Preflight leaves `border-color` at currentColor, which paints a bare
+   `border` in the text colour. Tailwind's own recommendation is to set the
+   default globally. */
 @layer base {
-  [data-slot] {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
     border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--text-md);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    /* Tabular figures app-wide: every number here sits in a column, a row of
+       tiles or a timeline, and proportional figures make those wobble. */
+    font-variant-numeric: tabular-nums;
   }
 }
 
