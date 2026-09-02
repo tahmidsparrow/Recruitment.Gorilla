@@ -4642,11 +4642,236 @@ a.hero-chip--accent:hover {
 }
 /* Space below the progress bar, and above the actions, in both layouts. */
 .eval-form-card .eval-progress__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.05));
+  overflow: hidden;
   margin-bottom: var(--space-4);
+  border: 1px solid var(--border);
 }
-/* Schedule + interviewers as one right-hand cluster. Previously the
-   interviewers were a full-width strip under a divider, which spent a third of
-   the hero's height on what is usually a single avatar pill. */
+.eval-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.eval-progress__count {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.04));
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.eval-progress__count--invalid {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ===== Evaluation Rubric Accordion Panels ===== */
+.eval-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.eval-panel:hover {
+  border-color: var(--border-strong, #334155);
+}
+.eval-panel__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.02));
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+.eval-panel__header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.eval-panel__header[aria-expanded="true"] {
+  border-bottom-color: var(--border);
+}
+.eval-panel__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.eval-panel--a .eval-panel__icon {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+.eval-panel--b .eval-panel__icon {
+  background: rgba(129, 140, 248, 0.12);
+  color: #818cf8;
+  border: 1px solid rgba(129, 140, 248, 0.25);
+}
+.eval-panel--c .eval-panel__icon {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+.eval-panel--d .eval-panel__icon {
+  background: rgba(251, 146, 60, 0.12);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.25);
+}
+.eval-panel__titles {
+  flex: 1 1 auto;
+  margin-left: 12px;
+  min-width: 0;
+}
+.eval-panel__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.eval-panel__hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+  display: block;
+}
+.eval-panel__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.eval-panel__count {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-soft);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.eval-panel__chevron {
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+.eval-panel__chevron--open {
+  transform: rotate(180deg);
+}
+
+.eval-panel__body {
+  padding: 4px 16px 14px 16px;
+}
+.eval-criterion {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+}
+.eval-criterion:last-child {
+  border-bottom: none;
+}
+.eval-criterion__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.eval-criterion__label {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.eval-criterion__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.eval-criterion__hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* Segmented Rating Capsule */
+.rating-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9999px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease;
+}
+.rating-group--invalid {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.05);
+}
+.rating-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rating-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transform: scale(1.08);
+}
+.rating-btn--active {
+  background: var(--primary, #3b82f6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  transform: scale(1.08);
+}
+.eval-criterion__comment {
+  margin-top: 8px !important;
+  width: 100%;
+  border-radius: 6px;
+  font-size: 12px !important;
+  background: var(--surface-muted, rgba(0, 0, 0, 0.2)) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* Overall evaluation summary box */
+.eval-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.eval-summary__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+/* Schedule + interviewers as one right-hand cluster */
 .interview-hero__aside {
   display: flex;
   flex-direction: column;
@@ -4677,34 +4902,36 @@ a.hero-chip--accent:hover {
   gap: 0.45rem;
   padding: 0.35rem 0.8rem;
   border-radius: 999px;
-  background: var(--primary-tint);
-  color: var(--primary-dark);
-  font-size: 0.85rem;
-  font-weight: 600;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
 }
-.interview-chip--soon { background: var(--primary-dark); color: var(--on-accent); }
+.interview-chip--soon {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
 .interviewer-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.25rem 0.7rem 0.25rem 0.3rem;
   border-radius: 999px;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text);
 }
 .interviewer-pill__avatar {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  /* --primary-dark, not --primary: this is a solid fill carrying white text,
-     and --primary brightens in dark mode to stay legible *as text*, which
-     leaves white on top of it at ~2.2:1. --primary-dark is mode-invariant and
-     clears 6.3:1 under --on-accent in both. */
-  background: var(--primary-dark);
-  color: var(--on-accent);
+  background: var(--primary);
+  color: #ffffff;
   font-size: 0.62rem;
   font-weight: 700;
 }
@@ -4810,12 +5037,157 @@ a.hero-chip--accent:hover {
   border-radius: var(--radius-sm);
 }
 
+/* ===== Candidate Profile Components ===== */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.contact-tile {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+.contact-tile:hover {
+  border-color: var(--border-strong, #475569);
+}
+.contact-tile__icon {
+  color: var(--primary);
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.contact-tile__content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.contact-tile__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--muted);
+  display: block;
+}
+.contact-tile__value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.contact-tile__copy {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.contact-tile__copy:hover {
+  color: var(--text);
+}
+
+.profile-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+}
+.profile-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+.profile-section__count {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+}
+.profile-empty-text {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+.profile-summary {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-line;
+}
+.profile-summary--collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.profile-summary-toggle {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-top: 2px;
+}
+.profile-summary-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Coding Profiles Brand Badges */
+.profile-links-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+}
+.profile-link:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+.profile-link--linkedin { color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.2); }
+.profile-link--github { color: #cbd5e1; background: rgba(203, 213, 225, 0.08); border-color: rgba(203, 213, 225, 0.2); }
+.profile-link--leetcode { color: #fb923c; background: rgba(251, 146, 60, 0.08); border-color: rgba(251, 146, 60, 0.2); }
+.profile-link--codeforces { color: #f87171; background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.2); }
+.profile-link--hackerrank { color: #4ade80; background: rgba(74, 222, 128, 0.08); border-color: rgba(74, 222, 128, 0.2); }
+.profile-link--portfolio { color: #a78bfa; background: rgba(167, 139, 250, 0.08); border-color: rgba(167, 139, 250, 0.2); }
+
 /* ===== Interview-completed evaluation summary cards (status timeline) ===== */
 .eval-summary {
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
-  padding: 0.6rem 0.7rem;
+  padding: 1rem;
   border-left: 3px solid var(--primary);
 }
 .eval-summary__head {

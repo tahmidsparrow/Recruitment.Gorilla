@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Accordion } from 'react-bootstrap';
+import { Accordion, Offcanvas } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { StickyNote } from 'lucide-react';
+import { FileText, StickyNote } from 'lucide-react';
 import { getInterview, getInterviewEvaluationRubric } from '../services/api';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import EvaluationForm, { EvaluationReadOnly } from '../components/EvaluationForm';
@@ -93,6 +94,7 @@ export default function InterviewPage() {
       <div className="eval-briefing__body">{data.notes}</div>
     </div>
   ) : null;
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
 
   return (
     <Page>
@@ -100,30 +102,40 @@ export default function InterviewPage() {
         <div className="interview-hero__top">
           <div className="profile-avatar">{initials(data.candidate.fullName) || '?'}</div>
           <div className="interview-hero__identity">
-            {/* No "Interview" eyebrow — the topbar directly above already says
-                it. The name is the heading; the role and the interview's type
-                tags are one meta line rather than a three-deep stack. */}
-            <h2>{data.candidate.fullName}</h2>
-            <div className="interview-hero__meta">
-              {role && <span className="form-help">{role}</span>}
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <h2 className="mb-0">{data.candidate.fullName}</h2>
+              {role && <span className="badge bg-primary-subtle text-primary fw-medium px-2 py-1 rounded-pill">{role}</span>}
               {data.interviewTags.map((tag) => (
                 <span key={tag} className={skillColorClass(tag)}>{tag}</span>
               ))}
             </div>
+            <div className="interview-hero__meta text-muted small mt-1">
+              <span>{data.candidate.email}</span>
+              {data.candidate.currentTitle && <span>• {data.candidate.currentTitle}</span>}
+            </div>
           </div>
-          {/* The schedule and the interviewers are one right-hand cluster.
-              They used to be two rows — the chip here and a full-width
-              "INTERVIEWERS" strip below a divider — which spent a third of the
-              hero's height on what is usually one avatar pill. */}
+
           <div className="interview-hero__aside">
-            <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
-              <CalendarIcon /> {scheduled} · {data.durationMinutes} min · {relative.label}
-            </span>
-            <div className="interview-hero__people">
-              {/* Inline, not a row of its own — the pills are meaningless
-                  without it, but it doesn't warrant its own band either. */}
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <span className={`interview-chip${relative.soon ? ' interview-chip--soon' : ''}`}>
+                <CalendarIcon /> {scheduled} · {data.durationMinutes} min · {relative.label}
+              </span>
+
+              {/* View Full Candidate Profile Button */}
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5 rounded-pill shadow-xs font-semibold"
+                onClick={() => setShowProfileDrawer(true)}
+                title="View full candidate CV, education, experience and details"
+              >
+                <FileText size={14} strokeWidth={2} aria-hidden="true" />
+                <span>View Profile & CV</span>
+              </button>
+            </div>
+
+            <div className="interview-hero__people mt-1">
               <span className="field-label interview-hero__people-label">
-                {data.interviewers.length === 1 ? 'Interviewer' : 'Interviewers'}
+                {data.interviewers.length === 1 ? 'Interviewer' : 'Interviewers'}:
               </span>
               {data.interviewers.map((i) => (
                 <span key={i.userId} className="interviewer-pill" title={i.name}>
@@ -136,41 +148,25 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      {/* --panels gives both columns one shared height so their bottoms line
-          up; .interview-grid overrides that height to exactly the viewport
-          below the topbar and pins the columns, so the profile scrolls on the
-          left and the rubric on the right without the page moving. */}
-      <div className="detail-grid detail-grid--panels interview-grid">
-        <div className="card-stack anim-fade-up" style={{ animationDelay: '60ms' }}>
-          <ReadOnlyCandidateProfile candidate={data.candidate} className="detail-scroll" />
-        </div>
-
-        {/* The evaluation column sticks below the topbar and is sized to the
-            remaining viewport, so the rubric is always the thing on screen
-            while the candidate profile scrolls past it on the left. */}
-        <div className="card-stack interview-grid__eval anim-fade-up" style={{ animationDelay: '120ms' }}>
-          {/* The briefing is folded into the evaluation card itself rather than
-              floating above it as a second card: it is instructions *for this
-              form*, it belongs to the same object, and as its own card it cost
-              a whole surface plus a gap to show one line. Inside the card it
-              also sits outside the scrolling rubric, so it stays readable the
-              whole way down the twelve criteria. */}
-          {data.canEvaluate ? (
-            <EvaluationForm
-              interviewId={interviewId}
-              evaluation={data.myEvaluation}
-              briefing={briefing}
-            />
-          ) : (
-            <div className="pulse-card">
-              {briefing}
-              <div className="alert-info-soft">
-                You are viewing this interview but are not an assigned interviewer.
-              </div>
+      {/* Main Full-Width Evaluation Studio */}
+      <div className="interview-studio-container anim-fade-up" style={{ animationDelay: '60ms' }}>
+        {data.canEvaluate ? (
+          <EvaluationForm
+            interviewId={interviewId}
+            evaluation={data.myEvaluation}
+            briefing={briefing}
+          />
+        ) : (
+          <div className="pulse-card">
+            {briefing}
+            <div className="alert-info-soft">
+              You are viewing this interview but are not an assigned interviewer.
             </div>
-          )}
+          </div>
+        )}
 
-          {data.allEvaluations && otherEvaluations.length > 0 && (
+        {data.allEvaluations && otherEvaluations.length > 0 && (
+          <div className="mt-4">
             <Accordion>
               <Accordion.Item eventKey="others">
                 <Accordion.Header>Other interviewers' evaluations ({otherEvaluations.length})</Accordion.Header>
@@ -191,9 +187,28 @@ export default function InterviewPage() {
                 </Accordion.Body>
               </Accordion.Item>
             </Accordion>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Slide-over Candidate Profile & CV Drawer */}
+      <Offcanvas
+        show={showProfileDrawer}
+        onHide={() => setShowProfileDrawer(false)}
+        placement="end"
+        className="history-drawer profile-drawer"
+        style={{ width: '560px', maxWidth: '100vw' }}
+      >
+        <Offcanvas.Header closeButton className="border-bottom pb-3">
+          <Offcanvas.Title className="d-flex align-items-center gap-2 font-semibold">
+            <FileText size={18} className="text-primary" />
+            <span>Candidate Profile & Qualifications</span>
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="p-3">
+          <ReadOnlyCandidateProfile candidate={data.candidate} />
+        </Offcanvas.Body>
+      </Offcanvas>
     </Page>
   );
 }
