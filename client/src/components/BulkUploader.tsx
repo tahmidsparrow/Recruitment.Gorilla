@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Alert, ProgressBar, Spinner } from 'react-bootstrap';
+import { ProgressBar } from 'react-bootstrap';
 import { CheckCircle2, FileText, Loader2, UploadCloud, XCircle } from 'lucide-react';
 import { uploadCV } from '../services/api';
 import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent } from '../services/signalr';
 import type { CVDraft } from '../types';
+import { Alert } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Props {
   onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;

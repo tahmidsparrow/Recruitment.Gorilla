@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, Card } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import {
   Briefcase,
   Building2,
@@ -20,6 +20,8 @@ import { downloadCvFile, previewCvFile } from '../services/api';
 import { StatusBadge } from './StatusBadge';
 import { skillColorClass } from '../utils/skillColors';
 import type { CandidateDetail } from '../types';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
 

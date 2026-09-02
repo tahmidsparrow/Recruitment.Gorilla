@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import {
   Briefcase,
   Clock,
@@ -16,6 +16,7 @@ import { getCandidateFilterRoleOptions, getRecruitingAnalytics } from '../servic
 import EmptyState from '../components/common/EmptyState';
 import { SkeletonRows } from '../components/common/Loading';
 import type { AnalyticsFilterParams, RoleAppliedOption } from '../types';
+import { Button } from '@/components/ui/button';
 
 const PRESETS = [
   { id: '7d', label: '7 Days' },

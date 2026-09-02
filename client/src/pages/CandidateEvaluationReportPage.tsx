@@ -1,5 +1,4 @@
 import { Link, useParams } from 'react-router-dom';
-import { Button } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { CalendarDays, ChevronLeft, ClipboardList, Printer } from 'lucide-react';
@@ -13,6 +12,7 @@ import LoadingPanel from '../components/common/Loading';
 import { EVALUATION_SECTIONS, RECOMMENDATIONS } from '../utils/evaluationCriteria';
 import { skillColorClass } from '../utils/skillColors';
 import type { ReportEvaluation } from '../types';
+import { Button } from '@/components/ui/button';
 
 const CRITERION_LABELS: Record<string, string> = Object.fromEntries(
   EVALUATION_SECTIONS.flatMap((s) => s.criteria.map((c) => [c.key, c.label]))

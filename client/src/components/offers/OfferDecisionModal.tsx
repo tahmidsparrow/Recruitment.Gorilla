@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Form, Modal } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { recordOfferDecision } from '../../services/api';
 import type { Offer } from '../../types';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 interface OfferDecisionModalProps {
   candidateId: number;
@@ -57,7 +60,7 @@ export default function OfferDecisionModal({
 
   return (
     <Modal show={show} onHide={onHide} centered backdrop="static">
-      <Form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <Modal.Header closeButton>
           <Modal.Title>Record Candidate Offer Decision</Modal.Title>
         </Modal.Header>
@@ -66,7 +69,7 @@ export default function OfferDecisionModal({
           {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
 
           <div className="mb-3">
-            <Form.Label className="small fw-semibold">Decision</Form.Label>
+            <Label className="small fw-semibold">Decision</Label>
             <div className="d-flex gap-3">
               <Form.Check
                 type="radio"
@@ -88,17 +91,16 @@ export default function OfferDecisionModal({
           </div>
 
           {decision === 'Declined' && (
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-semibold">Decline Reason</Form.Label>
-              <Form.Control
-                as="textarea"
+            <div className="flex flex-col gap-1.5 mb-3">
+              <Label className="small fw-semibold">Decline Reason</Label>
+              <Textarea
                 rows={3}
                 required
                 placeholder="e.g. Accepted competing offer, salary expectations, relocation issues..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
-            </Form.Group>
+            </div>
           )}
 
           <p className="small text-muted mb-0">
@@ -113,14 +115,14 @@ export default function OfferDecisionModal({
             Cancel
           </Button>
           <Button
-            variant={decision === 'Accepted' ? 'success' : 'danger'}
+            
             type="submit"
             disabled={mutation.isPending}
             >
             {mutation.isPending ? 'Recording...' : `Confirm ${decision}`}
           </Button>
         </Modal.Footer>
-      </Form>
+      </form>
     </Modal>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Form } from 'react-bootstrap';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 export interface Option<T = number | string> {
   id: T;
@@ -253,11 +254,10 @@ export default function SearchableDropdown<T = number | string>({
           />
         )}
 
-        <Form.Control
+        <Input
           ref={inputRef}
           id={inputId}
           autoComplete="off"
-          size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : undefined}
           disabled={disabled}
           placeholder={open && singleSelectedOption ? singleSelectedOption.name : placeholder}
           value={getInputValue()}
@@ -276,8 +276,13 @@ export default function SearchableDropdown<T = number | string>({
             setQuery(e.target.value);
             if (!open) setOpen(true);
           }}
-          isInvalid={isInvalid}
-          className={`dropdown-trigger-input ${open ? 'dropdown-trigger-input--open' : ''}`}
+          aria-invalid={isInvalid || undefined}
+          className={cn(
+            'dropdown-trigger-input',
+            open && 'dropdown-trigger-input--open',
+            size === 'sm' && 'h-[var(--control-h-sm)] text-[length:var(--text-sm)]',
+            size === 'lg' && 'h-[var(--control-h-lg)]',
+          )}
           style={{
             paddingLeft: !open && singleSelectedOption?.color ? '23px' : '11px',
             paddingRight: '2rem',
@@ -438,7 +443,7 @@ export function SearchableSelect({
       multiple={false}
       placeholder={placeholder}
       id={id}
-      isInvalid={isInvalid}
+      aria-invalid={isInvalid || undefined}
       disabled={disabled}
       clearable={clearable}
       size={size}
@@ -479,7 +484,7 @@ export function SearchableMultiSelect({
       showTokens={showTokens}
       placeholder={placeholder}
       id={id}
-      isInvalid={isInvalid}
+      aria-invalid={isInvalid || undefined}
       disabled={disabled}
       clearable={clearable}
       size={size}

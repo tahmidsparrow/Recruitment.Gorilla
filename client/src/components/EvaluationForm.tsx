@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Collapse, Form } from 'react-bootstrap';
+import { Collapse, Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getInterviewEvaluationRubric, saveEvaluation } from '../services/api';
 import { useToast } from './ToastStack';
@@ -14,6 +14,10 @@ import {
   type Criterion,
 } from '../utils/evaluationCriteria';
 import type { EvaluationItem, EvaluationRubric, InterviewEvaluation } from '../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 type ItemMap = Record<string, { rating: number | null; comment: string }>;
 
@@ -399,9 +403,8 @@ export default function EvaluationForm({
                               })}
                             </div>
                           </div>
-                          <Form.Control
-                            size="sm"
-                            className="mt-2 eval-criterion__comment"
+                          <Input
+                            className="h-[var(--control-h-sm)] text-[length:var(--text-sm)] mt-2 eval-criterion__comment"
                             placeholder="Optional notes or examples…"
                             value={v?.comment ?? ''}
                             onChange={(e) => setItem(c.key, { comment: e.target.value })}
@@ -421,10 +424,9 @@ export default function EvaluationForm({
           <h4 className="eval-summary__title">Overall evaluation</h4>
 
           <div className="mb-3">
-            <Form.Label htmlFor="eval-general">General assessment</Form.Label>
-            <Form.Control
+            <Label htmlFor="eval-general">General assessment</Label>
+            <Textarea
               id="eval-general"
-              as="textarea"
               rows={3}
               placeholder="Summary of the interview, candidate's key strengths and concerns…"
               value={generalAssessment}
@@ -435,14 +437,14 @@ export default function EvaluationForm({
 
           <div className="row g-3 mb-3">
             <div className="col-12 col-md-6">
-              <Form.Label htmlFor="eval-rec">
+              <Label htmlFor="eval-rec">
                 Final recommendation <span className="required-star" aria-hidden="true">*</span>
-              </Form.Label>
+              </Label>
               <Form.Select
                 id="eval-rec"
                 value={recommendation}
                 onChange={(e) => setRecommendation(e.target.value)}
-                isInvalid={showErrors && recommendationMissing}
+                aria-invalid={showErrors && recommendationMissing || undefined}
               >
                 <option value="">Select a recommendation…</option>
                 {RECOMMENDATIONS.map((r) => (
@@ -451,20 +453,18 @@ export default function EvaluationForm({
                   </option>
                 ))}
               </Form.Select>
-              <Form.Control.Feedback type="invalid">
-                Recommendation is required to submit.
-              </Form.Control.Feedback>
+              <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Recommendation is required to submit.</p>
             </div>
 
             <div className="col-12 col-md-6">
-              <Form.Label htmlFor="eval-overall">
+              <Label htmlFor="eval-overall">
                 Overall rating <span className="required-star" aria-hidden="true">*</span>
-              </Form.Label>
+              </Label>
               <Form.Select
                 id="eval-overall"
                 value={overallRating}
                 onChange={(e) => setOverallRating(e.target.value)}
-                isInvalid={showErrors && overallMissing}
+                aria-invalid={showErrors && overallMissing || undefined}
               >
                 <option value="">Select an overall rating…</option>
                 {RATING_SCALE.map((r) => (
@@ -473,27 +473,23 @@ export default function EvaluationForm({
                   </option>
                 ))}
               </Form.Select>
-              <Form.Control.Feedback type="invalid">
-                Overall rating is required to submit.
-              </Form.Control.Feedback>
+              <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Overall rating is required to submit.</p>
             </div>
 
             {recommendation === 'Other' && (
               <div className="col-12">
-                <Form.Label htmlFor="eval-rec-other">
+                <Label htmlFor="eval-rec-other">
                   Please specify <span className="required-star" aria-hidden="true">*</span>
-                </Form.Label>
-                <Form.Control
+                </Label>
+                <Input
                   id="eval-rec-other"
                   value={recommendationOther}
                   onChange={(e) => setRecommendationOther(e.target.value)}
                   placeholder="e.g., Hold for senior position, Consider for different team…"
-                  isInvalid={showErrors && otherMissing}
+                  aria-invalid={showErrors && otherMissing || undefined}
                   maxLength={100}
                 />
-                <Form.Control.Feedback type="invalid">
-                  Please specify the recommendation.
-                </Form.Control.Feedback>
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Please specify the recommendation.</p>
               </div>
             )}
           </div>

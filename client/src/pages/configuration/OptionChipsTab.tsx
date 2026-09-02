@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Tags, X } from 'lucide-react';
 import { useToast } from '../../components/ToastStack';
@@ -10,6 +10,9 @@ import { Skeleton } from '../../components/common/Loading';
 import { skillColorModifier } from '../../utils/skillColors';
 import type { DeleteRoleResult, UpsertOptionPayload } from '../../types';
 import type { Opt } from './types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export interface OptionApi {
   list: (includeInactive: boolean) => Promise<Opt[]>;
@@ -212,7 +215,7 @@ export default function OptionChipsTab({
       </ConfirmModal>
 
       <Modal show={editing !== null} onHide={() => setEditing(null)} centered>
-        <Form
+        <form
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
@@ -225,16 +228,16 @@ export default function OptionChipsTab({
           </Modal.Header>
           <Modal.Body>
             <div className="form-stack">
-              <Form.Group>
-                <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label>Name <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   value={editName}
                   onChange={(e) => { setEditName(e.target.value); if (editInvalid) setEditInvalid(false); }}
-                  isInvalid={editInvalid}
+                  aria-invalid={editInvalid || undefined}
                   autoFocus
                 />
-                <Form.Control.Feedback type="invalid">Name is required.</Form.Control.Feedback>
-              </Form.Group>
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Name is required.</p>
+              </div>
               <Form.Check
                 type="checkbox"
                 id={`${queryKey}-active`}
@@ -250,7 +253,7 @@ export default function OptionChipsTab({
               {updateMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
           </Modal.Footer>
-        </Form>
+        </form>
       </Modal>
     </>
   );

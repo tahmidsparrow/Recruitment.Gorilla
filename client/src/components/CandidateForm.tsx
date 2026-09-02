@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Col, Form, Row } from 'react-bootstrap';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -12,6 +12,10 @@ import {
 import { SearchableSelect, SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
 import type { CVDraft, DuplicateCandidate } from '../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   draft: CVDraft;
@@ -164,7 +168,7 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
   return (
     // The card that hosts this form owns the heading and the file name now, so
     // the form no longer prints its own <h5> above them.
-    <Form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate>
       {saveError && (
         <div className="alert-danger-soft mb-4" role="alert">
           {saveError}
@@ -192,69 +196,69 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
 
       <Row className="g-3">
         <Col md={6}>
-          <Form.Label>Full name <Req /></Form.Label>
-          <Form.Control
+          <Label>Full name <Req /></Label>
+          <Input
             value={fullName}
             onChange={(e) => { setFullName(e.target.value); clearFE('fullName'); }}
-            isInvalid={!!fieldErrors.fullName}
+            aria-invalid={!!fieldErrors.fullName || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.fullName}</Form.Control.Feedback>
+          {fieldErrors.fullName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.fullName}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>Email <Req /></Form.Label>
-          <Form.Control
+          <Label>Email <Req /></Label>
+          <Input
             type="email"
             value={email}
             onChange={(e) => { setEmail(e.target.value); clearFE('email'); }}
-            isInvalid={!!fieldErrors.email}
+            aria-invalid={!!fieldErrors.email || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.email}</Form.Control.Feedback>
+          {fieldErrors.email ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.email}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>Phone</Form.Label>
-          <Form.Control value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Label>Phone</Label>
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Current title</Form.Label>
-          <Form.Control value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} />
+          <Label>Current title</Label>
+          <Input value={currentTitle} onChange={(e) => setCurrentTitle(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Relevant Experience <Req /></Form.Label>
-          <Form.Control
+          <Label>Relevant Experience <Req /></Label>
+          <Input
             value={relevantExperience}
             placeholder="e.g. 3 Years"
             onChange={(e) => { setRelevantExperience(e.target.value); clearFE('relevantExperience'); }}
-            isInvalid={!!fieldErrors.relevantExperience}
+            aria-invalid={!!fieldErrors.relevantExperience || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.relevantExperience}</Form.Control.Feedback>
+          {fieldErrors.relevantExperience ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.relevantExperience}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>LinkedIn URL</Form.Label>
-          <Form.Control value={linkedInUrl} onChange={(e) => setLinkedInUrl(e.target.value)} />
+          <Label>LinkedIn URL</Label>
+          <Input value={linkedInUrl} onChange={(e) => setLinkedInUrl(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>GitHub URL</Form.Label>
-          <Form.Control value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+          <Label>GitHub URL</Label>
+          <Input value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Portfolio website</Form.Label>
-          <Form.Control value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
+          <Label>Portfolio website</Label>
+          <Input value={portfolioUrl} onChange={(e) => setPortfolioUrl(e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Role applied for <Req /></Form.Label>
+          <Label>Role applied for <Req /></Label>
           <SearchableSelect
             options={roleOptions}
             value={roleAppliedOptionId}
             onChange={(v) => { setRoleAppliedOptionId(v); clearFE('roleApplied'); }}
             placeholder="Search roles…"
-            isInvalid={!!fieldErrors.roleApplied}
+            aria-invalid={!!fieldErrors.roleApplied || undefined}
           />
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
         </Col>
         <Col md={6}>
-          <Form.Label>Source</Form.Label>
+          <Label>Source</Label>
           <SearchableSelect
             options={sourceOptions}
             value={sourceOptionId}
@@ -263,15 +267,15 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Source detail</Form.Label>
-          <Form.Control
+          <Label>Source detail</Label>
+          <Input
             value={sourceDetail}
             onChange={(e) => setSourceDetail(e.target.value)}
             placeholder="Agency, campaign or board name"
           />
         </Col>
         <Col md={12}>
-          <Form.Label>Skills</Form.Label>
+          <Label>Skills</Label>
           <SearchableMultiSelect
             options={skillOptions}
             value={skillOptionIds}
@@ -280,12 +284,12 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           />
         </Col>
         <Col md={12}>
-          <Form.Label>Skills summary (from CV)</Form.Label>
-          <Form.Control as="textarea" rows={2} value={skills} onChange={(e) => setSkills(e.target.value)} />
+          <Label>Skills summary (from CV)</Label>
+          <Textarea rows={2} value={skills} onChange={(e) => setSkills(e.target.value)} />
         </Col>
         <Col md={12}>
-          <Form.Label>Summary</Form.Label>
-          <Form.Control as="textarea" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} />
+          <Label>Summary</Label>
+          <Textarea rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} />
         </Col>
         <Col md={12}>
           <div className="field-divider" />
@@ -300,27 +304,27 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
         {isReferred && (
           <>
             <Col md={6}>
-              <Form.Label>Reference name <Req /></Form.Label>
-              <Form.Control
+              <Label>Reference name <Req /></Label>
+              <Input
                 value={referenceName}
                 onChange={(e) => { setReferenceName(e.target.value); clearFE('referenceName'); }}
-                isInvalid={!!fieldErrors.referenceName}
+                aria-invalid={!!fieldErrors.referenceName || undefined}
               />
-              <Form.Control.Feedback type="invalid">{fieldErrors.referenceName}</Form.Control.Feedback>
+              {fieldErrors.referenceName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceName}</p> : null}
             </Col>
             <Col md={6}>
-              <Form.Label>Reference email <Req /></Form.Label>
-              <Form.Control
+              <Label>Reference email <Req /></Label>
+              <Input
                 type="email"
                 value={referenceEmail}
                 onChange={(e) => { setReferenceEmail(e.target.value); clearFE('referenceEmail'); }}
-                isInvalid={!!fieldErrors.referenceEmail}
+                aria-invalid={!!fieldErrors.referenceEmail || undefined}
               />
-              <Form.Control.Feedback type="invalid">{fieldErrors.referenceEmail}</Form.Control.Feedback>
+              {fieldErrors.referenceEmail ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceEmail}</p> : null}
             </Col>
             <Col md={6}>
-              <Form.Label>Employee ID</Form.Label>
-              <Form.Control
+              <Label>Employee ID</Label>
+              <Input
                 value={referenceEmployeeId}
                 onChange={(e) => setReferenceEmployeeId(e.target.value)}
               />
@@ -337,6 +341,6 @@ export default function CandidateForm({ draft, onSaved, onCancel }: Props) {
           Skip this CV
         </Button>
       </div>
-    </Form>
+    </form>
   );
 }

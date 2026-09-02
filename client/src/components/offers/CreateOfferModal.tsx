@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Button, Form, Modal, Row, Col, InputGroup } from 'react-bootstrap';
+import { Form, Modal, Row, Col, InputGroup } from 'react-bootstrap';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../ToastStack';
 import { createOffer, updateOffer } from '../../services/api';
 import type { CreateOfferPayload, Offer } from '../../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'];
 
@@ -108,7 +112,7 @@ export default function CreateOfferModal({
 
   return (
     <Modal show={show} onHide={onHide} centered backdrop="static">
-      <Form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
         <Modal.Header closeButton>
           <Modal.Title>{existingOffer ? 'Edit Offer Terms' : 'Draft New Employment Offer'}</Modal.Title>
         </Modal.Header>
@@ -116,23 +120,23 @@ export default function CreateOfferModal({
         <Modal.Body className="p-3">
           {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
 
-          <Form.Group className="mb-3">
-            <Form.Label className="small fw-semibold">Job Title / Position</Form.Label>
-            <Form.Control
+          <div className="flex flex-col gap-1.5 mb-3">
+            <Label className="small fw-semibold">Job Title / Position</Label>
+            <Input
               type="text"
               required
               placeholder="e.g. Senior Software Engineer"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
             />
-          </Form.Group>
+          </div>
 
           <Row className="g-2 mb-3">
             <Col sm={8}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Annual Base Salary</Form.Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Annual Base Salary</Label>
                 <InputGroup>
-                  <Form.Control
+                  <Input
                     type="number"
                     step="0.01"
                     min="1"
@@ -142,11 +146,11 @@ export default function CreateOfferModal({
                     onChange={(e) => setBaseSalary(e.target.value)}
                   />
                 </InputGroup>
-              </Form.Group>
+              </div>
             </Col>
             <Col sm={4}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Currency</Form.Label>
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Currency</Label>
                 <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
                   {CURRENCIES.map((c) => (
                     <option key={c} value={c}>
@@ -154,15 +158,15 @@ export default function CreateOfferModal({
                     </option>
                   ))}
                 </Form.Select>
-              </Form.Group>
+              </div>
             </Col>
           </Row>
 
           <Row className="g-2 mb-3">
             <Col sm={6}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Signing / Annual Bonus (Optional)</Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Signing / Annual Bonus (Optional)</Label>
+                <Input
                   type="number"
                   step="0.01"
                   min="0"
@@ -170,54 +174,53 @@ export default function CreateOfferModal({
                   value={bonus}
                   onChange={(e) => setBonus(e.target.value)}
                 />
-              </Form.Group>
+              </div>
             </Col>
             <Col sm={6}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Equity / Options (Optional)</Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Equity / Options (Optional)</Label>
+                <Input
                   type="text"
                   placeholder="e.g. 10,000 RSUs or 0.25%"
                   value={equity}
                   onChange={(e) => setEquity(e.target.value)}
                 />
-              </Form.Group>
+              </div>
             </Col>
           </Row>
 
           <Row className="g-2 mb-3">
             <Col sm={6}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Proposed Start Date</Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Proposed Start Date</Label>
+                <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
-              </Form.Group>
+              </div>
             </Col>
             <Col sm={6}>
-              <Form.Group>
-                <Form.Label className="small fw-semibold">Offer Expiration Date</Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label className="small fw-semibold">Offer Expiration Date</Label>
+                <Input
                   type="date"
                   value={expirationDate}
                   onChange={(e) => setExpirationDate(e.target.value)}
                 />
-              </Form.Group>
+              </div>
             </Col>
           </Row>
 
-          <Form.Group>
-            <Form.Label className="small fw-semibold">Additional Terms & Notes</Form.Label>
-            <Form.Control
-              as="textarea"
+          <div className="flex flex-col gap-1.5">
+            <Label className="small fw-semibold">Additional Terms & Notes</Label>
+            <Textarea
               rows={3}
               placeholder="e.g. Standard benefits package, 4 weeks PTO, hybrid schedule..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
-          </Form.Group>
+          </div>
         </Modal.Body>
 
         <Modal.Footer>
@@ -228,7 +231,7 @@ export default function CreateOfferModal({
             {mutation.isPending ? 'Saving...' : existingOffer ? 'Save Changes' : 'Create Offer'}
           </Button>
         </Modal.Footer>
-      </Form>
+      </form>
     </Modal>
   );
 }

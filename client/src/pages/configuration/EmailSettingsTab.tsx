@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEmailSettings, saveEmailSettings, sendTestEmail } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
@@ -7,6 +7,9 @@ import { useToast } from '../../components/ToastStack';
 import PasswordInput from '../../components/common/PasswordInput';
 import SectionCard from '../../components/common/SectionCard';
 import { SkeletonRows } from '../../components/common/Loading';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 /**
  * SMTP configuration, grouped into Server / Credentials / Sender rather than
@@ -85,7 +88,7 @@ export default function EmailSettingsTab() {
           </span>
         }
       >
-        <Form
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             saveMutation.mutate();
@@ -95,12 +98,12 @@ export default function EmailSettingsTab() {
             <div className="form-section__title">Server</div>
             <div className="row g-3">
               <div className="col-12 col-sm-8">
-                <Form.Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
+                <Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
               </div>
               <div className="col-12 col-sm-4">
-                <Form.Label>Port <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
+                <Label>Port <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
               </div>
               <div className="col-12">
                 <Form.Check
@@ -118,21 +121,21 @@ export default function EmailSettingsTab() {
             <div className="form-section__title">Credentials</div>
             <div className="row g-3">
               <div className="col-12 col-md-6">
-                <Form.Label>Username</Form.Label>
-                <Form.Control value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
+                <Label>Username</Label>
+                <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>App password</Form.Label>
+                <Label>App password</Label>
                 <PasswordInput
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
                   placeholder={data?.passwordSet ? '•••••••• (leave blank to keep)' : 'App password'}
                 />
-                <Form.Text muted>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
                   Gmail/Workspace: a 16-character App Password, not your account password. Other
                   providers: your SMTP password.
-                </Form.Text>
+                </p>
               </div>
             </div>
           </div>
@@ -141,16 +144,16 @@ export default function EmailSettingsTab() {
             <div className="form-section__title">Sender</div>
             <div className="row g-3">
               <div className="col-12 col-md-6">
-                <Form.Label>From address <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+                <Label>From address <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   value={fromAddress}
                   onChange={(e) => setFromAddress(e.target.value)}
                   placeholder="you@example.com"
                 />
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>From name</Form.Label>
-                <Form.Control value={fromName} onChange={(e) => setFromName(e.target.value)} />
+                <Label>From name</Label>
+                <Input value={fromName} onChange={(e) => setFromName(e.target.value)} />
               </div>
             </div>
           </div>
@@ -170,7 +173,7 @@ export default function EmailSettingsTab() {
               {saveMutation.isPending ? 'Saving…' : 'Save settings'}
             </Button>
           </div>
-        </Form>
+        </form>
       </SectionCard>
 
       <SectionCard
@@ -178,7 +181,7 @@ export default function EmailSettingsTab() {
         description="Uses the saved configuration, so save any changes first."
       >
         <div className="d-flex flex-wrap gap-2 align-items-start">
-          <Form.Control
+          <Input
             type="email"
             value={testTo}
             onChange={(e) => setTestTo(e.target.value)}

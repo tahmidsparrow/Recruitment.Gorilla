@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Button, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Col, Form, Modal, Row } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   addStatus,
   getActiveInterviewTypes,
@@ -157,7 +162,7 @@ export default function AddStatusModal({
 
   return (
     <Modal show={show} onHide={handleHide} centered size="lg">
-      <Form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate>
         <Modal.Header closeButton>
           <Modal.Title>
             {candidateName ? `Advance Status — ${candidateName}` : 'Add a status'}
@@ -174,16 +179,16 @@ export default function AddStatusModal({
           )}
           <Row className="g-3">
             <Col md={12}>
-              <Form.Label className="mb-1">
+              <Label className="mb-1">
                 New status <Req />
-              </Form.Label>
+              </Label>
               <Form.Select
                 value={status}
                 onChange={(e) => {
                   setStatus(e.target.value);
                   clearFE('status');
                 }}
-                isInvalid={!!fieldErrors.status}
+                aria-invalid={!!fieldErrors.status || undefined}
               >
                 <option value="">Select status</option>
                 {statusOptions.map((option) => (
@@ -195,67 +200,66 @@ export default function AddStatusModal({
                   <option value={initialStatus}>{initialStatus}</option>
                 )}
               </Form.Select>
-              <Form.Control.Feedback type="invalid">{fieldErrors.status}</Form.Control.Feedback>
+              {fieldErrors.status ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.status}</p> : null}
             </Col>
 
             {requiresTaskDetails && (
               <Col md={12}>
-                <Form.Label className="mb-1">
+                <Label className="mb-1">
                   Task details <Req />
-                </Form.Label>
-                <Form.Control
-                  as="textarea"
+                </Label>
+                <Textarea
                   rows={2}
                   value={taskDetails}
                   onChange={(e) => {
                     setTaskDetails(e.target.value);
                     clearFE('taskDetails');
                   }}
-                  isInvalid={!!fieldErrors.taskDetails}
+                  aria-invalid={!!fieldErrors.taskDetails || undefined}
                 />
-                <Form.Control.Feedback type="invalid">{fieldErrors.taskDetails}</Form.Control.Feedback>
+                {fieldErrors.taskDetails ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.taskDetails}</p> : null}
               </Col>
             )}
 
             {requiresSubmissionUrl && (
               <Col md={12}>
-                <Form.Label className="mb-1">
+                <Label className="mb-1">
                   Submission link <Req />
-                </Form.Label>
-                <Form.Control
+                </Label>
+                <Input
                   type="url"
                   value={submissionUrl}
                   onChange={(e) => {
                     setSubmissionUrl(e.target.value);
                     clearFE('submissionUrl');
                   }}
-                  isInvalid={!!fieldErrors.submissionUrl}
+                  aria-invalid={!!fieldErrors.submissionUrl || undefined}
                 />
-                <Form.Control.Feedback type="invalid">{fieldErrors.submissionUrl}</Form.Control.Feedback>
+                {fieldErrors.submissionUrl ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.submissionUrl}</p> : null}
               </Col>
             )}
 
             {requiresInterviewAt && (
               <Col md={12}>
-                <Form.Label className="mb-1">
+                <Label className="mb-1">
                   Interview date/time <Req />
-                </Form.Label>
-                <Form.Control
+                </Label>
+                <Input
                   type="datetime-local"
                   value={interviewAt}
                   onChange={(e) => {
                     setInterviewAt(e.target.value);
                     clearFE('interviewAt');
                   }}
-                  isInvalid={!!fieldErrors.interviewAt}
+                  aria-invalid={!!fieldErrors.interviewAt || undefined}
                 />
-                <Form.Control.Feedback type="invalid">{fieldErrors.interviewAt}</Form.Control.Feedback>
+                {fieldErrors.interviewAt ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.interviewAt}</p> : null}
               </Col>
             )}
 
             {requiresInterviewAt && (
               <Col md={12}>
-                <Form.Label className="mb-1">Duration</Form.Label>
+                <Label className="mb-1">Duration</Label>
                 <Form.Select
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
@@ -267,28 +271,28 @@ export default function AddStatusModal({
                     </option>
                   ))}
                 </Form.Select>
-                <Form.Text muted>Sets the end time on the calendar invite sent to interviewers.</Form.Text>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Sets the end time on the calendar invite sent to interviewers.</p>
               </Col>
             )}
 
             {requiresInterviewers && (
               <Col md={12}>
-                <Form.Label className="mb-1">Interview types</Form.Label>
+                <Label className="mb-1">Interview types</Label>
                 <SearchableMultiSelect
                   options={interviewTypes.map((t) => ({ id: t.id, name: t.name }))}
                   value={interviewTypeIds}
                   onChange={setInterviewTypeIds}
                   placeholder="Tag this interview (Technical, HR, 1st Level…)"
                 />
-                <Form.Text muted>Optional tags shown on the status history and interview page.</Form.Text>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Optional tags shown on the status history and interview page.</p>
               </Col>
             )}
 
             {requiresInterviewers && (
               <Col md={12}>
-                <Form.Label className="mb-1">
+                <Label className="mb-1">
                   Interviewers <Req />
-                </Form.Label>
+                </Label>
                 <SearchableMultiSelect
                   options={assignableUsers.map((u) => ({ id: u.id, name: u.name }))}
                   value={interviewerIds}
@@ -301,20 +305,19 @@ export default function AddStatusModal({
                 {fieldErrors.interviewers && (
                   <div className="text-danger small mt-1">{fieldErrors.interviewers}</div>
                 )}
-                <Form.Text muted>Assigned users are notified and can fill the evaluation form.</Form.Text>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Assigned users are notified and can fill the evaluation form.</p>
               </Col>
             )}
 
             <Col md={12}>
               {requiresComment ? (
-                <Form.Label className="mb-1">
+                <Label className="mb-1">
                   Comment <Req />
-                </Form.Label>
+                </Label>
               ) : (
-                requiresInterviewers && <Form.Label className="mb-1">Notes for interviewers (optional)</Form.Label>
+                requiresInterviewers && <Label className="mb-1">Notes for interviewers (optional)</Label>
               )}
-              <Form.Control
-                as="textarea"
+              <Textarea
                 rows={2}
                 placeholder={requiresComment || requiresInterviewers ? '' : 'Comment (optional)'}
                 value={comment}
@@ -322,12 +325,12 @@ export default function AddStatusModal({
                   setComment(e.target.value);
                   clearFE('comment');
                 }}
-                isInvalid={!!fieldErrors.comment}
+                aria-invalid={!!fieldErrors.comment || undefined}
               />
               {requiresInterviewers && (
-                <Form.Text muted>Shared with the assigned interviewers on the interview page.</Form.Text>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Shared with the assigned interviewers on the interview page.</p>
               )}
-              <Form.Control.Feedback type="invalid">{fieldErrors.comment}</Form.Control.Feedback>
+              {fieldErrors.comment ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.comment}</p> : null}
             </Col>
           </Row>
         </Modal.Body>
@@ -345,7 +348,7 @@ export default function AddStatusModal({
             )}
           </Button>
         </Modal.Footer>
-      </Form>
+      </form>
     </Modal>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { KeyRound, Pencil, UserCheck, UserCog, UserPlus, UserX } from 'lucide-react';
@@ -17,6 +17,9 @@ import PageHeader from '../components/common/PageHeader';
 import RowActions, { RowAction } from '../components/common/RowActions';
 import { SkeletonRows } from '../components/common/Loading';
 import { ALL_ROLES, type Role, type UserListItem } from '../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 /**
  * Roles as pill badges rather than raw Bootstrap `<Badge bg="…">`, which
@@ -287,7 +290,7 @@ export default function UsersPage() {
 
       {/* Create / edit modal */}
       <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
-        <Form onSubmit={submitForm}>
+        <form onSubmit={submitForm}>
           <Modal.Header closeButton>
             <Modal.Title>{editing ? 'Edit user' : 'Add user'}</Modal.Title>
           </Modal.Header>
@@ -298,24 +301,24 @@ export default function UsersPage() {
                   {formError}
                 </div>
               )}
-              <Form.Group>
-                <Form.Label>Name <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Email <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label>Name <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Email <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={!!editing}
                 />
-                {editing && <Form.Text className="text-muted">Email can't be changed.</Form.Text>}
-              </Form.Group>
-              <Form.Group>
-                <Form.Label as="legend">
+                {editing && <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Email can't be changed.</p>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <legend className="text-[length:var(--text-sm)] font-semibold text-text-soft">
                   Roles <span className="required-star" aria-hidden="true">*</span>
-                </Form.Label>
+                </legend>
                 <div className="check-grid">
                   {ALL_ROLES.map((r) => (
                     <Form.Check
@@ -328,19 +331,19 @@ export default function UsersPage() {
                     />
                   ))}
                 </div>
-              </Form.Group>
+              </div>
               {!editing && (
-                <Form.Group>
-                  <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                  <Form.Control
+                <div className="flex flex-col gap-1.5">
+                  <Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Label>
+                  <Input
                     value={temporaryPassword}
                     onChange={(e) => setTemporaryPassword(e.target.value)}
                     autoComplete="off"
                   />
-                  <Form.Text className="text-muted">
+                  <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
                     At least 8 characters. The user must change it on first login.
-                  </Form.Text>
-                </Form.Group>
+                  </p>
+                </div>
               )}
               {editing && (
                 <Form.Check
@@ -361,12 +364,12 @@ export default function UsersPage() {
               {saveMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
           </Modal.Footer>
-        </Form>
+        </form>
       </Modal>
 
       {/* Reset password modal */}
       <Modal show={resetTarget !== null} onHide={() => setResetTarget(null)} centered>
-        <Form onSubmit={submitReset}>
+        <form onSubmit={submitReset}>
           <Modal.Header closeButton>
             <Modal.Title>Reset password</Modal.Title>
           </Modal.Header>
@@ -381,16 +384,16 @@ export default function UsersPage() {
                 Set a temporary password for <strong>{resetTarget?.name}</strong>. They'll be required
                 to change it on next login.
               </p>
-              <Form.Group>
-                <Form.Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+              <div className="flex flex-col gap-1.5">
+                <Label>Temporary password <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   value={resetPassword}
                   onChange={(e) => setResetPassword(e.target.value)}
                   autoComplete="off"
                   autoFocus
                 />
-                <Form.Text className="text-muted">At least 8 characters.</Form.Text>
-              </Form.Group>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">At least 8 characters.</p>
+              </div>
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -401,7 +404,7 @@ export default function UsersPage() {
               {resetMutation.isPending ? 'Saving…' : 'Reset password'}
             </Button>
           </Modal.Footer>
-        </Form>
+        </form>
       </Modal>
     </Page>
   );

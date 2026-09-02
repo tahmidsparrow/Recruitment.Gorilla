@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Form, Modal } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Briefcase, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
@@ -27,6 +27,9 @@ import {
 } from '../../utils/jobStatus';
 import type { UpsertOptionPayload } from '../../types';
 import type { Opt } from './types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const LOCATIONS = ['Remote', 'Office', 'Hybrid', 'Contractual'];
@@ -204,7 +207,7 @@ export default function JobOpeningsTab() {
           <div className="data-toolbar">
           <div className="search-field data-toolbar__search">
             <Search size={15} strokeWidth={1.75} aria-hidden="true" className="search-field__icon" />
-            <Form.Control
+            <Input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -279,7 +282,7 @@ export default function JobOpeningsTab() {
       )}
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
-        <Form
+        <form
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
@@ -305,51 +308,51 @@ export default function JobOpeningsTab() {
                 derived and both are shown on the card, so they are gone. */}
             <div className="row g-3">
               <div className="col-12">
-                <Form.Label>Role name <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+                <Label>Role name <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   value={name}
                   onChange={(e) => { setName(e.target.value); if (nameInvalid) setNameInvalid(false); }}
-                  isInvalid={nameInvalid}
+                  aria-invalid={nameInvalid || undefined}
                   autoFocus
                 />
-                <Form.Control.Feedback type="invalid">Role name is required.</Form.Control.Feedback>
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Role name is required.</p>
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>Closes <span className="required-star" aria-hidden="true">*</span></Form.Label>
-                <Form.Control
+                <Label>Closes <span className="required-star" aria-hidden="true">*</span></Label>
+                <Input
                   type="datetime-local"
                   value={endDate}
                   onChange={(e) => { setEndDate(e.target.value); if (endDateInvalid) setEndDateInvalid(false); }}
-                  isInvalid={endDateInvalid}
+                  aria-invalid={endDateInvalid || undefined}
                 />
-                <Form.Control.Feedback type="invalid">A closing date is required.</Form.Control.Feedback>
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">A closing date is required.</p>
                 {editing?.createdAt && (
-                  <Form.Text muted>Posted {formatDate(editing.createdAt)}.</Form.Text>
+                  <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Posted {formatDate(editing.createdAt)}.</p>
                 )}
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>Priority</Form.Label>
+                <Label>Priority</Label>
                 <Form.Select value={priority} onChange={(e) => setPriority(e.target.value)}>
                   <option value="">None</option>
                   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
                 </Form.Select>
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>Location</Form.Label>
+                <Label>Location</Label>
                 <Form.Select value={location} onChange={(e) => setLocation(e.target.value)}>
                   <option value="">None</option>
                   {LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
                 </Form.Select>
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>Department</Form.Label>
+                <Label>Department</Label>
                 <Form.Select value={department} onChange={(e) => setDepartment(e.target.value)}>
                   <option value="">None</option>
                   {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </Form.Select>
               </div>
               <div className="col-12 col-md-6">
-                <Form.Label>Evaluation rubric</Form.Label>
+                <Label>Evaluation rubric</Label>
                 <SearchableDropdown<number>
                   options={rubricOptions}
                   value={evaluationRubricId}
@@ -358,22 +361,22 @@ export default function JobOpeningsTab() {
                   emptyMessage="No rubric found"
                   clearable
                 />
-                <Form.Text muted>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
                   Determines the scorecard criteria and sections for candidates in this opening.
-                </Form.Text>
+                </p>
               </div>
               <div className="col-12">
-                <Form.Label>Recruiters</Form.Label>
+                <Label>Recruiters</Label>
                 <SearchableMultiSelect
                   options={recruiterOptions}
                   value={recruiterUserIds}
                   onChange={setRecruiterUserIds}
                   placeholder="Search by name or email…"
                 />
-                <Form.Text muted>
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
                   Each assigned recruiter can access every candidate under this role. Only users with
                   the Recruiter role or higher are listed — an Interviewer would gain no access.
-                </Form.Text>
+                </p>
               </div>
               <div className="col-12">
                 <Form.Check
@@ -392,7 +395,7 @@ export default function JobOpeningsTab() {
               {saveMutation.isPending ? 'Saving…' : 'Save'}
             </Button>
           </Modal.Footer>
-        </Form>
+        </form>
       </Modal>
 
       {/* The shared confirm dialog rather than a fourth hand-rolled copy of the

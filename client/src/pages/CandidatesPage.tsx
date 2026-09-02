@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Button, Form, InputGroup } from 'react-bootstrap';
+import { Form, InputGroup } from 'react-bootstrap';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import {
@@ -23,6 +23,8 @@ import RowActions, { RowAction } from '../components/common/RowActions';
 import { SkeletonRows } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const PAGE_SIZE = 20;
 
@@ -209,9 +211,9 @@ export default function CandidatesPage() {
             results they filter are one object, so the seam is a rule rather
             than a 20px gap with page background showing through. */}
         <div className={`data-toolbar${showsTable ? ' data-toolbar--attached' : ''}`}>
-          <Form onSubmit={applySearch} className="data-toolbar__search" role="search">
+          <form onSubmit={applySearch} className="data-toolbar__search" role="search">
             <InputGroup>
-              <Form.Control
+              <Input
                 type="search"
                 placeholder="Search by name, email or phone"
                 value={searchInput}
@@ -222,7 +224,7 @@ export default function CandidatesPage() {
                 <Search size={15} strokeWidth={1.75} aria-hidden="true" />
               </Button>
             </InputGroup>
-          </Form>
+          </form>
 
           <div className="data-toolbar__field">
             <SearchableDropdown<string>

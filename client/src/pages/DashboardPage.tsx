@@ -34,6 +34,7 @@ import SectionCard from '../components/common/SectionCard';
 import { SkeletonCards } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { ActivityItem, UpcomingInterview } from '../types';
+import { Label } from '@/components/ui/label';
 
 const relativeTime = (iso: string): string => {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -224,9 +225,9 @@ export default function DashboardPage() {
             </div>
             {isRecruiterOnly && assignedRoles.length > 0 && (
               <div className="section-head__actions">
-                <Form.Label htmlFor="pipeline-role" className="mb-0 form-help">
+                <Label htmlFor="pipeline-role" className="mb-0 form-help">
                   Role
-                </Form.Label>
+                </Label>
                 <Form.Select
                   id="pipeline-role"
                   size="sm"

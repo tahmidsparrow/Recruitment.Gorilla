@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ScrollText } from 'lucide-react';
 import { getAuditLog } from '../services/api';
@@ -9,6 +9,9 @@ import Page from '../components/common/Page';
 import Pagination from '../components/common/Pagination';
 import { SkeletonRows } from '../components/common/Loading';
 import type { AuditQuery } from '../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const ENTITY_TYPES = ['Candidate', 'Interview', 'Role', 'Skill', 'InterviewType', 'User'];
 const PAGE_SIZE = 50;
@@ -78,10 +81,10 @@ export default function AuditLogPage() {
           "Audit". A title and a caption over four labelled inputs was just
           height. */}
       <div className="pulse-card">
-        <Form onSubmit={applyFilters}>
+        <form onSubmit={applyFilters}>
           <Row className="g-3 align-items-end">
             <Col xs={12} md={6} lg={3}>
-              <Form.Label htmlFor="audit-entity">Entity type</Form.Label>
+              <Label htmlFor="audit-entity">Entity type</Label>
               <SearchableDropdown<string>
                 id="audit-entity"
                 options={entityOptions}
@@ -93,23 +96,23 @@ export default function AuditLogPage() {
               />
             </Col>
             <Col xs={12} md={6} lg={3}>
-              <Form.Label htmlFor="audit-action">Action contains</Form.Label>
-              <Form.Control id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
+              <Label htmlFor="audit-action">Action contains</Label>
+              <Input id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
             </Col>
             <Col xs={12} sm={6} lg={2}>
-              <Form.Label htmlFor="audit-from">From</Form.Label>
-              <Form.Control id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Label htmlFor="audit-from">From</Label>
+              <Input id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
             </Col>
             <Col xs={12} sm={6} lg={2}>
-              <Form.Label htmlFor="audit-to">To</Form.Label>
-              <Form.Control id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+              <Label htmlFor="audit-to">To</Label>
+              <Input id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
             </Col>
             <Col xs={12} lg={2} className="d-flex gap-2">
               <Button type="submit" className="flex-grow-1">Filter</Button>
               <Button type="button" variant="outline" onClick={reset}>Reset</Button>
             </Col>
           </Row>
-        </Form>
+        </form>
       </div>
 
       {isLoading ? (

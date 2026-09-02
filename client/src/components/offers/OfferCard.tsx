@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button, Badge, Spinner } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, DollarSign, Download, Edit3, FileText, Plus, Send, XCircle } from 'lucide-react';
 import { useToast } from '../ToastStack';
@@ -14,6 +13,9 @@ import {
 import type { CandidateDetail, Offer } from '../../types';
 import CreateOfferModal from './CreateOfferModal';
 import OfferDecisionModal from './OfferDecisionModal';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
 
 interface OfferCardProps {
   candidate: CandidateDetail;
@@ -94,14 +96,14 @@ export default function OfferCard({ candidate }: OfferCardProps) {
       case 'Accepted':
         return 'success';
       case 'Extended':
-        return 'primary';
+        return 'brand';
       case 'PendingApproval':
         return 'warning';
       case 'Declined':
       case 'Withdrawn':
         return 'danger';
       default:
-        return 'secondary';
+        return 'neutral';
     }
   };
 
@@ -123,7 +125,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
             <DollarSign size={17} className="text-primary" />
             <span className="fw-semibold small">Offer & Compensation</span>
             {latestOffer && (
-              <Badge bg={getStatusBadgeVariant(latestOffer.status)} className="ms-1 fw-normal">
+              <Badge variant={getStatusBadgeVariant(latestOffer.status)} className="ms-1 fw-normal">
                 {latestOffer.status}
               </Badge>
             )}
@@ -297,7 +299,7 @@ export default function OfferCard({ candidate }: OfferCardProps) {
                       <XCircle size={14} /> Reject
                     </Button>
                     <Button
-                      variant="success"
+                      
                       size="sm"
                       className="d-flex align-items-center gap-1.5"
                       disabled={reviewMutation.isPending}

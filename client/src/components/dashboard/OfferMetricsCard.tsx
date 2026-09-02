@@ -1,6 +1,7 @@
-import { Card, Row, Col, ProgressBar, Badge } from 'react-bootstrap';
+import { Card, Row, Col, ProgressBar } from 'react-bootstrap';
 import { Award, CheckCircle, FileSignature } from 'lucide-react';
 import type { OfferMetrics } from '../../types';
+import { Badge } from '@/components/ui/badge';
 
 interface OfferMetricsCardProps {
   metrics: OfferMetrics;
@@ -14,7 +15,7 @@ export default function OfferMetricsCard({ metrics }: OfferMetricsCardProps) {
           <FileSignature size={18} className="text-primary" />
           <span className="fw-bold small">Offer & Hiring Conversion</span>
         </div>
-        <Badge bg={metrics.acceptanceRatePercentage >= 75 ? 'success' : 'primary'} className="fw-normal">
+        <Badge variant={metrics.acceptanceRatePercentage >= 75 ? 'success' : 'neutral'} className="fw-normal">
           {metrics.acceptanceRatePercentage}% Acceptance Rate
         </Badge>
       </Card.Header>
@@ -60,7 +61,7 @@ export default function OfferMetricsCard({ metrics }: OfferMetricsCardProps) {
           </div>
           <ProgressBar
             now={metrics.acceptanceRatePercentage}
-            variant={metrics.acceptanceRatePercentage >= 70 ? 'success' : 'warning'}
+            
             style={{ height: '8px' }}
           />
         </div>

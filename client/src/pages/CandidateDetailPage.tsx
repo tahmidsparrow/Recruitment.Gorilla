@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Button, Col, Form, Row, Modal, Offcanvas } from 'react-bootstrap';
+import { Col, Form, Row, Modal, Offcanvas } from 'react-bootstrap';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ClipboardList, FileText, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -29,6 +29,10 @@ import RowActions, { RowAction } from '../components/common/RowActions';
 import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateDetail } from '../types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 
@@ -460,123 +464,123 @@ function ProfileEditor({
   };
 
   return (
-    <Form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate>
       <fieldset className="border-0 p-0 m-0">
       <Row className="g-3">
         <Col md={6}>
-          <Form.Label>Full name <Req /></Form.Label>
-          <Form.Control
+          <Label>Full name <Req /></Label>
+          <Input
             value={form.fullName}
             onChange={(e) => { set('fullName', e.target.value); clearFE('fullName'); }}
-            isInvalid={!!fieldErrors.fullName}
+            aria-invalid={!!fieldErrors.fullName || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.fullName}</Form.Control.Feedback>
+          {fieldErrors.fullName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.fullName}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>Email <Req /></Form.Label>
-          <Form.Control
+          <Label>Email <Req /></Label>
+          <Input
             value={form.email}
             onChange={(e) => { set('email', e.target.value); clearFE('email'); }}
-            isInvalid={!!fieldErrors.email}
+            aria-invalid={!!fieldErrors.email || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.email}</Form.Control.Feedback>
+          {fieldErrors.email ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.email}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>Phone</Form.Label>
-          <Form.Control value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
+          <Label>Phone</Label>
+          <Input value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
         </Col>
         <Col md={6}>
-          <Form.Label>Location</Form.Label>
-          <Form.Control
+          <Label>Location</Label>
+          <Input
             value={form.location ?? ''}
             placeholder="e.g. Dhaka, Bangladesh"
             onChange={(e) => set('location', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Current title</Form.Label>
-          <Form.Control
+          <Label>Current title</Label>
+          <Input
             value={form.currentTitle ?? ''}
             onChange={(e) => set('currentTitle', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Relevant Experience <Req /></Form.Label>
-          <Form.Control
+          <Label>Relevant Experience <Req /></Label>
+          <Input
             value={form.relevantExperience ?? ''}
             placeholder="e.g. 3 Years"
             onChange={(e) => { set('relevantExperience', e.target.value); clearFE('relevantExperience'); }}
-            isInvalid={!!fieldErrors.relevantExperience}
+            aria-invalid={!!fieldErrors.relevantExperience || undefined}
           />
-          <Form.Control.Feedback type="invalid">{fieldErrors.relevantExperience}</Form.Control.Feedback>
+          {fieldErrors.relevantExperience ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.relevantExperience}</p> : null}
         </Col>
         <Col md={6}>
-          <Form.Label>LinkedIn URL</Form.Label>
-          <Form.Control
+          <Label>LinkedIn URL</Label>
+          <Input
             value={form.linkedInUrl ?? ''}
             onChange={(e) => set('linkedInUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>GitHub URL</Form.Label>
-          <Form.Control
+          <Label>GitHub URL</Label>
+          <Input
             value={form.githubUrl ?? ''}
             onChange={(e) => set('githubUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>GitLab URL</Form.Label>
-          <Form.Control
+          <Label>GitLab URL</Label>
+          <Input
             value={form.gitLabUrl ?? ''}
             onChange={(e) => set('gitLabUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>LeetCode Profile</Form.Label>
-          <Form.Control
+          <Label>LeetCode Profile</Label>
+          <Input
             value={form.leetCodeUrl ?? ''}
             placeholder="https://leetcode.com/u/..."
             onChange={(e) => set('leetCodeUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Codeforces Profile</Form.Label>
-          <Form.Control
+          <Label>Codeforces Profile</Label>
+          <Input
             value={form.codeforcesUrl ?? ''}
             placeholder="https://codeforces.com/profile/..."
             onChange={(e) => set('codeforcesUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>HackerRank Profile</Form.Label>
-          <Form.Control
+          <Label>HackerRank Profile</Label>
+          <Input
             value={form.hackerRankUrl ?? ''}
             placeholder="https://hackerrank.com/profile/..."
             onChange={(e) => set('hackerRankUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Portfolio website</Form.Label>
-          <Form.Control
+          <Label>Portfolio website</Label>
+          <Input
             value={form.portfolioUrl ?? ''}
             onChange={(e) => set('portfolioUrl', e.target.value)}
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Role applied for <Req /></Form.Label>
+          <Label>Role applied for <Req /></Label>
           <SearchableSelect
             options={roleOptions}
             value={form.roleAppliedOptionId}
             onChange={(roleAppliedOptionId) => { setForm((f) => ({ ...f, roleAppliedOptionId })); clearFE('roleApplied'); }}
             placeholder="Search roles…"
-            isInvalid={!!fieldErrors.roleApplied}
+            aria-invalid={!!fieldErrors.roleApplied || undefined}
           />
           {fieldErrors.roleApplied && (
             <div className="invalid-feedback d-block">{fieldErrors.roleApplied}</div>
           )}
         </Col>
         <Col md={6}>
-          <Form.Label>Source</Form.Label>
+          <Label>Source</Label>
           <SearchableSelect
             options={sourceOptions}
             value={form.sourceOptionId}
@@ -585,15 +589,15 @@ function ProfileEditor({
           />
         </Col>
         <Col md={6}>
-          <Form.Label>Source detail</Form.Label>
-          <Form.Control
+          <Label>Source detail</Label>
+          <Input
             value={form.sourceDetail ?? ''}
             onChange={(e) => set('sourceDetail', e.target.value)}
             placeholder="Agency, campaign or board name"
           />
         </Col>
         <Col md={12}>
-          <Form.Label>Skills</Form.Label>
+          <Label>Skills</Label>
           <SearchableMultiSelect
             options={skillOptions}
             value={skillIds}
@@ -602,18 +606,16 @@ function ProfileEditor({
           />
         </Col>
         <Col md={12}>
-          <Form.Label>Skills summary (from CV)</Form.Label>
-          <Form.Control
-            as="textarea"
+          <Label>Skills summary (from CV)</Label>
+          <Textarea
             rows={2}
             value={form.skills ?? ''}
             onChange={(e) => set('skills', e.target.value)}
           />
         </Col>
         <Col md={12}>
-          <Form.Label>Summary</Form.Label>
-          <Form.Control
-            as="textarea"
+          <Label>Summary</Label>
+          <Textarea
             rows={3}
             value={form.summary ?? ''}
             onChange={(e) => set('summary', e.target.value)}
@@ -633,27 +635,27 @@ function ProfileEditor({
         {form.isReferred && (
           <>
             <Col md={6}>
-              <Form.Label>Reference name <Req /></Form.Label>
-              <Form.Control
+              <Label>Reference name <Req /></Label>
+              <Input
                 value={form.referenceName ?? ''}
                 onChange={(e) => { set('referenceName', e.target.value); clearFE('referenceName'); }}
-                isInvalid={!!fieldErrors.referenceName}
+                aria-invalid={!!fieldErrors.referenceName || undefined}
               />
-              <Form.Control.Feedback type="invalid">{fieldErrors.referenceName}</Form.Control.Feedback>
+              {fieldErrors.referenceName ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceName}</p> : null}
             </Col>
             <Col md={6}>
-              <Form.Label>Reference email <Req /></Form.Label>
-              <Form.Control
+              <Label>Reference email <Req /></Label>
+              <Input
                 type="email"
                 value={form.referenceEmail ?? ''}
                 onChange={(e) => { set('referenceEmail', e.target.value); clearFE('referenceEmail'); }}
-                isInvalid={!!fieldErrors.referenceEmail}
+                aria-invalid={!!fieldErrors.referenceEmail || undefined}
               />
-              <Form.Control.Feedback type="invalid">{fieldErrors.referenceEmail}</Form.Control.Feedback>
+              {fieldErrors.referenceEmail ? <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">{fieldErrors.referenceEmail}</p> : null}
             </Col>
             <Col md={6}>
-              <Form.Label>Employee ID</Form.Label>
-              <Form.Control
+              <Label>Employee ID</Label>
+              <Input
                 value={form.referenceEmployeeId ?? ''}
                 onChange={(e) => set('referenceEmployeeId', e.target.value)}
               />
@@ -671,7 +673,7 @@ function ProfileEditor({
           Cancel
         </Button>
       </div>
-    </Form>
+    </form>
   );
 }
 

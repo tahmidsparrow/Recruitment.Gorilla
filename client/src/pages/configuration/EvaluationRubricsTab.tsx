@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Form, Modal } from 'react-bootstrap';
+import { Form, Modal } from 'react-bootstrap';
 import {
   Copy,
   FileCheck2,
@@ -22,6 +22,11 @@ import {
 import ConfirmModal from '../../components/common/ConfirmModal';
 import EmptyState from '../../components/common/EmptyState';
 import { SkeletonRows } from '../../components/common/Loading';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 import type {
   EvaluationRubric,
   UpsertEvaluationRubricPayload,
@@ -512,7 +517,7 @@ export default function EvaluationRubricsTab() {
         backdrop="static"
         dialogClassName="rubric-editor-dialog"
       >
-        <Form onSubmit={handleFormSubmit}>
+        <form onSubmit={handleFormSubmit}>
           <Modal.Header closeButton>
             <Modal.Title>
               {editingRubric ? `Edit Rubric: ${editingRubric.name}` : 'New Evaluation Scorecard Rubric'}
@@ -525,10 +530,10 @@ export default function EvaluationRubricsTab() {
             {/* Rubric Top Metadata */}
             <div className="row g-3 mb-4">
               <div className="col-12 col-md-8">
-                <Form.Label htmlFor="rubric-name">
+                <Label htmlFor="rubric-name">
                   Rubric Name <span className="text-danger">*</span>
-                </Form.Label>
-                <Form.Control
+                </Label>
+                <Input
                   id="rubric-name"
                   placeholder="e.g. Senior Backend Engineer Scorecard"
                   value={name}
@@ -556,10 +561,9 @@ export default function EvaluationRubricsTab() {
               </div>
 
               <div className="col-12">
-                <Form.Label htmlFor="rubric-desc">Description (Optional)</Form.Label>
-                <Form.Control
+                <Label htmlFor="rubric-desc">Description (Optional)</Label>
+                <Textarea
                   id="rubric-desc"
-                  as="textarea"
                   rows={2}
                   placeholder="Briefly describe the candidate level, department, or scope this rubric targets..."
                   value={description}
@@ -595,9 +599,8 @@ export default function EvaluationRubricsTab() {
                       <span className="badge bg-secondary-subtle text-secondary font-monospace">
                         Section {secIdx + 1}
                       </span>
-                      <Form.Control
-                        size="sm"
-                        className="fw-semibold"
+                      <Input
+                        className="h-[var(--control-h-sm)] text-[length:var(--text-sm)] fw-semibold"
                         placeholder="Section Name (e.g. Technical Knowledge)"
                         value={sec.name}
                         onChange={(e) => updateSectionName(sec.id, e.target.value)}
@@ -637,8 +640,7 @@ export default function EvaluationRubricsTab() {
                         <GripVertical size={14} className="text-muted flex-shrink-0" />
                         <div className="flex-grow-1 row g-2">
                           <div className="col-12 col-md-5">
-                            <Form.Control
-                              size="sm"
+                            <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               placeholder="Criterion Label (e.g. System Design)"
                               value={crit.label}
                               onChange={(e) => updateCriterion(sec.id, cIdx, 'label', e.target.value)}
@@ -646,8 +648,7 @@ export default function EvaluationRubricsTab() {
                             />
                           </div>
                           <div className="col-12 col-md-5">
-                            <Form.Control
-                              size="sm"
+                            <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               placeholder="Evaluation guide hint / rubric standard..."
                               value={crit.hint || ''}
                               onChange={(e) => updateCriterion(sec.id, cIdx, 'hint', e.target.value)}
@@ -655,8 +656,7 @@ export default function EvaluationRubricsTab() {
                           </div>
                           <div className="col-6 col-md-2 d-flex align-items-center gap-1">
                             <span className="text-xs text-muted">Weight:</span>
-                            <Form.Control
-                              size="sm"
+                            <Input className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
                               type="number"
                               step="0.1"
                               min="0.1"
@@ -693,7 +693,7 @@ export default function EvaluationRubricsTab() {
               {saveMutation.isPending ? 'Saving...' : 'Save Rubric Scorecard'}
             </Button>
           </Modal.Footer>
-        </Form>
+        </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
