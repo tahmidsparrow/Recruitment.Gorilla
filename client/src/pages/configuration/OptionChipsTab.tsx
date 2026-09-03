@@ -245,7 +245,9 @@ export default function OptionChipsTab({
                   aria-invalid={editInvalid || undefined}
                   autoFocus
                 />
-                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Name is required.</p>
+                {editInvalid && (
+                  <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Name is required.</p>
+                )}
               </div>
               <CheckboxField id={`${queryKey}-active`} label="Active — shown in candidate forms" checked={editActive} onCheckedChange={(checked) => setEditActive(checked)} />
             </div>

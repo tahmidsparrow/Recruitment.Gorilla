@@ -4830,26 +4830,16 @@ a.hero-chip--accent:hover {
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
-.eval-panel--a .eval-panel__icon {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.25);
+/* One treatment for all four rubric sections.
+   They were sky / indigo / emerald / orange, which implied the sections rank
+   or differ in kind. They don't — they are four groups of criteria read in
+   order, and the heading beside each icon already says which is which. */
+.eval-panel__icon {
+  background: var(--surface-muted);
+  color: var(--muted);
+  border: 0;
 }
-.eval-panel--b .eval-panel__icon {
-  background: rgba(129, 140, 248, 0.12);
-  color: #818cf8;
-  border: 1px solid rgba(129, 140, 248, 0.25);
-}
-.eval-panel--c .eval-panel__icon {
-  background: rgba(52, 211, 153, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(52, 211, 153, 0.25);
-}
-.eval-panel--d .eval-panel__icon {
-  background: rgba(251, 146, 60, 0.12);
-  color: #fb923c;
-  border: 1px solid rgba(251, 146, 60, 0.25);
-}
+
 .eval-panel__titles {
   flex: 1 1 auto;
   margin-left: 12px;

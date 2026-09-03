@@ -453,7 +453,9 @@ export default function EvaluationForm({
                   </option>
                 ))}
               </NativeSelect>
-              <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Recommendation is required to submit.</p>
+              {showErrors && recommendationMissing && (
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Recommendation is required to submit.</p>
+              )}
             </div>
 
             <div className="col-span-12 md:col-span-6">
@@ -473,7 +475,9 @@ export default function EvaluationForm({
                   </option>
                 ))}
               </NativeSelect>
-              <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Overall rating is required to submit.</p>
+              {showErrors && overallMissing && (
+                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Overall rating is required to submit.</p>
+              )}
             </div>
 
             {recommendation === 'Other' && (
@@ -489,7 +493,9 @@ export default function EvaluationForm({
                   aria-invalid={showErrors && otherMissing || undefined}
                   maxLength={100}
                 />
-                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Please specify the recommendation.</p>
+                {showErrors && otherMissing && (
+                  <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Please specify the recommendation.</p>
+                )}
               </div>
             )}
           </div>

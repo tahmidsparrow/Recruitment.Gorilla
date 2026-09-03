@@ -325,7 +325,9 @@ export default function JobOpeningsTab() {
                   aria-invalid={nameInvalid || undefined}
                   autoFocus
                 />
-                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Role name is required.</p>
+                {nameInvalid && (
+                  <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Role name is required.</p>
+                )}
               </div>
               <div className="col-span-12 md:col-span-6">
                 <Label>Closes <span className="required-star" aria-hidden="true">*</span></Label>
@@ -335,7 +337,9 @@ export default function JobOpeningsTab() {
                   onChange={(e) => { setEndDate(e.target.value); if (endDateInvalid) setEndDateInvalid(false); }}
                   aria-invalid={endDateInvalid || undefined}
                 />
-                <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">A closing date is required.</p>
+                {endDateInvalid && (
+                  <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">A closing date is required.</p>
+                )}
                 {editing?.createdAt && (
                   <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">Posted {formatDate(editing.createdAt)}.</p>
                 )}
