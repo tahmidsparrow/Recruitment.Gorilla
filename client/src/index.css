@@ -6466,9 +6466,10 @@ a.hero-chip--accent:hover {
   line-height: normal;
 }
 
-/* A group heading inside a dense form. It labels the two or three fields under
-   it without the full-width band and horizontal rule a .form-section draws —
-   which, repeated four times, was most of the email settings form's height. */
+/* A group name in the gutter beside its fields, rather than a heading on a
+   line of its own above them. Three headings cost three lines of height to say
+   three words, on a form whose fields already name themselves. It aligns with
+   the field labels because both sit at the top of their grid row. */
 .email-settings__group {
   margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
@@ -6477,4 +6478,19 @@ a.hero-chip--accent:hover {
 }
 .email-settings__group:first-child {
   margin-top: 0;
+}
+@media (min-width: 1024px) {
+  /* In the gutter the grid's own row gap does the separating. */
+  .email-settings__group {
+    margin-top: 0;
+    padding-top: 1px;
+  }
+}
+
+/* A checkbox sharing a row with labelled inputs. Aligning to the END of the
+   row lands it on the inputs rather than up beside their labels, and needs no
+   hard-coded offset: a 16px checkbox row bottom-aligned against a 30px control
+   comes out centred on it to within a pixel, measured. */
+.email-settings__inline-check {
+  align-self: end;
 }
