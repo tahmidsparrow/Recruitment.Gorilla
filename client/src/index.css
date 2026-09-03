@@ -1853,6 +1853,121 @@ a.list-row__title:hover {
   overflow: hidden;
 }
 
+/* ---------- Orphans left by Bootstrap ----------
+   A handful of Bootstrap class names are still written in markup that has not
+   been converted to the shadcn primitives yet. Without Bootstrap they styled
+   nothing at all — the drafts workspace rendered a bare mail glyph floating
+   above its input, and every field error was unstyled body text. These give
+   them the Harbor treatment so nothing looks broken while the remaining call
+   sites migrate. Delete each rule as its last call site moves. */
+
+/* An input with a control or glyph butted against it. The group owns the
+   border and the children are borderless, so it renders as one object rather
+   than two touching ones with a doubled hairline. */
+.input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.input-group:focus-within {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.input-group > .form-control,
+.input-group > [data-slot='input'] {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.input-group > .form-control:focus,
+.input-group > [data-slot='input']:focus-visible {
+  box-shadow: none;
+  background: transparent;
+}
+.input-group-text {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding-inline: 10px;
+  color: var(--muted);
+}
+
+/* Bootstrap revealed this only when the sibling carried .is-invalid; here the
+   call sites already render it conditionally, so it is always visible when
+   present. */
+.invalid-feedback {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--text-sm);
+  color: var(--danger-text);
+}
+.form-control.is-invalid,
+.is-invalid > .form-control {
+  border-color: var(--danger);
+}
+
+/* A spinner, for the call sites still using Bootstrap's class name. */
+.spinner-border {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: anim-spin 0.7s linear infinite;
+}
+.spinner-border-sm {
+  width: 0.85em;
+  height: 0.85em;
+  border-width: 1.5px;
+}
+
+/* A bare `.alert` / `.alert-danger`, matched to the <Alert> component. */
+.alert {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.alert-danger {
+  border-color: var(--danger-border);
+  background: var(--danger-tint);
+  color: var(--danger-text);
+}
+.alert-warning {
+  border-color: var(--warning-border);
+  background: var(--warning-tint);
+  color: var(--warning-text-strong);
+}
+.alert-success {
+  border-color: var(--success-border);
+  background: var(--success-tint);
+  color: var(--success-text);
+}
+
+/* A count chip beside a section heading. */
+.badge.bg-secondary-subtle,
+.bg-secondary-subtle {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
 /* ---------- Badges ----------
    Status is never conveyed by colour alone; each carries a leading glyph. */
 .badge-pill {
@@ -6814,18 +6929,26 @@ a.hero-chip--accent:hover {
   gap: var(--space-2);
 }
 
+/* The review rail is a queue of 50; at 113px a row it showed six. The rail is
+   for choosing which draft to work on next, so it needs to show the queue, not
+   render each entry as a card. `--transition-fast` never existed as a token,
+   so the transition was also a no-op. */
 .draft-item-card {
   flex-shrink: 0;
-  padding: var(--space-3);
+  padding: 8px 10px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
   position: relative;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+}
+.draft-item-card:hover {
+  background: var(--surface-muted);
 }
 
 .draft-item-card:hover {

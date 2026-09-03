@@ -1290,7 +1290,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               <div className="draft-editor-studio__foot">
                 <button
                   type="button"
-                  className="btn btn-outline-danger btn-sm inline-flex items-center gap-1.5"
+                  className="btn btn-ghost-danger btn-sm inline-flex items-center gap-1.5"
                   disabled={discardMutation.isPending || activeDraft.status === 'Discarded'}
                   onClick={() => discardMutation.mutate(activeDraft.id)}
                 >
