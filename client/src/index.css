@@ -3014,28 +3014,6 @@ a.list-row__title:hover {
   line-height: var(--leading-normal);
 }
 
-/* A search input with a leading glyph. Its own class because the icon was
-   positioned with four inline styles at each call site, which meant the
-   padding that clears it was a magic number repeated alongside them. */
-.search-field {
-  position: relative;
-}
-.search-field__icon {
-  position: absolute;
-  top: 50%;
-  left: 11px;
-  transform: translateY(-50%);
-  color: var(--muted);
-  pointer-events: none;
-}
-/* Clears the leading glyph. Matches the shadcn <Input> as well as the legacy
-   `.form-control`, since the two are interchangeable at these call sites and
-   the icon would otherwise sit on top of the placeholder. */
-.search-field .form-control,
-.search-field [data-slot='input'] {
-  padding-left: 32px;
-}
-
 /* ---------- Segmented control ----------
    For switching a view's filter in place — a range (7D/30D/90D), a status
    filter. Distinct from .admin-tabs, which navigates between panels and is
@@ -3161,15 +3139,15 @@ a.list-row__title:hover {
 .job-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .job-row {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
-  padding: var(--space-4);
+  padding: 10px var(--space-3);
   text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3258,6 +3236,12 @@ a.list-row__title:hover {
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+.job-row__closes-value {
+  font-size: var(--text-md);
+}
+.job-row__bar-row {
+  margin-top: 4px;
+}
 
 .job-row__closes {
   min-width: 190px;
@@ -3325,20 +3309,20 @@ a.list-row__title:hover {
   .job-row {
     flex-direction: row;
     align-items: center;
-    gap: 24px;
-    padding: 16px 20px;
+    gap: var(--space-4);
+    padding: 10px var(--space-4);
   }
   .job-row__metrics {
     flex-wrap: nowrap;
     align-items: center;
-    gap: 28px;
+    gap: var(--space-5);
   }
   .job-row__status {
-    width: 150px;
+    width: 132px;
     flex-shrink: 0;
   }
   .job-row__closes {
-    width: 210px;
+    width: 186px;
     flex-shrink: 0;
   }
 }
@@ -7175,10 +7159,12 @@ a.hero-chip--accent:hover {
    break mid-rubric.
    ============================================================ */
 @media print {
+  /* Chrome that has no meaning on paper. `.d-print-none` was Bootstrap's
+     name for this and every call site now uses Tailwind's `print:hidden`,
+     which generates its own print rule. */
   .app-sidebar,
   .app-sidebar-scrim,
   .app-topbar,
-  .d-print-none,
   .back-link {
     display: none !important;
   }

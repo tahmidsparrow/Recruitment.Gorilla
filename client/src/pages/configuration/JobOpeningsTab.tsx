@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import {
   createRoleOption,
@@ -31,6 +31,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
 import { NativeSelect } from '@/components/ui/native-select';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Dialog,
   DialogBody,
@@ -214,16 +215,13 @@ export default function JobOpeningsTab() {
       <div className="page-bar">
         <search className="grow">
           <div className="data-toolbar">
-          <div className="search-field data-toolbar__search">
-            <Search size={15} strokeWidth={1.75} aria-hidden="true" className="search-field__icon" />
-            <Input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search role, recruiter or department…"
-              aria-label="Search job openings"
-            />
-          </div>
+          <SearchInput
+            wrapperClassName="data-toolbar__search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search role, recruiter or department…"
+            aria-label="Search job openings"
+          />
           {/* A segmented control, not the underline tab strip it borrowed
               before: these filter a list in place, they don't switch between
               panels, and an underline inside a bordered toolbar read as a

@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
   return (
     <div className="analytics-page">
       {/* Top Filter and Action Bar */}
-      <div className="page-bar d-print-none">
+      <div className="page-bar print:hidden">
         <div className="flex items-center flex-wrap gap-2 grow">
           {/* Preset Segmented Control */}
           <div className="segmented" role="group" aria-label="Select date range preset">

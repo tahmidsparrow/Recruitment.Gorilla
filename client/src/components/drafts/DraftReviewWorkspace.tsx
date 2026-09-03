@@ -1,26 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  CheckCircle2,
-  XCircle,
-  Search,
-  Layers,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  RotateCw,
-  Trash2,
-  UserCheck,
-  CheckSquare,
-  Square,
-  Globe,
-  Clock,
-  Sparkles,
-  Copy,
-  Briefcase,
-  Mail,
-  Phone,
-} from 'lucide-react';
+import { CheckCircle2, XCircle, Layers, FileText, ChevronLeft, ChevronRight, RotateCw, Trash2, UserCheck, CheckSquare, Square, Globe, Clock, Sparkles, Copy, Briefcase, Mail, Phone } from 'lucide-react';
 import {
   getCandidateDrafts,
   getCandidateDraft,
@@ -38,6 +18,7 @@ import { useToast } from '../ToastStack';
 import { initials } from '../../utils/initials';
 import EmptyState from '../common/EmptyState';
 import LoadingPanel from '../common/Loading';
+import { SearchInput } from '@/components/ui/search-input';
 import type {
   CandidateDraft,
   ApproveCandidateDraftRequest,
@@ -456,16 +437,14 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
           )}
 
           {/* Search Bar */}
-          <div className="search-field draft-search-field">
-            <Search size={14} className="search-field__icon" aria-hidden="true" />
-            <input
-              type="search"
-              className="form-control form-control-sm search-field__input"
-              placeholder="Search candidate, role, skills..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            wrapperClassName="draft-search-field"
+            className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
+            placeholder="Search candidate, role, skills…"
+            aria-label="Search drafts"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
 
           <button
             type="button"
