@@ -200,12 +200,14 @@ export const uploadCV = async (
   batchId?: string,
   fileIndex?: number,
   totalFiles?: number,
-  batchName?: string
+  batchName?: string,
+  roleAppliedOptionId?: number
 ): Promise<CVDraft> => {
   const form = new FormData();
   form.append('file', file);
   if (batchId) form.append('batchId', batchId);
   if (batchName) form.append('batchName', batchName);
+  if (roleAppliedOptionId != null) form.append('roleAppliedOptionId', roleAppliedOptionId.toString());
   if (fileIndex != null) form.append('fileIndex', fileIndex.toString());
   if (totalFiles != null) form.append('totalFiles', totalFiles.toString());
   const { data } = await api.post<CVDraft>('/cvupload', form);
@@ -314,9 +316,15 @@ export const getCandidates = async (
     dir?: string; // asc | desc
     page?: number;
     pageSize?: number;
+    batch?: string;
   }
 ): Promise<PagedResult<CandidateListItem>> => {
   const { data } = await api.get<PagedResult<CandidateListItem>>('/candidates', { params });
+  return data;
+};
+
+export const getCandidateBatches = async (): Promise<string[]> => {
+  const { data } = await api.get<string[]>('/candidates/batches');
   return data;
 };
 
@@ -410,6 +418,12 @@ export const getActiveSourceOptions = async (): Promise<CandidateSourceOption[]>
 // which is active-only for the create/edit form.
 export const getCandidateFilterRoleOptions = async (): Promise<RoleAppliedOption[]> => {
   const { data } = await api.get<RoleAppliedOption[]>('/candidates/role-filter-options');
+  return data;
+};
+
+/** All pipeline jobs/openings for view-only overview — accessible to Recruiters & Admins. */
+export const getPipelineJobs = async (): Promise<RoleAppliedOption[]> => {
+  const { data } = await api.get<RoleAppliedOption[]>('/candidates/jobs');
   return data;
 };
 

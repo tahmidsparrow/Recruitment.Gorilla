@@ -214,21 +214,17 @@ export default function JobOpeningsTab() {
     <>
       {/* The action shares the filter row rather than taking one of its own
           — see .page-bar. */}
-      <div className="page-bar">
-        <search className="grow">
-          <div className="data-toolbar">
-          <SearchInput
-            wrapperClassName="data-toolbar__search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search role, recruiter or department…"
-            aria-label="Search job openings"
-          />
-          {/* A segmented control, not the underline tab strip it borrowed
-              before: these filter a list in place, they don't switch between
-              panels, and an underline inside a bordered toolbar read as a
-              stray rule. */}
-          <div className="segmented data-toolbar__end" role="group" aria-label="Filter by status">
+      <div className="data-toolbar">
+        <SearchInput
+          wrapperClassName="!max-w-[420px] !flex-[1_1_320px]"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search role, recruiter or department…"
+          aria-label="Search job openings"
+          className="h-10 text-sm pl-9"
+        />
+        <div className="data-toolbar__end">
+          <div className="segmented" role="group" aria-label="Filter by status">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.id}
@@ -240,14 +236,11 @@ export default function JobOpeningsTab() {
                 {f.label}
               </button>
             ))}
-            </div>
           </div>
-        </search>
-
-        <div className="page-bar__actions">
-          <Button onClick={() => resetForm(null)}>
+          <div className="toolbar-divider hidden sm:block" />
+          <Button size="sm" onClick={() => resetForm(null)} className="shrink-0 gap-1.5">
             <Plus size={15} strokeWidth={2} aria-hidden="true" />
-            <span className="ml-1">Add job opening</span>
+            <span>Add job opening</span>
           </Button>
         </div>
       </div>

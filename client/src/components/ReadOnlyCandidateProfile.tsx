@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Briefcase,
   Building2,
@@ -11,19 +12,32 @@ import {
   GraduationCap,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   UserCheck,
   Users,
 } from 'lucide-react';
-import { downloadCvFile, previewCvFile } from '../services/api';
+import {
+  downloadCvFile,
+  getActiveRoleOptions,
+  getActiveSkillOptions,
+  getActiveSourceOptions,
+  previewCvFile,
+} from '../services/api';
 import { StatusBadge } from './StatusBadge';
 import { skillColorClass } from '../utils/skillColors';
-import type { CandidateDetail } from '../types';
+import SearchableDropdown, { SearchableMultiSelect } from './SearchableSelect';
+import type { CandidateDetail, UpdateCandidatePayload } from '../types';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckboxField } from '@/components/ui/field';
 
 const formatSize = (bytes: number) => `${(bytes / 1024).toFixed(0)} KB`;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/i;
 
 /* Brand SVGs */
 const LinkedInIcon = () => (
@@ -124,21 +138,214 @@ function ContactTile({ icon, label, value, href, allowCopy = false }: ContactTil
   );
 }
 
+interface Props {
+  candidate: CandidateDetail;
+  showCvFiles?: boolean;
+  className?: string;
+  canEdit?: boolean;
+  onSave?: (updates: UpdateCandidatePayload) => Promise<void>;
+}
+
+type EditableSection = 'none' | 'position' | 'contact' | 'links' | 'skills' | 'summary';
+
 /**
- * Non-editable candidate profile shown on Candidate Detail page and alongside evaluation form.
+ * Candidate profile shown on Candidate Detail page and Interview evaluation page.
+ * Supports inline editing of sections when canEdit & onSave are provided.
  */
 export default function ReadOnlyCandidateProfile({
   candidate,
   showCvFiles = true,
   className = '',
-}: {
-  candidate: CandidateDetail;
-  showCvFiles?: boolean;
-  className?: string;
-}) {
+  canEdit = false,
+  onSave,
+}: Props) {
   const [preview, setPreview] = useState<{ url: string; contentType: string } | null>(null);
   const [previewName, setPreviewName] = useState('');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
+
+  // Inline editing state
+  const [editingSection, setEditingSection] = useState<EditableSection>('none');
+  const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Local edit form state
+  const [form, setForm] = useState({
+    fullName: candidate.fullName,
+    email: candidate.email,
+    phone: candidate.phone ?? '',
+    currentTitle: candidate.currentTitle ?? '',
+    relevantExperience: candidate.relevantExperience,
+    location: candidate.location ?? '',
+    roleAppliedOptionId: candidate.roleAppliedOptionId,
+    sourceOptionId: candidate.sourceOptionId,
+    sourceDetail: candidate.sourceDetail ?? '',
+    isReferred: candidate.isReferred,
+    referenceName: candidate.referenceName ?? '',
+    referenceEmail: candidate.referenceEmail ?? '',
+    referenceEmployeeId: candidate.referenceEmployeeId ?? '',
+    summary: candidate.summary ?? '',
+    skills: candidate.skills ?? '',
+    linkedInUrl: candidate.linkedInUrl ?? '',
+    githubUrl: candidate.githubUrl ?? '',
+    leetCodeUrl: candidate.leetCodeUrl ?? '',
+    codeforcesUrl: candidate.codeforcesUrl ?? '',
+    hackerRankUrl: candidate.hackerRankUrl ?? '',
+    gitLabUrl: candidate.gitLabUrl ?? '',
+    portfolioUrl: candidate.portfolioUrl ?? '',
+  });
+
+  const [skillIds, setSkillIds] = useState<number[]>(candidate.skillOptions.map((s) => s.id));
+
+  // Sync state when candidate changes
+  useEffect(() => {
+    setForm({
+      fullName: candidate.fullName,
+      email: candidate.email,
+      phone: candidate.phone ?? '',
+      currentTitle: candidate.currentTitle ?? '',
+      relevantExperience: candidate.relevantExperience,
+      location: candidate.location ?? '',
+      roleAppliedOptionId: candidate.roleAppliedOptionId,
+      sourceOptionId: candidate.sourceOptionId,
+      sourceDetail: candidate.sourceDetail ?? '',
+      isReferred: candidate.isReferred,
+      referenceName: candidate.referenceName ?? '',
+      referenceEmail: candidate.referenceEmail ?? '',
+      referenceEmployeeId: candidate.referenceEmployeeId ?? '',
+      summary: candidate.summary ?? '',
+      skills: candidate.skills ?? '',
+      linkedInUrl: candidate.linkedInUrl ?? '',
+      githubUrl: candidate.githubUrl ?? '',
+      leetCodeUrl: candidate.leetCodeUrl ?? '',
+      codeforcesUrl: candidate.codeforcesUrl ?? '',
+      hackerRankUrl: candidate.hackerRankUrl ?? '',
+      gitLabUrl: candidate.gitLabUrl ?? '',
+      portfolioUrl: candidate.portfolioUrl ?? '',
+    });
+    setSkillIds(candidate.skillOptions.map((s) => s.id));
+  }, [candidate]);
+
+  // Lookups for inline editors
+  const { data: roleOptions = [] } = useQuery({
+    queryKey: ['role-options', 'active'],
+    queryFn: getActiveRoleOptions,
+    enabled: canEdit,
+  });
+
+  const { data: skillOptions = [] } = useQuery({
+    queryKey: ['skill-options', 'active'],
+    queryFn: getActiveSkillOptions,
+    enabled: canEdit,
+  });
+
+  const { data: sourceOptions = [] } = useQuery({
+    queryKey: ['source-options', 'active'],
+    queryFn: getActiveSourceOptions,
+    enabled: canEdit,
+  });
+
+  const startEdit = (section: EditableSection) => {
+    setFieldErrors({});
+    setEditingSection(section);
+  };
+
+  const cancelEdit = () => {
+    // Reset to current candidate values
+    setForm({
+      fullName: candidate.fullName,
+      email: candidate.email,
+      phone: candidate.phone ?? '',
+      currentTitle: candidate.currentTitle ?? '',
+      relevantExperience: candidate.relevantExperience,
+      location: candidate.location ?? '',
+      roleAppliedOptionId: candidate.roleAppliedOptionId,
+      sourceOptionId: candidate.sourceOptionId,
+      sourceDetail: candidate.sourceDetail ?? '',
+      isReferred: candidate.isReferred,
+      referenceName: candidate.referenceName ?? '',
+      referenceEmail: candidate.referenceEmail ?? '',
+      referenceEmployeeId: candidate.referenceEmployeeId ?? '',
+      summary: candidate.summary ?? '',
+      skills: candidate.skills ?? '',
+      linkedInUrl: candidate.linkedInUrl ?? '',
+      githubUrl: candidate.githubUrl ?? '',
+      leetCodeUrl: candidate.leetCodeUrl ?? '',
+      codeforcesUrl: candidate.codeforcesUrl ?? '',
+      hackerRankUrl: candidate.hackerRankUrl ?? '',
+      gitLabUrl: candidate.gitLabUrl ?? '',
+      portfolioUrl: candidate.portfolioUrl ?? '',
+    });
+    setSkillIds(candidate.skillOptions.map((s) => s.id));
+    setFieldErrors({});
+    setEditingSection('none');
+  };
+
+  const handleSaveSection = async () => {
+    if (!onSave) return;
+    const errors: Record<string, string> = {};
+
+    if (editingSection === 'position') {
+      if (!form.relevantExperience.trim()) {
+        errors.relevantExperience = 'Relevant experience is required.';
+      }
+      if (!form.roleAppliedOptionId) {
+        errors.roleApplied = 'Role applied for is required.';
+      }
+    } else if (editingSection === 'contact') {
+      if (!form.fullName.trim()) {
+        errors.fullName = 'Full name is required.';
+      }
+      if (!EMAIL_REGEX.test(form.email.trim())) {
+        errors.email = 'A valid email is required.';
+      }
+      if (form.isReferred) {
+        if (!form.referenceName.trim()) errors.referenceName = 'Reference name is required.';
+        if (!EMAIL_REGEX.test(form.referenceEmail.trim())) errors.referenceEmail = 'Valid reference email is required.';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave({
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null,
+        currentTitle: form.currentTitle.trim() || null,
+        relevantExperience: form.relevantExperience.trim(),
+        location: form.location.trim() || null,
+        appliedRole: null,
+        roleAppliedOptionId: form.roleAppliedOptionId,
+        sourceOptionId: form.sourceOptionId,
+        sourceDetail: form.sourceDetail.trim() || null,
+        isReferred: form.isReferred,
+        referenceName: form.isReferred ? form.referenceName.trim() || null : null,
+        referenceEmail: form.isReferred ? form.referenceEmail.trim() || null : null,
+        referenceEmployeeId: form.isReferred ? form.referenceEmployeeId.trim() || null : null,
+        summary: form.summary.trim() || null,
+        skills: form.skills.trim() || null,
+        linkedInUrl: form.linkedInUrl.trim() || null,
+        githubUrl: form.githubUrl.trim() || null,
+        leetCodeUrl: form.leetCodeUrl.trim() || null,
+        codeforcesUrl: form.codeforcesUrl.trim() || null,
+        hackerRankUrl: form.hackerRankUrl.trim() || null,
+        gitLabUrl: form.gitLabUrl.trim() || null,
+        portfolioUrl: form.portfolioUrl.trim() || null,
+        skillOptionIds: skillIds,
+        educations: candidate.educations,
+        experiences: candidate.experiences,
+      });
+      setEditingSection('none');
+    } catch {
+      // Error handled by parent toast
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const openPreview = async (fileId: number, name: string) => {
     if (preview) URL.revokeObjectURL(preview.url);
@@ -159,7 +366,6 @@ export default function ReadOnlyCandidateProfile({
   const summaryIsLong = (candidate.summary?.length ?? 0) > SUMMARY_COLLAPSE_THRESHOLD;
   const summaryCollapsed = summaryIsLong && !summaryExpanded;
 
-  // Extract skills from skillOptions or raw skills string fallback
   const skillsList: string[] = React.useMemo(() => {
     if (candidate.skillOptions && candidate.skillOptions.length > 0) {
       return candidate.skillOptions.map((s) => s.name);
@@ -175,169 +381,466 @@ export default function ReadOnlyCandidateProfile({
 
   return (
     <Card className={`profile-card ${className}`.trim()}>
+      {/* Profile Header (Position, Role & Status) */}
       <div className="profile-header">
         <div className="flex justify-between items-start gap-4">
-          <div>
-            <div className="profile-field-label">Current position</div>
-            <div className="profile-title">{candidate.currentTitle || '—'}</div>
+          <div className="grow">
+            <div className="flex items-center justify-between gap-2">
+              <div className="profile-field-label">Current position &amp; Role</div>
+              {canEdit && editingSection !== 'position' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => startEdit('position')}
+                  className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1 -mt-1"
+                  title="Edit position & title inline"
+                >
+                  <Pencil size={11} />
+                  <span>Edit</span>
+                </Button>
+              )}
+            </div>
+
+            {editingSection === 'position' ? (
+              <div className="mt-2 p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-semibold">Current Title</Label>
+                    <Input
+                      className="h-8 text-xs bg-card"
+                      value={form.currentTitle}
+                      onChange={(e) => setForm((f) => ({ ...f, currentTitle: e.target.value }))}
+                      placeholder="e.g. Senior Backend Engineer"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Role Applied For *</Label>
+                    <SearchableDropdown<number>
+                      options={roleOptions.map((r) => ({ id: r.id, name: r.name }))}
+                      value={form.roleAppliedOptionId}
+                      onChange={(val) => setForm((f) => ({ ...f, roleAppliedOptionId: val }))}
+                      placeholder="Select target role…"
+                    />
+                    {fieldErrors.roleApplied && (
+                      <span className="text-[11px] text-danger">{fieldErrors.roleApplied}</span>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Relevant Experience *</Label>
+                    <Input
+                      className="h-8 text-xs bg-card"
+                      value={form.relevantExperience}
+                      onChange={(e) => setForm((f) => ({ ...f, relevantExperience: e.target.value }))}
+                      placeholder="e.g. 4 Years"
+                    />
+                    {fieldErrors.relevantExperience && (
+                      <span className="text-[11px] text-danger">{fieldErrors.relevantExperience}</span>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Location</Label>
+                    <Input
+                      className="h-8 text-xs bg-card"
+                      value={form.location}
+                      onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                      placeholder="e.g. Dhaka, Bangladesh"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                  <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="h-7 text-xs">
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSaveSection} disabled={isSaving} className="h-7 text-xs">
+                    {isSaving ? 'Saving…' : 'Save position'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="profile-title">{candidate.currentTitle || '—'}</div>
+            )}
           </div>
           <StatusBadge status={candidate.currentStatus} />
         </div>
 
         {/* Brand Coding & Social Profile Badges */}
-        {hasLinks && (
-          <div className="profile-links mt-4 flex flex-wrap gap-2">
-            {candidate.linkedInUrl && (
-              <a
-                href={candidate.linkedInUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--linkedin"
-                title="LinkedIn Profile"
+        <div className="mt-4 pt-3 border-t border-border/40">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Social &amp; Coding Profiles
+            </span>
+            {canEdit && editingSection !== 'links' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEdit('links')}
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+                title="Edit profile links inline"
               >
-                <LinkedInIcon />
-                <span>LinkedIn</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.githubUrl && (
-              <a
-                href={candidate.githubUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--github"
-                title="GitHub Profile"
-              >
-                <GitHubIcon />
-                <span>GitHub</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.leetCodeUrl && (
-              <a
-                href={candidate.leetCodeUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--leetcode"
-                title="LeetCode Profile"
-              >
-                <LeetCodeIcon />
-                <span>LeetCode</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.codeforcesUrl && (
-              <a
-                href={candidate.codeforcesUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--codeforces"
-                title="Codeforces Profile"
-              >
-                <CodeforcesIcon />
-                <span>Codeforces</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.hackerRankUrl && (
-              <a
-                href={candidate.hackerRankUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--hackerrank"
-                title="HackerRank Profile"
-              >
-                <HackerRankIcon />
-                <span>HackerRank</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.gitLabUrl && (
-              <a
-                href={candidate.gitLabUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--gitlab"
-                title="GitLab Profile"
-              >
-                <GitLabIcon />
-                <span>GitLab</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
-            )}
-            {candidate.portfolioUrl && (
-              <a
-                href={candidate.portfolioUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="profile-link profile-link--portfolio"
-                title="Portfolio Website"
-              >
-                <Globe size={14} strokeWidth={2} />
-                <span>Portfolio</span>
-                <ExternalLink size={11} className="profile-link__arrow" />
-              </a>
+                <Pencil size={11} />
+                <span>Edit links</span>
+              </Button>
             )}
           </div>
-        )}
+
+          {editingSection === 'links' ? (
+            <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div>
+                  <Label className="text-[11px] font-medium">LinkedIn URL</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.linkedInUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, linkedInUrl: e.target.value }))}
+                    placeholder="https://linkedin.com/in/…"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium">GitHub URL</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.githubUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, githubUrl: e.target.value }))}
+                    placeholder="https://github.com/…"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium">Portfolio / Website</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.portfolioUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, portfolioUrl: e.target.value }))}
+                    placeholder="https://…"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium">LeetCode URL</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.leetCodeUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, leetCodeUrl: e.target.value }))}
+                    placeholder="https://leetcode.com/…"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium">Codeforces URL</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.codeforcesUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, codeforcesUrl: e.target.value }))}
+                    placeholder="https://codeforces.com/…"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium">HackerRank URL</Label>
+                  <Input
+                    className="h-7 text-xs bg-card"
+                    value={form.hackerRankUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, hackerRankUrl: e.target.value }))}
+                    placeholder="https://hackerrank.com/…"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="h-7 text-xs">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveSection} disabled={isSaving} className="h-7 text-xs">
+                  {isSaving ? 'Saving…' : 'Save links'}
+                </Button>
+              </div>
+            </div>
+          ) : hasLinks ? (
+            <div className="profile-links flex flex-wrap gap-2">
+              {candidate.linkedInUrl && (
+                <a href={candidate.linkedInUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--linkedin" title="LinkedIn Profile">
+                  <LinkedInIcon />
+                  <span>LinkedIn</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.githubUrl && (
+                <a href={candidate.githubUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--github" title="GitHub Profile">
+                  <GitHubIcon />
+                  <span>GitHub</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.leetCodeUrl && (
+                <a href={candidate.leetCodeUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--leetcode" title="LeetCode Profile">
+                  <LeetCodeIcon />
+                  <span>LeetCode</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.codeforcesUrl && (
+                <a href={candidate.codeforcesUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--codeforces" title="Codeforces Profile">
+                  <CodeforcesIcon />
+                  <span>Codeforces</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.hackerRankUrl && (
+                <a href={candidate.hackerRankUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--hackerrank" title="HackerRank Profile">
+                  <HackerRankIcon />
+                  <span>HackerRank</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.gitLabUrl && (
+                <a href={candidate.gitLabUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--gitlab" title="GitLab Profile">
+                  <GitLabIcon />
+                  <span>GitLab</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+              {candidate.portfolioUrl && (
+                <a href={candidate.portfolioUrl} target="_blank" rel="noreferrer" className="profile-link profile-link--portfolio" title="Portfolio Website">
+                  <Globe size={14} strokeWidth={2} />
+                  <span>Portfolio</span>
+                  <ExternalLink size={11} className="profile-link__arrow" />
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground italic">No online profile links added.</div>
+          )}
+        </div>
       </div>
 
-      {/* CardContent deliberately carries no top padding: a CardHeader
-          normally supplies that space. This card uses its own
-          .profile-header instead, so without pt the contact tiles sat
-          flush against the header's bottom border. */}
       <CardContent className="flex flex-col gap-3.5 pt-[var(--card-pad)]">
-        {/* Contact Details & Metadata Grid */}
-        <div className="contact-grid">
-          <ContactTile
-            icon={<Mail size={15} />}
-            label="Email"
-            value={candidate.email}
-            href={`mailto:${candidate.email}`}
-            allowCopy
-          />
-          <ContactTile
-            icon={<Phone size={15} />}
-            label="Phone"
-            value={candidate.phone}
-            href={candidate.phone ? `tel:${candidate.phone}` : undefined}
-            allowCopy
-          />
-          <ContactTile
-            icon={<MapPin size={15} />}
-            label="Location"
-            value={candidate.location}
-          />
-          <ContactTile
-            icon={<Briefcase size={15} />}
-            label="Relevant Experience"
-            value={candidate.relevantExperience}
-          />
-          <ContactTile
-            icon={<UserCheck size={15} />}
-            label="Source"
-            value={
-              candidate.source
-                ? candidate.sourceDetail
-                  ? `${candidate.source} — ${candidate.sourceDetail}`
-                  : candidate.source
-                : 'Direct Application'
-            }
-          />
-        </div>
-
-        {/* Technical Skills Section - Always Rendered */}
-        <div className="profile-section">
-          <div className="profile-section__title">
-            <Code2 size={15} className="profile-section__icon" />
-            <span>Technical Skills</span>
-            {skillsList.length > 0 && (
-              <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
-                {skillsList.length}
-              </span>
+        {/* Contact Details Section */}
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Contact &amp; Sourcing Details
+            </span>
+            {canEdit && editingSection !== 'contact' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEdit('contact')}
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+                title="Edit contact info inline"
+              >
+                <Pencil size={11} />
+                <span>Edit contact</span>
+              </Button>
             )}
           </div>
-          {skillsList.length > 0 ? (
+
+          {editingSection === 'contact' ? (
+            <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold">Full Name *</Label>
+                  <Input
+                    className="h-8 text-xs bg-card"
+                    value={form.fullName}
+                    onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                  />
+                  {fieldErrors.fullName && <span className="text-[11px] text-danger">{fieldErrors.fullName}</span>}
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Email *</Label>
+                  <Input
+                    className="h-8 text-xs bg-card"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  />
+                  {fieldErrors.email && <span className="text-[11px] text-danger">{fieldErrors.email}</span>}
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Phone</Label>
+                  <Input
+                    className="h-8 text-xs bg-card"
+                    value={form.phone}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-border/40">
+                <div>
+                  <Label className="text-xs font-semibold">Candidate Source</Label>
+                  <SearchableDropdown<number>
+                    options={sourceOptions.map((s) => ({ id: s.id, name: s.name }))}
+                    value={form.sourceOptionId}
+                    onChange={(val) => setForm((f) => ({ ...f, sourceOptionId: val }))}
+                    placeholder="Select source…"
+                    clearable
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Source Detail / Link</Label>
+                  <Input
+                    className="h-8 text-xs bg-card"
+                    value={form.sourceDetail}
+                    onChange={(e) => setForm((f) => ({ ...f, sourceDetail: e.target.value }))}
+                    placeholder="e.g. BDJobs / Event name"
+                  />
+                </div>
+              </div>
+
+              {/* Referral details */}
+              <div className="pt-2 border-t border-border/40 space-y-2">
+                <CheckboxField
+                  id="inline-referred-checkbox"
+                  label="Referred by an employee"
+                  checked={form.isReferred}
+                  onCheckedChange={(checked: boolean) => setForm((f) => ({ ...f, isReferred: checked }))}
+                />
+
+                {form.isReferred && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pl-6 pt-1">
+                    <div>
+                      <Label className="text-xs font-semibold">Referrer Name *</Label>
+                      <Input
+                        className="h-8 text-xs bg-card"
+                        value={form.referenceName}
+                        onChange={(e) => setForm((f) => ({ ...f, referenceName: e.target.value }))}
+                      />
+                      {fieldErrors.referenceName && <span className="text-[11px] text-danger">{fieldErrors.referenceName}</span>}
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Referrer Email *</Label>
+                      <Input
+                        className="h-8 text-xs bg-card"
+                        value={form.referenceEmail}
+                        onChange={(e) => setForm((f) => ({ ...f, referenceEmail: e.target.value }))}
+                      />
+                      {fieldErrors.referenceEmail && <span className="text-[11px] text-danger">{fieldErrors.referenceEmail}</span>}
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Employee ID</Label>
+                      <Input
+                        className="h-8 text-xs bg-card"
+                        value={form.referenceEmployeeId}
+                        onChange={(e) => setForm((f) => ({ ...f, referenceEmployeeId: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="h-7 text-xs">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveSection} disabled={isSaving} className="h-7 text-xs">
+                  {isSaving ? 'Saving…' : 'Save contact details'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="contact-grid">
+              <ContactTile
+                icon={<Mail size={15} />}
+                label="Email"
+                value={candidate.email}
+                href={`mailto:${candidate.email}`}
+                allowCopy
+              />
+              <ContactTile
+                icon={<Phone size={15} />}
+                label="Phone"
+                value={candidate.phone}
+                href={candidate.phone ? `tel:${candidate.phone}` : undefined}
+                allowCopy
+              />
+              <ContactTile
+                icon={<MapPin size={15} />}
+                label="Location"
+                value={candidate.location}
+              />
+              <ContactTile
+                icon={<Briefcase size={15} />}
+                label="Relevant Experience"
+                value={candidate.relevantExperience}
+              />
+              <ContactTile
+                icon={<UserCheck size={15} />}
+                label="Source"
+                value={
+                  candidate.source
+                    ? candidate.sourceDetail
+                      ? `${candidate.source} — ${candidate.sourceDetail}`
+                      : candidate.source
+                    : 'Direct Application'
+                }
+              />
+              {candidate.isReferred && (
+                <ContactTile
+                  icon={<Users size={15} />}
+                  label="Referred By"
+                  value={`${candidate.referenceName || 'Employee'}${candidate.referenceEmail ? ` (${candidate.referenceEmail})` : ''}`}
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Technical Skills Section */}
+        <div className="profile-section">
+          <div className="flex items-center justify-between gap-2">
+            <div className="profile-section__title">
+              <Code2 size={15} className="profile-section__icon" />
+              <span>Technical Skills</span>
+              {skillsList.length > 0 && (
+                <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
+                  {skillsList.length}
+                </span>
+              )}
+            </div>
+            {canEdit && editingSection !== 'skills' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEdit('skills')}
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+                title="Edit skills inline"
+              >
+                <Pencil size={11} />
+                <span>Edit skills</span>
+              </Button>
+            )}
+          </div>
+
+          {editingSection === 'skills' ? (
+            <div className="mt-2 p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+              <div>
+                <Label className="text-xs font-semibold">Configured Skills</Label>
+                <SearchableMultiSelect
+                  options={skillOptions}
+                  value={skillIds}
+                  onChange={setSkillIds}
+                  placeholder="Choose skills from catalog…"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold">Custom / Additional Skills (free text)</Label>
+                <Input
+                  className="h-8 text-xs bg-card"
+                  value={form.skills}
+                  onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))}
+                  placeholder="e.g. React, Next.js, Docker, Microservices"
+                />
+                <span className="text-[11px] text-muted-foreground">Separate with commas</span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="h-7 text-xs">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveSection} disabled={isSaving} className="h-7 text-xs">
+                  {isSaving ? 'Saving…' : 'Save skills'}
+                </Button>
+              </div>
+            </div>
+          ) : skillsList.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {skillsList.map((skillName, idx) => (
                 <span key={`${skillName}-${idx}`} className={skillColorClass(skillName)}>
@@ -350,13 +853,49 @@ export default function ReadOnlyCandidateProfile({
           )}
         </div>
 
-        {/* Professional Summary Section - Always Rendered */}
+        {/* Professional Summary Section */}
         <div className="profile-section">
-          <div className="profile-section__title">
-            <FileText size={15} className="profile-section__icon" />
-            <span>Professional Summary</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="profile-section__title">
+              <FileText size={15} className="profile-section__icon" />
+              <span>Professional Summary</span>
+            </div>
+            {canEdit && editingSection !== 'summary' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEdit('summary')}
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"
+                title="Edit summary inline"
+              >
+                <Pencil size={11} />
+                <span>Edit summary</span>
+              </Button>
+            )}
           </div>
-          {candidate.summary && candidate.summary.trim() ? (
+
+          {editingSection === 'summary' ? (
+            <div className="mt-2 p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+              <div>
+                <Label className="text-xs font-semibold">Executive Summary / Bio</Label>
+                <Textarea
+                  className="text-xs bg-card min-h-[120px]"
+                  value={form.summary}
+                  onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                  placeholder="Candidate professional summary, strengths, and achievements…"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving} className="h-7 text-xs">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveSection} disabled={isSaving} className="h-7 text-xs">
+                  {isSaving ? 'Saving…' : 'Save summary'}
+                </Button>
+              </div>
+            </div>
+          ) : candidate.summary && candidate.summary.trim() ? (
             <div>
               <div className={`profile-summary${summaryCollapsed ? ' profile-summary--collapsed' : ''}`}>
                 {candidate.summary}
@@ -376,11 +915,11 @@ export default function ReadOnlyCandidateProfile({
           )}
         </div>
 
-        {/* Education & Academics Section - Always Rendered */}
+        {/* Education & Academics Section */}
         <div className="profile-section">
           <div className="profile-section__title">
             <GraduationCap size={16} className="profile-section__icon" />
-            <span>Education & Academics</span>
+            <span>Education &amp; Academics</span>
             {candidate.educations && candidate.educations.length > 0 && (
               <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
                 {candidate.educations.length}
@@ -418,7 +957,7 @@ export default function ReadOnlyCandidateProfile({
           )}
         </div>
 
-        {/* Work & Employment History Section - Always Rendered */}
+        {/* Work & Employment History Section */}
         <div className="profile-section">
           <div className="profile-section__title">
             <Building2 size={15} className="profile-section__icon" />
@@ -450,7 +989,7 @@ export default function ReadOnlyCandidateProfile({
                     {exp.company}
                   </div>
                   {exp.description && (
-                    <div className="experience-card__desc">
+                    <div className="experience-card__description">
                       {exp.description}
                     </div>
                   )}
@@ -458,45 +997,19 @@ export default function ReadOnlyCandidateProfile({
               ))}
             </div>
           ) : (
-            <div className="profile-empty-text">No employment history recorded.</div>
+            <div className="profile-empty-text">No prior work experience recorded.</div>
           )}
         </div>
 
-        {/* Referral & Sourcing Section - Always Rendered */}
-        <div className="profile-section">
-          <div className="profile-section__title">
-            <Users size={15} className="profile-section__icon" />
-            <span>Referral & Sourcing</span>
-          </div>
-          {candidate.isReferred ? (
-            <div className="referral-card p-2.5 rounded-[var(--radius-md)] border border-border border-success-subtle bg-success-subtle bg-opacity-10 mt-1">
-              <div className="flex items-center gap-2">
-                <span className="badge bg-success-subtle text-success-foreground border border-border border-success-subtle">
-                  Referred
-                </span>
-                <span className="font-medium text-foreground text-[length:var(--text-sm)]">
-                  {candidate.referenceName || 'Internal Referral'}
-                </span>
-                {candidate.referenceEmail && (
-                  <span className="text-muted-foreground text-[length:var(--text-sm)]">({candidate.referenceEmail})</span>
-                )}
-                {candidate.referenceEmployeeId && (
-                  <span className="badge bg-secondary-subtle text-text-soft text-[length:var(--text-sm)]">
-                    ID: {candidate.referenceEmployeeId}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="profile-empty-text">Direct applicant (Not referred).</div>
-          )}
-        </div>
-
+        {/* CV Files Section */}
         {showCvFiles && candidate.cvFiles.length > 0 && (
-          <div className="profile-section mt-1">
+          <div className="profile-section">
             <div className="profile-section__title">
               <FileText size={15} className="profile-section__icon" />
-              <span>CV Files</span>
+              <span>Original CV Files</span>
+              <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
+                {candidate.cvFiles.length}
+              </span>
             </div>
             <div className="flex flex-col gap-2 mt-1.5">
               {candidate.cvFiles.map((f) => (

@@ -96,7 +96,7 @@ export default function SidebarNav({
             </Link>
             <button
               type="button"
-              className="app-sidebar__icon-btn hidden md:inline-grid"
+              className="app-sidebar__icon-btn app-sidebar__collapse-btn hidden md:inline-grid"
               onClick={onToggleCollapse}
               aria-label="Collapse sidebar"
               title="Collapse sidebar"
@@ -105,7 +105,7 @@ export default function SidebarNav({
             </button>
             <button
               type="button"
-              className="app-sidebar__icon-btn inline-grid md:hidden"
+              className="app-sidebar__icon-btn app-sidebar__collapse-btn inline-grid md:hidden"
               onClick={onHide}
               aria-label="Close navigation"
               title="Close navigation"

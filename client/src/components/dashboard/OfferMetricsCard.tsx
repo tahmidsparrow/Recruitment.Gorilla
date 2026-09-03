@@ -61,7 +61,13 @@ export default function OfferMetricsCard({ metrics }: OfferMetricsCardProps) {
             </span>
           </div>
           <Progress
-            value={metrics.acceptanceRatePercentage} className="h-2"
+            value={metrics.acceptanceRatePercentage}
+            className="h-1.5 bg-muted/30"
+            indicatorClassName={
+              metrics.acceptanceRatePercentage >= 75
+                ? 'bg-emerald-500/80 dark:bg-emerald-500/70'
+                : 'bg-primary/80 dark:bg-primary/70'
+            }
           />
         </div>
       </CardContent>

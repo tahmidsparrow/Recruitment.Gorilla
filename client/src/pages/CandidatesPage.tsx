@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Trash2, Upload, Users
 import {
   deleteCandidate,
   getActiveSkillOptions,
+  getCandidateBatches,
   getCandidateFilterRoleOptions,
   getCandidates,
   getStatusOptions,
@@ -27,7 +28,7 @@ import { CheckboxField } from '@/components/ui/field';
 import { SearchInput } from '@/components/ui/search-input';
 import { NativeSelect } from '@/components/ui/native-select';
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 10;
 
 /** Sortable columns and the direction each one naturally opens in. */
 const SORTS = {
@@ -73,11 +74,13 @@ export default function CandidatesPage() {
   const roleId = searchParams.get('role') ?? '';
   const skillsCsv = searchParams.get('skills') ?? '';
   const referred = searchParams.get('referred') === '1';
+  const batch = searchParams.get('batch') ?? '';
   // Set by the dashboard KPI tiles; see BUCKET_LABELS.
   const bucket = searchParams.get('bucket') ?? '';
   const sort = searchParams.get('sort') ?? '';
   const dir = searchParams.get('dir') ?? '';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const pageSizeParam = Number(searchParams.get('pageSize')) || DEFAULT_PAGE_SIZE;
   const skillIds = skillsCsv ? skillsCsv.split(',').map(Number).filter(Number.isFinite) : [];
 
   const [searchInput, setSearchInput] = useState(search);
@@ -99,10 +102,10 @@ export default function CandidatesPage() {
       { replace: true },
     );
 
-  const hasFilters = !!(search || status || roleId || skillsCsv || referred || bucket);
+  const hasFilters = !!(search || status || roleId || skillsCsv || referred || bucket || batch);
   const clearFilters = () => {
     setSearchInput('');
-    setParams({ q: null, status: null, role: null, skills: null, referred: null, bucket: null });
+    setParams({ q: null, status: null, role: null, skills: null, referred: null, bucket: null, batch: null });
   };
 
   // Default is Added desc. A first click on a column uses its natural direction;
@@ -126,7 +129,7 @@ export default function CandidatesPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page, viewMode }],
+    queryKey: ['candidates', { search, status, roleId, skillsCsv, referred, bucket, sort, dir, page, viewMode, batch }],
     queryFn: () =>
       getCandidates({
         search: search || undefined,
@@ -137,8 +140,9 @@ export default function CandidatesPage() {
         bucket: bucket || undefined,
         sort: sort || undefined,
         dir: dir || undefined,
+        batch: batch || undefined,
         page: viewMode === 'board' ? 1 : page,
-        pageSize: viewMode === 'board' ? 150 : PAGE_SIZE,
+        pageSize: viewMode === 'board' ? 150 : pageSizeParam,
       }),
     placeholderData: keepPreviousData,
   });
@@ -166,6 +170,18 @@ export default function CandidatesPage() {
       color: getStatusSolidColor(o.name),
     }));
   }, [statusOptions]);
+
+  const { data: batchOptionsList = [] } = useQuery({
+    queryKey: ['candidate-batches'],
+    queryFn: getCandidateBatches,
+  });
+
+  const batchDropdownOptions: DropdownOption<string>[] = useMemo(() => {
+    return batchOptionsList.map((b) => ({
+      id: b,
+      name: b,
+    }));
+  }, [batchOptionsList]);
 
   const roleDropdownOptions: DropdownOption<string>[] = useMemo(() => {
     return roleOptions.map((o) => ({
@@ -250,6 +266,17 @@ export default function CandidatesPage() {
             />
           </div>
 
+          <div className="data-toolbar__field">
+            <SearchableDropdown<string>
+              options={batchDropdownOptions}
+              value={batch || null}
+              onChange={(val) => setParams({ batch: val || null })}
+              placeholder="All batches"
+              emptyMessage="No batch found"
+              clearable
+            />
+          </div>
+
           <div className="data-toolbar__field--wide">
             <SearchableMultiSelect
               options={skillOptions}
@@ -279,10 +306,16 @@ export default function CandidatesPage() {
               ))}
             </NativeSelect>
 
-            <CheckboxField id="filter-referred" label="Referred only" checked={referred} onCheckedChange={(checked) => setParams({ referred: checked ? '1' : null })} />
+            <CheckboxField
+              id="filter-referred"
+              label="Referred only"
+              checked={referred}
+              onCheckedChange={(checked) => setParams({ referred: checked ? '1' : null })}
+              className="h-8 self-center"
+            />
 
             {BUCKET_LABELS[bucket] && (
-              <span className="filter-chip">
+              <span className="filter-chip h-8 self-center">
                 {BUCKET_LABELS[bucket]}
                 <button
                   type="button"
@@ -297,7 +330,13 @@ export default function CandidatesPage() {
 
             {/* Rendered only when something is filtered */}
             {hasFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground self-center"
+              >
+                <X size={13} strokeWidth={2.25} aria-hidden="true" />
                 Clear filters
               </Button>
             )}
@@ -308,7 +347,7 @@ export default function CandidatesPage() {
                 with two values; rendering the active one as .btn-primary made
                 it look like the page's primary action, competing with the one
                 button on the row that actually is. */}
-            <div className="segmented view-toggle" role="group" aria-label="Candidate view mode">
+            <div className="segmented view-toggle self-center" role="group" aria-label="Candidate view mode">
               <button
                 type="button"
                 className={viewMode === 'table' ? 'active' : ''}
@@ -330,7 +369,7 @@ export default function CandidatesPage() {
             </div>
 
             {canWriteCandidates && (
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="h-8 self-center">
                 <Link to="/upload">
                   <Upload strokeWidth={2} aria-hidden="true" />
                   Upload CVs
@@ -424,9 +463,9 @@ export default function CandidatesPage() {
                           <Link to={`/candidates/${c.id}`} className="cell-identity__name">
                             {c.fullName}
                           </Link>
-                          {(c.appliedRole || c.source) && (
+                          {(c.appliedRole || c.source || c.batchName) && (
                             <span className="cell-identity__meta">
-                              {[c.appliedRole, c.source].filter(Boolean).join(' · ')}
+                              {[c.appliedRole, c.source, c.batchName].filter(Boolean).join(' · ')}
                             </span>
                           )}
                         </span>
@@ -468,6 +507,8 @@ export default function CandidatesPage() {
             pageSize={data.pageSize}
             totalCount={data.totalCount}
             onPageChange={(p) => setParams({ page: p > 1 ? String(p) : null }, false)}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onPageSizeChange={(sz) => setParams({ pageSize: sz !== 10 ? String(sz) : null, page: null }, false)}
             noun="candidate"
           />
         </>

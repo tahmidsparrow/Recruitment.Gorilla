@@ -27,8 +27,8 @@ function token(name: string, fallback: string): string {
  *  that genuinely need to distinguish series — the status donut, which uses the
  *  pipeline tones so a segment matches its badge exactly. */
 export const ACCENT: Record<'light' | 'dark', string> = {
-  light: '#2563eb', // Harbor cobalt — matches --primary
-  dark: '#60a5fa',
+  light: '#7c5cfc', // Violet — matches --primary
+  dark: '#8b6dff', // Violet — matches --primary
 };
 
 /**

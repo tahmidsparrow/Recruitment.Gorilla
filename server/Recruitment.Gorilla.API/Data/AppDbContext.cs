@@ -69,6 +69,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.ReferenceEmail).HasMaxLength(200);
             e.Property(c => c.ReferenceEmployeeId).HasMaxLength(100);
             e.Property(c => c.CurrentStatus).HasMaxLength(100).IsRequired();
+            e.Property(c => c.BatchId).HasMaxLength(100);
+            e.Property(c => c.BatchName).HasMaxLength(255);
             e.Property(c => c.SourceDetail).HasMaxLength(300);
             e.HasOne(c => c.RoleAppliedOption)
              .WithMany()

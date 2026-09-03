@@ -35,6 +35,9 @@ public class Candidate
     public string? ReferenceEmployeeId { get; set; }
     public string CurrentStatus { get; set; } = "Uploaded";
 
+    public string? BatchId { get; set; }
+    public string? BatchName { get; set; }
+
     /// <summary>The user who owns this candidate (the creator). Recruiters only see their own.</summary>
     public int? OwnerUserId { get; set; }
     public User? OwnerUser { get; set; }

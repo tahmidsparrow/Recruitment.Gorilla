@@ -54,12 +54,12 @@ export default function ConfigurationPage() {
   const { isSuperAdmin } = useAuth();
 
   const tabs: TabDef[] = [
-    { id: 'jobs', label: 'Job openings' },
     { id: 'rubrics', label: 'Evaluation rubrics' },
     { id: 'skills', label: 'Skills' },
     { id: 'sources', label: 'Candidate sources' },
     { id: 'interview-types', label: 'Interview types' },
     ...(isSuperAdmin ? [{ id: 'email', label: 'Email' }] : []),
+    { id: 'jobs', label: 'Job openings' },
   ];
 
   const [active, setActive] = useTabs(tabs);

@@ -15,13 +15,14 @@ describe('visibleRoutes', () => {
   });
 
   it('shows a Recruiter the candidate-managing pages but no admin pages', () => {
-    expect(labels(['Recruiter'])).toEqual(['Dashboard', 'Analytics', 'Upload CVs', 'Candidates']);
+    expect(labels(['Recruiter'])).toEqual(['Dashboard', 'Analytics', 'Jobs', 'Upload CVs', 'Candidates']);
   });
 
   it('shows an Admin the config and audit pages but not Users', () => {
     expect(labels(['Admin'])).toEqual([
       'Dashboard',
       'Analytics',
+      'Jobs',
       'Upload CVs',
       'Candidates',
       'Configuration',
@@ -33,6 +34,7 @@ describe('visibleRoutes', () => {
     expect(labels(['SuperAdmin'])).toEqual([
       'Dashboard',
       'Analytics',
+      'Jobs',
       'Upload CVs',
       'Candidates',
       'Configuration',
@@ -58,6 +60,7 @@ describe('routeFor', () => {
   });
 
   it('resolves a nested path to its parent by longest prefix', () => {
+    expect(routeFor('/jobs')?.label).toBe('Jobs');
     expect(routeFor('/candidates/7')?.label).toBe('Candidates');
     expect(routeFor('/interviews/12')?.label).toBe('Interview');
   });

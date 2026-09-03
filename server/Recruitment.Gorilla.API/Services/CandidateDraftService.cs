@@ -230,7 +230,8 @@ public class CandidateDraftService(
         string? hackerRank = null,
         string? gitLab = null,
         List<ParsedEducation>? educations = null,
-        List<ParsedExperience>? experiences = null)
+        List<ParsedExperience>? experiences = null,
+        int? roleAppliedOptionId = null)
     {
         var eduDtos = educations?.Select((e, idx) => new CandidateEducationDto(idx + 1, e.Degree, e.Institution, e.GraduationYear, e.Cgpa)).ToList();
         var expDtos = experiences?.Select((e, idx) => new CandidateExperienceDto(idx + 1, e.JobTitle, e.Company, e.Duration, e.Description)).ToList();
@@ -257,6 +258,7 @@ public class CandidateDraftService(
             GitLabUrl = gitLab,
             EducationJson = eduDtos is { Count: > 0 } ? JsonSerializer.Serialize(eduDtos) : null,
             ExperienceJson = expDtos is { Count: > 0 } ? JsonSerializer.Serialize(expDtos) : null,
+            RoleAppliedOptionId = roleAppliedOptionId,
             Status = "Pending",
             UploadedByUserId = currentUser.UserId,
             CreatedAt = DateTime.UtcNow,
@@ -360,6 +362,8 @@ public class CandidateDraftService(
             ReferenceEmail = dto.ReferenceEmail?.Trim(),
             ReferenceEmployeeId = dto.ReferenceEmployeeId?.Trim(),
             CurrentStatus = "Uploaded",
+            BatchId = draft.BatchId,
+            BatchName = draft.BatchName,
             OwnerUserId = currentUser.UserId ?? draft.UploadedByUserId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

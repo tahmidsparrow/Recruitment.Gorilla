@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Copy,
@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckboxField } from '@/components/ui/field';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Dialog,
   DialogBody,
@@ -48,6 +49,13 @@ interface SectionDraft {
   criteria: UpsertRubricCriterionPayload[];
 }
 
+const STATUS_FILTERS: { id: 'all' | 'active' | 'inactive' | 'default'; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: 'Active' },
+  { id: 'inactive', label: 'Inactive' },
+  { id: 'default', label: 'Default' },
+];
+
 export default function EvaluationRubricsTab() {
   const queryClient = useQueryClient();
 
@@ -55,6 +63,24 @@ export default function EvaluationRubricsTab() {
     queryKey: ['evaluation-rubrics'],
     queryFn: getEvaluationRubrics,
   });
+
+  // Filter & Search states
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'default'>('all');
+
+  const filteredRubrics = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rubrics.filter((r) => {
+      if (statusFilter === 'active' && !r.isActive) return false;
+      if (statusFilter === 'inactive' && r.isActive) return false;
+      if (statusFilter === 'default' && !r.isDefault) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        (r.description && r.description.toLowerCase().includes(q))
+      );
+    });
+  }, [rubrics, query, statusFilter]);
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -376,18 +402,33 @@ export default function EvaluationRubricsTab() {
   };
 
   return (
-    <div className="evaluation-rubrics-tab">
-      {/* Header bar */}
-      <div className="page-bar">
-        <div className="page-bar__main">
-          <p className="page-bar__description mb-0">
-            Define customized scorecard rubrics per role with weighted criteria, evaluation guides,
-            and section groupings.
-          </p>
-        </div>
-        <div className="page-bar__actions">
-          <Button onClick={openCreateModal} className="flex items-center gap-1.5">
-            <Plus size={15} strokeWidth={2.5} />
+    <div className="evaluation-rubrics-tab page-stack">
+      {/* Search and Action Toolbar */}
+      <div className="data-toolbar">
+        <SearchInput
+          wrapperClassName="data-toolbar__search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search rubric name or description…"
+          aria-label="Search evaluation rubrics"
+        />
+        <div className="data-toolbar__end">
+          <div className="segmented" role="group" aria-label="Filter rubrics by status">
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={statusFilter === f.id}
+                className={statusFilter === f.id ? 'active' : ''}
+                onClick={() => setStatusFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="toolbar-divider hidden sm:block" />
+          <Button size="sm" onClick={openCreateModal} className="shrink-0 gap-1.5">
+            <Plus size={15} strokeWidth={2} aria-hidden="true" />
             <span>Add rubric scorecard</span>
           </Button>
         </div>
@@ -412,25 +453,42 @@ export default function EvaluationRubricsTab() {
             </Button>
           }
         />
+      ) : filteredRubrics.length === 0 ? (
+        <EmptyState
+          icon={<FileCheck2 size={24} strokeWidth={1.5} />}
+          title="No rubrics match these filters"
+          description="Try a different search query or status filter."
+          action={
+            <Button
+              variant="outline"
+              onClick={() => {
+                setQuery('');
+                setStatusFilter('all');
+              }}
+            >
+              Clear filters
+            </Button>
+          }
+        />
       ) : (
         <div className="table-wrap">
           <table className="table table-cards align-middle">
             <thead>
               <tr>
-                <th style={{ width: '30%' }}>Rubric Name</th>
-                <th style={{ width: '25%' }}>Description</th>
-                <th style={{ width: '12%' }} className="text-center">Criteria</th>
-                <th style={{ width: '15%' }} className="text-center">Assigned Openings</th>
-                <th style={{ width: '8%' }} className="text-center">Status</th>
-                <th style={{ width: '10%' }} className="text-right">Actions</th>
+                <th className="w-[360px] lg:w-[420px]">Rubric Name</th>
+                <th>Description</th>
+                <th className="w-28 text-center">Criteria</th>
+                <th className="w-36 text-center">Assigned Openings</th>
+                <th className="w-24 text-center">Status</th>
+                <th className="w-28 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rubrics.map((r) => (
+              {filteredRubrics.map((r) => (
                 <tr key={r.id}>
                   <td>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold truncate">{r.name}</span>
+                      <span className="font-semibold">{r.name}</span>
                       {r.isDefault && (
                         <Badge variant="brand">
                           <Star fill="currentColor" />
@@ -440,7 +498,7 @@ export default function EvaluationRubricsTab() {
                     </div>
                   </td>
                   <td>
-                    <span className="text-muted-foreground text-[length:var(--text-sm)] truncate block" style={{ maxWidth: 320 }}>
+                    <span className="text-muted-foreground text-[length:var(--text-sm)] line-clamp-2">
                       {r.description || '—'}
                     </span>
                   </td>

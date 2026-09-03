@@ -45,7 +45,7 @@ export default function KanbanCard({ candidate, onAdvanceClick, canWrite }: Kanb
     e.currentTarget.classList.remove('kanban-card--dragging');
   };
 
-  const meta = [candidate.appliedRole, candidate.source].filter(Boolean).join(' · ');
+  const meta = [candidate.appliedRole, candidate.source, candidate.batchName].filter(Boolean).join(' · ');
 
   return (
     <div

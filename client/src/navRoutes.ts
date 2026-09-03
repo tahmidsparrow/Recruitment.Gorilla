@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
+  Briefcase,
   CalendarCheck,
   KeyRound,
   LayoutDashboard,
@@ -71,6 +72,14 @@ export const NAV_ROUTES: NavRoute[] = [
     roles: ['SuperAdmin', 'Admin', 'Recruiter'],
   },
   {
+    path: '/jobs',
+    label: 'Jobs',
+    group: 'Pipeline',
+    icon: Briefcase,
+    description: 'Track open positions, target dates, required skills, and assigned recruiters.',
+    roles: ['SuperAdmin', 'Admin', 'Recruiter'],
+  },
+  {
     path: '/upload',
     label: 'Upload CVs',
     group: 'Pipeline',
@@ -92,7 +101,7 @@ export const NAV_ROUTES: NavRoute[] = [
     label: 'Configuration',
     group: 'Admin',
     icon: Settings,
-    description: 'Job openings, skills, interview types and email settings.',
+    description: 'Evaluation rubrics, skills, interview types and email settings.',
     roles: ['SuperAdmin', 'Admin'],
   },
   {

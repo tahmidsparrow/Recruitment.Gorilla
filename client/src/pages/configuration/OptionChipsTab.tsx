@@ -12,6 +12,7 @@ import type { Opt } from './types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { CheckboxField } from '@/components/ui/field';
 import {
   Dialog,
@@ -30,13 +31,8 @@ export interface OptionApi {
 }
 
 /**
- * Skills and interview types are lists of names with an active flag, so they
- * render as tags rather than as the four-column table they used to share with
- * job openings. Adding is an input in the flow of the chips — the common case
- * never opens a modal; clicking a chip's name opens the edit dialog.
- *
- * Colours come from utils/skillColors, so a skill looks the same here as it
- * does on a candidate profile or the interview timeline.
+ * Skills, candidate sources, and interview types managed as interactive tags/chips.
+ * Adding is an ergonomic input bar; clicking a chip opens the edit modal.
  */
 export default function OptionChipsTab({
   noun,
@@ -60,9 +56,6 @@ export default function OptionChipsTab({
   const [editName, setEditName] = useState('');
   const [editActive, setEditActive] = useState(true);
   const [editInvalid, setEditInvalid] = useState(false);
-  // The chip's × used to fire the delete straight away. Deleting a skill can
-  // deactivate it across every candidate tagged with it, and the chips sit a
-  // few pixels apart — an easy misclick with a consequence and no undo.
   const [toDelete, setToDelete] = useState<Opt | null>(null);
 
   const { data: options = [], isLoading } = useQuery({
@@ -77,7 +70,6 @@ export default function OptionChipsTab({
     mutationFn: (value: string) =>
       api.create({
         name: value,
-        // New values go to the end. Nobody types an ordinal any more.
         sortOrder: (options.at(-1)?.sortOrder ?? 0) + 1,
         isActive: true,
       }),
@@ -134,80 +126,94 @@ export default function OptionChipsTab({
     setEditInvalid(false);
   };
 
+  const activeCount = options.filter((o) => o.isActive).length;
+
   return (
     <>
-      <SectionCard title={`${cap(noun)}s`} description={description}>
-        {isLoading ? (
-          <div className="chip-grid" aria-busy="true">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} variant="row" width={`${70 + (i % 3) * 30}px`} />
-            ))}
+      <SectionCard
+        title={`${cap(noun)}s`}
+        description={description}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="neutral">
+              {activeCount} active
+            </Badge>
           </div>
-        ) : (
-          <>
-            <div className="chip-grid">
-              {options.map((o) => (
-                <span
-                  key={o.id}
-                  className={`option-chip ${skillColorModifier(o.name)}${o.isActive ? '' : ' option-chip--inactive'}`}
-                  title={o.isActive ? undefined : 'Hidden from candidate forms'}
-                >
-                  <button
-                    type="button"
-                    className="option-chip__name"
-                    onClick={() => openEdit(o)}
-                    aria-label={`Edit ${o.name}`}
-                  >
-                    {o.name}
-                  </button>
-                  <button
-                    type="button"
-                    className="option-chip__remove"
-                    onClick={() => setToDelete(o)}
-                    disabled={removeMutation.isPending}
-                    aria-label={`Delete ${o.name}`}
-                    title={`Delete ${o.name}`}
-                  >
-                    <X size={13} strokeWidth={2.25} aria-hidden="true" />
-                  </button>
-                </span>
+        }
+      >
+        <div className="flex flex-col gap-5">
+          {/* Quick Add Bar */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitDraft();
+            }}
+            className="flex flex-wrap items-center gap-2 max-w-md"
+          >
+            <Input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={addPlaceholder}
+              aria-label={`Add a ${noun}`}
+              className="grow"
+            />
+            <Button
+              type="submit"
+              disabled={!draft.trim() || createMutation.isPending}
+              className="gap-1.5 shrink-0"
+            >
+              <Plus size={15} strokeWidth={2} aria-hidden="true" />
+              Add {noun}
+            </Button>
+          </form>
+
+          {isLoading ? (
+            <div className="chip-grid" aria-busy="true">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} variant="row" width={`${70 + (i % 3) * 30}px`} />
               ))}
-
-              <span className="chip-add">
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); submitDraft(); }
-                  }}
-                  placeholder={addPlaceholder}
-                  aria-label={`Add a ${noun}`}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={submitDraft}
-                  disabled={!draft.trim() || createMutation.isPending}
-                  aria-label={`Add ${noun}`}
-                  title={`Add ${noun}`}
-                  className="chip-add__btn"
-                  >
-                  <Plus size={14} strokeWidth={2} aria-hidden="true" />
-                </Button>
-              </span>
             </div>
+          ) : (
+            <>
+              <div className="chip-grid">
+                {options.map((o) => (
+                  <span
+                    key={o.id}
+                    className={`option-chip ${skillColorModifier(o.name)}${o.isActive ? '' : ' option-chip--inactive'}`}
+                    title={o.isActive ? undefined : 'Hidden from candidate forms'}
+                  >
+                    <button
+                      type="button"
+                      className="option-chip__name"
+                      onClick={() => openEdit(o)}
+                      aria-label={`Edit ${o.name}`}
+                    >
+                      {o.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="option-chip__remove"
+                      onClick={() => setToDelete(o)}
+                      disabled={removeMutation.isPending}
+                      aria-label={`Delete ${o.name}`}
+                      title={`Delete ${o.name}`}
+                    >
+                      <X size={13} strokeWidth={2.25} aria-hidden="true" />
+                    </button>
+                  </span>
+                ))}
+              </div>
 
-            {options.length === 0 && (
-              <div className="mt-6">
+              {options.length === 0 && (
                 <EmptyState
                   icon={<Tags size={20} strokeWidth={1.75} aria-hidden="true" />}
                   title={`No ${noun} values yet`}
-                  description="Type one above and press Enter to make it selectable on candidate forms."
+                  description={`Add your first ${noun} using the input field above.`}
                 />
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
+        </div>
       </SectionCard>
 
       <ConfirmModal
@@ -222,45 +228,68 @@ export default function OptionChipsTab({
         deactivated instead — hidden from new forms but kept on existing records.
       </ConfirmModal>
 
-      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) { (() => setEditing(null))(); } }}>
-<DialogContent>
-        <form
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!editName.trim()) { setEditInvalid(true); return; }
-            updateMutation.mutate();
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>Edit {noun}</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="form-stack">
+      <Dialog
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+      >
+        <DialogContent>
+          <form
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!editName.trim()) {
+                setEditInvalid(true);
+                return;
+              }
+              updateMutation.mutate();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>Edit {noun}</DialogTitle>
+            </DialogHeader>
+            <DialogBody className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label>Name <span className="required-star" aria-hidden="true">*</span></Label>
+                <Label htmlFor="edit-option-name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
                 <Input
+                  id="edit-option-name"
                   value={editName}
-                  onChange={(e) => { setEditName(e.target.value); if (editInvalid) setEditInvalid(false); }}
-                  aria-invalid={editInvalid || undefined}
+                  onChange={(e) => {
+                    setEditName(e.target.value);
+                    if (editInvalid && e.target.value.trim()) setEditInvalid(false);
+                  }}
                   autoFocus
+                  aria-invalid={editInvalid}
                 />
                 {editInvalid && (
-                  <p className="text-[length:var(--text-sm)] text-[var(--danger-text)]">Name is required.</p>
+                  <p className="text-[length:var(--text-sm)] text-destructive">
+                    Name is required.
+                  </p>
                 )}
               </div>
-              <CheckboxField id={`${queryKey}-active`} label="Active — shown in candidate forms" checked={editActive} onCheckedChange={(checked) => setEditActive(checked)} />
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-</Dialog>
+
+              <CheckboxField
+                id="edit-option-active"
+                label="Active"
+                description="When unchecked, hidden from candidate forms but preserved on existing records."
+                checked={editActive}
+                onCheckedChange={(checked) => setEditActive(checked)}
+              />
+            </DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Saving…' : 'Save changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

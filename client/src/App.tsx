@@ -5,6 +5,7 @@ import RequireRole from './components/RequireRole';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import JobsPage from './pages/JobsPage';
 import UploadPage from './pages/UploadPage';
 import CandidatesPage from './pages/CandidatesPage';
 import CandidateDetailPage from './pages/CandidateDetailPage';
@@ -54,6 +55,14 @@ export default function App() {
               element={
                 <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
                   <AnalyticsPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/jobs"
+              element={
+                <RequireRole roles={['SuperAdmin', 'Admin', 'Recruiter']}>
+                  <JobsPage />
                 </RequireRole>
               }
             />

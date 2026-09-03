@@ -30,6 +30,7 @@ import { initials } from '../../utils/initials';
 import EmptyState from '../common/EmptyState';
 import LoadingPanel from '../common/Loading';
 import { SearchInput } from '@/components/ui/search-input';
+import { cn } from '@/lib/utils';
 import type {
   CandidateDraft,
   ApproveCandidateDraftRequest,
@@ -50,8 +51,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
   // Filters state
   const [statusFilter, setStatusFilter] = useState<string>('Pending');
   const [batchFilter, setBatchFilter] = useState<string>(initialBatchId || '');
+  const [roleFilter, setRoleFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedDraftId, setSelectedDraftId] = useState<number | null>(null);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState<boolean>(false);
 
   // Multi-select state for bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -126,11 +129,12 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['candidate-drafts', statusFilter, batchFilter, searchQuery],
+    queryKey: ['candidate-drafts', statusFilter, batchFilter, roleFilter, searchQuery],
     queryFn: ({ pageParam }) =>
       getCandidateDrafts({
         status: statusFilter,
         batchId: batchFilter || undefined,
+        roleId: roleFilter ? Number(roleFilter) : undefined,
         search: searchQuery || undefined,
         pageSize: 50,
         cursor: pageParam,
@@ -226,8 +230,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
     (direction: 'prev' | 'next') => {
       if (direction === 'prev' && hasPrev) {
         setSelectedDraftId(drafts[currentIndex - 1].id);
+        setMobileDetailOpen(true);
       } else if (direction === 'next' && hasNext) {
         setSelectedDraftId(drafts[currentIndex + 1].id);
+        setMobileDetailOpen(true);
       }
     },
     [currentIndex, drafts, hasNext, hasPrev]
@@ -457,6 +463,22 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
         </div>
 
         <div className="draft-toolbar__right">
+          {/* Job Opening Selector */}
+          <NativeSelect
+            size="sm"
+            wrapperClassName="draft-batch-select"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            aria-label="Filter by Job Opening"
+          >
+            <option value="">All Job Openings</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </NativeSelect>
+
           {/* Batch Selector */}
           {batches.length > 0 && (
             <NativeSelect
@@ -475,36 +497,38 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             </NativeSelect>
           )}
 
-          {/* Search Bar */}
-          <SearchInput
-            wrapperClassName="draft-search-field"
-            className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
-            placeholder="Search candidate, role, skills…"
-            aria-label="Search drafts"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          {/* Search Bar + Refresh */}
+          <div className="draft-search-wrap flex items-center gap-2 grow">
+            <SearchInput
+              wrapperClassName="draft-search-field grow"
+              className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
+              placeholder="Search candidate, role, skills…"
+              aria-label="Search drafts"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
 
-          <Button
-            variant="outline"
-            size="iconSm"
-            className="shrink-0"
-            onClick={() => {
-              void refetchDrafts();
-              void refetchBatches();
-            }}
-            title="Refresh Drafts"
-            aria-label="Refresh drafts"
-          >
-            <RotateCw />
-          </Button>
+            <Button
+              variant="outline"
+              size="iconSm"
+              className="shrink-0"
+              onClick={() => {
+                void refetchDrafts();
+                void refetchBatches();
+              }}
+              title="Refresh Drafts"
+              aria-label="Refresh drafts"
+            >
+              <RotateCw />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* 2. Workspace Split-Screen: Master Rail + Studio */}
       <div className="draft-split-view">
         {/* LEFT RAIL: Queue Cards List */}
-        <div className="draft-list-rail">
+        <div className={cn('draft-list-rail', mobileDetailOpen ? 'hidden lg:flex' : 'flex')}>
           <div className="flex items-stretch justify-between border-b border-border shrink-0 bg-card">
             <div 
               className="flex items-center justify-center shrink-0"
@@ -564,7 +588,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   <div
                     key={d.id}
                     className={`draft-item-card ${isSelected ? 'draft-item-card--active' : ''} ${isChecked ? 'draft-item-card--checked' : ''} flex items-stretch border-b border-border p-0`}
-                    onClick={() => setSelectedDraftId(d.id)}
+                    onClick={() => {
+                      setSelectedDraftId(d.id);
+                      setMobileDetailOpen(true);
+                    }}
                   >
                     {/* Dedicated Checkbox Column */}
                     <div 
@@ -641,11 +668,19 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
         </div>
 
         {/* RIGHT STUDIO: Candidate Review & Approval Studio */}
-        <div className="draft-editor-studio">
+        <div className={cn('draft-editor-studio', !mobileDetailOpen ? 'hidden lg:flex' : 'flex')}>
           {isLoadingActiveDraft ? (
             <LoadingPanel />
           ) : !activeDraft ? (
-            <div className="draft-editor-studio__empty">
+            <div className="draft-editor-studio__empty flex flex-col items-center justify-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden"
+                onClick={() => setMobileDetailOpen(false)}
+              >
+                <ChevronLeft size={16} className="me-1" /> Back to Queue
+              </Button>
               <EmptyState
                 icon={<FileText size={24} />}
                 title="Select a candidate to review"
@@ -654,35 +689,78 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             </div>
           ) : (
             <div className="draft-editor-studio__container">
+              {/* Mobile Back-to-Queue Nav Bar */}
+              <div className="flex items-center justify-between border-b border-border px-3 py-2 bg-surface-muted lg:hidden shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 font-medium -ml-1 text-brand hover:text-brand"
+                  onClick={() => setMobileDetailOpen(false)}
+                >
+                  <ChevronLeft size={16} />
+                  Back to Queue
+                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="iconSm"
+                    disabled={!hasPrev}
+                    onClick={() => navigateQueue('prev')}
+                    aria-label="Previous draft"
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+                  <span className="text-xs font-semibold px-1 text-muted-foreground">
+                    {currentIndex >= 0 ? `${currentIndex + 1} / ${drafts.length}` : ''}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="iconSm"
+                    disabled={!hasNext}
+                    onClick={() => navigateQueue('next')}
+                    aria-label="Next draft"
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                </div>
+              </div>
+
               {/* Studio Hero Header */}
               <div className="draft-editor-studio__head">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="avatar avatar--lg shrink-0">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="avatar avatar--lg shrink-0 mt-0.5">
                     {initials(editForm.fullName || activeDraft.originalFileName)}
                   </div>
-                  <div className="min-w-0">
-                    <h5 className="mb-0 font-bold truncate">
+                  <div className="min-w-0 flex-1">
+                    <h5 className="mb-1 font-bold text-base md:text-lg leading-tight truncate">
                       {editForm.fullName || activeDraft.originalFileName}
                     </h5>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <Badge variant="neutral">
-                        <FileText />
-                        {activeDraft.originalFileName} ({(activeDraft.fileSizeBytes / 1024).toFixed(0)} KB)
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs">
+                      <Badge variant="neutral" className="max-w-full">
+                        <FileText size={12} className="shrink-0 mr-1" />
+                        <span className="truncate inline-block max-w-[160px] sm:max-w-[280px]">
+                          {activeDraft.originalFileName}
+                        </span>
+                        <span className="shrink-0 ml-1 text-muted-foreground">
+                          ({(activeDraft.fileSizeBytes / 1024).toFixed(0)} KB)
+                        </span>
                       </Badge>
                       {activeDraft.batchName && (
-                        <Badge variant="outline">
-                          {activeDraft.batchName}
+                        <Badge variant="outline" className="max-w-full">
+                          <span className="truncate inline-block max-w-[160px] sm:max-w-[240px]">
+                            {activeDraft.batchName}
+                          </span>
                         </Badge>
                       )}
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-xs shrink-0">
                         Added {new Date(activeDraft.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Queue Stepper Buttons */}
-                <div className="flex items-center gap-1.5">
+                {/* Queue Stepper Buttons (Desktop only - mobile uses top return bar) */}
+                <div className="hidden lg:flex items-center gap-1.5">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1325,17 +1403,21 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 <Button
                   variant="ghostDestructive"
                   size="sm"
+                  className="gap-1 px-2 sm:px-3 shrink-0 text-xs sm:text-sm"
                   disabled={discardMutation.isPending || activeDraft.status === 'Discarded'}
                   onClick={() => discardMutation.mutate(activeDraft.id)}
+                  title="Discard Draft"
                 >
-                  <Trash2 />
-                  Discard Draft
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">Discard Draft</span>
+                  <span className="sm:hidden">Discard</span>
                 </Button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="px-2.5 sm:px-3 text-xs sm:text-sm"
                     disabled={updateMutation.isPending}
                     onClick={() =>
                       updateMutation.mutate({
@@ -1343,19 +1425,29 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         payload: editForm,
                       })
                     }
+                    title="Save Changes"
                   >
                     {updateMutation.isPending && <Spinner />}
-                    Save Changes
+                    <span className="hidden sm:inline">Save Changes</span>
+                    <span className="sm:hidden">Save</span>
                   </Button>
 
                   <Button
                     size="sm"
+                    className="gap-1 px-2.5 sm:px-4 text-xs sm:text-sm font-medium"
                     disabled={approveMutation.isPending || activeDraft.status === 'Approved'}
                     onClick={handleApprove}
                     title="Approve and create candidate (Ctrl+Enter)"
                   >
-                    {approveMutation.isPending ? <Spinner /> : <UserCheck />}
-                    {approveMutation.isPending ? 'Approving…' : 'Approve & Create Candidate'}
+                    {approveMutation.isPending ? <Spinner /> : <UserCheck size={14} />}
+                    {approveMutation.isPending ? (
+                      'Approving…'
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">Approve &amp; Create Candidate</span>
+                        <span className="sm:hidden">Approve</span>
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

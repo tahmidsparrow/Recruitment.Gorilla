@@ -179,17 +179,25 @@ export function CheckboxField({
   disabled?: boolean;
   className?: string;
 }) {
+  const hasDescription = Boolean(description);
+
   return (
-    <div className={cn('flex min-h-[var(--control-h-sm)] items-start gap-2', className)}>
+    <div
+      className={cn(
+        'flex min-h-[var(--control-h-sm)] gap-2',
+        hasDescription ? 'items-start' : 'items-center',
+        className,
+      )}
+    >
       <Checkbox
         id={id}
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(v === true)}
         disabled={disabled}
-        className="mt-0.5"
+        className={hasDescription ? 'mt-0.5' : undefined}
       />
       <div className="flex min-w-0 flex-col gap-0.5">
-        <Label htmlFor={id} className="font-medium">
+        <Label htmlFor={id} className="font-medium cursor-pointer">
           {label}
         </Label>
         {description && (

@@ -15,6 +15,7 @@ import {
 import StatusTimeline from '../components/StatusTimeline';
 import ReadOnlyCandidateProfile from '../components/ReadOnlyCandidateProfile';
 import AddStatusModal from '../components/AddStatusModal';
+import CandidatePipelineStepper from '../components/CandidatePipelineStepper';
 import { SearchableSelect, SearchableMultiSelect } from '../components/SearchableSelect';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/ToastStack';
@@ -28,7 +29,7 @@ import RowActions, { RowAction, RowActionSeparator } from '../components/common/
 import EvaluationReportDrawer from '../components/EvaluationReportDrawer';
 import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
-import type { CandidateDetail } from '../types';
+import type { CandidateDetail, UpdateCandidatePayload } from '../types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,6 +56,7 @@ export default function CandidateDetailPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { canWriteCandidates, isAdminOrAbove } = useAuth();
+  const { addToast } = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
   const [addingStatus, setAddingStatus] = useState(false);
@@ -98,6 +100,16 @@ export default function CandidateDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ['candidates'] });
       navigate('/candidates');
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (updates: UpdateCandidatePayload) => updateCandidate(candidateId, updates),
+    onSuccess: () => {
+      addToast('Candidate details updated successfully.');
+      void queryClient.invalidateQueries({ queryKey: ['candidate', candidateId] });
+      void queryClient.invalidateQueries({ queryKey: ['candidates'] });
+    },
+    onError: () => addToast('Failed to update candidate. Please check your inputs.', 'danger'),
   });
 
   if (isLoading) return <LoadingPanel label="Loading candidate…" />;
@@ -224,6 +236,7 @@ export default function CandidateDetailPage() {
           )}
         </div>
       </div>
+      <CandidatePipelineStepper currentStatus={data.currentStatus} className="mt-1" />
     </div>
 
       {data.roleClosed && (
@@ -269,7 +282,14 @@ export default function CandidateDetailPage() {
         /* Full-Width Focused Candidate Profile Stack */
         <div className="candidate-detail-container w-full">
           <div className="card-stack candidate-profile-stack w-full">
-            <ReadOnlyCandidateProfile candidate={data} showCvFiles={false} />
+            <ReadOnlyCandidateProfile
+              candidate={data}
+              showCvFiles={false}
+              canEdit={canWrite}
+              onSave={async (updates) => {
+                await updateMutation.mutateAsync(updates);
+              }}
+            />
             {canWrite && <OfferCard candidate={data} />}
           </div>
         </div>

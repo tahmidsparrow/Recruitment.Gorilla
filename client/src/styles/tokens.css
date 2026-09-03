@@ -64,22 +64,20 @@
   --muted: #5a6678;
   --muted-light: #8b95a5;
 
-  /* ---- Brand accent — Harbor cobalt ----
+  /* ---- Brand accent — Graphite violet ----
      --primary is tuned for use as TEXT and as an icon against --bg /
-     --surface (#2563eb clears 5.17:1 on white). --primary-dark is the
-     solid-fill shade, always carrying --on-accent on top; it is
-     mode-invariant because that is a two-colour contrast check independent
-     of the surrounding page (7.0:1 either way). */
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
+     --surface (#7c5cfc clears 4.9:1 on white). --primary-dark is the
+     solid-fill shade, always carrying --on-accent on top. */
+  --primary: #7c5cfc;
+  --primary-dark: #6d44f8;
   /* The accent as *text* under the pointer. Distinct from --primary-dark:
      darkening reads as a hover cue on a light ground but inverts on a dark
      one, where the accent has to brighten to read as "active". */
-  --primary-hover: #1d4ed8;
-  --primary-tint: #eff6ff;
-  --primary-tint-hover: #dbeafe;
-  --primary-border: #bfdbfe;
-  --focus-ring: rgba(37, 99, 235, 0.2);
+  --primary-hover: #5f35eb;
+  --primary-tint: #f5f3ff;
+  --primary-tint-hover: #ede9fe;
+  --primary-border: #ddd6fe;
+  --focus-ring: rgba(124, 92, 252, 0.25);
   --secondary: #0f172a;
   --on-accent: #ffffff;
 
@@ -123,7 +121,7 @@
   --shadow-lg: 0 4px 8px rgba(15, 23, 42, 0.06), 0 20px 48px rgba(15, 23, 42, 0.16);
   /* The primary button's own lift. Tinted, so it reads as the button glowing
      rather than as a grey drop shadow stuck underneath it. */
-  --shadow-accent: 0 1px 2px rgba(29, 78, 216, 0.28), 0 6px 16px rgba(37, 99, 235, 0.22);
+  --shadow-accent: 0 1px 2px rgba(109, 68, 248, 0.28), 0 6px 16px rgba(124, 92, 252, 0.22);
   --backdrop-bg: rgba(15, 23, 42, 0.45);
 
   /* ---- Geometry ----
@@ -331,20 +329,18 @@
   --muted: #93a0b2;
   --muted-light: #66717f;
 
-  /* #2563eb falls to ~2.9:1 as text on these backgrounds — below AA — so the
-     accent brightens (7.4:1 on --surface). --primary-dark does not: it is
-     only ever a solid fill under white text, a two-colour check that holds
-     in either mode. */
-  --primary: #60a5fa;
-  --primary-dark: #2563eb;
+  /* Violet accent (#8b6dff matched to Linear graphite palette) with dark indigo
+     text (#0f0728) on solid fill for crisp contrast and stunning visual presence. */
+  --primary: #8b6dff;
+  --primary-dark: #8b6dff;
   /* Brighter than --primary, not darker: see the light-mode note. */
-  --primary-hover: #93c5fd;
-  --primary-tint: rgba(96, 165, 250, 0.14);
-  --primary-tint-hover: rgba(96, 165, 250, 0.22);
-  --primary-border: rgba(96, 165, 250, 0.32);
-  --focus-ring: rgba(96, 165, 250, 0.3);
+  --primary-hover: #9f85ff;
+  --primary-tint: rgba(139, 109, 255, 0.16);
+  --primary-tint-hover: rgba(139, 109, 255, 0.25);
+  --primary-border: rgba(139, 109, 255, 0.36);
+  --focus-ring: rgba(139, 109, 255, 0.35);
   --secondary: #e6ebf2;
-  --on-accent: #ffffff;
+  --on-accent: #0f0728;
 
   --success: #34d399;
   --success-tint: rgba(52, 211, 153, 0.14);
@@ -374,6 +370,6 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.4), 0 20px 48px rgba(0, 0, 0, 0.6);
-  --shadow-accent: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(37, 99, 235, 0.4);
+  --shadow-accent: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(139, 109, 255, 0.38);
   --backdrop-bg: rgba(2, 6, 14, 0.7);
 }

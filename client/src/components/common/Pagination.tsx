@@ -1,18 +1,10 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 
 /**
- * Prev/next pager with a result count. Replaces the copy of this markup that
- * lived in CandidatesPage, AuditLogPage and UsersPage.
- *
- * `totalPages` is derived here rather than passed in, so every caller rounds
- * the same way and a zero-result page still reads "Page 1 of 1" instead of
- * "Page 1 of 0".
- *
- * The labels collapse to bare chevrons below `sm`. The buttons keep their full
- * control height either way, so a thumb still has a real target — shrinking
- * the control along with the label is the usual mistake here.
+ * Prev/next pager with a result count and page size selector.
  */
 export default function Pagination({
   page,
@@ -20,6 +12,8 @@ export default function Pagination({
   totalCount,
   onPageChange,
   noun,
+  pageSizeOptions = [10, 25, 50, 100],
+  onPageSizeChange,
 }: {
   page: number;
   pageSize: number;
@@ -27,15 +21,41 @@ export default function Pagination({
   onPageChange: (page: number) => void;
   /** Singular; pluralised for the count, e.g. "candidate" → "12 candidates". */
   noun: string;
+  /** Options for rows/items per page dropdown, e.g. [10, 25, 50, 100]. */
+  pageSizeOptions?: number[];
+  /** Callback when user changes page size. */
+  onPageSizeChange?: (pageSize: number) => void;
 }) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <span className="text-[length:var(--text-sm)] whitespace-nowrap text-muted-foreground">
-        {totalCount.toLocaleString()} {noun}
-        {totalCount === 1 ? '' : 's'}
-      </span>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className="text-[length:var(--text-sm)] whitespace-nowrap text-muted-foreground">
+          {totalCount.toLocaleString()} {noun}
+          {totalCount === 1 ? '' : 's'}
+        </span>
+        {onPageSizeChange && (
+          <div className="flex items-center gap-1.5 text-[length:var(--text-sm)] text-muted-foreground">
+            <span className="hidden sm:inline">Show</span>
+            <NativeSelect
+              size="sm"
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="h-8 py-0.5 text-xs w-20"
+              aria-label={`${noun}s per page`}
+            >
+              {pageSizeOptions.map((sz) => (
+                <option key={sz} value={sz}>
+                  {sz}
+                </option>
+              ))}
+            </NativeSelect>
+            <span className="hidden sm:inline">per page</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center gap-1.5">
         <Button
           size="sm"

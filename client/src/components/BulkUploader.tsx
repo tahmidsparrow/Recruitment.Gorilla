@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, FileText, UploadCloud, XCircle } from 'lucide-react';
-import { uploadCV } from '../services/api';
+import { getActiveRoleOptions, uploadCV } from '../services/api';
 import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent } from '../services/signalr';
 import type { CVDraft } from '../types';
 import { Alert } from '@/components/ui/alert';
@@ -9,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 
 interface Props {
   onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;
@@ -27,12 +29,18 @@ const ACCEPTED = {
 
 export default function BulkUploader({ onDraftsParsed }: Props) {
   const [batchName, setBatchName] = useState('');
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [fileProgresses, setFileProgresses] = useState<FileProgressState[]>([]);
   const currentBatchId = useRef<string | null>(null);
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ['active-role-options'],
+    queryFn: getActiveRoleOptions,
+  });
 
   useEffect(() => {
     let active = true;
@@ -106,7 +114,14 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
         });
 
         try {
-          const draft = await uploadCV(file, batchId, i, files.length, batchName.trim() || undefined);
+          const draft = await uploadCV(
+            file,
+            batchId,
+            i,
+            files.length,
+            batchName.trim() || undefined,
+            selectedRoleId ?? undefined
+          );
           drafts.push(draft);
           setFileProgresses((prev) => {
             const next = [...prev];
@@ -134,7 +149,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
       setBusy(false);
       if (drafts.length > 0) onDraftsParsed(drafts, batchId);
     },
-    [batchName, onDraftsParsed]
+    [batchName, selectedRoleId, onDraftsParsed]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -154,7 +169,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
   return (
     <div className="page-stack page-stack--tight">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-1">
+      <div className="flex flex-wrap items-center gap-4 mb-1">
         <div className="flex items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
           <label htmlFor="batch-name-input" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
             Batch Label:
@@ -167,6 +182,27 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
             disabled={busy}
             onChange={(e) => setBatchName(e.target.value)}
           />
+        </div>
+
+        <div className="flex items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
+          <label htmlFor="job-role-select" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
+            Job Opening:
+          </label>
+          <NativeSelect
+            id="job-role-select"
+            size="sm"
+            value={selectedRoleId ?? ''}
+            disabled={busy}
+            onChange={(e) => setSelectedRoleId(e.target.value ? Number(e.target.value) : null)}
+            aria-label="Target Job Opening"
+          >
+            <option value="">Select Job Opening (Optional)…</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
       </div>
 

@@ -34,6 +34,7 @@ import { SkeletonCards } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { ActivityItem, UpcomingInterview } from '../types';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 
@@ -260,7 +261,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid-2">
-            <SectionCard title="Upcoming interviews">
+            <SectionCard
+              title="Upcoming interviews"
+              actions={
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/candidates?status=Interview Scheduled">View all</Link>
+                </Button>
+              }
+            >
               {(scoped?.upcomingInterviews ?? []).length === 0 ? (
                 <EmptyState
                   title="No interviews scheduled"
@@ -275,7 +283,14 @@ export default function DashboardPage() {
               )}
             </SectionCard>
 
-            <SectionCard title="Recent activity">
+            <SectionCard
+              title="Recent activity"
+              actions={
+                <Button asChild variant="outline" size="sm">
+                  <Link to={isAdminOrAbove ? '/audit' : '/candidates'}>View all</Link>
+                </Button>
+              }
+            >
               {(scoped?.recentActivity ?? []).length === 0 ? (
                 <EmptyState
                   title="No recent activity"

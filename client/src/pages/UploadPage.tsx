@@ -38,19 +38,21 @@ export default function UploadPage() {
             className={`segmented__item ${activeTab === 'upload' ? 'segmented__item--active active' : ''}`}
             onClick={() => setActiveTab('upload')}
           >
-            <UploadCloud size={15} className="me-1.5" />
-            Upload &amp; Intake
+            <UploadCloud size={15} className="me-1.5 shrink-0" />
+            <span>Upload &amp; Intake</span>
           </button>
           <button
             type="button"
             className={`segmented__item ${activeTab === 'review' ? 'segmented__item--active active' : ''}`}
             onClick={() => setActiveTab('review')}
           >
-            <Layers size={15} className="me-1.5" />
-            Review Staging Workspace
+            <Layers size={15} className="me-1.5 shrink-0" />
+            <span className="hidden sm:inline">Review Staging Workspace</span>
+            <span className="sm:hidden">Review Workspace</span>
             {pendingCount > 0 && (
-              <span className="draft-badge--pending ml-2">
-                {pendingCount} Pending
+              <span className="draft-badge--pending ml-1.5 sm:ml-2">
+                <span className="hidden sm:inline">{pendingCount} Pending</span>
+                <span className="sm:hidden">{pendingCount}</span>
               </span>
             )}
           </button>

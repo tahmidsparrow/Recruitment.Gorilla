@@ -283,6 +283,7 @@ export interface RoleAppliedOption {
   recruiters: { userId: number; name: string }[];
   evaluationRubricId?: number | null;
   evaluationRubricName?: string | null;
+  candidateCount?: number;
 }
 
 export interface SkillOption {
@@ -343,6 +344,7 @@ export interface CandidateListItem {
   createdAt: string;
   source: string | null;
   updatedAt?: string;
+  batchName?: string | null;
 }
 
 export interface CVFileInfo {

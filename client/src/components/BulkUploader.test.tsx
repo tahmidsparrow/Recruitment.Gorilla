@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithProviders } from '../test/renderWithProviders';
 import BulkUploader from './BulkUploader';
 
 vi.mock('../services/api', () => ({
   uploadCV: vi.fn(),
+  getActiveRoleOptions: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../services/signalr', () => ({
@@ -22,7 +24,7 @@ vi.mock('../services/signalr', () => ({
 describe('BulkUploader', () => {
   it('renders dropzone prompt correctly', () => {
     const handleParsed = vi.fn();
-    render(<BulkUploader onDraftsParsed={handleParsed} />);
+    renderWithProviders(<BulkUploader onDraftsParsed={handleParsed} />);
 
     expect(screen.getByText(/Drag & drop CVs here/i)).toBeInTheDocument();
     expect(screen.getByText(/PDF or Word \(\.docx\)/i)).toBeInTheDocument();
