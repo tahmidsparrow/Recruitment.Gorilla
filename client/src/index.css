@@ -375,9 +375,18 @@ a.btn:focus {
    Ported from Prism's .sidebar / .nav-item / .topbar blocks.
    ============================================================ */
 
+/* The rail is `position: sticky; height: 100dvh`, so on a page taller than
+   the viewport it cannot stretch and its background used to stop dead at the
+   fold. Painting the rail colour on the layout and the page colour on the
+   main column means the column of colour runs the full height whatever the
+   sidebar element does. */
 .app-layout {
   display: flex;
   min-height: 100dvh;
+  background: var(--rail-bg);
+}
+.app-main {
+  background: var(--bg);
 }
 
 /* ---------- Sidebar ----------
@@ -949,6 +958,11 @@ a.btn:focus {
    muted, semibold row. The tint is gone with it, because a shaded strip
    directly under a card's own head reads as a second header. */
 .table {
+  /* Bootstrap's .table supplied these; nothing does now. Without the width a
+     table shrinks to its content and leaves the right third of its card
+     empty, which is what it did the first render after Bootstrap came out. */
+  width: 100%;
+  border-collapse: collapse;
   font-size: var(--text-md);
   margin-bottom: 0;
   border-color: var(--line-soft);
@@ -968,8 +982,9 @@ a.btn:focus {
   /* Block padding rather than a row height: `.table-cards` turns each row
      into a `display: block` card on small screens, where a fixed height stops
      being a minimum and becomes a hard box that clips every cell after the
-     first. 17px + a 1.35 line box lands on --row-h. */
-  padding: 17px var(--space-4);
+     first. At the compact density 8px + a 1.35 line box lands on --row-h;
+     the two-line identity cell sets the real floor. */
+  padding: 8px var(--space-4);
   line-height: var(--leading-snug);
   border-bottom-color: var(--line-soft);
   vertical-align: middle;
@@ -1803,7 +1818,7 @@ a.list-row__title:hover {
     font-weight: inherit;
     /* Matches the base `.table > tbody td` rule so a `.table-cards` table and
        a plain one are the same height once the table layout returns. */
-    padding: 17px var(--space-4);
+    padding: 8px var(--space-4);
     margin: 0;
     border-top: 0;
     border-bottom: 1px solid var(--line-soft);

@@ -24,10 +24,21 @@
    component, which is what the layer order buys.
    ========================================================================== */
 
-@layer legacy, theme, base, components, utilities;
+/* ORDER IS LOAD-BEARING, and getting it wrong is silent.
 
-@import '../index.css' layer(legacy);
+   `legacy` must sit ABOVE Tailwind's `base`. Preflight lives in `base`, and it
+   zeroes padding, margins, borders and font sizes on every element. With
+   `legacy` first, preflight outranked index.css and flattened the entire app
+   chrome — the page gutter, the topbar height, table cell padding, the card
+   surfaces — while every build stayed green.
+
+   So: theme and base (Tailwind's tokens and reset) at the bottom, then
+   index.css, then Tailwind's utilities on top so a utility on a shadcn
+   component still wins over anything index.css says. */
+@layer theme, base, legacy, components, utilities;
+
 @import 'tailwindcss';
+@import '../index.css' layer(legacy);
 @import 'tw-animate-css';
 
 @custom-variant dark (&:where([data-bs-theme='dark'], [data-bs-theme='dark'] *));
