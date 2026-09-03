@@ -6246,20 +6246,25 @@ a.hero-chip--accent:hover {
 }
 
 /* Floating Minimap / Viewport Navigator (Atlassian / Jira style) */
+/* A scroll indicator, parked out of the way. It is not a control people hunt
+   for, so it stays quiet until the pointer is near it. */
 .kanban-minimap {
   position: fixed;
-  bottom: 24px;
-  right: 28px;
+  bottom: 16px;
+  right: 20px;
   z-index: 50;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  padding: 5px 8px;
   box-shadow: var(--shadow-md);
   cursor: pointer;
   user-select: none;
-  backdrop-filter: blur(8px);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  opacity: 0.7;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.kanban-minimap:hover {
+  opacity: 1;
 }
 
 [data-bs-theme='dark'] .kanban-minimap {
@@ -6274,34 +6279,39 @@ a.hero-chip--accent:hover {
 }
 
 .kanban-minimap__track {
-  display: flex;
-  align-items: center;
-  gap: 3.5px;
-  height: 28px;
   position: relative;
-  max-width: 220px;
+  width: 168px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
   overflow: hidden;
 }
 
-.kanban-minimap__bar {
-  flex: 0 0 8px;
-  width: 8px;
-  height: 100%;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: 2px;
+/* Evenly spaced hairlines standing in for the stage count. Decorative — the
+   lens carries the actual position. */
+.kanban-minimap__ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  padding-inline: 2px;
+}
+.kanban-minimap__tick {
+  width: 1px;
+  background: var(--border-strong);
+  opacity: 0.5;
 }
 
 .kanban-minimap__lens {
   position: absolute;
-  top: -1px;
-  bottom: -1px;
-  border: 2px solid var(--primary);
-  border-radius: 3px;
-  background: var(--primary-tint-hover);
+  top: 0;
+  bottom: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
   pointer-events: none;
-  box-shadow: none;
-  transition: left 0.05s ease-out;
+  transition: left 0.05s ease-out, width 0.05s ease-out;
 }
 
 @media (max-width: 768px) {

@@ -98,21 +98,27 @@ export default function KanbanMinimap({ statusOptions, boardRef }: KanbanMinimap
       aria-valuemax={100}
       aria-valuenow={Math.round(scrollRatio.left * 100)}
     >
-      <div className="kanban-minimap__track">
-        {statusOptions.map((opt) => (
-          <div
-            key={opt.id}
-            className="kanban-minimap__bar"
-            title={opt.name}
-          />
-        ))}
+      {/*
+        A continuous track with a lens, not one bar per stage.
 
-        {/* Viewport lens highlight */}
+        The per-stage bars were all the same width whatever the column
+        underneath measured, so the picture they drew was not the board — with
+        nineteen stages it read as a barcode and told you nothing about where
+        you were. The lens over a plain track is what a scroll indicator
+        actually is, and the tick marks keep the "how many stages" cue without
+        implying each one is the same size.
+      */}
+      <div className="kanban-minimap__track">
+        <div className="kanban-minimap__ticks" aria-hidden="true">
+          {statusOptions.map((opt) => (
+            <span key={opt.id} className="kanban-minimap__tick" title={opt.name} />
+          ))}
+        </div>
         <div
           className="kanban-minimap__lens"
           style={{
             left: `${scrollRatio.left * 100}%`,
-            width: `${Math.max(10, scrollRatio.width * 100)}%`,
+            width: `${Math.max(8, scrollRatio.width * 100)}%`,
           }}
         />
       </div>
