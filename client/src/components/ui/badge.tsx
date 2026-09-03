@@ -52,4 +52,11 @@ function Badge({
   );
 }
 
+/**
+ * The tone name on its own, for the several places that pick a tone from a
+ * lookup table or a chain of conditions (a role, an audit action, an
+ * evaluation outcome) rather than writing it inline.
+ */
+export type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
+
 export { Badge, badgeVariants };

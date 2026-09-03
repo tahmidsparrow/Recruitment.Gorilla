@@ -16,6 +16,7 @@ import EmptyState from '../components/common/EmptyState';
 import { SkeletonRows } from '../components/common/Loading';
 import type { AnalyticsFilterParams, RoleAppliedOption } from '../types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { NativeSelect } from '@/components/ui/native-select';
 
 const PRESETS = [
@@ -326,13 +327,13 @@ export default function AnalyticsPage() {
                             {formattedName}
                           </span>
                           {isSlow && (
-                            <span
-                              className="badge-pill badge-warning shrink-0"
-                              style={{ fontSize: '9.5px', padding: '1px 6px' }}
+                            <Badge
+                              variant="warning"
+                              className="shrink-0"
                               title="Stage dwell exceeds 7 days threshold"
                             >
                               Bottleneck
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <div className="velocity-row__value">
@@ -399,9 +400,7 @@ export default function AnalyticsPage() {
                       <tr key={s.sourceName}>
                         <td className="font-semibold">
                           <div className="flex items-center gap-2">
-                            <span className="badge-pill badge-neutral">
-                              {s.sourceName}
-                            </span>
+                            <Badge variant="neutral">{s.sourceName}</Badge>
                           </div>
                         </td>
                         <td className="text-center">{s.totalApplicants}</td>
@@ -414,9 +413,7 @@ export default function AnalyticsPage() {
                           </strong>
                         </td>
                         <td className="text-center">
-                          <span className="badge-pill badge-primary">
-                            {s.conversionToHirePercent}%
-                          </span>
+                          <Badge variant="brand">{s.conversionToHirePercent}%</Badge>
                         </td>
                         <td className="text-center text-muted-foreground">
                           {s.shareOfTotalHiresPercent}%
@@ -475,9 +472,7 @@ export default function AnalyticsPage() {
                           </div>
                         </td>
                         <td className="text-center">
-                          <span className="badge-pill badge-neutral">
-                            {r.activeCandidates} active
-                          </span>
+                          <Badge variant="neutral">{r.activeCandidates} active</Badge>
                         </td>
                         <td className="text-center">{r.totalAssigned}</td>
                         <td className="text-center">{r.transitionsLogged}</td>

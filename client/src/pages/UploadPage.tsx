@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UploadCloud, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import BulkUploader from '../components/BulkUploader';
 import DraftReviewWorkspace from '../components/drafts/DraftReviewWorkspace';
+import { Button } from '@/components/ui/button';
 import Page from '../components/common/Page';
 import SectionCard from '../components/common/SectionCard';
 import { getCandidateDrafts } from '../services/api';
@@ -77,14 +78,10 @@ export default function UploadPage() {
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary inline-flex items-center gap-1.5"
-                onClick={() => setActiveTab('review')}
-              >
-                <span>Open Review Workspace</span>
-                <ArrowRight size={14} />
-              </button>
+              <Button size="sm" onClick={() => setActiveTab('review')}>
+                Open Review Workspace
+                <ArrowRight />
+              </Button>
             </div>
           )}
         </div>

@@ -109,9 +109,9 @@ export default function CandidateDetailPage() {
         title="Couldn't load this candidate"
         description="The record may have been deleted, or the request failed."
         action={
-          <Link to="/candidates" className="btn btn-outline-secondary">
-            Back to candidates
-          </Link>
+          <Button asChild variant="outline">
+            <Link to="/candidates">Back to candidates</Link>
+          </Button>
         }
       />
     );

@@ -24,6 +24,7 @@ import { SkeletonRows } from '../../components/common/Loading';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckboxField } from '@/components/ui/field';
@@ -431,9 +432,10 @@ export default function EvaluationRubricsTab() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold truncate">{r.name}</span>
                       {r.isDefault && (
-                        <span className="badge-pill badge-primary inline-flex items-center gap-1">
-                          <Star size={11} fill="currentColor" /> Default
-                        </span>
+                        <Badge variant="brand">
+                          <Star fill="currentColor" />
+                          Default
+                        </Badge>
                       )}
                     </div>
                   </td>
@@ -443,20 +445,18 @@ export default function EvaluationRubricsTab() {
                     </span>
                   </td>
                   <td className="text-center">
-                    <span className="badge-pill badge-neutral font-monospace">
-                      {r.criteriaCount} criteria
-                    </span>
+                    <Badge variant="neutral">{r.criteriaCount} criteria</Badge>
                   </td>
                   <td className="text-center">
-                    <span className="badge-pill badge-info">
+                    <Badge variant="info">
                       {r.assignedRolesCount} {r.assignedRolesCount === 1 ? 'opening' : 'openings'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="text-center">
                     {r.isActive ? (
-                      <span className="badge-pill badge-success">Active</span>
+                      <Badge variant="success">Active</Badge>
                     ) : (
-                      <span className="badge-pill badge-neutral">Inactive</span>
+                      <Badge variant="neutral">Inactive</Badge>
                     )}
                   </td>
                   <td>

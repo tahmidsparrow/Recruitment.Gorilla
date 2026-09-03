@@ -12,6 +12,8 @@ import Page from '../components/common/Page';
 import LoadingPanel from '../components/common/Loading';
 import { initials } from '../utils/initials';
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const CalendarIcon = () => (
@@ -71,9 +73,9 @@ export default function InterviewPage() {
             : 'The request failed. Refresh the page to try again.'
         }
         action={
-          <Link to="/" className="btn btn-outline-secondary">
-            Back to dashboard
-          </Link>
+          <Button asChild variant="outline">
+            <Link to="/">Back to dashboard</Link>
+          </Button>
         }
       />
     );
@@ -127,15 +129,15 @@ export default function InterviewPage() {
               </span>
 
               {/* View Full Candidate Profile Button */}
-              <button
-                type="button"
-                className="btn btn-outline-primary btn-sm inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full shadow-xs font-semibold"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowProfileDrawer(true)}
                 title="View full candidate CV, education, experience and details"
               >
-                <FileText size={14} strokeWidth={2} aria-hidden="true" />
-                <span>View Profile & CV</span>
-              </button>
+                <FileText strokeWidth={2} aria-hidden="true" />
+                View Profile &amp; CV
+              </Button>
             </div>
 
             <div className="interview-hero__people mt-1">
@@ -181,9 +183,9 @@ export default function InterviewPage() {
                       <div key={e.id}>
                         <div className="flex justify-between items-center gap-2 mb-2">
                           <strong>{e.interviewerName}</strong>
-                          <span className={`badge-pill ${e.isSubmitted ? 'badge-success' : 'badge-neutral'}`}>
+                          <Badge variant={e.isSubmitted ? 'success' : 'neutral'}>
                             {e.isSubmitted ? 'Submitted' : 'Draft'}
-                          </span>
+                          </Badge>
                         </div>
                         <EvaluationReadOnly evaluation={e} rubric={rubric} />
                       </div>

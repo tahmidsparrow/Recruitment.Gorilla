@@ -16,6 +16,7 @@ import type { EvaluationItem, EvaluationRubric, InterviewEvaluation } from '../t
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
 
@@ -253,11 +254,9 @@ export default function EvaluationForm({
         actions={
           <div className="flex items-center gap-2">
             {rubric && (
-              <span className="badge-pill badge-neutral text-[length:var(--text-sm)]">
-                Rubric: {rubric.name}
-              </span>
+              <Badge variant="neutral">Rubric: {rubric.name}</Badge>
             )}
-            <span className="badge-pill badge-success">Submitted</span>
+            <Badge variant="success">Submitted</Badge>
           </div>
         }
       >
@@ -314,9 +313,9 @@ export default function EvaluationForm({
       actions={
         <div className="flex items-center gap-2">
           {rubric && (
-            <span className="badge-pill badge-neutral text-[length:var(--text-sm)]" title={rubric.description || undefined}>
+            <Badge variant="neutral" title={rubric.description || undefined}>
               {rubric.name}
-            </span>
+            </Badge>
           )}
           <span className={`eval-progress__count${showErrors && !allRated ? ' eval-progress__count--invalid' : ''}`}>
             Rated {ratedCount} of {totalCriteriaCount}

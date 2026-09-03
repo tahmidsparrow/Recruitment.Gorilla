@@ -29,6 +29,7 @@ import type { Opt } from './types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { CheckboxField } from '@/components/ui/field';
 import { NativeSelect } from '@/components/ui/native-select';
 import { SearchInput } from '@/components/ui/search-input';
@@ -510,7 +511,7 @@ function JobRow({
 
       <div className="job-row__metrics">
         <div className="job-row__status">
-          <span className={badge.className}>{badge.label}</span>
+          <Badge variant={badge.variant}>{badge.label}</Badge>
           <span className="job-row__gauge">
             {gauge.label}
             <span className="job-row__gauge-value">{gauge.value}</span>

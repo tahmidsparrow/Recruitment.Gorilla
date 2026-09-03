@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import {
   Dialog,
   DialogBody,
@@ -36,11 +37,11 @@ import {
  * which made the most senior account look like an error. Seniority is now
  * conveyed by fill weight (accent → outline), not by a warning colour.
  */
-const roleBadge: Record<Role, string> = {
-  SuperAdmin: 'badge-pill badge-accent',
-  Admin: 'badge-pill badge-accent',
-  Recruiter: 'badge-pill badge-outline',
-  Interviewer: 'badge-pill badge-outline',
+const roleBadge: Record<Role, BadgeVariant> = {
+  SuperAdmin: 'brand',
+  Admin: 'brand',
+  Recruiter: 'outline',
+  Interviewer: 'outline',
 };
 
 function errorMessage(err: unknown, fallback: string): string {
@@ -248,16 +249,16 @@ export default function UsersPage() {
                   <td data-label="Roles">
                     <span className="badge-row">
                       {u.roles.map((r) => (
-                        <span key={r} className={roleBadge[r]}>
+                        <Badge key={r} variant={roleBadge[r]}>
                           {r}
-                        </span>
+                        </Badge>
                       ))}
                     </span>
                   </td>
                   <td data-label="Status">
-                    <span className={`badge-pill ${u.isActive ? 'badge-success' : 'badge-neutral'}`}>
+                    <Badge variant={u.isActive ? 'success' : 'neutral'}>
                       {u.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    </Badge>
                   </td>
                   <td data-label="Last login" className="table-muted">{formatDate(u.lastLoginAt)}</td>
                   <td className="col-actions">
@@ -330,7 +331,7 @@ export default function UsersPage() {
                 </legend>
                 <div className="check-grid">
                   {ALL_ROLES.map((r) => (
-                    <CheckboxField id={`role-${r}`} label={r} checked={roles.includes(r)} onCheckedChange={() => toggleRole(r)} />
+                    <CheckboxField key={r} id={`role-${r}`} label={r} checked={roles.includes(r)} onCheckedChange={() => toggleRole(r)} />
                   ))}
                 </div>
               </div>

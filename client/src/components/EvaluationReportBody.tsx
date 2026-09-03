@@ -2,6 +2,7 @@ import { CalendarDays, ClipboardList } from 'lucide-react';
 
 import { EvaluationReadOnly } from '@/components/EvaluationForm';
 import EmptyState from '@/components/common/EmptyState';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import SectionCard from '@/components/common/SectionCard';
 import { EVALUATION_SECTIONS, RECOMMENDATIONS } from '@/utils/evaluationCriteria';
 import { skillColorClass } from '@/utils/skillColors';
@@ -18,14 +19,14 @@ const recLabel = (value: string) =>
   RECOMMENDATIONS.find((r) => r.value === value)?.label ?? value;
 
 /** Recommendation → a dot-carrying pill, so the outcome isn't colour-alone. */
-const recBadgeClass = (value: string): string =>
+const recBadgeVariant = (value: string): BadgeVariant =>
   value === 'Recommended'
-    ? 'badge-pill badge-success'
+    ? 'success'
     : value === 'Hold'
-      ? 'badge-pill badge-warning'
+      ? 'warning'
       : value === 'Reject'
-        ? 'badge-pill badge-danger'
-        : 'badge-pill badge-neutral';
+        ? 'danger'
+        : 'neutral';
 
 /** A 1–5 dot meter mirroring the evaluation form's RatingDots. */
 function RatingDots({ rating }: { rating: number | null }) {
@@ -116,9 +117,9 @@ export default function EvaluationReportBody({
                   <span className="table-muted">—</span>
                 ) : (
                   summary.recommendationCounts.map((r) => (
-                    <span key={r.recommendation} className={recBadgeClass(r.recommendation)}>
+                    <Badge key={r.recommendation} variant={recBadgeVariant(r.recommendation)}>
                       {recLabel(r.recommendation)}: {r.count}
-                    </span>
+                    </Badge>
                   ))
                 )}
               </div>
@@ -177,7 +178,7 @@ export default function EvaluationReportBody({
                 key={r.evaluation.id}
                 as="h4"
                 title={r.evaluation.interviewerName}
-                actions={<span className="badge-pill badge-success">Submitted</span>}
+                actions={<Badge variant="success">Submitted</Badge>}
               >
                 <EvaluationReadOnly evaluation={r.evaluation} />
               </SectionCard>

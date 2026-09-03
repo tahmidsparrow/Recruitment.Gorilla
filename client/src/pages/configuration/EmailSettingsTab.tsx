@@ -9,6 +9,7 @@ import { SkeletonRows } from '../../components/common/Loading';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { CheckboxField } from '@/components/ui/field';
 
 /**
@@ -83,9 +84,9 @@ export default function EmailSettingsTab() {
         title="SMTP"
         description="Transactional email — interview assignments, account and password notices. The password is encrypted at rest and never returned; leave it blank to keep the current one."
         actions={
-          <span className={`badge-pill ${enabled ? 'badge-success' : 'badge-neutral'}`}>
+          <Badge variant={enabled ? 'success' : 'neutral'}>
             {enabled ? 'Enabled' : 'Disabled'}
-          </span>
+          </Badge>
         }
       >
         <form

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { CheckCircle2, FileText, Loader2, UploadCloud, XCircle } from 'lucide-react';
+import { CheckCircle2, FileText, UploadCloud, XCircle } from 'lucide-react';
 import { uploadCV } from '../services/api';
 import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent } from '../services/signalr';
 import type { CVDraft } from '../types';
 import { Alert } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface Props {
   onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;
@@ -157,10 +159,9 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
           <label htmlFor="batch-name-input" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
             Batch Label:
           </label>
-          <input
+          <Input
             id="batch-name-input"
-            type="text"
-            className="form-control form-control-sm"
+            className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
             placeholder="e.g. Q3 Senior Engineering Intake"
             value={batchName}
             disabled={busy}
@@ -213,25 +214,25 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
                 </div>
                 <div className="shrink-0">
                   {fp.status === 'queued' && (
-                    <span className="badge-pill badge-neutral">Queued</span>
+                    <Badge variant="neutral">Queued</Badge>
                   )}
                   {fp.status === 'parsing' && (
-                    <span className="badge-pill badge-primary inline-flex items-center gap-1">
-                      <Loader2 size={11} className="spinner-border spinner-border-sm" />
+                    <Badge variant="brand">
+                      <Spinner className="size-3" />
                       Parsing
-                    </span>
+                    </Badge>
                   )}
                   {fp.status === 'completed' && (
-                    <span className="badge-pill badge-success inline-flex items-center gap-1">
-                      <CheckCircle2 size={12} />
+                    <Badge variant="success">
+                      <CheckCircle2 />
                       Extracted
-                    </span>
+                    </Badge>
                   )}
                   {fp.status === 'error' && (
-                    <span className="badge-pill badge-danger inline-flex items-center gap-1">
-                      <XCircle size={12} />
+                    <Badge variant="danger">
+                      <XCircle />
                       Failed
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>

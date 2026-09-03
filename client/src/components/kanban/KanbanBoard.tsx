@@ -7,6 +7,7 @@ import AddStatusModal from '../AddStatusModal';
 import { useToast } from '../ToastStack';
 import { addStatus, getNextStatusOptions, getStatusOptions } from '../../services/api';
 import { isStageStagnant } from '../../utils/stagnantStage';
+import { Spinner } from '@/components/ui/spinner';
 import type { CandidateListItem, StatusOption } from '../../types';
 
 export interface KanbanBoardProps {
@@ -139,8 +140,8 @@ export default function KanbanBoard({ candidates, isLoading, canWrite }: KanbanB
 
   if (isLoading) {
     return (
-      <div className="kanban-loading py-12 text-center text-muted-foreground">
-        <div className="spinner-border spinner-border-sm text-brand mr-2" role="status" />
+      <div className="kanban-loading flex items-center justify-center gap-2 py-12 text-muted-foreground">
+        <Spinner className="text-brand" label="Loading board" />
         Loading recruitment pipeline board…
       </div>
     );

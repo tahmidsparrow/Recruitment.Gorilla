@@ -504,9 +504,10 @@ export default function ReadOnlyCandidateProfile({
                   </span>
                   <span className="flex gap-2 shrink-0">
                     <Button size="sm" variant="outline" onClick={() => void openPreview(f.id, f.originalFileName)}>Preview</Button>
-                    <button type="button" className="btn btn-sm btn-cv-download" onClick={() => void downloadCvFile(candidate.id, f.id)}>
-                      <DownloadIcon /> Download
-                    </button>
+                    <Button size="sm" onClick={() => void downloadCvFile(candidate.id, f.id)}>
+                      <DownloadIcon />
+                      Download
+                    </Button>
                   </span>
                 </div>
               ))}

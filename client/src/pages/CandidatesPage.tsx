@@ -330,10 +330,12 @@ export default function CandidatesPage() {
             </div>
 
             {canWriteCandidates && (
-              <Link to="/upload" className="btn btn-primary btn-sm">
-                <Upload size={14} strokeWidth={2} aria-hidden="true" />
-                Upload CVs
-              </Link>
+              <Button asChild size="sm">
+                <Link to="/upload">
+                  <Upload strokeWidth={2} aria-hidden="true" />
+                  Upload CVs
+                </Link>
+              </Button>
             )}
           </div>
         </div>
@@ -362,9 +364,9 @@ export default function CandidatesPage() {
                 Clear filters
               </Button>
             ) : canWriteCandidates ? (
-              <Link to="/upload" className="btn btn-primary">
-                Upload CVs
-              </Link>
+              <Button asChild>
+                <Link to="/upload">Upload CVs</Link>
+              </Button>
             ) : undefined
           }
         />

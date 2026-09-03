@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { Briefcase, Calendar, MapPin, User, type LucideProps } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
+import { Button } from '@/components/ui/button';
 import SectionCard from '../common/SectionCard';
 import type { JobOpening } from '../../types';
 
@@ -45,9 +46,9 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
       title="Active job openings"
       description="Roles still open for applications, soonest to close first."
       actions={
-        <Link to="/configuration" className="btn btn-sm btn-outline-secondary">
-          View all
-        </Link>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/configuration">View all</Link>
+        </Button>
       }
       flush={data.length > 0}
     >
@@ -57,9 +58,9 @@ export default function ActiveJobOpeningsTable({ data }: { data: JobOpening[] })
           title="No active job openings"
           description="Openings you add in Configuration show up here until their end date passes."
           action={
-            <Link to="/configuration" className="btn btn-primary">
-              Add a job opening
-            </Link>
+            <Button asChild>
+              <Link to="/configuration">Add a job opening</Link>
+            </Button>
           }
         />
       ) : (

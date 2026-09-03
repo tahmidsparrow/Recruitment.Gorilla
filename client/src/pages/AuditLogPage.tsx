@@ -11,6 +11,7 @@ import type { AuditQuery } from '../types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 
 const ENTITY_TYPES = ['Candidate', 'Interview', 'Role', 'Skill', 'InterviewType', 'User'];
 const PAGE_SIZE = 50;
@@ -24,13 +25,13 @@ const fmt = (iso: string) =>
  * they match every other badge in the app and carry a glyph, since the colour
  * is the only thing distinguishing a create from a delete at a glance.
  */
-const actionBadge = (action: string): string => {
+const actionBadge = (action: string): BadgeVariant => {
   if (action.startsWith('Auth')) {
-    return action.includes('Failed') ? 'badge-pill badge-danger' : 'badge-pill badge-neutral';
+    return action.includes('Failed') ? 'danger' : 'neutral';
   }
-  if (action.endsWith('.Deleted')) return 'badge-pill badge-warning';
-  if (action.endsWith('.Created')) return 'badge-pill badge-success';
-  return 'badge-pill badge-info';
+  if (action.endsWith('.Deleted')) return 'warning';
+  if (action.endsWith('.Created')) return 'success';
+  return 'info';
 };
 
 export default function AuditLogPage() {
@@ -167,7 +168,7 @@ export default function AuditLogPage() {
                     <td data-label="Time" className="whitespace-nowrap table-muted">{fmt(e.timestamp)}</td>
                     <td data-label="Actor" className="font-semibold">{e.actorName}</td>
                     <td data-label="Action">
-                      <span className={actionBadge(e.action)}>{e.action}</span>
+                      <Badge variant={actionBadge(e.action)}>{e.action}</Badge>
                     </td>
                     <td data-label="Entity" className="whitespace-nowrap col-mono">
                       {e.entityType ? `${e.entityType}${e.entityId != null ? ` #${e.entityId}` : ''}` : '—'}

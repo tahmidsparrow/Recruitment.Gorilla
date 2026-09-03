@@ -35,6 +35,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { ActivityItem, UpcomingInterview } from '../types';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
+import { Segmented, SegmentedItem } from '@/components/ui/segmented';
 
 const relativeTime = (iso: string): string => {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -188,23 +189,25 @@ export default function DashboardPage() {
           <StatusDonutChart data={statusBreakdown} />
         </SectionCard>
 
+        {/* The range picker is one setting with three values, which is what
+            Segmented is for. As a button group the active range rendered as
+            `btn-primary`, so it looked like the card's primary action. */}
         <SectionCard
           title="Applications"
           description={`New candidates over the last ${trendDays} days.`}
           actions={
-            <div className="btn-group btn-group-sm" role="group" aria-label="Trend range">
+            <Segmented
+              type="single"
+              value={String(trendDays)}
+              onValueChange={(v) => v && setTrendDays(Number(v))}
+              aria-label="Trend range"
+            >
               {TREND_RANGES.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={`btn ${trendDays === d ? 'btn-primary' : 'btn-outline-secondary'}`}
-                  aria-pressed={trendDays === d}
-                  onClick={() => setTrendDays(d)}
-                >
+                <SegmentedItem key={d} value={String(d)}>
                   {d}D
-                </button>
+                </SegmentedItem>
               ))}
-            </div>
+            </Segmented>
           }
         >
           <TrendChart data={trend} />

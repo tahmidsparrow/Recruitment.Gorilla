@@ -6,13 +6,14 @@ import { getMyInterviews } from '../../services/api';
 import EmptyState from '../common/EmptyState';
 import SectionCard from '../common/SectionCard';
 import { SkeletonRows } from '../common/Loading';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import type { EvaluationState } from '../../types';
 
 // Prism's glyph-carrying pill badges — status is never colour-alone.
-const stateBadge: Record<EvaluationState, { cls: string; label: string }> = {
-  None: { cls: 'badge-pill badge-neutral', label: 'Pending' },
-  Draft: { cls: 'badge-pill badge-warning', label: 'Draft' },
-  Submitted: { cls: 'badge-pill badge-success', label: 'Submitted' },
+const stateBadge: Record<EvaluationState, { variant: BadgeVariant; label: string }> = {
+  None: { variant: 'neutral', label: 'Pending' },
+  Draft: { variant: 'warning', label: 'Draft' },
+  Submitted: { variant: 'success', label: 'Submitted' },
 };
 
 const isSoon = (iso: string) => {
@@ -35,7 +36,7 @@ export default function MyInterviewsCard() {
       description="Interviews you're assigned to, and where your evaluation stands."
       actions={
         pending > 0 ? (
-          <span className="badge-pill badge-warning">{pending} awaiting evaluation</span>
+          <Badge variant="warning">{pending} awaiting evaluation</Badge>
         ) : undefined
       }
     >
@@ -68,7 +69,7 @@ export default function MyInterviewsCard() {
                       timeZoneName: 'short',
                     })}
                   </div>
-                  <span className={badge.cls}>{badge.label}</span>
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
                 </div>
               </li>
             );
