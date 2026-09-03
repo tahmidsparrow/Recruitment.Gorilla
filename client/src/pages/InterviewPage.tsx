@@ -47,6 +47,11 @@ export default function InterviewPage() {
     enabled: !!data,
   });
 
+  /* Declared before the early returns below. A hook placed after them runs on
+     some renders and not others, which desynchronises React's hook order the
+     first time the query resolves. */
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
+
   if (isLoading) {
     return <LoadingPanel label="Loading interview…" />;
   }
@@ -95,7 +100,6 @@ export default function InterviewPage() {
       <div className="eval-briefing__body">{data.notes}</div>
     </div>
   ) : null;
-  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
 
   return (
     <Page>

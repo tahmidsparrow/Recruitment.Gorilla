@@ -140,8 +140,8 @@ describe('AnalyticsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('14.5 days')).toBeInTheDocument();
-      expect(screen.getByText('Pipeline Funnel & Conversion')).toBeInTheDocument();
-      expect(screen.getByText('Stage Dwell Time & Velocity')).toBeInTheDocument();
+      expect(screen.getByText('Pipeline funnel')).toBeInTheDocument();
+      expect(screen.getByText('Stage dwell time')).toBeInTheDocument();
       expect(screen.getByText('Sourcing Channel Performance & ROI')).toBeInTheDocument();
       expect(screen.getByText('Recruiter Productivity & Pipeline Workload')).toBeInTheDocument();
     });
