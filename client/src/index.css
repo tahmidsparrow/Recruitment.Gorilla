@@ -6331,10 +6331,11 @@ a.hero-chip--accent:hover {
   border-top: 1px solid var(--border);
   background: var(--surface-muted);
   /* The bulk action bar is fixed to the viewport bottom and this footer sits
-     there too, so the bar used to cover "Discard Draft". The component
-     measures the bar and publishes its height here; --bulk-bar-h is 0 while
+     there too, so the bar used to cover "Discard Draft". The component measures
+     how much of the viewport's bottom edge the bar occupies — its height plus
+     the gap it floats above the edge — and publishes it here. It is 0 while
      nothing is selected, which is when the bar is not rendered at all. */
-  padding-bottom: calc(var(--space-3) + var(--bulk-bar-h, 0px));
+  padding-bottom: calc(var(--space-3) + var(--bulk-bar-inset, 0px));
 }
 
 .draft-bulk-bar {

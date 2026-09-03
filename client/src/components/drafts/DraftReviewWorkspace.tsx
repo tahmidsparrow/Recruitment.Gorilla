@@ -58,12 +58,17 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
   /**
    * The floating bulk bar is fixed to the viewport and the studio's footer sits
    * at the bottom of the viewport too, so the two collided: the bar covered
-   * "Discard Draft". The footer reserves room for whatever the bar actually
-   * measures rather than for a hard-coded height, because the bar wraps to two
-   * rows on a narrow screen and any constant would be wrong there.
+   * "Discard Draft" and "Save Changes".
+   *
+   * What the footer has to clear is not the bar's height but how much of the
+   * viewport's bottom edge the bar occupies — its height PLUS the gap it is
+   * offset by. Reserving only the height left the buttons 18px inside the bar,
+   * because the bar also sits `--space-6` up from the bottom. Measuring
+   * `innerHeight - top` gets both in one number, and keeps working when the bar
+   * wraps to two rows on a narrow viewport (44px tall at 1440, 74px at 700).
    */
   const bulkBarRef = useRef<HTMLDivElement | null>(null);
-  const [bulkBarHeight, setBulkBarHeight] = useState(0);
+  const [bulkBarInset, setBulkBarInset] = useState(0);
   const [bulkRoleId, setBulkRoleId] = useState<number | null>(null);
 
   // Form editing state for currently loaded draft
@@ -73,14 +78,21 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
   useEffect(() => {
     const el = bulkBarRef.current;
     if (!el) {
-      setBulkBarHeight(0);
+      setBulkBarInset(0);
       return;
     }
-    const measure = () => setBulkBarHeight(el.offsetHeight);
+    const measure = () =>
+      setBulkBarInset(Math.max(0, window.innerHeight - el.getBoundingClientRect().top));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+    // innerHeight is part of the measurement now, so a viewport change matters
+    // even when the bar itself does not resize.
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [selectedIds.size]);
 
   // Sync initialBatchId when provided
@@ -411,7 +423,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
   return (
     <div
       className="draft-workspace"
-      style={{ '--bulk-bar-h': `${bulkBarHeight}px` } as React.CSSProperties}
+      style={{ '--bulk-bar-inset': `${bulkBarInset}px` } as React.CSSProperties}
     >
       {/* 1. Header Toolbar & Command Row */}
       <div className="draft-toolbar">
