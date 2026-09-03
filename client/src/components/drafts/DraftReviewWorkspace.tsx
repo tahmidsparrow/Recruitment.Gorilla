@@ -542,7 +542,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 return (
                   <div
                     key={d.id}
-                    className={`draft-item-card ${isSelected ? 'draft-item-card--active' : ''} ${isChecked ? 'draft-item-card--checked' : ''} d-flex align-items-stretch border-bottom p-0`}
+                    className={`draft-item-card ${isSelected ? 'draft-item-card--active' : ''} ${isChecked ? 'draft-item-card--checked' : ''} flex items-stretch border-bottom p-0`}
                     onClick={() => setSelectedDraftId(d.id)}
                   >
                     {/* Dedicated Checkbox Column */}
@@ -589,7 +589,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                                   : d.status === 'Discarded'
                                   ? 'draft-badge--discarded'
                                   : 'draft-badge--pending'
-                              } flex-shrink-0`}
+                              } shrink-0`}
                             >
                               {d.status}
                             </span>

@@ -975,7 +975,7 @@ a.btn:focus {
   line-height: var(--leading-snug);
   letter-spacing: 0;
   border-bottom: 1px solid var(--border);
-  padding: 10px var(--space-4);
+  padding: 7px var(--space-3);
   white-space: nowrap;
 }
 .table > tbody td {
@@ -984,7 +984,7 @@ a.btn:focus {
      being a minimum and becomes a hard box that clips every cell after the
      first. At the compact density 8px + a 1.35 line box lands on --row-h;
      the two-line identity cell sets the real floor. */
-  padding: 8px var(--space-4);
+  padding: 6px var(--space-3);
   line-height: var(--leading-snug);
   border-bottom-color: var(--line-soft);
   vertical-align: middle;
@@ -1250,14 +1250,14 @@ a.cell-identity__name:focus-visible {
      --space-page is redeclared here rather than overridden per-rule so that
      anything else keying off the page gutter (the topbar) tracks it. */
   --space-page: var(--space-3);
-  --stack-gap: var(--space-4);
+  --stack-gap: var(--space-3);
   padding: var(--space-page);
 }
-@media (min-width: 576px) {
-  .rg-content { --space-page: var(--space-4); --stack-gap: var(--space-5); }
-}
 @media (min-width: 768px) {
-  .rg-content { --space-page: var(--space-6); --stack-gap: var(--space-6); }
+  .rg-content { --space-page: var(--space-4); --stack-gap: var(--space-3); }
+}
+@media (min-width: 1280px) {
+  .rg-content { --space-page: var(--space-5); --stack-gap: var(--space-4); }
 }
 
 /* ---------- The page stack ----------
@@ -1306,7 +1306,9 @@ a.cell-identity__name:focus-visible {
 .grid-3,
 .kpi-grid {
   display: grid;
-  gap: var(--space-4);
+  /* Tracks the vertical rhythm, so the gap between two cards side by side is
+     the same as the gap between the rows they sit in. */
+  gap: var(--stack-gap);
   min-width: 0;
 }
 .grid-2 { grid-template-columns: 1fr; }
@@ -1602,7 +1604,7 @@ a.list-row__title:hover {
 .card-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--stack-gap);
   min-width: 0;
 }
 
@@ -1830,7 +1832,7 @@ a.list-row__title:hover {
     font-weight: inherit;
     /* Matches the base `.table > tbody td` rule so a `.table-cards` table and
        a plain one are the same height once the table layout returns. */
-    padding: 8px var(--space-4);
+    padding: 6px var(--space-3);
     margin: 0;
     border-top: 0;
     border-bottom: 1px solid var(--line-soft);
@@ -2885,23 +2887,28 @@ a.list-row__title:hover {
 }
 
 @media (min-width: 576px) {
+  /* Every control shrinks. The row's natural width is about 1170 and the
+     content column at 1440 is about 1164, so a set of fixed widths put it one
+     pixel over and the whole toolbar wrapped, leaving an empty band. Letting
+     the filters compress by 20px each keeps it on one line without a
+     breakpoint that only holds for today's filter set. */
   .data-toolbar__search {
-    flex: 1 1 240px;
-    min-width: 220px;
-    max-width: 320px;
+    flex: 1 1 220px;
+    min-width: 180px;
+    max-width: 280px;
   }
   .data-toolbar__field {
     flex: 0 1 auto;
-    min-width: 120px;
-    max-width: 160px;
+    min-width: 108px;
+    max-width: 140px;
   }
   .data-toolbar__field--wide {
-    flex: 1 1 170px;
-    min-width: 150px;
-    max-width: 220px;
+    flex: 1 1 150px;
+    min-width: 130px;
+    max-width: 190px;
   }
   .data-toolbar__end {
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     margin-left: auto;
   }
 }

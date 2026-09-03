@@ -207,7 +207,7 @@ export default function SearchableDropdown<T = number | string>({
   return (
     <div
       ref={containerRef}
-      className={`dropdown-custom-root position-relative ${className}`.trim()}
+      className={`dropdown-custom-root relative ${className}`.trim()}
       onKeyDown={handleKeyDown}
     >
       {/* Multi-select tokens (when enabled for form / dialog modes) */}
@@ -296,7 +296,7 @@ export default function SearchableDropdown<T = number | string>({
         <div className="dropdown-trigger-actions absolute end-0 me-2.5 flex items-center pointer-events-none">
           <ChevronDown
             size={14}
-            className={`dropdown-chevron text-muted ${
+            className={`dropdown-chevron text-muted-foreground ${
               open ? 'dropdown-chevron--rotated text-primary' : ''
             }`}
             aria-hidden="true"

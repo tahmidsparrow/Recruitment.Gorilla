@@ -264,7 +264,7 @@ export default function CandidatesPage() {
             {/* Small screens hide the table header, and the sortable columns
                 with it — this select is the equivalent control there. */}
             <NativeSelect
-              className="md:hidden data-toolbar__field"
+              wrapperClassName="md:hidden data-toolbar__field"
               aria-label="Sort candidates"
               value={`${activeSort}:${activeDir}`}
               onChange={(e) => {

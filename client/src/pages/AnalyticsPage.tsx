@@ -409,7 +409,7 @@ export default function AnalyticsPage() {
                         <td className="text-center">{s.interviewedCount}</td>
                         <td className="text-center">{s.offeredCount}</td>
                         <td className="text-center">
-                          <strong className={s.hiredCount > 0 ? 'text-success' : ''}>
+                          <strong className={s.hiredCount > 0 ? 'text-success-foreground' : ''}>
                             {s.hiredCount}
                           </strong>
                         </td>
@@ -483,7 +483,7 @@ export default function AnalyticsPage() {
                         <td className="text-center">{r.transitionsLogged}</td>
                         <td className="text-center">{r.interviewsParticipated}</td>
                         <td className="text-center">
-                          <strong className={r.hiresMade > 0 ? 'text-success' : ''}>
+                          <strong className={r.hiresMade > 0 ? 'text-success-foreground' : ''}>
                             {r.hiresMade}
                           </strong>
                         </td>

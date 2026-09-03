@@ -25,6 +25,7 @@ import Page from '../components/common/Page';
 import SectionCard from '../components/common/SectionCard';
 import LoadingPanel from '../components/common/Loading';
 import RowActions, { RowAction } from '../components/common/RowActions';
+import EvaluationReportDrawer from '../components/EvaluationReportDrawer';
 import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateDetail } from '../types';
@@ -58,6 +59,7 @@ export default function CandidateDetailPage() {
   const [editing, setEditing] = useState(false);
   const [addingStatus, setAddingStatus] = useState(false);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
+  const [showReportDrawer, setShowReportDrawer] = useState(false);
   const [cvPreview, setCvPreview] = useState<{ url: string; contentType: string; fileName: string; fileId: number } | null>(null);
   const [loadingCvId, setLoadingCvId] = useState<number | null>(null);
   const cvUrlRef = useRef<string | null>(null);
@@ -178,10 +180,14 @@ export default function CandidateDetailPage() {
             )}
           </Button>
 
-          <Link to={`/candidates/${candidateId}/evaluations`} className="btn btn-ghost btn-action-eval">
+          <Button
+            variant="ghost"
+            className="btn-action-eval"
+            onClick={() => setShowReportDrawer(true)}
+          >
             <ClipboardList size={15} strokeWidth={1.75} aria-hidden="true" />
             Evaluation report
-          </Link>
+          </Button>
 
           {canWrite && !editing && (
             <Button variant="ghost" className="btn-action-edit" onClick={() => setEditing(true)}>
@@ -303,6 +309,14 @@ export default function CandidateDetailPage() {
         </DialogContent>
 </Dialog>
       )}
+
+      <EvaluationReportDrawer
+        candidateId={candidateId}
+        candidateName={data.fullName}
+        role={role}
+        open={showReportDrawer}
+        onOpenChange={setShowReportDrawer}
+      />
 
       {/* Status History Slide-over Offcanvas Drawer */}
       <Sheet open={showHistoryDrawer} onOpenChange={setShowHistoryDrawer}>

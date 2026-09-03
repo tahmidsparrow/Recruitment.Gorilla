@@ -103,7 +103,7 @@ function ContactTile({ icon, label, value, href, allowCopy = false }: ContactTil
               {value}
             </a>
           ) : (
-            <span className={`contact-tile__text ${!value?.trim() ? 'text-muted' : ''}`} title={displayVal}>
+            <span className={`contact-tile__text ${!value?.trim() ? 'text-muted-foreground' : ''}`} title={displayVal}>
               {displayVal}
             </span>
           )}

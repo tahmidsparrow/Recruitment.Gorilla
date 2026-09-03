@@ -24,12 +24,25 @@ import { cn } from '@/lib/utils';
  */
 function NativeSelect({
   className,
+  wrapperClassName,
   size = 'default',
   children,
   ...props
-}: Omit<React.ComponentProps<'select'>, 'size'> & { size?: 'sm' | 'default' }) {
+}: Omit<React.ComponentProps<'select'>, 'size'> & {
+  size?: 'sm' | 'default';
+  /**
+   * Classes for the positioning wrapper rather than the <select>.
+   *
+   * The chevron is a sibling of the control, so anything that decides whether
+   * the control EXISTS on screen — `md:hidden`, a flex basis, a column span —
+   * has to land on the wrapper. Passing `md:hidden` through `className` hid
+   * the select and left its chevron floating in the toolbar, which is exactly
+   * what happened to the small-screen sort control.
+   */
+  wrapperClassName?: string;
+}) {
   return (
-    <div className="relative min-w-0">
+    <div className={cn('relative min-w-0', wrapperClassName)}>
       <select
         data-slot="native-select"
         className={cn(
