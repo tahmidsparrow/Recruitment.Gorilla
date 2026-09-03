@@ -269,7 +269,15 @@
   --z-sticky: 1020;
   --z-scrim: 1030;
   --z-drawer: 1040;
-  --z-dropdown: 1045;
+  --z-backdrop: 1050;
+  --z-modal: 1055;
+  /* ABOVE the modal, not below it. A menu, a select or a date picker is very
+     often opened from inside a dialog, and at 1045 every one of them rendered
+     behind the dialog that launched it — the calendar in the "Add job opening"
+     form was drawn underneath the form. Anything a modal can spawn has to
+     outrank the modal. */
+  --z-dropdown: 1060;
+  --z-tooltip: 1080;
   --z-toast: 1090;
 
   /* ---- Focus ----

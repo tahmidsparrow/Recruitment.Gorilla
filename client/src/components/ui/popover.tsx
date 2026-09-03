@@ -27,7 +27,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'z-[1045] w-72 origin-(--radix-popover-content-transform-origin) outline-none',
+          'z-[var(--z-dropdown)] w-72 origin-(--radix-popover-content-transform-origin) outline-none',
           'rounded-[var(--radius-xl)] border border-border bg-popover text-popover-foreground shadow-[var(--shadow-lg)]',
           'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
           'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',

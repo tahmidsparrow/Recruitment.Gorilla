@@ -815,6 +815,14 @@ a.btn:focus {
   border-bottom: 0;
 }
 
+/* A row that opens its record. The pointer is the promise; the hover tint the
+   row already has is what confirms the target. Cells stay text-selectable —
+   the handler stands aside when there is a selection, so dragging to copy an
+   email does not navigate away mid-drag. */
+.row-clickable {
+  cursor: pointer;
+}
+
 /* The identity cell: an avatar beside a name, with an optional second line of
    context under it. This is what buys the extra row height back — a candidate
    is recognisable at a glance instead of being one of forty grey names. */
@@ -6431,4 +6439,42 @@ a.hero-chip--accent:hover {
     color: #000 !important;
     text-decoration: underline;
   }
+}
+
+/* ============================================================
+   Date fields
+   ============================================================
+   A date input keeps the browser's typing and validation, but its own
+   calendar button is suppressed: <DatePicker> renders a real one beside it
+   that matches the app. Leaving both would put two calendar affordances in
+   one field.
+   ============================================================ */
+.date-field::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+/* Firefox and Chrome both show the clear "X" on a filled date field; the
+   picker's own Clear does this in a way that is visible before you open it. */
+.date-field::-webkit-clear-button,
+.date-field::-webkit-inner-spin-button {
+  display: none;
+  -webkit-appearance: none;
+}
+/* Safari/Chrome lay the segments out with their own baseline, which sits the
+   text a pixel high inside our control height. */
+.date-field::-webkit-datetime-edit {
+  line-height: normal;
+}
+
+/* A group heading inside a dense form. It labels the two or three fields under
+   it without the full-width band and horizontal rule a .form-section draws —
+   which, repeated four times, was most of the email settings form's height. */
+.email-settings__group {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--muted);
+}
+.email-settings__group:first-child {
+  margin-top: 0;
 }

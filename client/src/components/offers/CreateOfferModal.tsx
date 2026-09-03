@@ -5,6 +5,7 @@ import { createOffer, updateOffer } from '../../services/api';
 import type { CreateOfferPayload, Offer } from '../../types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { InputGroup } from '@/components/ui/input-group';
@@ -203,21 +204,13 @@ export default function CreateOfferModal({
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-[length:var(--text-sm)] font-semibold">Proposed Start Date</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <DatePicker value={startDate} onChange={setStartDate} />
               </div>
             </div>
             <div className="col-span-12 sm:col-span-6">
               <div className="flex flex-col gap-1.5">
                 <Label className="text-[length:var(--text-sm)] font-semibold">Offer Expiration Date</Label>
-                <Input
-                  type="date"
-                  value={expirationDate}
-                  onChange={(e) => setExpirationDate(e.target.value)}
-                />
+                <DatePicker value={expirationDate} onChange={setExpirationDate} />
               </div>
             </div>
           </div>

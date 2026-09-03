@@ -10,6 +10,7 @@ import { SkeletonRows } from '../components/common/Loading';
 import type { AuditQuery } from '../types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import { Badge, type BadgeVariant } from '@/components/ui/badge';
 
@@ -83,7 +84,7 @@ export default function AuditLogPage() {
       <div className="pulse-card">
         <form onSubmit={applyFilters}>
           <div className="grid grid-cols-12 gap-6 items-end">
-            <div className="col-span-12 md:col-span-6 lg:col-span-3">
+            <div className="col-span-12 md:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-entity">Entity type</Label>
               <SearchableDropdown<string>
                 id="audit-entity"
@@ -95,17 +96,17 @@ export default function AuditLogPage() {
                 clearable
               />
             </div>
-            <div className="col-span-12 md:col-span-6 lg:col-span-3">
+            <div className="col-span-12 md:col-span-6 lg:col-span-2">
               <Label htmlFor="audit-action">Action contains</Label>
               <Input id="audit-action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Deleted, Auth" />
             </div>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-2">
+            <div className="col-span-12 sm:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-from">From</Label>
-              <Input id="audit-from" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <DatePicker id="audit-from" withTime value={from} onChange={setFrom} />
             </div>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-2">
+            <div className="col-span-12 sm:col-span-6 lg:col-span-3">
               <Label htmlFor="audit-to">To</Label>
-              <Input id="audit-to" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+              <DatePicker id="audit-to" withTime value={to} onChange={setTo} />
             </div>
             <div className="col-span-12 lg:col-span-2 flex gap-2">
               <Button type="submit" className="grow">Filter</Button>

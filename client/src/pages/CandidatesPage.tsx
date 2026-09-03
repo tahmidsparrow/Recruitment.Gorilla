@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Kanban, List, Trash2, Upload, Users, X } from 'lucide-react';
 import {
   deleteCandidate,
   getActiveSkillOptions,
@@ -22,10 +22,9 @@ import RowActions, { RowAction } from '../components/common/RowActions';
 import { SkeletonRows } from '../components/common/Loading';
 import { useAuth } from '../auth/AuthContext';
 import type { CandidateListItem } from '../types';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CheckboxField } from '@/components/ui/field';
-import { InputGroup } from '@/components/ui/input-group';
+import { SearchInput } from '@/components/ui/search-input';
 import { NativeSelect } from '@/components/ui/native-select';
 
 const PAGE_SIZE = 20;
@@ -68,6 +67,7 @@ export default function CandidatesPage() {
 
   // Filters/sort/page live in the URL so views are bookmarkable and survive refresh.
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const search = searchParams.get('q') ?? '';
   const status = searchParams.get('status') ?? '';
   const roleId = searchParams.get('role') ?? '';
@@ -213,19 +213,19 @@ export default function CandidatesPage() {
             results they filter are one object, so the seam is a rule rather
             than a 20px gap with page background showing through. */}
         <div className={`data-toolbar${showsTable ? ' data-toolbar--attached' : ''}`}>
+          {/* The glyph leads the field rather than sitting in a bordered button
+              after it. A submit button implied search would not happen without
+              it, next to three filters that apply on change; and it is the only
+              search box in the app shaped that way — the drafts workspace and
+              the job openings tab both use this component. Enter still submits,
+              because the form is still a form. */}
           <form onSubmit={applySearch} className="data-toolbar__search" role="search">
-            <InputGroup>
-              <Input
-                type="search"
-                placeholder="Search by name, email or phone"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                aria-label="Search candidates"
-              />
-              <Button type="submit" variant="outline" aria-label="Search">
-                <Search size={15} strokeWidth={1.75} aria-hidden="true" />
-              </Button>
-            </InputGroup>
+            <SearchInput
+              placeholder="Search by name, email or phone"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Search candidates"
+            />
           </form>
 
           <div className="data-toolbar__field">
@@ -395,7 +395,23 @@ export default function CandidatesPage() {
               </thead>
               <tbody>
                 {data.items.map((c) => (
-                  <tr key={c.id}>
+                  /* The whole row opens the candidate. The name stays a real
+                     <Link>: that is what keyboard and screen-reader users
+                     follow, what the browser shows in the status bar, and what
+                     ctrl/middle-click opens in a new tab. This handler is a
+                     mouse convenience layered on top of it, so it stands aside
+                     for clicks that landed on a control of their own and for
+                     modified clicks, which the link already handles. */
+                  <tr
+                    key={c.id}
+                    className="row-clickable"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                      if ((e.target as HTMLElement).closest('a, button, input, [role="menu"]')) return;
+                      if (window.getSelection()?.toString()) return;
+                      navigate(`/candidates/${c.id}`);
+                    }}
+                  >
                     {/* Avatar + name, with the location and experience the row
                         used to have no room for on its second line. This is
                         what the taller row buys: a candidate is recognisable

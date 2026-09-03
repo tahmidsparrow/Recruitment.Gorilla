@@ -40,7 +40,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'fixed inset-0 z-[1050] bg-[var(--backdrop-bg)]',
+        'fixed inset-0 z-[var(--z-backdrop)] bg-[var(--backdrop-bg)]',
         'data-[state=open]:animate-in data-[state=open]:fade-in-0',
         'data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
         className,
@@ -62,7 +62,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'fixed z-[1055] flex flex-col gap-0 bg-card text-card-foreground shadow-[var(--shadow-lg)]',
+          'fixed z-[var(--z-modal)] flex flex-col gap-0 bg-card text-card-foreground shadow-[var(--shadow-lg)]',
           // Phone: a bottom sheet pinned to the viewport edges.
           'inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[var(--radius-2xl)] border-t border-border',
           'data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom-4',

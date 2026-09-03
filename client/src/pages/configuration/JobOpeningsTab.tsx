@@ -28,6 +28,7 @@ import type { UpsertOptionPayload } from '../../types';
 import type { Opt } from './types';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckboxField } from '@/components/ui/field';
@@ -330,10 +331,10 @@ export default function JobOpeningsTab() {
               </div>
               <div className="col-span-12 md:col-span-6">
                 <Label>Closes <span className="required-star" aria-hidden="true">*</span></Label>
-                <Input
-                  type="datetime-local"
+                <DatePicker
+                  withTime
                   value={endDate}
-                  onChange={(e) => { setEndDate(e.target.value); if (endDateInvalid) setEndDateInvalid(false); }}
+                  onChange={(v) => { setEndDate(v); if (endDateInvalid) setEndDateInvalid(false); }}
                   aria-invalid={endDateInvalid || undefined}
                 />
                 {endDateInvalid && (

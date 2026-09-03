@@ -36,7 +36,7 @@ function SheetContent({
     <SheetPrimitive.Portal>
       <SheetPrimitive.Overlay
         className={cn(
-          'fixed inset-0 z-[1050] bg-[var(--backdrop-bg)]',
+          'fixed inset-0 z-[var(--z-backdrop)] bg-[var(--backdrop-bg)]',
           'data-[state=open]:animate-in data-[state=open]:fade-in-0',
           'data-[state=closed]:animate-out data-[state=closed]:fade-out-0',
         )}
@@ -44,7 +44,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          'fixed z-[1055] flex flex-col gap-0 bg-card text-card-foreground shadow-[var(--shadow-lg)]',
+          'fixed z-[var(--z-modal)] flex flex-col gap-0 bg-card text-card-foreground shadow-[var(--shadow-lg)]',
           'transition ease-[var(--ease-harbor)]',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',
           side === 'right' &&

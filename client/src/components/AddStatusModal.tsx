@@ -4,6 +4,7 @@ import { SearchableMultiSelect } from './SearchableSelect';
 import { useToast } from './ToastStack';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -253,11 +254,11 @@ export default function AddStatusModal({
                 <Label className="mb-1">
                   Interview date/time <Req />
                 </Label>
-                <Input
-                  type="datetime-local"
+                <DatePicker
+                  withTime
                   value={interviewAt}
-                  onChange={(e) => {
-                    setInterviewAt(e.target.value);
+                  onChange={(v) => {
+                    setInterviewAt(v);
                     clearFE('interviewAt');
                   }}
                   aria-invalid={!!fieldErrors.interviewAt || undefined}

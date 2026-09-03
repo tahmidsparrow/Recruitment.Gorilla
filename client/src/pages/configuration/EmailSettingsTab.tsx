@@ -6,11 +6,10 @@ import { useToast } from '../../components/ToastStack';
 import PasswordInput from '../../components/common/PasswordInput';
 import SectionCard from '../../components/common/SectionCard';
 import { SkeletonRows } from '../../components/common/Loading';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckboxField } from '@/components/ui/field';
+import { CheckboxField, Field } from '@/components/ui/field';
 
 /**
  * SMTP configuration, grouped into Server / Credentials / Sender rather than
@@ -95,69 +94,84 @@ export default function EmailSettingsTab() {
             saveMutation.mutate();
           }}
         >
-          <div className="form-section">
-            <div className="form-section__title">Server</div>
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 sm:col-span-8">
-                <Label>SMTP host <span className="required-star" aria-hidden="true">*</span></Label>
-                <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
-              </div>
-              <div className="col-span-12 sm:col-span-4">
-                <Label>Port <span className="required-star" aria-hidden="true">*</span></Label>
-                <Input type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
-              </div>
-              <div className="col-span-12">
-                <CheckboxField id="smtp-starttls" label="Use STARTTLS (port 587). Uncheck for implicit SSL (port 465)." checked={useStartTls} onCheckedChange={(checked) => setUseStartTls(checked)} />
-              </div>
-            </div>
-          </div>
+          {/* Eight fields in four full-width bands, each separated by a rule
+              and 20px, ran the form to roughly twice the height it needs — and
+              on a wide screen a two-column split left a "Port" input about
+              700px wide. One grid instead: the fields sit at widths that suit
+              what goes in them, and the group headings become inline labels
+              rather than bands.
 
-          <div className="form-section">
-            <div className="form-section__title">Credentials</div>
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-6">
-                <Label>Username</Label>
-                <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
-              </div>
-              <div className="col-span-12 md:col-span-6">
-                <Label>App password</Label>
+              Every field also moves to <Field>, which owns the label/control
+              association. None of these labels had an htmlFor, so clicking one
+              focused nothing and a screen reader read the input unlabelled. */}
+          <div className="grid grid-cols-12 gap-x-3 gap-y-2.5">
+            <p className="col-span-12 email-settings__group">Server</p>
+            <Field className="col-span-12 sm:col-span-7 lg:col-span-5" label="SMTP host" required>
+              {(p) => (
+                <Input {...p} value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.gmail.com" />
+              )}
+            </Field>
+            <Field className="col-span-5 sm:col-span-3 lg:col-span-2" label="Port" required>
+              {(p) => (
+                <Input {...p} type="number" value={port} onChange={(e) => setPort(Number(e.target.value))} />
+              )}
+            </Field>
+            <div className="col-span-12 lg:col-span-5 flex items-end pb-1.5">
+              <CheckboxField
+                id="smtp-starttls"
+                label="Use STARTTLS (587). Uncheck for implicit SSL (465)."
+                checked={useStartTls}
+                onCheckedChange={(checked) => setUseStartTls(checked)}
+              />
+            </div>
+
+            <p className="col-span-12 email-settings__group">Credentials</p>
+            <Field className="col-span-12 md:col-span-6" label="Username">
+              {(p) => (
+                <Input {...p} value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} autoComplete="off" />
+              )}
+            </Field>
+            <Field
+              className="col-span-12 md:col-span-6"
+              label="App password"
+              help="Gmail/Workspace: a 16-character App Password, not your account password."
+            >
+              {(p) => (
                 <PasswordInput
+                  {...p}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
                   placeholder={data?.passwordSet ? '•••••••• (leave blank to keep)' : 'App password'}
                 />
-                <p className="text-[length:var(--text-sm)] leading-[var(--leading-normal)] text-muted-foreground">
-                  Gmail/Workspace: a 16-character App Password, not your account password. Other
-                  providers: your SMTP password.
-                </p>
-              </div>
-            </div>
-          </div>
+              )}
+            </Field>
 
-          <div className="form-section">
-            <div className="form-section__title">Sender</div>
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-6">
-                <Label>From address <span className="required-star" aria-hidden="true">*</span></Label>
+            <p className="col-span-12 email-settings__group">Sender</p>
+            <Field className="col-span-12 md:col-span-6" label="From address" required>
+              {(p) => (
                 <Input
+                  {...p}
                   value={fromAddress}
                   onChange={(e) => setFromAddress(e.target.value)}
                   placeholder="you@example.com"
                 />
-              </div>
-              <div className="col-span-12 md:col-span-6">
-                <Label>From name</Label>
-                <Input value={fromName} onChange={(e) => setFromName(e.target.value)} />
-              </div>
-            </div>
+              )}
+            </Field>
+            <Field className="col-span-12 md:col-span-6" label="From name">
+              {(p) => <Input {...p} value={fromName} onChange={(e) => setFromName(e.target.value)} />}
+            </Field>
           </div>
 
-          <div className="form-section">
-            <CheckboxField id="smtp-enabled" label="Enabled — actually send email. When off, notifications stay in-app only." checked={enabled} onCheckedChange={(checked) => setEnabled(checked)} />
-          </div>
-
-          <div className="form-actions">
+          {/* The master switch sits with Save rather than in a band of its own:
+              it is the setting you flip last, and it is what Save commits. */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <CheckboxField
+              id="smtp-enabled"
+              label="Enabled — actually send email. When off, notifications stay in-app only."
+              checked={enabled}
+              onCheckedChange={(checked) => setEnabled(checked)}
+            />
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving…' : 'Save settings'}
             </Button>
