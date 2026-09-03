@@ -134,15 +134,46 @@ public class CVParserService
         return sb.ToString();
     }
 
+    /// <summary>
+    /// A "ti" ligature that the font reported as a euro sign, wedged between
+    /// two letters. See <see cref="NormalizeText"/>.
+    /// </summary>
+    private static readonly Regex MojibakeTiLigature =
+        new(@"(?<=\p{L})\u20AC(?=\p{L})", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Repairs ligatures that a PDF's font reports as the wrong character.
+    ///
+    /// The U+FB0x replacements are the well-behaved case: the font uses the
+    /// real Unicode ligature codepoints, and we just want the letters back.
+    ///
+    /// The euro-sign rule is the misbehaving case. A subsetted font ships only
+    /// the glyphs its document uses, and its ToUnicode CMap sometimes maps a
+    /// ligature glyph onto whatever codepoint occupied that slot in the
+    /// original encoding. In practice the "ti" ligature lands on U+20AC often
+    /// enough to be worth handling by name: it is what turned "Station" into
+    /// "Sta\u20ACon", "initiatives" into "ini\u20ACa\u20ACves" and "Education" into
+    /// "Educa\u20ACon" across the parsed CVs.
+    ///
+    /// The replacement is guarded by a letter on BOTH sides, which is what
+    /// makes it safe. A euro sign in a CV is a salary or a currency list \u2014
+    /// preceded by a space, followed by a digit \u2014 never wedged between two
+    /// letters. Replacing unconditionally would corrupt those; this cannot.
+    /// </summary>
     private static string NormalizeText(string text)
     {
-        return text
+        var normalized = text
             .Replace("\uFB00", "ff")
             .Replace("\uFB01", "fi")
             .Replace("\uFB02", "fl")
             .Replace("\uFB03", "ffi")
             .Replace("\uFB04", "ffl")
-            .Normalize(System.Text.NormalizationForm.FormC);
+            .Replace("\uFB05", "st")
+            .Replace("\uFB06", "st");
+
+        normalized = MojibakeTiLigature.Replace(normalized, "ti");
+
+        return normalized.Normalize(System.Text.NormalizationForm.FormC);
     }
 
     private static string ExtractWordText(string filePath)

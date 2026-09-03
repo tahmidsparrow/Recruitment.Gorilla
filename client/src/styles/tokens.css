@@ -25,6 +25,13 @@
       interface reads as a prototype, so the shadow scale is what separates
       layers and borders stay whisper-thin.
 
+   SURFACE SEPARATION (treatment C). The neutrals step further apart than a
+   conventional palette would: a whiter card on a greyer canvas in light, a
+   near-black canvas under a lighter card in dark. This app is mostly dense
+   tables and stacked cards, and the thing that makes those readable is
+   knowing at a glance where one surface ends and the next begins. The
+   earlier, closer values looked calmer in isolation and vaguer in use.
+
    THE RULE: components reference tokens, never literal colours.
    ========================================================================== */
 
@@ -35,27 +42,27 @@
      --bg is the page canvas, --surface is what sits on it, --surface-muted is
      a recess *inside* a surface (a table head, a segmented track, a well).
      Three levels, no more: a fourth always ends up being used arbitrarily. */
-  --bg: #f7f9fc;
+  --bg: #eef1f6;
   --surface: #ffffff;
-  --surface-muted: #f1f5f9;
-  --surface-sunken: #eef2f7;
+  --surface-muted: #e9edf3;
+  --surface-sunken: #dfe4ec;
 
   /* The navigation rail and topbar. Its own token because in dark mode the
      chrome sits *below* the page canvas in the elevation order, while in
      light mode it sits above it — one value can't express both. */
   --rail-bg: #ffffff;
 
-  --border: #e6ebf2;
-  --border-strong: #cfd8e3;
+  --border: #d8dfe9;
+  --border-strong: #b6c1d0;
   /* A divider between rows of one object, as opposed to the edge of the
      object itself. Deliberately fainter than --border: a 40-row table drawn
      with 40 full-strength rules reads as a grid, not a list. */
-  --line-soft: #eef2f7;
+  --line-soft: #e4e9f0;
 
-  --text: #0f172a;
-  --text-soft: #334155;
-  --muted: #64748b;
-  --muted-light: #94a3b8;
+  --text: #0b1220;
+  --text-soft: #2b3648;
+  --muted: #5a6678;
+  --muted-light: #8b95a5;
 
   /* ---- Brand accent — Harbor cobalt ----
      --primary is tuned for use as TEXT and as an icon against --bg /
@@ -301,20 +308,20 @@
 [data-bs-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #0e1116;
-  --surface: #161b23;
-  --surface-muted: #1b212b;
-  --surface-sunken: #10141b;
-  --rail-bg: #10141b;
+  --bg: #06080c;
+  --surface: #141922;
+  --surface-muted: #1c222d;
+  --surface-sunken: #0d1117;
+  --rail-bg: #0a0d13;
 
-  --border: #242c38;
-  --border-strong: #344155;
-  --line-soft: #1e2530;
+  --border: #2a323f;
+  --border-strong: #3d4756;
+  --line-soft: #222a35;
 
-  --text: #e6ebf2;
-  --text-soft: #b8c4d4;
-  --muted: #93a1b5;
-  --muted-light: #64748b;
+  --text: #eef2f8;
+  --text-soft: #c2ccda;
+  --muted: #93a0b2;
+  --muted-light: #66717f;
 
   /* #2563eb falls to ~2.9:1 as text on these backgrounds — below AA — so the
      accent brightens (7.4:1 on --surface). --primary-dark does not: it is

@@ -4259,13 +4259,6 @@ a.list-row__title:hover {
 }
 
 /* ===== CV preview ===== */
-.cv-preview-frame {
-  width: 100%;
-  height: 480px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
 /* ===== Status colors (design tokens) =====
    Each tone sets --status-color (solid, used by the dot) and --status-tint
    (translucent, used as the badge background). Translucent tints adapt to any
@@ -6246,31 +6239,14 @@ a.hero-chip--accent:hover {
 }
 
 /* Floating Minimap / Viewport Navigator (Atlassian / Jira style) */
-/* A scroll indicator, parked out of the way. It is not a control people hunt
-   for, so it stays quiet until the pointer is near it. */
-.kanban-minimap {
-  position: fixed;
-  bottom: 16px;
-  right: 20px;
-  z-index: 50;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  padding: 5px 8px;
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  user-select: none;
-  opacity: 0.7;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
+
+
+
 .kanban-minimap:hover {
   opacity: 1;
 }
 
-[data-bs-theme='dark'] .kanban-minimap {
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-}
+[data-bs-theme='dark'] 
 
 .kanban-minimap:hover {
   transform: translateY(-1px);
@@ -6278,38 +6254,87 @@ a.hero-chip--accent:hover {
   border-color: var(--border-strong);
 }
 
-.kanban-minimap__track {
+
+
+
+
+
+
+
+@media (max-width: 768px) {
+  .kanban-minimap {
+    display: none;
+  }
+}
+
+/* ---------- Board minimap ----------
+   A miniature of the board, on Jira's model: each column drawn at its real
+   proportional width, columns holding candidates tinted, and a lens marking
+   the slice on screen. Parked bottom-right, out of the way of the columns. */
+.kanban-minimap {
+  position: fixed;
+  bottom: 18px;
+  right: 22px;
+  z-index: 50;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  cursor: grab;
+  user-select: none;
+  opacity: 0.94;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.kanban-minimap:hover {
+  opacity: 1;
+}
+.kanban-minimap:active {
+  cursor: grabbing;
+}
+.kanban-minimap:focus-visible {
+  outline: var(--focus-ring-width) solid var(--primary);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* The board, in miniature. Wide and tall enough to be a comfortable target —
+   a 5px sliver is accurate and useless. */
+.kanban-minimap__stage {
   position: relative;
-  width: 168px;
-  height: 8px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-muted);
+  width: 240px;
+  height: 42px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-/* Evenly spaced hairlines standing in for the stage count. Decorative — the
-   lens carries the actual position. */
-.kanban-minimap__ticks {
+/* One column. Positioned and sized from the real column's geometry, so a
+   board of nineteen narrow stages looks like nineteen narrow stages. */
+.kanban-minimap__col {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  padding-inline: 2px;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: var(--surface-muted);
+  /* A gap drawn in the panel's own colour rather than a border on every
+     block. With nineteen narrow columns, nineteen outlines read as a barcode;
+     the separator alone reads as columns. */
+  box-shadow: inset -2px 0 0 var(--surface);
 }
-.kanban-minimap__tick {
-  width: 1px;
-  background: var(--border-strong);
-  opacity: 0.5;
+.kanban-minimap__col--filled {
+  background: var(--primary);
+  opacity: 0.85;
 }
 
+/* The viewport. An outline rather than a fill, so the columns underneath stay
+   readable through it — which is the whole point of a minimap. */
 .kanban-minimap__lens {
   position: absolute;
   top: 0;
   bottom: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--primary);
+  min-width: 26px;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
   pointer-events: none;
   transition: left 0.05s ease-out, width 0.05s ease-out;
 }
@@ -7035,34 +7060,6 @@ a.hero-chip--accent:hover {
 /* -------------------------------------
    CV Preview Modal (Professional Viewer)
 ------------------------------------- */
-.cv-viewer-modal {
-  max-width: 1200px !important;
-}
-.cv-viewer-modal .modal-content {
-  height: 90vh;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
-  background-color: var(--surface);
-}
-.cv-viewer-modal .modal-header {
-  border-bottom: 1px solid var(--border);
-  background-color: var(--surface-mixed);
-  padding: 1rem 1.5rem;
-}
-.cv-viewer-modal .modal-title {
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.cv-viewer-modal .modal-body {
-  background-color: var(--background);
-  padding: 0;
-}
-
 .draft-item-card__name {
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
