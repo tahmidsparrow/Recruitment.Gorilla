@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, XCircle, Layers, FileText, ChevronLeft, ChevronRight, RotateCw, Trash2, UserCheck, CheckSquare, Square, Globe, Clock, Sparkles, Copy, Briefcase, Mail, Phone } from 'lucide-react';
+import { CheckCircle2, XCircle, Layers, FileText, ChevronLeft, ChevronRight, RotateCw, Trash2, UserCheck, CheckSquare, Square, Globe, Clock, Sparkles, Copy, Briefcase, Mail, Phone, Plus } from 'lucide-react';
 import {
   getCandidateDrafts,
   getCandidateDraft,
@@ -14,6 +14,16 @@ import {
   getActiveSourceOptions,
 } from '../../services/api';
 import { SearchableSelect } from '../SearchableSelect';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon } from '@/components/ui/input-group';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Segmented, SegmentedItem } from '@/components/ui/segmented';
+import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '../ToastStack';
 import { initials } from '../../utils/initials';
 import EmptyState from '../common/EmptyState';
@@ -381,48 +391,39 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
       <div className="draft-toolbar">
         <div className="draft-toolbar__left">
           {/* Status Filter Chips */}
-          <div className="segmented">
-            <button
-              type="button"
-              className={`segmented__item ${statusFilter === 'Pending' ? 'segmented__item--active active' : ''}`}
-              onClick={() => setStatusFilter('Pending')}
-            >
-              <Clock size={13} className="me-1.5 text-warning-foreground" />
+          <Segmented
+            type="single"
+            value={statusFilter}
+            // Radix lets a single-type group be deselected, which would leave the queue
+            // with no status filter at all. There is no "all statuses" view here, so an
+            // empty value is ignored rather than stored.
+            onValueChange={(v) => v && setStatusFilter(v)}
+            aria-label="Filter drafts by status"
+          >
+            <SegmentedItem value="Pending">
+              <Clock className="text-warning-foreground" />
               Pending
-              <span className="draft-counter-badge draft-counter-badge--pending">
-                {draftsData?.totalPending ?? 0}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`segmented__item ${statusFilter === 'Approved' ? 'segmented__item--active active' : ''}`}
-              onClick={() => setStatusFilter('Approved')}
-            >
-              <CheckCircle2 size={13} className="me-1.5 text-success-foreground" />
+              <Badge variant="neutral">{draftsData?.totalPending ?? 0}</Badge>
+            </SegmentedItem>
+            <SegmentedItem value="Approved">
+              <CheckCircle2 className="text-success-foreground" />
               Approved
-              <span className="draft-counter-badge draft-counter-badge--success">
-                {draftsData?.totalApproved ?? 0}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`segmented__item ${statusFilter === 'Discarded' ? 'segmented__item--active active' : ''}`}
-              onClick={() => setStatusFilter('Discarded')}
-            >
-              <XCircle size={13} className="me-1.5 text-[var(--danger-text)]" />
+              <Badge variant="neutral">{draftsData?.totalApproved ?? 0}</Badge>
+            </SegmentedItem>
+            <SegmentedItem value="Discarded">
+              <XCircle className="text-[var(--danger-text)]" />
               Discarded
-              <span className="draft-counter-badge draft-counter-badge--danger">
-                {draftsData?.totalDiscarded ?? 0}
-              </span>
-            </button>
-          </div>
+              <Badge variant="neutral">{draftsData?.totalDiscarded ?? 0}</Badge>
+            </SegmentedItem>
+          </Segmented>
         </div>
 
         <div className="draft-toolbar__right">
           {/* Batch Selector */}
           {batches.length > 0 && (
-            <select
-              className="form-select form-select-sm draft-batch-select"
+            <NativeSelect
+              size="sm"
+              wrapperClassName="draft-batch-select"
               value={batchFilter}
               onChange={(e) => setBatchFilter(e.target.value)}
               aria-label="Filter by Batch"
@@ -433,7 +434,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   {b.batchName || b.batchId} ({b.pendingDrafts} pending / {b.totalDrafts} total)
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           )}
 
           {/* Search Bar */}
@@ -446,17 +447,19 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
             onChange={(e) => setSearchQuery(e.target.value)}
           />
 
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-secondary inline-flex items-center shrink-0"
+          <Button
+            variant="outline"
+            size="iconSm"
+            className="shrink-0"
             onClick={() => {
               void refetchDrafts();
               void refetchBatches();
             }}
             title="Refresh Drafts"
+            aria-label="Refresh drafts"
           >
-            <RotateCw size={14} />
-          </button>
+            <RotateCw />
+          </Button>
         </div>
       </div>
 
@@ -464,32 +467,33 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
       <div className="draft-split-view">
         {/* LEFT RAIL: Queue Cards List */}
         <div className="draft-list-rail">
-          <div className="flex items-stretch justify-between border-b border-border shrink-0 bg-surface">
+          <div className="flex items-stretch justify-between border-b border-border shrink-0 bg-card">
             <div 
               className="flex items-center justify-center shrink-0"
               style={{ width: '36px', borderRight: '1px solid var(--border)' }}
             >
-              <button
-                type="button"
-                className="btn btn-link p-0 text-muted-foreground inline-flex items-center"
+              <Button
+                variant="ghost"
+                size="iconSm"
                 onClick={toggleSelectAll}
                 title={selectedIds.size === drafts.length ? 'Deselect all' : 'Select all'}
+                aria-label={selectedIds.size === drafts.length ? 'Deselect all' : 'Select all'}
               >
                 {selectedIds.size > 0 && selectedIds.size === drafts.length ? (
-                  <CheckSquare size={16} className="text-brand" />
+                  <CheckSquare className="text-brand" />
                 ) : (
-                  <Square size={16} />
+                  <Square className="text-muted-foreground" />
                 )}
-              </button>
+              </Button>
             </div>
             <div className="flex items-center justify-between grow pr-4 pl-2 py-2">
               <span className="text-[length:var(--text-sm)] font-semibold text-muted-foreground">
                 {drafts.length} {statusFilter === 'all' ? 'total' : statusFilter.toLowerCase()} candidate{drafts.length === 1 ? '' : 's'}
               </span>
               {drafts.length > 0 && (
-                <span className="badge-pill badge-neutral text-xs">
+                <Badge variant="neutral">
                   {currentIndex >= 0 ? `${currentIndex + 1} / ${drafts.length}` : ''}
-                </span>
+                </Badge>
               )}
             </div>
           </div>
@@ -521,7 +525,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                 return (
                   <div
                     key={d.id}
-                    className={`draft-item-card ${isSelected ? 'draft-item-card--active' : ''} ${isChecked ? 'draft-item-card--checked' : ''} flex items-stretch border-bottom p-0`}
+                    className={`draft-item-card ${isSelected ? 'draft-item-card--active' : ''} ${isChecked ? 'draft-item-card--checked' : ''} flex items-stretch border-b border-border p-0`}
                     onClick={() => setSelectedDraftId(d.id)}
                   >
                     {/* Dedicated Checkbox Column */}
@@ -538,14 +542,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                         toggleSelect(d.id);
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        className="form-check-input m-0"
+                      <Checkbox
                         checked={isChecked}
                         onClick={(e) => e.stopPropagation()}
-                        onChange={() => {
-                          toggleSelect(d.id);
-                        }}
+                        onCheckedChange={() => toggleSelect(d.id)}
                         aria-label={`Select ${displayTitle}`}
                       />
                     </div>
@@ -595,10 +595,8 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               })
             )}
             {isFetchingNextPage && (
-              <div className="p-4 text-center">
-                <div className="spinner-border spinner-border-sm text-text-soft" role="status">
-                  <span className="sr-only">Loading more...</span>
-                </div>
+              <div className="flex justify-center p-4">
+                <Spinner className="text-text-soft" label="Loading more drafts" />
               </div>
             )}
           </div>
@@ -629,14 +627,14 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       {editForm.fullName || activeDraft.originalFileName}
                     </h5>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="badge-pill badge-neutral text-xs inline-flex items-center gap-1">
-                        <FileText size={11} />
+                      <Badge variant="neutral">
+                        <FileText />
                         {activeDraft.originalFileName} ({(activeDraft.fileSizeBytes / 1024).toFixed(0)} KB)
-                      </span>
+                      </Badge>
                       {activeDraft.batchName && (
-                        <span className="badge-pill badge-outline text-xs">
+                        <Badge variant="outline">
                           {activeDraft.batchName}
-                        </span>
+                        </Badge>
                       )}
                       <span className="text-muted-foreground text-xs">
                         Added {new Date(activeDraft.createdAt).toLocaleDateString()}
@@ -647,29 +645,29 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
                 {/* Queue Stepper Buttons */}
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary inline-flex items-center gap-1"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={!hasPrev}
                     onClick={() => navigateQueue('prev')}
                     title="Previous (Ctrl+Left)"
                   >
-                    <ChevronLeft size={15} />
+                    <ChevronLeft />
                     <span className="hidden md:inline">Prev</span>
-                  </button>
-                  <span className="badge-pill badge-neutral text-xs px-2.5">
+                  </Button>
+                  <Badge variant="neutral">
                     {currentIndex >= 0 ? `${currentIndex + 1} of ${drafts.length}` : ''}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-secondary inline-flex items-center gap-1"
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={!hasNext}
                     onClick={() => navigateQueue('next')}
                     title="Next (Ctrl+Right)"
                   >
                     <span className="hidden md:inline">Next</span>
-                    <ChevronRight size={15} />
-                  </button>
+                    <ChevronRight />
+                  </Button>
                 </div>
               </div>
 
@@ -683,101 +681,111 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
                   <div className="grid grid-cols-12 gap-4">
                     {/* Full Name */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
-                        Full Name <span className="required-star">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className={`form-control ${formErrors.fullName ? 'is-invalid' : ''}`}
-                        placeholder="Candidate full name"
-                        value={editForm.fullName || ''}
-                        onChange={(e) => {
-                          setEditForm((prev) => ({ ...prev, fullName: e.target.value }));
-                          if (formErrors.fullName) setFormErrors((fe) => ({ ...fe, fullName: '' }));
-                        }}
-                      />
-                      {formErrors.fullName && (
-                        <div className="invalid-feedback">{formErrors.fullName}</div>
-                      )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold flex justify-between items-center">
-                        <span>Email Address <span className="required-star">*</span></span>
-                        {editForm.email && (
-                          <button
-                            type="button"
-                            className="btn btn-link p-0 text-muted-foreground text-xs inline-flex items-center gap-1"
-                            onClick={() => copyToClipboard(editForm.email!, 'Email')}
-                          >
-                            <Copy size={11} /> Copy
-                          </button>
-                        )}
-                      </label>
-                      <div className="input-group">
-                        <span className="input-group-text"><Mail size={14} /></span>
-                        <input
-                          type="email"
-                          className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
-                          placeholder="candidate@example.com"
-                          value={editForm.email || ''}
+                    <Field
+                      className="col-span-12 md:col-span-6"
+                      label="Full Name"
+                      required
+                      error={formErrors.fullName}
+                    >
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="Candidate full name"
+                          value={editForm.fullName || ''}
                           onChange={(e) => {
-                            setEditForm((prev) => ({ ...prev, email: e.target.value }));
-                            if (formErrors.email) setFormErrors((fe) => ({ ...fe, email: '' }));
+                            setEditForm((prev) => ({ ...prev, fullName: e.target.value }));
+                            if (formErrors.fullName) setFormErrors((fe) => ({ ...fe, fullName: '' }));
                           }}
                         />
-                      </div>
-                      {formErrors.email && (
-                        <div className="text-[var(--danger-text)] text-[length:var(--text-sm)] mt-1">{formErrors.email}</div>
                       )}
-                    </div>
+                    </Field>
+
+                    {/* Email */}
+                    <Field
+                      className="col-span-12 md:col-span-6"
+                      label="Email Address"
+                      required
+                      error={formErrors.email}
+                    >
+                      {(p) => (
+                        <InputGroup aria-invalid={p['aria-invalid']}>
+                          <InputGroupAddon>
+                            <Mail className="size-3.5" />
+                          </InputGroupAddon>
+                          <Input
+                            {...p}
+                            type="email"
+                            placeholder="candidate@example.com"
+                            value={editForm.email || ''}
+                            onChange={(e) => {
+                              setEditForm((prev) => ({ ...prev, email: e.target.value }));
+                              if (formErrors.email) setFormErrors((fe) => ({ ...fe, email: '' }));
+                            }}
+                          />
+                          {/* Copy sits beside the value it copies rather than in
+                              the label, where it pushed the required marker out
+                              past it and read as "Copy *". */}
+                          {editForm.email && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="iconSm"
+                              className="mr-0.5 shrink-0"
+                              onClick={() => copyToClipboard(editForm.email!, 'Email')}
+                              title="Copy email address"
+                              aria-label="Copy email address"
+                            >
+                              <Copy />
+                            </Button>
+                          )}
+                        </InputGroup>
+                      )}
+                    </Field>
 
                     {/* Current Job Title */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Current / Extracted Job Title</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="e.g. Senior Backend Engineer"
-                        value={editForm.currentTitle || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, currentTitle: e.target.value }))
-                        }
-                      />
-                    </div>
-
-                    {/* Phone */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Phone Number</label>
-                      <div className="input-group">
-                        <span className="input-group-text"><Phone size={14} /></span>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="+880 1700-000000"
-                          value={editForm.phone || ''}
+                    <Field className="col-span-12 md:col-span-6" label="Current / Extracted Job Title">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="e.g. Senior Backend Engineer"
+                          value={editForm.currentTitle || ''}
                           onChange={(e) =>
-                            setEditForm((prev) => ({ ...prev, phone: e.target.value }))
+                            setEditForm((prev) => ({ ...prev, currentTitle: e.target.value }))
                           }
                         />
-                      </div>
-                    </div>
+                      )}
+                    </Field>
+
+                    {/* Phone */}
+                    <Field className="col-span-12 md:col-span-6" label="Phone Number">
+                      {(p) => (
+                        <InputGroup>
+                          <InputGroupAddon>
+                            <Phone className="size-3.5" />
+                          </InputGroupAddon>
+                          <Input
+                            {...p}
+                            placeholder="+880 1700-000000"
+                            value={editForm.phone || ''}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                          />
+                        </InputGroup>
+                      )}
+                    </Field>
 
                     {/* Location */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Location (City/Area)</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="e.g. Dhaka, Bangladesh"
-                        value={editForm.location || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, location: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-6" label="Location (City/Area)">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="e.g. Dhaka, Bangladesh"
+                          value={editForm.location || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, location: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
                   </div>
                 </div>
 
@@ -789,88 +797,93 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
                   <div className="grid grid-cols-12 gap-4">
                     {/* Role Applied For */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
-                        Role Applied For <span className="required-star">*</span>
-                      </label>
-                      <SearchableSelect
-                        options={roles.map((r) => ({ id: r.id, name: r.name }))}
-                        value={editForm.roleAppliedOptionId || null}
-                        onChange={(val) => {
-                          setEditForm((prev) => ({ ...prev, roleAppliedOptionId: val as number | null }));
-                          if (formErrors.role) setFormErrors((fe) => ({ ...fe, role: '' }));
-                        }}
-                        placeholder="Select position / job opening..."
-                      />
-                      {formErrors.role && (
-                        <div className="text-[var(--danger-text)] text-[length:var(--text-sm)] mt-1">{formErrors.role}</div>
+                    <Field
+                      className="col-span-12 md:col-span-6"
+                      label="Role Applied For"
+                      required
+                      error={formErrors.role}
+                    >
+                      {() => (
+                        <SearchableSelect
+                          options={roles.map((r) => ({ id: r.id, name: r.name }))}
+                          value={editForm.roleAppliedOptionId || null}
+                          onChange={(val) => {
+                            setEditForm((prev) => ({ ...prev, roleAppliedOptionId: val as number | null }));
+                            if (formErrors.role) setFormErrors((fe) => ({ ...fe, role: '' }));
+                          }}
+                          placeholder="Select position / job opening..."
+                        />
                       )}
-                    </div>
+                    </Field>
 
                     {/* Relevant Experience */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">
-                        Relevant Experience <span className="required-star">*</span>
-                      </label>
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        {EXPERIENCE_PRESETS.map((preset) => {
-                          const isActive = editForm.relevantExperience === preset;
-                          return (
-                            <button
-                              key={preset}
-                              type="button"
-                              className={`btn btn-xs ${
-                                isActive ? 'btn-primary' : 'btn-outline-secondary'
-                              }`}
-                              onClick={() =>
-                                setEditForm((prev) => ({ ...prev, relevantExperience: preset }))
+                    <Field className="col-span-12 md:col-span-6" label="Relevant Experience" required>
+                      {() => (
+                        <>
+                          {/* One value out of a fixed set, so it is a segmented control rather
+                              than a row of buttons — the old markup rendered the active preset
+                              as `btn-primary`, which read as the page's primary action. */}
+                          <Segmented
+                            type="single"
+                            value={
+                              EXPERIENCE_PRESETS.includes(editForm.relevantExperience || '')
+                                ? (editForm.relevantExperience ?? '')
+                                : ''
+                            }
+                            onValueChange={(v) =>
+                              v && setEditForm((prev) => ({ ...prev, relevantExperience: v }))
+                            }
+                            aria-label="Relevant experience"
+                          >
+                            {EXPERIENCE_PRESETS.map((preset) => (
+                              <SegmentedItem key={preset} value={preset}>
+                                {preset}
+                              </SegmentedItem>
+                            ))}
+                          </Segmented>
+                          {(!editForm.relevantExperience ||
+                            !EXPERIENCE_PRESETS.includes(editForm.relevantExperience)) && (
+                            <Input
+                              className="mt-2 h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
+                              placeholder="e.g. 4 Years"
+                              aria-label="Relevant experience, free text"
+                              value={editForm.relevantExperience || ''}
+                              onChange={(e) =>
+                                setEditForm((prev) => ({ ...prev, relevantExperience: e.target.value }))
                               }
-                            >
-                              {preset}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {(!editForm.relevantExperience ||
-                        !EXPERIENCE_PRESETS.includes(editForm.relevantExperience)) && (
-                        <input
-                          type="text"
-                          className="form-control form-control-sm mt-2"
-                          placeholder="e.g. 4 Years"
-                          value={editForm.relevantExperience || ''}
+                            />
+                          )}
+                        </>
+                      )}
+                    </Field>
+
+                    {/* Source Option */}
+                    <Field className="col-span-12 md:col-span-6" label="Sourcing Channel">
+                      {() => (
+                        <SearchableSelect
+                          options={sources.map((s) => ({ id: s.id, name: s.name }))}
+                          value={editForm.sourceOptionId || null}
+                          onChange={(val) =>
+                            setEditForm((prev) => ({ ...prev, sourceOptionId: val as number | null }))
+                          }
+                          placeholder="Select source..."
+                        />
+                      )}
+                    </Field>
+
+                    {/* Source Detail */}
+                    <Field className="col-span-12 md:col-span-6" label="Source Detail / Campaign">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="e.g. LinkedIn Inbound, Campus 2026"
+                          value={editForm.sourceDetail || ''}
                           onChange={(e) =>
-                            setEditForm((prev) => ({ ...prev, relevantExperience: e.target.value }))
+                            setEditForm((prev) => ({ ...prev, sourceDetail: e.target.value }))
                           }
                         />
                       )}
-                    </div>
-
-                    {/* Source Option */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Sourcing Channel</label>
-                      <SearchableSelect
-                        options={sources.map((s) => ({ id: s.id, name: s.name }))}
-                        value={editForm.sourceOptionId || null}
-                        onChange={(val) =>
-                          setEditForm((prev) => ({ ...prev, sourceOptionId: val as number | null }))
-                        }
-                        placeholder="Select source..."
-                      />
-                    </div>
-
-                    {/* Source Detail */}
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Source Detail / Campaign</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="e.g. LinkedIn Inbound, Campus 2026"
-                        value={editForm.sourceDetail || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, sourceDetail: e.target.value }))
-                        }
-                      />
-                    </div>
+                    </Field>
                   </div>
                 </div>
 
@@ -882,137 +895,136 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
                   <div className="grid grid-cols-12 gap-4">
                     {/* Skills */}
-                    <div className="col-span-12">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Extracted Skills (Summary)</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="e.g. C#, .NET Core, TypeScript, React, Docker, Kubernetes"
-                        value={editForm.skills || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, skills: e.target.value }))
-                        }
-                      />
-                      {editForm.skills && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
+                    <Field className="col-span-12" label="Extracted Skills (Summary)">
+                      {(p) => (
+                        <>
+                          <Input
+                            {...p}
+                            placeholder="e.g. C#, .NET Core, TypeScript, React, Docker, Kubernetes"
+                            value={editForm.skills || ''}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, skills: e.target.value }))}
+                          />
+                          {editForm.skills && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
                           {editForm.skills
                             .split(/[,•|;\n]/)
                             .map((s) => s.trim())
                             .filter(Boolean)
                             .map((skill, idx) => (
-                              <span key={idx} className="badge-pill badge-neutral text-xs">
+                              <Badge key={idx} variant="neutral">
                                 {skill}
-                              </span>
-                            ))}
-                        </div>
+                              </Badge>
+                                  ))}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </Field>
+
+                            {/* Social & Dev Profiles */}
+                    <Field className="col-span-12 md:col-span-4" label="LinkedIn Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="linkedin.com/in/..."
+                          value={editForm.linkedInUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, linkedInUrl: e.target.value }))
+                          }
+                        />
                       )}
-                    </div>
+                    </Field>
 
-                    {/* Social & Dev Profiles */}
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">LinkedIn Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="linkedin.com/in/..."
-                        value={editForm.linkedInUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, linkedInUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-4" label="GitHub Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="github.com/..."
+                          value={editForm.githubUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, githubUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">GitHub Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="github.com/..."
-                        value={editForm.githubUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, githubUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-4" label="GitLab Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="gitlab.com/..."
+                          value={editForm.gitLabUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, gitLabUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">GitLab Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="gitlab.com/..."
-                        value={editForm.gitLabUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, gitLabUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-4" label="LeetCode Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="leetcode.com/u/..."
+                          value={editForm.leetCodeUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, leetCodeUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">LeetCode Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="leetcode.com/u/..."
-                        value={editForm.leetCodeUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, leetCodeUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-4" label="Codeforces Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="codeforces.com/profile/..."
+                          value={editForm.codeforcesUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, codeforcesUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Codeforces Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="codeforces.com/profile/..."
-                        value={editForm.codeforcesUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, codeforcesUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-4" label="HackerRank Profile">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="hackerrank.com/profile/..."
+                          value={editForm.hackerRankUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, hackerRankUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">HackerRank Profile</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="hackerrank.com/profile/..."
-                        value={editForm.hackerRankUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, hackerRankUrl: e.target.value }))
-                        }
-                      />
-                    </div>
-
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Portfolio / Personal Website</label>
-                      <input
-                        type="text"
-                        className="form-control form-control-sm"
-                        placeholder="https://..."
-                        value={editForm.portfolioUrl || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, portfolioUrl: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12 md:col-span-6" label="Portfolio / Personal Website">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          placeholder="https://..."
+                          value={editForm.portfolioUrl || ''}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, portfolioUrl: e.target.value }))
+                          }
+                        />
+                      )}
+                    </Field>
 
                     {/* Bio / Summary */}
-                    <div className="col-span-12">
-                      <label className="form-label text-[length:var(--text-sm)] font-semibold">Professional Summary &amp; Bio</label>
-                      <textarea
-                        rows={3}
-                        className="form-control"
-                        placeholder="Candidate overview, background summary..."
-                        value={editForm.summary || ''}
-                        onChange={(e) =>
-                          setEditForm((prev) => ({ ...prev, summary: e.target.value }))
-                        }
-                      />
-                    </div>
+                    <Field className="col-span-12" label="Professional Summary & Bio">
+                      {(p) => (
+                        <Textarea
+                          {...p}
+                          rows={3}
+                          placeholder="Candidate overview, background summary..."
+                          value={editForm.summary || ''}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, summary: e.target.value }))}
+                        />
+                      )}
+                    </Field>
                   </div>
                 </div>
 
@@ -1023,21 +1035,22 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       <FileText size={14} className="text-brand me-1.5" />
                       Education &amp; Academic Qualifications
                     </h6>
-                    <button
-                      type="button"
-                      className="btn btn-xs btn-outline-primary"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         setEditForm((prev) => ({
                           ...prev,
                           educations: [
                             ...(prev.educations || []),
                             { degree: 'BSc in CSE', institution: 'University', graduationYear: '2024', cgpa: '' },
-                          ],
-                        }))
-                      }
-                    >
-                      + Add Education
-                    </button>
+                                ],
+                              }))
+                            }
+                          >
+                          <Plus />
+                          Add Education
+                          </Button>
                   </div>
 
                   {(editForm.educations || []).length === 0 ? (
@@ -1045,11 +1058,11 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   ) : (
                     <div className="flex flex-col gap-4 mt-2">
                       {(editForm.educations || []).map((edu, idx) => (
-                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border border-subtle bg-surface-muted relative">
-                          <button
-                            type="button"
-                            className="btn btn-link text-[var(--danger-text)] p-0 absolute"
-                            style={{ top: '8px', right: '10px' }}
+                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border bg-muted relative">
+                          <Button
+                            variant="ghostDestructive"
+                            size="iconSm"
+                            className="absolute top-1.5 right-1.5"
                             onClick={() =>
                               setEditForm((prev) => ({
                                 ...prev,
@@ -1057,82 +1070,83 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                               }))
                             }
                             title="Remove Education"
+                            aria-label="Remove education"
                           >
-                            <Trash2 size={13} />
-                          </button>
-                          <div className="grid grid-cols-12 gap-4 gap-2">
-                            <div className="col-span-12 md:col-span-6">
-                              <label className="form-label text-xs font-semibold mb-1">Degree / Major</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. BSc in Computer Science & Engineering"
-                                value={edu.degree}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    educations: prev.educations?.map((item, i) =>
-                                      i === idx ? { ...item, degree: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-12 md:col-span-6 pr-6">
-                              <label className="form-label text-xs font-semibold mb-1">Institution / University</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. BUET, DU, NSU, BRAC University"
-                                value={edu.institution}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    educations: prev.educations?.map((item, i) =>
-                                      i === idx ? { ...item, institution: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-6 md:col-span-4">
-                              <label className="form-label text-xs font-semibold mb-1">Graduation Year</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. 2024"
-                                value={edu.graduationYear || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    educations: prev.educations?.map((item, i) =>
-                                      i === idx ? { ...item, graduationYear: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-6 md:col-span-4">
-                              <label className="form-label text-xs font-semibold mb-1">CGPA / GPA</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. 3.85 / 4.00"
-                                value={edu.cgpa || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    educations: prev.educations?.map((item, i) =>
-                                      i === idx ? { ...item, cgpa: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
+                            <Trash2 />
+                          </Button>
+                          <div className="grid grid-cols-12 gap-2">
+                            <Field className="col-span-12 md:col-span-6" label="Degree / Major">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. BSc in Computer Science & Engineering"
+                                  value={edu.degree}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      educations: prev.educations?.map((item, i) =>
+                                        i === idx ? { ...item, degree: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-12 md:col-span-6 pr-6" label="Institution / University">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. BUET, DU, NSU, BRAC University"
+                                  value={edu.institution}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      educations: prev.educations?.map((item, i) =>
+                                        i === idx ? { ...item, institution: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-6 md:col-span-4" label="Graduation Year">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. 2024"
+                                  value={edu.graduationYear || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      educations: prev.educations?.map((item, i) =>
+                                        i === idx ? { ...item, graduationYear: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-6 md:col-span-4" label="CGPA / GPA">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. 3.85 / 4.00"
+                                  value={edu.cgpa || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      educations: prev.educations?.map((item, i) =>
+                                        i === idx ? { ...item, cgpa: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
                           </div>
                         </div>
                       ))}
@@ -1147,21 +1161,22 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       <Briefcase size={14} className="text-brand me-1.5" />
                       Work &amp; Employment History
                     </h6>
-                    <button
-                      type="button"
-                      className="btn btn-xs btn-outline-primary"
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         setEditForm((prev) => ({
                           ...prev,
                           experiences: [
                             ...(prev.experiences || []),
                             { jobTitle: 'Software Engineer', company: 'Company Name', duration: '2022 - Present', description: '' },
-                          ],
-                        }))
-                      }
-                    >
-                      + Add Experience
-                    </button>
+                                ],
+                              }))
+                            }
+                          >
+                          <Plus />
+                          Add Experience
+                          </Button>
                   </div>
 
                   {(editForm.experiences || []).length === 0 ? (
@@ -1169,11 +1184,11 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                   ) : (
                     <div className="flex flex-col gap-4 mt-2">
                       {(editForm.experiences || []).map((exp, idx) => (
-                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border border-subtle bg-surface-muted relative">
-                          <button
-                            type="button"
-                            className="btn btn-link text-[var(--danger-text)] p-0 absolute"
-                            style={{ top: '8px', right: '10px' }}
+                        <div key={idx} className="p-4 rounded-[var(--radius-md)] border border-border bg-muted relative">
+                          <Button
+                            variant="ghostDestructive"
+                            size="iconSm"
+                            className="absolute top-1.5 right-1.5"
                             onClick={() =>
                               setEditForm((prev) => ({
                                 ...prev,
@@ -1181,82 +1196,84 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                               }))
                             }
                             title="Remove Experience"
+                            aria-label="Remove experience"
                           >
-                            <Trash2 size={13} />
-                          </button>
-                          <div className="grid grid-cols-12 gap-4 gap-2">
-                            <div className="col-span-12 md:col-span-5">
-                              <label className="form-label text-xs font-semibold mb-1">Job Title</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. Senior Backend Engineer"
-                                value={exp.jobTitle}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    experiences: prev.experiences?.map((item, i) =>
-                                      i === idx ? { ...item, jobTitle: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-12 md:col-span-4">
-                              <label className="form-label text-xs font-semibold mb-1">Company</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. Tech Innovations Ltd"
-                                value={exp.company}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    experiences: prev.experiences?.map((item, i) =>
-                                      i === idx ? { ...item, company: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-12 md:col-span-3 pr-6">
-                              <label className="form-label text-xs font-semibold mb-1">Duration / Dates</label>
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                placeholder="e.g. Jan 2022 - Present"
-                                value={exp.duration || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    experiences: prev.experiences?.map((item, i) =>
-                                      i === idx ? { ...item, duration: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="col-span-12">
-                              <label className="form-label text-xs font-semibold mb-1">Responsibilities / Highlights</label>
-                              <textarea
-                                rows={2}
-                                className="form-control form-control-sm"
-                                placeholder="Key achievements, stack used, responsibilities..."
-                                value={exp.description || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    experiences: prev.experiences?.map((item, i) =>
-                                      i === idx ? { ...item, description: val } : item
-                                    ),
-                                  }));
-                                }}
-                              />
-                            </div>
+                            <Trash2 />
+                          </Button>
+                          <div className="grid grid-cols-12 gap-2">
+                            <Field className="col-span-12 md:col-span-5" label="Job Title">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. Senior Backend Engineer"
+                                  value={exp.jobTitle}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      experiences: prev.experiences?.map((item, i) =>
+                                        i === idx ? { ...item, jobTitle: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-12 md:col-span-4" label="Company">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. Tech Innovations Ltd"
+                                  value={exp.company}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      experiences: prev.experiences?.map((item, i) =>
+                                        i === idx ? { ...item, company: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-12 md:col-span-3 pr-6" label="Duration / Dates">
+                              {(p) => (
+                                <Input
+                                  {...p}
+                                  placeholder="e.g. Jan 2022 - Present"
+                                  value={exp.duration || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      experiences: prev.experiences?.map((item, i) =>
+                                        i === idx ? { ...item, duration: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
+                            <Field className="col-span-12" label="Responsibilities / Highlights">
+                              {(p) => (
+                                <Textarea
+                                  {...p}
+                                  rows={2}
+                                  placeholder="Key achievements, stack used, responsibilities..."
+                                  value={exp.description || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditForm((prev) => ({
+                                      ...prev,
+                                      experiences: prev.experiences?.map((item, i) =>
+                                        i === idx ? { ...item, description: val } : item
+                                      ),
+                                    }));
+                                  }}
+                                />
+                              )}
+                            </Field>
                           </div>
                         </div>
                       ))}
@@ -1267,20 +1284,20 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
               {/* Studio Sticky Footer Actions */}
               <div className="draft-editor-studio__foot">
-                <button
-                  type="button"
-                  className="btn btn-ghost-danger btn-sm inline-flex items-center gap-1.5"
+                <Button
+                  variant="ghostDestructive"
+                  size="sm"
                   disabled={discardMutation.isPending || activeDraft.status === 'Discarded'}
                   onClick={() => discardMutation.mutate(activeDraft.id)}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 />
                   Discard Draft
-                </button>
+                </Button>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary btn-sm"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={updateMutation.isPending}
                     onClick={() =>
                       updateMutation.mutate({
@@ -1289,19 +1306,19 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
                       })
                     }
                   >
+                    {updateMutation.isPending && <Spinner />}
                     Save Changes
-                  </button>
+                  </Button>
 
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm inline-flex items-center gap-1.5 shadow-[var(--shadow-sm)]"
+                  <Button
+                    size="sm"
                     disabled={approveMutation.isPending || activeDraft.status === 'Approved'}
                     onClick={handleApprove}
                     title="Approve and create candidate (Ctrl+Enter)"
                   >
-                    <UserCheck size={14} />
-                    {approveMutation.isPending ? 'Approving...' : 'Approve & Create Candidate'}
-                  </button>
+                    {approveMutation.isPending ? <Spinner /> : <UserCheck />}
+                    {approveMutation.isPending ? 'Approving…' : 'Approve & Create Candidate'}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1317,54 +1334,56 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
               {selectedIds.size} candidate{selectedIds.size === 1 ? '' : 's'} selected
             </span>
 
-            <div style={{ minWidth: 200 }}>
-              <select
-                className="form-select form-select-sm"
-                value={bulkRoleId ?? ''}
-                onChange={(e) => setBulkRoleId(e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">Assign Role (Optional)...</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <NativeSelect
+              size="sm"
+              wrapperClassName="min-w-[200px]"
+              value={bulkRoleId ?? ''}
+              onChange={(e) => setBulkRoleId(e.target.value ? Number(e.target.value) : null)}
+              aria-label="Assign a role to the selected drafts"
+            >
+              <option value="">Assign Role (Optional)…</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </NativeSelect>
 
             {showApproveBulk && (
-              <button
-                type="button"
-                className="btn btn-success btn-sm inline-flex items-center gap-1.5 whitespace-nowrap"
+              <Button
+                size="sm"
+                className="whitespace-nowrap"
                 disabled={bulkApproveMutation.isPending}
                 onClick={() => bulkApproveMutation.mutate()}
               >
-                <CheckCircle2 size={14} />
+                {bulkApproveMutation.isPending ? <Spinner /> : <CheckCircle2 />}
                 {bulkApproveMutation.isPending
-                  ? 'Approving...'
+                  ? 'Approving…'
                   : `Approve Selected (${selectedIds.size})`}
-              </button>
+              </Button>
             )}
 
             {showDiscardBulk && (
-              <button
-                type="button"
-                className="btn btn-outline-danger btn-sm inline-flex items-center gap-1.5 whitespace-nowrap"
+              <Button
+                variant="outlineDestructive"
+                size="sm"
+                className="whitespace-nowrap"
                 disabled={bulkDiscardMutation.isPending}
                 onClick={() => bulkDiscardMutation.mutate()}
               >
-                <XCircle size={14} />
+                {bulkDiscardMutation.isPending ? <Spinner /> : <XCircle />}
                 Discard Selected
-              </button>
+              </Button>
             )}
 
-            <button
-              type="button"
-              className="btn btn-link btn-sm text-muted-foreground ml-auto no-underline"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
               onClick={() => setSelectedIds(new Set())}
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}

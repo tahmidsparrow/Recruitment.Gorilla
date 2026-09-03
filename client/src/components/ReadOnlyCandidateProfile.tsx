@@ -521,7 +521,11 @@ export default function ReadOnlyCandidateProfile({
               <Button size="sm" variant="link" className="p-0" onClick={() => { URL.revokeObjectURL(preview.url); setPreview(null); }}>Close</Button>
             </div>
             {preview.contentType.includes('pdf') ? (
-              <iframe title="CV preview" src={preview.url} className="cv-preview-frame" style={{ width: '100%', height: 480, border: '1px solid var(--bs-border-color)' }} />
+              <iframe
+                title="CV preview"
+                src={preview.url}
+                className="h-[480px] w-full rounded-[var(--radius-control)] border border-border bg-white"
+              />
             ) : (
               <Alert variant="info" className="mb-0">In-app preview isn't available for this file type. Use Download.</Alert>
             )}
