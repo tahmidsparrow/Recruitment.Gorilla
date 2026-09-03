@@ -24,7 +24,7 @@ import EmptyState from '../components/common/EmptyState';
 import Page from '../components/common/Page';
 import SectionCard from '../components/common/SectionCard';
 import LoadingPanel from '../components/common/Loading';
-import RowActions, { RowAction } from '../components/common/RowActions';
+import RowActions, { RowAction, RowActionSeparator } from '../components/common/RowActions';
 import EvaluationReportDrawer from '../components/EvaluationReportDrawer';
 import OfferCard from '../components/offers/OfferCard';
 import { useAuth } from '../auth/AuthContext';
@@ -190,28 +190,36 @@ export default function CandidateDetailPage() {
           </Button>
 
           {canWrite && !editing && (
-            <Button variant="ghost" className="btn-action-edit" onClick={() => setEditing(true)}>
-              <Pencil size={15} strokeWidth={1.75} aria-hidden="true" />
-              Edit
-            </Button>
-          )}
-
-          {canWrite && !editing && (
             <Button className="btn-action-advance" onClick={() => setAddingStatus(true)}>
               <Plus size={15} strokeWidth={2.25} aria-hidden="true" />
               Add status
             </Button>
           )}
 
-          {isAdminOrAbove && (
+          {/* Edit lives in here rather than in the row. It is a mode switch for
+              the whole page, not a peer of the three read-only views beside it,
+              and as a fifth button it pushed the row wide enough to crowd the
+              one action this page is for. */}
+          {((canWrite && !editing) || isAdminOrAbove) && (
             <RowActions label={`More actions for ${data.fullName}`}>
-              <RowAction
-                icon={<Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />}
-                tone="danger"
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete candidate
-              </RowAction>
+              {canWrite && !editing && (
+                <RowAction
+                  icon={<Pencil size={15} strokeWidth={1.75} aria-hidden="true" />}
+                  onClick={() => setEditing(true)}
+                >
+                  Edit profile
+                </RowAction>
+              )}
+              {canWrite && !editing && isAdminOrAbove && <RowActionSeparator />}
+              {isAdminOrAbove && (
+                <RowAction
+                  icon={<Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />}
+                  tone="danger"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  Delete candidate
+                </RowAction>
+              )}
             </RowActions>
           )}
         </div>

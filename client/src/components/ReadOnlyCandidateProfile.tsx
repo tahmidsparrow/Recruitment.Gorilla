@@ -282,7 +282,11 @@ export default function ReadOnlyCandidateProfile({
         )}
       </div>
 
-      <CardContent className="flex flex-col gap-3.5">
+      {/* CardContent deliberately carries no top padding: a CardHeader
+          normally supplies that space. This card uses its own
+          .profile-header instead, so without pt the contact tiles sat
+          flush against the header's bottom border. */}
+      <CardContent className="flex flex-col gap-3.5 pt-[var(--card-pad)]">
         {/* Contact Details & Metadata Grid */}
         <div className="contact-grid">
           <ContactTile

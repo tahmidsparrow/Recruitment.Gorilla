@@ -5735,7 +5735,19 @@ a.hero-chip--accent:hover {
   position: relative;
   transition: background-color var(--dur-fast) var(--ease-out);
 }
-.stepped-funnel__node + .stepped-funnel__node {
+/* The rule that divides the band.
+
+   This was written as `.stepped-funnel__node + .stepped-funnel__node`, which
+   never matched a single element: the page wraps each node in a flex div so
+   the conversion rate can sit beside it, so no two nodes are ever siblings.
+   The funnel had been rendering with no dividers at all, which is why the
+   floating "15%" read as part of whichever stage it happened to sit near.
+
+   The divider goes on the WRAPPER, so it falls before the rate rather than
+   after it. That is the correct side: the rate describes the transition INTO
+   the stage it precedes — 15% of the previous stage reached this one — so it
+   belongs inside that stage's segment. */
+.stepped-funnel > * + * {
   border-left: 1px solid var(--line-soft);
 }
 
@@ -5877,6 +5889,12 @@ a.hero-chip--accent:hover {
   .stepped-funnel > *:first-child,
   .stepped-funnel > *:nth-child(2) {
     border-top: 0;
+  }
+  /* The comment above always promised this, but the rule was missing — which
+     went unnoticed because the divider it removes was itself never matching
+     anything. With two per row the odd children start a row. */
+  .stepped-funnel > *:nth-child(odd) {
+    border-left: 0;
   }
 }
 
