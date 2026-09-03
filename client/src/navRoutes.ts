@@ -12,6 +12,15 @@ import {
 } from 'lucide-react';
 import type { Role } from './types';
 
+/**
+ * The bands the sidebar is divided into, in the order they appear. Seven flat
+ * items gave no clue that Audit and Users are administration while Upload and
+ * Candidates are the daily work; three short headings say it without costing a
+ * click.
+ */
+export const NAV_GROUPS = ['Overview', 'Pipeline', 'Admin'] as const;
+export type NavGroup = (typeof NAV_GROUPS)[number];
+
 export type NavRoute = {
   /** Route path. Prefix-matched, so /candidates/7 resolves to the Candidates entry. */
   path: string;
@@ -23,6 +32,14 @@ export type NavRoute = {
   roles?: Role[];
   /** Reachable but not listed in the sidebar (deep links, self-service pages). */
   hidden?: boolean;
+  /** Which band of the sidebar it belongs to. Hidden routes need none. */
+  group?: NavGroup;
+  /**
+   * A live count rendered at the end of the item. Named rather than passed as a
+   * number so this file stays a static description of the nav and the sidebar
+   * owns the fetching.
+   */
+  badge?: 'pending-drafts';
 };
 
 /**
@@ -41,12 +58,14 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/',
     label: 'Dashboard',
+    group: 'Overview',
     icon: LayoutDashboard,
     description: 'Pipeline health, upcoming interviews and recent activity at a glance.',
   },
   {
     path: '/analytics',
     label: 'Analytics',
+    group: 'Overview',
     icon: BarChart3,
     description: 'Pipeline velocity, time-to-hire, funnel conversion and sourcing ROI.',
     roles: ['SuperAdmin', 'Admin', 'Recruiter'],
@@ -54,6 +73,8 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/upload',
     label: 'Upload CVs',
+    group: 'Pipeline',
+    badge: 'pending-drafts',
     icon: Upload,
     description: 'Drop CVs in bulk, review what was extracted, and add candidates.',
     roles: ['SuperAdmin', 'Admin', 'Recruiter'],
@@ -61,6 +82,7 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/candidates',
     label: 'Candidates',
+    group: 'Pipeline',
     icon: Users,
     description: 'Search, filter and manage every candidate in the pipeline.',
     roles: ['SuperAdmin', 'Admin', 'Recruiter'],
@@ -68,6 +90,7 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/configuration',
     label: 'Configuration',
+    group: 'Admin',
     icon: Settings,
     description: 'Job openings, skills, interview types and email settings.',
     roles: ['SuperAdmin', 'Admin'],
@@ -75,6 +98,7 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/audit',
     label: 'Audit',
+    group: 'Admin',
     icon: ScrollText,
     description: 'Who changed what, and when.',
     roles: ['SuperAdmin', 'Admin'],
@@ -82,6 +106,7 @@ export const NAV_ROUTES: NavRoute[] = [
   {
     path: '/users',
     label: 'Users',
+    group: 'Admin',
     icon: UserCog,
     description: 'Accounts, roles and password resets.',
     roles: ['SuperAdmin'],
@@ -123,6 +148,18 @@ export function canSeeRoute(route: NavRoute, roles: Role[]): boolean {
 /** The sidebar's items for a set of roles, in declaration order. */
 export function visibleRoutes(roles: Role[]): NavRoute[] {
   return NAV_ROUTES.filter((r) => canSeeRoute(r, roles));
+}
+
+/**
+ * The sidebar's items bucketed by group, in NAV_GROUPS order, with empty
+ * groups dropped — a Recruiter sees no Admin band rather than an empty heading.
+ */
+export function groupedRoutes(roles: Role[]): { group: NavGroup; routes: NavRoute[] }[] {
+  const visible = visibleRoutes(roles);
+  return NAV_GROUPS.map((group) => ({
+    group,
+    routes: visible.filter((r) => r.group === group),
+  })).filter((g) => g.routes.length > 0);
 }
 
 /** True when `pathname` is inside `route` — drives the active nav highlight. */
