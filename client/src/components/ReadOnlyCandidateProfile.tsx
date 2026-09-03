@@ -325,7 +325,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Technical Skills Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Code2 size={15} className="profile-section__icon text-brand" />
+            <Code2 size={15} className="profile-section__icon" />
             <span>Technical Skills</span>
             {skillsList.length > 0 && (
               <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
@@ -349,7 +349,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Professional Summary Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <FileText size={15} className="profile-section__icon text-brand" />
+            <FileText size={15} className="profile-section__icon" />
             <span>Professional Summary</span>
           </div>
           {candidate.summary && candidate.summary.trim() ? (
@@ -375,7 +375,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Education & Academics Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <GraduationCap size={16} className="profile-section__icon text-brand" />
+            <GraduationCap size={16} className="profile-section__icon" />
             <span>Education & Academics</span>
             {candidate.educations && candidate.educations.length > 0 && (
               <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
@@ -417,7 +417,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Work & Employment History Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Building2 size={15} className="profile-section__icon text-brand" />
+            <Building2 size={15} className="profile-section__icon" />
             <span>Work Experience</span>
             {candidate.experiences && candidate.experiences.length > 0 && (
               <span className="profile-section__count badge bg-secondary-subtle text-text-soft">
@@ -461,7 +461,7 @@ export default function ReadOnlyCandidateProfile({
         {/* Referral & Sourcing Section - Always Rendered */}
         <div className="profile-section">
           <div className="profile-section__title">
-            <Users size={15} className="profile-section__icon text-brand" />
+            <Users size={15} className="profile-section__icon" />
             <span>Referral & Sourcing</span>
           </div>
           {candidate.isReferred ? (
@@ -491,7 +491,7 @@ export default function ReadOnlyCandidateProfile({
         {showCvFiles && candidate.cvFiles.length > 0 && (
           <div className="profile-section mt-1">
             <div className="profile-section__title">
-              <FileText size={15} className="profile-section__icon text-brand" />
+              <FileText size={15} className="profile-section__icon" />
               <span>CV Files</span>
             </div>
             <div className="flex flex-col gap-2 mt-1.5">

@@ -2882,8 +2882,12 @@ a.list-row__title:hover {
   color: var(--muted);
   pointer-events: none;
 }
-.search-field .form-control {
-  padding-left: 34px;
+/* Clears the leading glyph. Matches the shadcn <Input> as well as the legacy
+   `.form-control`, since the two are interchangeable at these call sites and
+   the icon would otherwise sit on top of the placeholder. */
+.search-field .form-control,
+.search-field [data-slot='input'] {
+  padding-left: 32px;
 }
 
 /* ---------- Segmented control ----------
@@ -5056,14 +5060,6 @@ a.hero-chip--accent:hover {
   min-width: 0;
   flex: 1 1 auto;
 }
-.contact-tile__label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
-  color: var(--muted);
-  display: block;
-}
 .contact-tile__value {
   font-size: 13px;
   font-weight: 500;
@@ -5088,17 +5084,6 @@ a.hero-chip--accent:hover {
 .profile-section {
   padding-top: 14px;
   border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
-}
-.profile-section__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-soft);
-  margin-bottom: 8px;
 }
 .profile-section__count {
   font-size: 11px;
