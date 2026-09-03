@@ -1,7 +1,6 @@
 import { Avatar as AvatarRoot, AvatarFallback } from '@/components/ui/avatar';
 import { initialsOf } from '@/utils/initials';
 import { avatarTone } from '@/utils/avatarTone';
-import { useTheme } from '@/theme/ThemeContext';
 import { cn } from '@/lib/utils';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'hero';
@@ -38,13 +37,12 @@ export default function Avatar({
   size?: AvatarSize;
   className?: string;
 }) {
-  const { theme } = useTheme();
   const label = name || email || '';
 
   return (
     <AvatarRoot
       className={cn(SIZE_CLASS[size], className)}
-      style={avatarTone(label, theme === 'dark')}
+      style={avatarTone(label)}
       aria-hidden="true"
     >
       <AvatarFallback>{initialsOf(name, email)}</AvatarFallback>

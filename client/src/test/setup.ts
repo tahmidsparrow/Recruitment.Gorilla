@@ -21,27 +21,6 @@ if (!('ResizeObserver' in globalThis)) {
   } as unknown as typeof ResizeObserver;
 }
 
-if (!('DOMRect' in globalThis)) {
-  globalThis.DOMRect = class {
-    constructor(
-      public x = 0,
-      public y = 0,
-      public width = 0,
-      public height = 0,
-    ) {}
-    top = 0;
-    right = 0;
-    bottom = 0;
-    left = 0;
-    static fromRect() {
-      return new (globalThis.DOMRect as never)();
-    }
-    toJSON() {
-      return this;
-    }
-  } as unknown as typeof DOMRect;
-}
-
 // Radix's Select scrolls the highlighted item into view; jsdom has no scrolling.
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {};

@@ -62,6 +62,8 @@ function hash(input: string): number {
 export type AvatarToneStyle = CSSProperties & {
   ['--avatar-bg']: string;
   ['--avatar-fg']: string;
+  ['--avatar-bg-dark']: string;
+  ['--avatar-fg-dark']: string;
 };
 
 /**
@@ -69,12 +71,21 @@ export type AvatarToneStyle = CSSProperties & {
  *
  *   <span className="avatar" style={avatarTone(candidate.fullName)}>AR</span>
  *
- * `dark` picks the lifted ramp. Callers that don't know the theme can leave it
- * off — the light ramp's tints are translucent and its ink stays legible on a
- * dark surface, it is simply less vivid than it could be.
+ * BOTH ramps are emitted, and CSS picks between them under
+ * [data-bs-theme='dark'] (see `.avatar` in index.css). The alternative — a
+ * `dark` argument read from the theme context — made every avatar, and so
+ * every table row and kanban card, require a ThemeProvider above it. That is
+ * a lot of coupling for a background colour, and it broke rendering the
+ * components in isolation.
  */
-export function avatarTone(key: string, dark = false): AvatarToneStyle {
-  const ramp = dark ? TONES_DARK : TONES;
-  const tone = ramp[hash(key || '?') % ramp.length];
-  return { '--avatar-bg': tone.bg, '--avatar-fg': tone.fg };
+export function avatarTone(key: string): AvatarToneStyle {
+  const index = hash(key || '?') % TONES.length;
+  const light = TONES[index];
+  const dark = TONES_DARK[index];
+  return {
+    '--avatar-bg': light.bg,
+    '--avatar-fg': light.fg,
+    '--avatar-bg-dark': dark.bg,
+    '--avatar-fg-dark': dark.fg,
+  };
 }

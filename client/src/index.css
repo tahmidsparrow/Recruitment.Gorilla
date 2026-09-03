@@ -1941,6 +1941,15 @@ a.list-row__title:hover {
   color: var(--avatar-fg, var(--primary));
   user-select: none;
 }
+/* The tone comes in as four custom properties (light pair + dark pair) so the
+   component needs no theme context to pick between them — see
+   utils/avatarTone. */
+[data-bs-theme='dark'] .avatar,
+[data-bs-theme='dark'] [data-slot='avatar'] {
+  --avatar-bg: var(--avatar-bg-dark);
+  --avatar-fg: var(--avatar-fg-dark);
+}
+
 .who-name {
   font-weight: var(--weight-semibold);
   color: var(--text);
@@ -5962,34 +5971,37 @@ a.hero-chip--accent:hover {
 .kanban-column__empty {
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  padding: 24px 12px;
+  padding: 14px 12px;
   text-align: center;
-  color: var(--text-muted);
-  font-size: 12.5px;
-  background: var(--surface-muted);
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 140px;
+  color: var(--muted-light);
+  font-size: var(--text-xs);
+  background: transparent;
+  flex: 0 0 auto;
+  min-height: 0;
 }
 
+/* Compact: a board exists to show the shape of the pipeline at once, and it
+   cannot do that if each column shows four of eleven cards. */
 .kanban-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px;
+  border-radius: var(--radius-lg);
+  padding: 9px 10px;
   cursor: grab;
   user-select: none;
   box-shadow: var(--shadow-xs);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
+/* A 1px lift, not 2px: the card is being dragged in this view, and a hover
+   that visibly jumps competes with the drag affordance. */
 .kanban-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
   border-color: var(--border-strong);
 }
@@ -6002,7 +6014,7 @@ a.hero-chip--accent:hover {
 }
 
 .kanban-card--stagnant {
-  border-left: 3px solid var(--warning);
+  border-left: 2px solid var(--warning);
 }
 
 .kanban-card__header {
@@ -6012,15 +6024,17 @@ a.hero-chip--accent:hover {
 }
 
 .kanban-card__name {
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
   color: var(--text);
   text-decoration: none;
 }
 
+/* No underline: the card is already a target and the name sits on it. */
 .kanban-card__name:hover {
   color: var(--primary);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .kanban-card__meta {
