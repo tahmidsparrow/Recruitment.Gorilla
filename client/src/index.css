@@ -1644,6 +1644,12 @@ a.list-row__title:hover {
 /* ---------- Tables ---------- */
 .table-wrap {
   overflow-x: auto;
+  /* min-width:0 is load-bearing. A flex/grid child defaults to
+     min-width:auto — its CONTENT width — so a table wider than the column
+     pushed this wrapper past the viewport instead of scrolling inside it,
+     putting a scrollbar on the page. */
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   background: var(--surface);
@@ -1797,7 +1803,13 @@ a.list-row__title:hover {
   box-shadow: none;
 }
 
-@media (min-width: 768px) {
+/* 1024, not 768. At 768 the in-flow rail takes 228px and the page gutters
+   another 40, leaving ~500 for a six-column table whose content needs 660 —
+   so the table restored into a space it could not fit, and the wrapper's
+   scroll did not save the page from a horizontal scrollbar. Below 1024 the
+   labelled-card layout is simply the better presentation, and no column is
+   hidden either way. */
+@media (min-width: 1024px) {
   .table-cards { display: table; }
   .table-cards thead { display: table-header-group; }
   .table-cards tbody { display: table-row-group; }
@@ -2894,12 +2906,15 @@ a.list-row__title:hover {
   }
 }
 
-@media (min-width: 992px) {
-  .data-toolbar {
-    flex-wrap: nowrap;
-  }
+/* The toolbar WRAPS AT EVERY WIDTH, deliberately.
+   It used to go `nowrap` at 992px, where the sidebar takes 228 of it and the
+   row measures about 1040 — a guaranteed horizontal scrollbar on the page.
+   Raising the breakpoint just moves the failure: the row's width depends on
+   which filters the signed-in role can see, so any fixed number is one extra
+   filter away from being wrong again. Wrapping costs a second line on a
+   narrow window and can never overflow. */
+@media (min-width: 1280px) {
   .data-toolbar__end {
-    flex-wrap: nowrap;
     flex-shrink: 0;
   }
 }
@@ -4980,12 +4995,23 @@ a.hero-chip--accent:hover {
 }
 
 /* Schedule + interviewers as one right-hand cluster */
+/* `flex-shrink: 0` on a 531px block is what pushed the interview hero past a
+   390px viewport. It wraps onto its own line below the identity instead, and
+   aligns right once there is room for it beside. */
 .interview-hero__aside {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-2);
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+@media (min-width: 992px) {
+  .interview-hero__aside {
+    align-items: flex-end;
+    flex: 0 1 auto;
+    margin-left: auto;
+  }
 }
 .interview-hero__people {
   display: flex;
@@ -5007,14 +5033,19 @@ a.hero-chip--accent:hover {
 .interview-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.8rem;
-  border-radius: 999px;
-  background: var(--surface-muted, rgba(255, 255, 255, 0.04));
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
   border: 1px solid var(--border);
   color: var(--text-soft);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  /* The schedule line is long ("Wed, Aug 19, 01:23 AM GMT+6 · 60 min ·
+     Completed"); on a phone it wraps rather than forcing the row wide. */
+  white-space: normal;
 }
 .interview-chip--soon {
   background: rgba(59, 130, 246, 0.15);
