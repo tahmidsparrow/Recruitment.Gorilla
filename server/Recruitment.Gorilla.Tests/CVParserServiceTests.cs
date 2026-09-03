@@ -80,4 +80,63 @@ public class CVParserServiceTests
             if (File.Exists(tempFile)) File.Delete(tempFile);
         }
     }
+
+    // ---- NormalizeText -----------------------------------------------------
+    //
+    // A subsetted PDF font drops the glyph for the "ti" ligature, and PdfPig
+    // reports either NUL (the ToUnicode CMap has no entry) or a leftover
+    // codepoint such as the euro sign. The inputs below are the exact strings
+    // a census found in the CVs already parsed into the database.
+
+    private const string Nul = "\u0000";
+    private const string Euro = "€";
+
+    [Theory]
+    [InlineData("Brain Sta" + Nul + "on 23", "Brain Station 23")]
+    [InlineData("ini" + Nul + "a" + Nul + "ves", "initiatives")]
+    [InlineData("resul" + Nul + "ng", "resulting")]
+    [InlineData("na" + Nul + "ve", "native")]
+    [InlineData("Educa" + Nul + "on", "Education")]
+    [InlineData("Sta" + Euro + "on", "Station")]
+    public void NormalizeText_restores_the_ti_ligature(string input, string expected)
+    {
+        Assert.Equal(expected, CVParserService.NormalizeText(input));
+    }
+
+    [Theory]
+    [InlineData("qualityﬁrst.io", "qualityfirst.io")]
+    [InlineData("oﬀer", "offer")]
+    [InlineData("inﬂuence", "influence")]
+    public void NormalizeText_expands_real_ligature_codepoints(string input, string expected)
+    {
+        Assert.Equal(expected, CVParserService.NormalizeText(input));
+    }
+
+    [Theory]
+    // A euro sign that is actually money has to survive: it is never wedged
+    // between two letters, which is exactly what the guard checks.
+    [InlineData("Salary: " + Euro + "75,000")]
+    [InlineData("Budget " + Euro + "1.2M per year")]
+    [InlineData("Paid in " + Euro + " and $")]
+    public void NormalizeText_leaves_currency_alone(string input)
+    {
+        Assert.Equal(input, CVParserService.NormalizeText(input));
+    }
+
+    [Fact]
+    public void NormalizeText_drops_control_characters_it_cannot_interpret()
+    {
+        // Not between two letters, so there is no evidence it stood for "ti".
+        // Dropping beats guessing, and a NUL is never valid text anyway.
+        Assert.Equal("Dhaka Bangladesh", CVParserService.NormalizeText("Dhaka " + Nul + "Bangladesh"));
+        Assert.Equal("2024", CVParserService.NormalizeText("2024" + Nul));
+        Assert.Equal("ab", CVParserService.NormalizeText("a\u0007b"));
+    }
+
+    [Fact]
+    public void NormalizeText_preserves_ordinary_whitespace()
+    {
+        const string text = "Line one\r\nLine two\tcolumn";
+        Assert.Equal(text, CVParserService.NormalizeText(text));
+    }
 }
