@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import type * as React from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Layers, FileText, ChevronLeft, ChevronRight, RotateCw, Trash2, UserCheck, CheckSquare, Square, Globe, Clock, Sparkles, Copy, Briefcase, Mail, Phone, Plus } from 'lucide-react';
 import {
@@ -54,11 +55,33 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
   // Multi-select state for bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  /**
+   * The floating bulk bar is fixed to the viewport and the studio's footer sits
+   * at the bottom of the viewport too, so the two collided: the bar covered
+   * "Discard Draft". The footer reserves room for whatever the bar actually
+   * measures rather than for a hard-coded height, because the bar wraps to two
+   * rows on a narrow screen and any constant would be wrong there.
+   */
+  const bulkBarRef = useRef<HTMLDivElement | null>(null);
+  const [bulkBarHeight, setBulkBarHeight] = useState(0);
   const [bulkRoleId, setBulkRoleId] = useState<number | null>(null);
 
   // Form editing state for currently loaded draft
   const [editForm, setEditForm] = useState<Partial<CandidateDraft>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const el = bulkBarRef.current;
+    if (!el) {
+      setBulkBarHeight(0);
+      return;
+    }
+    const measure = () => setBulkBarHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [selectedIds.size]);
 
   // Sync initialBatchId when provided
   useEffect(() => {
@@ -386,7 +409,10 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
   const showDiscardBulk = selectedDraftsList.some((d) => d.status !== 'Discarded');
 
   return (
-    <div className="draft-workspace">
+    <div
+      className="draft-workspace"
+      style={{ '--bulk-bar-h': `${bulkBarHeight}px` } as React.CSSProperties}
+    >
       {/* 1. Header Toolbar & Command Row */}
       <div className="draft-toolbar">
         <div className="draft-toolbar__left">
@@ -1328,7 +1354,7 @@ export default function DraftReviewWorkspace({ initialBatchId, onCandidateCreate
 
       {/* 3. Floating Bulk Action Bar (when multiple items selected) */}
       {selectedIds.size > 0 && (
-        <div className="draft-bulk-bar">
+        <div className="draft-bulk-bar" ref={bulkBarRef}>
           <div className="draft-bulk-bar__content">
             <span className="font-semibold text-[length:var(--text-sm)] whitespace-nowrap">
               {selectedIds.size} candidate{selectedIds.size === 1 ? '' : 's'} selected
