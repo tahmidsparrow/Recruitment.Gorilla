@@ -11,7 +11,7 @@ import { expect, test } from '@playwright/test';
  * fallback serves deep links, and that the refresh cookie survives — the last
  * of which fails silently, fifteen minutes after anyone would notice.
  */
-const BASE = process.env.COMPOSE_BASE_URL ?? 'http://localhost:8080';
+const BASE = process.env.COMPOSE_BASE_URL ?? 'http://localhost:8090';
 
 test('the composed stack serves the app, the API and the hub', async ({ page }) => {
   test.setTimeout(180000);

@@ -53,7 +53,7 @@ The whole stack — MySQL, the API and the web app — from one command:
 docker compose up --build
 ```
 
-Then open <http://localhost:8080> and sign in as
+Then open <http://localhost:8090> and sign in as
 `admin@recruitmentgorilla.com` / `admin`.
 
 Nothing else is needed: no `.env`, no MySQL install, no `dotnet-ef`. Migrations

@@ -2,7 +2,7 @@
 #
 #     docker compose up --build
 #
-# Then open http://localhost:8080 and sign in as
+# Then open http://localhost:8090 and sign in as
 # admin@recruitmentgorilla.com / admin.
 #
 # It runs with no .env file and no setup step — every value below has a working
@@ -54,8 +54,10 @@ services:
       db:
         condition: service_healthy
     environment:
-      # 8080, so the container needs no privileged port and no root.
-      ASPNETCORE_URLS: http://+:8080
+      # A high port, so the container needs no privileged port and no root.
+      # This one is internal: the api service publishes nothing, so it is
+      # reachable only from nginx over the project network.
+      ASPNETCORE_URLS: http://+:8081
 
       # Development, deliberately, and this is the one setting to understand
       # before deploying for real. AuthController sets the refresh cookie
@@ -84,8 +86,8 @@ services:
       # An array index, so AllowedOrigins:[0]. Same-origin through nginx means
       # CORS is not exercised in this setup, but a wrong value here is the kind
       # of thing that only shows up once someone does split the origins.
-      AllowedOrigins__0: ${PUBLIC_ORIGIN:-http://localhost:8080}
-      App__ClientBaseUrl: ${PUBLIC_ORIGIN:-http://localhost:8080}
+      AllowedOrigins__0: ${PUBLIC_ORIGIN:-http://localhost:8090}
+      App__ClientBaseUrl: ${PUBLIC_ORIGIN:-http://localhost:8090}
 
       # Seeds the first Super Admin, once, when the Users table is empty.
       # PBKDF2-SHA256 "iterations.salt.hash" — see Auth/PasswordHasher.cs.
@@ -112,7 +114,7 @@ services:
     depends_on:
       - api
     ports:
-      - '${PUBLIC_PORT:-8080}:80'
+      - '${PUBLIC_PORT:-8090}:80'
 
 volumes:
   db-data:
