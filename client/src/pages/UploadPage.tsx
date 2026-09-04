@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { UploadCloud, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 import BulkUploader from '../components/BulkUploader';
 import DraftReviewWorkspace from '../components/drafts/DraftReviewWorkspace';
-import Page from '../components/ui/Page';
-import SectionCard from '../components/ui/SectionCard';
+import { Button } from '@/components/ui/button';
+import Page from '../components/common/Page';
+import SectionCard from '../components/common/SectionCard';
 import { getCandidateDrafts } from '../services/api';
 import type { CVDraft } from '../types';
 
@@ -30,26 +31,28 @@ export default function UploadPage() {
   return (
     <Page>
       {/* Workspace Sub-Nav Tab Bar */}
-      <div className="d-flex align-items-center justify-content-between border-bottom pb-3">
+      <div className="flex items-center justify-between border-b border-border pb-4">
         <div className="segmented">
           <button
             type="button"
             className={`segmented__item ${activeTab === 'upload' ? 'segmented__item--active active' : ''}`}
             onClick={() => setActiveTab('upload')}
           >
-            <UploadCloud size={15} className="me-1.5" />
-            Upload &amp; Intake
+            <UploadCloud size={15} className="me-1.5 shrink-0" />
+            <span>Upload &amp; Intake</span>
           </button>
           <button
             type="button"
             className={`segmented__item ${activeTab === 'review' ? 'segmented__item--active active' : ''}`}
             onClick={() => setActiveTab('review')}
           >
-            <Layers size={15} className="me-1.5" />
-            Review Staging Workspace
+            <Layers size={15} className="me-1.5 shrink-0" />
+            <span className="hidden sm:inline">Review Staging Workspace</span>
+            <span className="sm:hidden">Review Workspace</span>
             {pendingCount > 0 && (
-              <span className="draft-badge--pending ms-2">
-                {pendingCount} Pending
+              <span className="draft-badge--pending ml-1.5 sm:ml-2">
+                <span className="hidden sm:inline">{pendingCount} Pending</span>
+                <span className="sm:hidden">{pendingCount}</span>
               </span>
             )}
           </button>
@@ -65,26 +68,22 @@ export default function UploadPage() {
 
           {/* Staging Handoff Banner */}
           {lastBatchCount > 0 && (
-            <div className="alert-success-soft d-flex flex-wrap align-items-center justify-content-between gap-3" role="status">
-              <div className="d-inline-flex align-items-center gap-2.5">
-                <CheckCircle2 size={20} className="text-success flex-shrink-0" />
+            <div className="alert-success-soft flex flex-wrap items-center justify-between gap-4" role="status">
+              <div className="inline-flex items-center gap-2.5">
+                <CheckCircle2 size={20} className="text-success-foreground shrink-0" />
                 <div>
-                  <div className="fw-semibold">
+                  <div className="font-semibold">
                     Successfully staged {lastBatchCount} resume{lastBatchCount === 1 ? '' : 's'} to database!
                   </div>
-                  <div className="text-muted small">
+                  <div className="text-muted-foreground text-[length:var(--text-sm)]">
                     All candidates have been saved as pending drafts. You can review them now or come back anytime.
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5"
-                onClick={() => setActiveTab('review')}
-              >
-                <span>Open Review Workspace</span>
-                <ArrowRight size={14} />
-              </button>
+              <Button size="sm" onClick={() => setActiveTab('review')}>
+                Open Review Workspace
+                <ArrowRight />
+              </Button>
             </div>
           )}
         </div>

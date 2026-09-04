@@ -123,6 +123,14 @@ namespace Recruitment.Gorilla.API.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<string>("BatchId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("BatchName")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("CodeforcesUrl")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");

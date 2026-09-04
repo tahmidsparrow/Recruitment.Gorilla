@@ -134,15 +134,64 @@ public class CVParserService
         return sb.ToString();
     }
 
-    private static string NormalizeText(string text)
+    /// <summary>
+    /// A ligature the font failed to map, wedged between two letters.
+    ///
+    /// U+0000 is what PdfPig yields when a subsetted font's ToUnicode CMap has
+    /// no entry for the glyph at all. U+20AC is what it yields when the CMap
+    /// maps the glyph onto whatever codepoint held that slot in the original
+    /// encoding. Both turn up as the missing "ti".
+    /// See <see cref="NormalizeText"/>.
+    /// </summary>
+    private static readonly Regex UnmappedTiLigature =
+        new(@"(?<=\p{L})[\u0000\u20AC](?=\p{L})", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Control characters that carry no text. Whatever glyph they stood for is
+    /// unrecoverable, and keeping them is worse than dropping them: a NUL is
+    /// not valid text for anything downstream.
+    /// </summary>
+    private static readonly Regex StrayControlChars =
+        new(@"[\u0000-\u0008\u000B\u000C\u000E-\u001F]", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Repairs ligatures that a PDF's font reports as the wrong character.
+    ///
+    /// The U+FB0x replacements are the well-behaved case: the font uses the
+    /// real Unicode ligature codepoints, and we just want the letters back.
+    ///
+    /// The unmapped-glyph rule is the misbehaving case. A subsetted font ships
+    /// only the glyphs its document uses, and its ToUnicode CMap either omits
+    /// an entry outright or points it at a leftover codepoint. Either way it is
+    /// the "ti" ligature that goes missing, turning "Station" into "Sta?on",
+    /// "initiatives" into "ini?a?ves" and "Education" into "Educa?on".
+    ///
+    /// A census of every CV already parsed into this database found 120 such
+    /// characters, 118 of them plainly "ti" from the letters around them; the
+    /// other two were words already beyond recovery. So the rule is
+    /// evidence-based rather than certain, and it is deliberately narrow: a
+    /// control character it does not claim is deleted rather than guessed at.
+    ///
+    /// The letter-on-BOTH-sides guard is what makes the euro half safe. A euro
+    /// sign in a CV is a salary or a currency list - preceded by a space,
+    /// followed by a digit - never wedged between two letters. Replacing
+    /// unconditionally would corrupt those; this cannot.
+    /// </summary>
+    public static string NormalizeText(string text)
     {
-        return text
+        var normalized = text
             .Replace("\uFB00", "ff")
             .Replace("\uFB01", "fi")
             .Replace("\uFB02", "fl")
             .Replace("\uFB03", "ffi")
             .Replace("\uFB04", "ffl")
-            .Normalize(System.Text.NormalizationForm.FormC);
+            .Replace("\uFB05", "st")
+            .Replace("\uFB06", "st");
+
+        normalized = UnmappedTiLigature.Replace(normalized, "ti");
+        normalized = StrayControlChars.Replace(normalized, string.Empty);
+
+        return normalized.Normalize(System.Text.NormalizationForm.FormC);
     }
 
     private static string ExtractWordText(string filePath)

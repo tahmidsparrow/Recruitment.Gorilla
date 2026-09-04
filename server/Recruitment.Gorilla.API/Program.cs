@@ -141,6 +141,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// The CV upload progress hub. Everything around it already assumed this line
+// existed — the client connects to /hubs/cv-upload, the JWT handler above
+// reads the token off the query string specifically for paths under /hubs, and
+// CVUploadProgressNotifier is registered and injected with IHubContext — but
+// the endpoint was never mapped, so every negotiate returned 404 and the
+// live parsing progress never arrived.
+app.MapHub<CVUploadHub>("/hubs/cv-upload");
+
 // Apply pending migrations and seed the first Super Admin from config (once, when the
 // Users table is empty). The seed reuses the existing Auth:PasswordHash so the current
 // admin keeps its password, now logging in by email.

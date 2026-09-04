@@ -26,3 +26,6 @@ client/e2e/test-cvs/
 # Misc
 .DS_Store
 Thumbs.db
+
+# Local screenshot harness (Claude Code)
+client/*.tmp.mjs

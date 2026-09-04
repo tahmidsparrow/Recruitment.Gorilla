@@ -55,6 +55,9 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
         if (q.RoleId is int rid)
             query = query.Where(c => c.RoleAppliedOptionId == rid);
 
+        if (!string.IsNullOrWhiteSpace(q.Batch))
+            query = query.Where(c => c.BatchName == q.Batch || c.BatchId == q.Batch);
+
         // ANY-of: candidates having at least one of the selected skills.
         if (q.SkillIds is { Count: > 0 })
             query = query.Where(c => c.CandidateSkills.Any(cs => q.SkillIds.Contains(cs.SkillOptionId)));
@@ -98,10 +101,22 @@ public class CandidateService(AppDbContext db, IWebHostEnvironment env, Notifica
                 c.RoleAppliedOption != null ? c.RoleAppliedOption.Name : c.AppliedRole,
                 c.CurrentStatus, c.CreatedAt,
                 c.SourceOption != null ? c.SourceOption.Name : null,
-                c.UpdatedAt))
+                c.UpdatedAt,
+                c.BatchName))
             .ToListAsync();
 
         return new PagedResult<CandidateListItemDto>(items, total, q.Page, q.PageSize);
+    }
+
+    public async Task<List<string>> GetCandidateBatchesAsync(int? ownerUserId = null)
+    {
+        var query = ApplyAccess(db.Candidates.AsQueryable(), ownerUserId);
+        return await query
+            .Where(c => !string.IsNullOrEmpty(c.BatchName))
+            .Select(c => c.BatchName!)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToListAsync();
     }
 
     public async Task<CandidateDetailDto?> GetByIdAsync(int id, int? ownerUserId = null)

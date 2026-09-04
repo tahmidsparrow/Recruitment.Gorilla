@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Alert, ProgressBar, Spinner } from 'react-bootstrap';
-import { CheckCircle2, FileText, Loader2, UploadCloud, XCircle } from 'lucide-react';
-import { uploadCV } from '../services/api';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle2, FileText, UploadCloud, XCircle } from 'lucide-react';
+import { getActiveRoleOptions, uploadCV } from '../services/api';
 import { getCVUploadHubConnection, startCVUploadHub, type CVUploadProgressEvent } from '../services/signalr';
 import type { CVDraft } from '../types';
+import { Alert } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 
 interface Props {
   onDraftsParsed: (drafts: CVDraft[], batchId?: string) => void;
@@ -23,12 +29,18 @@ const ACCEPTED = {
 
 export default function BulkUploader({ onDraftsParsed }: Props) {
   const [batchName, setBatchName] = useState('');
+  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [fileProgresses, setFileProgresses] = useState<FileProgressState[]>([]);
   const currentBatchId = useRef<string | null>(null);
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ['active-role-options'],
+    queryFn: getActiveRoleOptions,
+  });
 
   useEffect(() => {
     let active = true;
@@ -102,7 +114,14 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
         });
 
         try {
-          const draft = await uploadCV(file, batchId, i, files.length, batchName.trim() || undefined);
+          const draft = await uploadCV(
+            file,
+            batchId,
+            i,
+            files.length,
+            batchName.trim() || undefined,
+            selectedRoleId ?? undefined
+          );
           drafts.push(draft);
           setFileProgresses((prev) => {
             const next = [...prev];
@@ -130,7 +149,7 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
       setBusy(false);
       if (drafts.length > 0) onDraftsParsed(drafts, batchId);
     },
-    [batchName, onDraftsParsed]
+    [batchName, selectedRoleId, onDraftsParsed]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -150,20 +169,40 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
 
   return (
     <div className="page-stack page-stack--tight">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-1">
-        <div className="d-flex align-items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
-          <label htmlFor="batch-name-input" className="small fw-semibold text-muted text-nowrap">
+      <div className="flex flex-wrap items-center gap-4 mb-1">
+        <div className="flex items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
+          <label htmlFor="batch-name-input" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
             Batch Label:
           </label>
-          <input
+          <Input
             id="batch-name-input"
-            type="text"
-            className="form-control form-control-sm"
+            className="h-[var(--control-h-sm)] text-[length:var(--text-sm)]"
             placeholder="e.g. Q3 Senior Engineering Intake"
             value={batchName}
             disabled={busy}
             onChange={(e) => setBatchName(e.target.value)}
           />
+        </div>
+
+        <div className="flex items-center gap-2" style={{ maxWidth: 360, width: '100%' }}>
+          <label htmlFor="job-role-select" className="text-[length:var(--text-sm)] font-semibold text-muted-foreground whitespace-nowrap">
+            Job Opening:
+          </label>
+          <NativeSelect
+            id="job-role-select"
+            size="sm"
+            value={selectedRoleId ?? ''}
+            disabled={busy}
+            onChange={(e) => setSelectedRoleId(e.target.value ? Number(e.target.value) : null)}
+            aria-label="Target Job Opening"
+          >
+            <option value="">Select Job Opening (Optional)…</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
       </div>
 
@@ -171,14 +210,14 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
         <input {...getInputProps()} />
         {busy ? (
           <div className="dropzone__progress" role="status" aria-live="polite">
-            <Spinner animation="border" size="sm" aria-hidden="true" />
+            <Spinner aria-hidden="true" />
             <div className="empty-state-title">Parsing CVs in background…</div>
             <div className="empty-state-description">
               {done} of {total} read
             </div>
-            <ProgressBar
+            <Progress
               className="dropzone__bar"
-              now={total ? (done / total) * 100 : 0}
+              value={total ? (done / total) * 100 : 0}
               aria-label={`Parsed ${done} of ${total} files`}
             />
           </div>
@@ -197,39 +236,39 @@ export default function BulkUploader({ onDraftsParsed }: Props) {
       </div>
 
       {busy && fileProgresses.length > 0 && (
-        <div className="card p-3 shadow-xs border">
-          <div className="small fw-bold text-muted text-uppercase mb-2">Live Parsing Queue</div>
-          <div className="d-flex flex-column gap-2">
+        <div className="card p-4 shadow-xs border border-border">
+          <div className="text-[length:var(--text-sm)] font-bold text-muted-foreground uppercase mb-2">Live Parsing Queue</div>
+          <div className="flex flex-col gap-2">
             {fileProgresses.map((fp, i) => (
               <div
                 key={i}
-                className="d-flex align-items-center justify-content-between p-2 rounded bg-light border small"
+                className="flex items-center justify-between p-2 rounded-[var(--radius-md)] bg-muted border border-border text-[length:var(--text-sm)]"
               >
-                <div className="d-flex align-items-center gap-2 text-truncate me-2">
-                  <FileText size={14} className="text-muted flex-shrink-0" />
-                  <span className="fw-semibold text-truncate">{fp.fileName}</span>
+                <div className="flex items-center gap-2 truncate mr-2">
+                  <FileText size={14} className="text-muted-foreground shrink-0" />
+                  <span className="font-semibold truncate">{fp.fileName}</span>
                 </div>
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   {fp.status === 'queued' && (
-                    <span className="badge-pill badge-neutral">Queued</span>
+                    <Badge variant="neutral">Queued</Badge>
                   )}
                   {fp.status === 'parsing' && (
-                    <span className="badge-pill badge-primary d-inline-flex align-items-center gap-1">
-                      <Loader2 size={11} className="spinner-border spinner-border-sm" />
+                    <Badge variant="brand">
+                      <Spinner className="size-3" />
                       Parsing
-                    </span>
+                    </Badge>
                   )}
                   {fp.status === 'completed' && (
-                    <span className="badge-pill badge-success d-inline-flex align-items-center gap-1">
-                      <CheckCircle2 size={12} />
+                    <Badge variant="success">
+                      <CheckCircle2 />
                       Extracted
-                    </span>
+                    </Badge>
                   )}
                   {fp.status === 'error' && (
-                    <span className="badge-pill badge-danger d-inline-flex align-items-center gap-1">
-                      <XCircle size={12} />
+                    <Badge variant="danger">
+                      <XCircle />
                       Failed
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>

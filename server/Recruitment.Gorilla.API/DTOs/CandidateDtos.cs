@@ -150,7 +150,8 @@ public record CandidateListItemDto(
     string CurrentStatus,
     DateTime CreatedAt,
     string? Source = null,
-    DateTime? UpdatedAt = null
+    DateTime? UpdatedAt = null,
+    string? BatchName = null
 );
 
 /// <summary>
@@ -174,7 +175,8 @@ public record CandidateListQuery(
     string? Sort = null,
     string? Dir = null,
     int Page = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    string? Batch = null
 );
 
 public record CandidateDetailDto(
@@ -270,7 +272,8 @@ public record RoleAppliedOptionDto(
     string Title,         // computed: "{Name} — {CreatedAt:dd MMM yyyy}"
     List<RecruiterDto> Recruiters,
     int? EvaluationRubricId = null,
-    string? EvaluationRubricName = null);
+    string? EvaluationRubricName = null,
+    int CandidateCount = 0);
 
 public record UpsertRoleAppliedOptionDto(
     string Name,

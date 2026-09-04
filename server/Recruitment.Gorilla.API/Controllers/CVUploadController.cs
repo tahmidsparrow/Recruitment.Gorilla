@@ -26,7 +26,8 @@ public class CVUploadController(
         [FromForm] string? batchId = null,
         [FromForm] string? batchName = null,
         [FromForm] int? fileIndex = null,
-        [FromForm] int? totalFiles = null)
+        [FromForm] int? totalFiles = null,
+        [FromForm] int? roleAppliedOptionId = null)
     {
         var bId = batchId ?? Guid.NewGuid().ToString("N");
         var idx = fileIndex ?? 0;
@@ -80,7 +81,8 @@ public class CVUploadController(
             file.FileName, storedName, fileType, file.Length,
             bId, batchName, name, parsed.Email, parsed.Phone, parsed.LinkedIn, parsed.Github, parsed.Skills, parsed.Summary,
             parsed.Location, parsed.LeetCode, parsed.Codeforces, parsed.HackerRank, parsed.GitLab,
-            parsed.Educations, parsed.Experiences);
+            parsed.Educations, parsed.Experiences,
+            roleAppliedOptionId: roleAppliedOptionId);
 
         var eduDtos = parsed.Educations.Select((e, i) => new CandidateEducationDto(i + 1, e.Degree, e.Institution, e.GraduationYear, e.Cgpa)).ToList();
         var expDtos = parsed.Experiences.Select((e, i) => new CandidateExperienceDto(i + 1, e.JobTitle, e.Company, e.Duration, e.Description)).ToList();
